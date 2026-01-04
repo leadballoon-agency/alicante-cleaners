@@ -5,7 +5,14 @@ import EmailProvider from 'next-auth/providers/email'
 import { Resend } from 'resend'
 import { db } from './db'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialize Resend only when needed (avoids build-time errors if API key missing)
+let resendClient: Resend | null = null
+const getResend = () => {
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY || 'dummy_key_for_build')
+  }
+  return resendClient
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db) as NextAuthOptions['adapter'],
@@ -23,7 +30,7 @@ export const authOptions: NextAuthOptions = {
       from: process.env.EMAIL_FROM || 'VillaCare <noreply@villacare.com>',
       sendVerificationRequest: async ({ identifier: email, url }) => {
         try {
-          await resend.emails.send({
+          await getResend().emails.send({
             from: process.env.EMAIL_FROM || 'VillaCare <noreply@villacare.com>',
             to: email,
             subject: 'Sign in to VillaCare',
