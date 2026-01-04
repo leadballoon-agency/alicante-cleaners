@@ -117,6 +117,20 @@ export const translations: Record<Language, Record<string, string>> = {
     'tech.cleaner5Title': 'Stay organized',
     'tech.cleaner5Desc': 'Your schedule syncs to your phone calendar',
 
+    // Empty state
+    'empty.title': 'We\'re growing our network',
+    'empty.subtitle': 'We\'re currently onboarding trusted cleaners in Alicante. Know a great cleaner? Invite them to join.',
+    'empty.cta': 'Refer a cleaner',
+
+    // Testimonials
+    'testimonials.title': 'What villa owners say',
+    'testimonial1.text': 'Finally found someone reliable. The photo proof gives me peace of mind when I\'m back in the UK.',
+    'testimonial1.author': 'James, Javea',
+    'testimonial2.text': 'The translation feature is brilliant. I write in English, Clara reads in Spanish. No more confusion.',
+    'testimonial2.author': 'Sarah, Moraira',
+    'testimonial3.text': 'Used to worry about the villa sitting empty. Now I get photos after every clean. Game changer.',
+    'testimonial3.author': 'Mark, Altea',
+
     // Villa life section
     'villa.title': 'Not just any home. Villas.',
     'villa.p1': 'Costa Blanca villas aren\'t like city apartments. Large terraces that collect dust. Pools that need attention. Gardens that shed leaves. Outside areas that take as much work as inside.',
@@ -217,6 +231,18 @@ export const translations: Record<Language, Record<string, string>> = {
     'tech.cleaner5Title': 'Mantente organizado',
     'tech.cleaner5Desc': 'Tu agenda se sincroniza con el calendario de tu móvil',
 
+    'empty.title': 'Estamos ampliando nuestra red',
+    'empty.subtitle': 'Actualmente estamos incorporando limpiadores de confianza en Alicante. ¿Conoces a un gran limpiador? Invítalo a unirse.',
+    'empty.cta': 'Referir un limpiador',
+
+    'testimonials.title': 'Lo que dicen los propietarios',
+    'testimonial1.text': 'Por fin encontré a alguien fiable. Las fotos de prueba me dan tranquilidad cuando estoy en el Reino Unido.',
+    'testimonial1.author': 'James, Jávea',
+    'testimonial2.text': 'La función de traducción es brillante. Escribo en inglés, Clara lee en español. Sin confusiones.',
+    'testimonial2.author': 'Sarah, Moraira',
+    'testimonial3.text': 'Solía preocuparme por la villa vacía. Ahora recibo fotos después de cada limpieza. Un cambio total.',
+    'testimonial3.author': 'Mark, Altea',
+
     'villa.title': 'No cualquier casa. Villas.',
     'villa.p1': 'Las villas de la Costa Blanca no son como apartamentos de ciudad. Grandes terrazas que acumulan polvo. Piscinas que necesitan atención. Jardines que sueltan hojas. Zonas exteriores que requieren tanto trabajo como el interior.',
     'villa.p2': 'Lo entendemos porque lo vivimos. Los limpiadores de VillaCare se especializan en mantenimiento de villas - el cuidado regular que mantiene una propiedad impecable, no solo la limpieza profunda ocasional.',
@@ -315,6 +341,18 @@ export const translations: Record<Language, Record<string, string>> = {
     'tech.cleaner4Desc': 'Bewertungen, die Ihrer Karriere folgen',
     'tech.cleaner5Title': 'Bleiben Sie organisiert',
     'tech.cleaner5Desc': 'Ihr Zeitplan synchronisiert sich mit Ihrem Handy-Kalender',
+
+    'empty.title': 'Wir erweitern unser Netzwerk',
+    'empty.subtitle': 'Wir nehmen derzeit vertrauenswürdige Reiniger in Alicante auf. Kennen Sie einen großartigen Reiniger? Laden Sie ihn ein.',
+    'empty.cta': 'Reiniger empfehlen',
+
+    'testimonials.title': 'Was Villenbesitzer sagen',
+    'testimonial1.text': 'Endlich jemand Zuverlässiges gefunden. Der Fotonachweis gibt mir Sicherheit, wenn ich in UK bin.',
+    'testimonial1.author': 'James, Jávea',
+    'testimonial2.text': 'Die Übersetzungsfunktion ist brillant. Ich schreibe auf Englisch, Clara liest auf Spanisch. Keine Verwirrung mehr.',
+    'testimonial2.author': 'Sarah, Moraira',
+    'testimonial3.text': 'Früher machte ich mir Sorgen um die leere Villa. Jetzt bekomme ich nach jeder Reinigung Fotos. Ein Gamechanger.',
+    'testimonial3.author': 'Mark, Altea',
 
     'villa.title': 'Nicht irgendein Haus. Villen.',
     'villa.p1': 'Costa Blanca Villen sind nicht wie Stadtwohnungen. Große Terrassen, die Staub sammeln. Pools, die Aufmerksamkeit brauchen. Gärten mit Laub. Außenbereiche, die genauso viel Arbeit erfordern wie innen.',
@@ -415,6 +453,18 @@ export const translations: Record<Language, Record<string, string>> = {
     'tech.cleaner5Title': 'Restez organisé',
     'tech.cleaner5Desc': 'Votre emploi du temps se synchronise avec votre calendrier',
 
+    'empty.title': 'Nous développons notre réseau',
+    'empty.subtitle': 'Nous intégrons actuellement des nettoyeurs de confiance à Alicante. Vous connaissez un excellent nettoyeur ? Invitez-le à nous rejoindre.',
+    'empty.cta': 'Recommander un nettoyeur',
+
+    'testimonials.title': 'Ce que disent les propriétaires',
+    'testimonial1.text': 'Enfin trouvé quelqu\'un de fiable. Les preuves photo me rassurent quand je suis au Royaume-Uni.',
+    'testimonial1.author': 'James, Jávea',
+    'testimonial2.text': 'La fonction de traduction est brillante. J\'écris en anglais, Clara lit en espagnol. Plus de confusion.',
+    'testimonial2.author': 'Sarah, Moraira',
+    'testimonial3.text': 'Je m\'inquiétais de la villa vide. Maintenant je reçois des photos après chaque nettoyage. Un vrai plus.',
+    'testimonial3.author': 'Mark, Altea',
+
     'villa.title': 'Pas n\'importe quelle maison. Des villas.',
     'villa.p1': 'Les villas de la Costa Blanca ne sont pas comme les appartements en ville. De grandes terrasses qui accumulent la poussière. Des piscines qui nécessitent attention. Des jardins qui perdent leurs feuilles. Des espaces extérieurs qui demandent autant de travail que l\'intérieur.',
     'villa.p2': 'Nous comprenons car nous le vivons. Les nettoyeurs VillaCare sont spécialisés dans l\'entretien de villas - l\'entretien régulier qui garde une propriété impeccable, pas seulement le grand nettoyage occasionnel.',
@@ -513,6 +563,18 @@ export const translations: Record<Language, Record<string, string>> = {
     'tech.cleaner4Desc': 'Beoordelingen die uw carrière volgen',
     'tech.cleaner5Title': 'Blijf georganiseerd',
     'tech.cleaner5Desc': 'Uw planning synchroniseert met uw telefoonagenda',
+
+    'empty.title': 'We breiden ons netwerk uit',
+    'empty.subtitle': 'We nemen momenteel betrouwbare schoonmakers in Alicante aan. Kent u een geweldige schoonmaker? Nodig hem uit.',
+    'empty.cta': 'Schoonmaker aanbevelen',
+
+    'testimonials.title': 'Wat villa-eigenaren zeggen',
+    'testimonial1.text': 'Eindelijk iemand betrouwbaar gevonden. Het fotobewijs geeft me rust als ik in het VK ben.',
+    'testimonial1.author': 'James, Jávea',
+    'testimonial2.text': 'De vertaalfunctie is briljant. Ik schrijf in het Engels, Clara leest in het Spaans. Geen verwarring meer.',
+    'testimonial2.author': 'Sarah, Moraira',
+    'testimonial3.text': 'Ik maakte me zorgen over de lege villa. Nu krijg ik foto\'s na elke schoonmaak. Een gamechanger.',
+    'testimonial3.author': 'Mark, Altea',
 
     'villa.title': 'Niet zomaar een huis. Villa\'s.',
     'villa.p1': 'Costa Blanca villa\'s zijn niet zoals stadsappartementen. Grote terrassen die stof verzamelen. Zwembaden die aandacht nodig hebben. Tuinen met vallende bladeren. Buitenruimtes die net zoveel werk vragen als binnen.',
@@ -613,6 +675,18 @@ export const translations: Record<Language, Record<string, string>> = {
     'tech.cleaner5Title': 'Resta organizzato',
     'tech.cleaner5Desc': 'Il tuo programma si sincronizza con il calendario del telefono',
 
+    'empty.title': 'Stiamo ampliando la nostra rete',
+    'empty.subtitle': 'Stiamo attualmente inserendo addetti di fiducia ad Alicante. Conosci un ottimo addetto? Invitalo a unirsi.',
+    'empty.cta': 'Raccomanda un addetto',
+
+    'testimonials.title': 'Cosa dicono i proprietari',
+    'testimonial1.text': 'Finalmente trovato qualcuno di affidabile. Le prove fotografiche mi danno tranquillità quando sono nel Regno Unito.',
+    'testimonial1.author': 'James, Jávea',
+    'testimonial2.text': 'La funzione di traduzione è brillante. Scrivo in inglese, Clara legge in spagnolo. Niente più confusione.',
+    'testimonial2.author': 'Sarah, Moraira',
+    'testimonial3.text': 'Mi preoccupavo per la villa vuota. Ora ricevo foto dopo ogni pulizia. Un vero cambiamento.',
+    'testimonial3.author': 'Mark, Altea',
+
     'villa.title': 'Non una casa qualsiasi. Ville.',
     'villa.p1': 'Le ville della Costa Blanca non sono come gli appartamenti in città. Grandi terrazze che accumulano polvere. Piscine che richiedono attenzione. Giardini che perdono foglie. Spazi esterni che richiedono tanto lavoro quanto l\'interno.',
     'villa.p2': 'Capiamo perché lo viviamo. Gli addetti VillaCare sono specializzati nella manutenzione delle ville - la cura regolare che mantiene una proprietà impeccabile, non solo la pulizia profonda occasionale.',
@@ -711,6 +785,18 @@ export const translations: Record<Language, Record<string, string>> = {
     'tech.cleaner4Desc': 'Avaliações que acompanham sua carreira',
     'tech.cleaner5Title': 'Mantenha-se organizado',
     'tech.cleaner5Desc': 'Sua agenda sincroniza com o calendário do celular',
+
+    'empty.title': 'Estamos expandindo nossa rede',
+    'empty.subtitle': 'Estamos atualmente integrando profissionais de confiança em Alicante. Conhece um ótimo profissional? Convide-o a se juntar.',
+    'empty.cta': 'Indicar um profissional',
+
+    'testimonials.title': 'O que dizem os proprietários',
+    'testimonial1.text': 'Finalmente encontrei alguém confiável. A prova fotográfica me dá paz quando estou no Reino Unido.',
+    'testimonial1.author': 'James, Jávea',
+    'testimonial2.text': 'A função de tradução é brilhante. Escrevo em inglês, Clara lê em espanhol. Sem mais confusão.',
+    'testimonial2.author': 'Sarah, Moraira',
+    'testimonial3.text': 'Costumava me preocupar com a vila vazia. Agora recebo fotos após cada limpeza. Uma mudança total.',
+    'testimonial3.author': 'Mark, Altea',
 
     'villa.title': 'Não é qualquer casa. Vilas.',
     'villa.p1': 'Vilas da Costa Blanca não são como apartamentos na cidade. Grandes terraços que acumulam poeira. Piscinas que precisam de atenção. Jardins que perdem folhas. Áreas externas que exigem tanto trabalho quanto o interior.',

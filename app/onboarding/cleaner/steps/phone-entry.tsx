@@ -111,10 +111,6 @@ export default function PhoneEntry({ phone, onUpdate, onNext }: Props) {
       <p className="text-center text-[#9B9B9B] text-xs mt-6">
         By continuing, you agree to our Terms of Service and Privacy Policy
       </p>
-
-      <p className="text-center text-[#9B9B9B] text-xs mt-2">
-        For testing, use code: 1234
-      </p>
     </div>
   )
 }

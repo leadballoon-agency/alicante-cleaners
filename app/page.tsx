@@ -281,27 +281,41 @@ export default function HomePage() {
       {/* Cleaners Grid */}
       <main className="px-6 py-8 max-w-5xl mx-auto">
         {loading ? (
-          <div className="text-center py-12">
-            <span className="w-8 h-8 border-2 border-[#1A1A1A]/20 border-t-[#1A1A1A] rounded-full animate-spin inline-block" />
-            <p className="text-[#6B6B6B] mt-3">Loading cleaners...</p>
+          <div>
+            <div className="h-5 w-32 bg-[#EBEBEB] rounded mb-4 animate-pulse" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-16 rounded-full bg-[#EBEBEB] animate-pulse flex-shrink-0" />
+                    <div className="flex-1">
+                      <div className="h-5 w-24 bg-[#EBEBEB] rounded animate-pulse mb-2" />
+                      <div className="h-4 w-32 bg-[#EBEBEB] rounded animate-pulse mb-2" />
+                      <div className="h-4 w-20 bg-[#EBEBEB] rounded animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="h-10 bg-[#EBEBEB] rounded animate-pulse mt-4" />
+                  <div className="flex gap-1.5 mt-3">
+                    <div className="h-5 w-16 bg-[#EBEBEB] rounded-full animate-pulse" />
+                    <div className="h-5 w-20 bg-[#EBEBEB] rounded-full animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : cleaners.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl border border-[#EBEBEB]">
-            <p className="text-4xl mb-4">🔍</p>
-            <h2 className="text-xl font-semibold text-[#1A1A1A] mb-2">No cleaners found</h2>
-            <p className="text-[#6B6B6B] mb-4">
-              {selectedArea !== 'all'
-                ? `No cleaners available in ${selectedArea} yet.`
-                : 'No cleaners available yet.'}
+            <p className="text-4xl mb-4">🏠</p>
+            <h2 className="text-xl font-semibold text-[#1A1A1A] mb-2">{t('empty.title')}</h2>
+            <p className="text-[#6B6B6B] mb-6 max-w-md mx-auto">
+              {t('empty.subtitle')}
             </p>
-            {selectedArea !== 'all' && (
-              <button
-                onClick={() => setSelectedArea('all')}
-                className="text-[#C4785A] font-medium hover:underline"
-              >
-                View all areas
-              </button>
-            )}
+            <Link
+              href="/onboarding/cleaner"
+              className="inline-block bg-[#C4785A] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#B56A4F] transition-colors"
+            >
+              {t('empty.cta')}
+            </Link>
           </div>
         ) : (
           <>
@@ -395,6 +409,41 @@ export default function HomePage() {
           </>
         )}
       </main>
+
+      {/* Testimonials */}
+      <section className="px-6 py-12 bg-white border-t border-[#EBEBEB]">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl font-semibold text-[#1A1A1A] text-center mb-8">
+            {t('testimonials.title')}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-[#FAFAF8] rounded-xl p-5">
+              <p className="text-[#6B6B6B] text-sm mb-4 italic">
+                &ldquo;{t('testimonial1.text')}&rdquo;
+              </p>
+              <p className="text-sm font-medium text-[#1A1A1A]">
+                {t('testimonial1.author')}
+              </p>
+            </div>
+            <div className="bg-[#FAFAF8] rounded-xl p-5">
+              <p className="text-[#6B6B6B] text-sm mb-4 italic">
+                &ldquo;{t('testimonial2.text')}&rdquo;
+              </p>
+              <p className="text-sm font-medium text-[#1A1A1A]">
+                {t('testimonial2.author')}
+              </p>
+            </div>
+            <div className="bg-[#FAFAF8] rounded-xl p-5">
+              <p className="text-[#6B6B6B] text-sm mb-4 italic">
+                &ldquo;{t('testimonial3.text')}&rdquo;
+              </p>
+              <p className="text-sm font-medium text-[#1A1A1A]">
+                {t('testimonial3.author')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Built for Villa Life */}
       <section className="px-6 py-12 bg-[#FFF8F5]">

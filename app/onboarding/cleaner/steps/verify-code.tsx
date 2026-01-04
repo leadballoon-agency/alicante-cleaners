@@ -158,10 +158,6 @@ export default function VerifyCode({ phone, onBack, onNext }: Props) {
           Resend
         </button>
       </p>
-
-      <p className="text-center text-[#9B9B9B] text-xs mt-2">
-        For testing, use code: 1234
-      </p>
     </div>
   )
 }

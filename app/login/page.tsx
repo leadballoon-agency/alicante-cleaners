@@ -419,9 +419,6 @@ function LoginContent() {
                     Resend
                   </button>
                 </p>
-                <p className="text-xs text-[#9B9B9B] mt-2">
-                  For testing, use code: 123456
-                </p>
               </div>
             </div>
           )}
