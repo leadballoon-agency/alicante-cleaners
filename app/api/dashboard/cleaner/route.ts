@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { randomBytes } from 'crypto'
 
 // GET /api/dashboard/cleaner - Get cleaner profile + stats
 export async function GET() {
@@ -81,6 +82,7 @@ export async function GET() {
         name: cleaner.user.name,
         photo: cleaner.user.image,
         phone: cleaner.user.phone,
+        calendarToken: cleaner.calendarToken,
       },
       stats: {
         thisWeekEarnings,
@@ -92,6 +94,47 @@ export async function GET() {
     console.error('Error fetching cleaner dashboard:', error)
     return NextResponse.json(
       { error: 'Failed to fetch dashboard data' },
+      { status: 500 }
+    )
+  }
+}
+
+// POST /api/dashboard/cleaner - Generate calendar token
+export async function POST() {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const cleaner = await db.cleaner.findUnique({
+      where: { userId: session.user.id },
+    })
+
+    if (!cleaner) {
+      return NextResponse.json(
+        { error: 'Cleaner profile not found' },
+        { status: 404 }
+      )
+    }
+
+    // Generate new token
+    const calendarToken = randomBytes(32).toString('hex')
+
+    await db.cleaner.update({
+      where: { id: cleaner.id },
+      data: { calendarToken },
+    })
+
+    return NextResponse.json({ calendarToken })
+  } catch (error) {
+    console.error('Error generating calendar token:', error)
+    return NextResponse.json(
+      { error: 'Failed to generate calendar token' },
       { status: 500 }
     )
   }

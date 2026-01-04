@@ -1,14 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { Booking } from '../page'
+import { Booking, Cleaner } from '../page'
 
 type Props = {
   bookings: Booking[]
+  cleaner: Cleaner
+  onCalendarTokenUpdate: (token: string) => void
 }
 
-export default function ScheduleTab({ bookings }: Props) {
+export default function ScheduleTab({ bookings, cleaner, onCalendarTokenUpdate }: Props) {
   const [selectedDate, setSelectedDate] = useState(new Date())
+  const [generatingToken, setGeneratingToken] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   // Generate dates for current week view (7 days starting from today)
   const today = new Date()
@@ -173,6 +177,96 @@ export default function ScheduleTab({ bookings }: Props) {
           <div className="w-3 h-3 rounded-full bg-[#2E7D32]" />
           <span>Confirmed</span>
         </div>
+      </div>
+
+      {/* Calendar Sync Section */}
+      <div className="mt-8 bg-white rounded-2xl p-4 border border-[#EBEBEB]">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="text-2xl">📅</span>
+          <div>
+            <h3 className="font-semibold text-[#1A1A1A]">Sync to your calendar</h3>
+            <p className="text-sm text-[#6B6B6B]">
+              Add bookings to Google, Apple, or Outlook
+            </p>
+          </div>
+        </div>
+
+        {cleaner.calendarToken ? (
+          <div className="space-y-3">
+            <div className="bg-[#F5F5F3] rounded-xl p-3">
+              <p className="text-xs text-[#6B6B6B] mb-1">Subscribe URL</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-xs text-[#1A1A1A] break-all">
+                  {typeof window !== 'undefined'
+                    ? `${window.location.origin}/api/calendar/${cleaner.calendarToken}`
+                    : `/api/calendar/${cleaner.calendarToken}`}
+                </code>
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/api/calendar/${cleaner.calendarToken}`
+                    navigator.clipboard.writeText(url)
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 2000)
+                  }}
+                  className="px-3 py-1.5 bg-white border border-[#DEDEDE] rounded-lg text-xs font-medium text-[#1A1A1A] hover:bg-[#F5F5F3] transition-colors"
+                >
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <a
+                href={`https://calendar.google.com/calendar/r?cid=webcal://${typeof window !== 'undefined' ? window.location.host : ''}/api/calendar/${cleaner.calendarToken}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-1 p-3 bg-[#F5F5F3] rounded-xl text-center hover:bg-[#EBEBEB] transition-colors"
+              >
+                <span className="text-xl">📧</span>
+                <span className="text-xs font-medium text-[#1A1A1A]">Google</span>
+              </a>
+              <a
+                href={`webcal://${typeof window !== 'undefined' ? window.location.host : ''}/api/calendar/${cleaner.calendarToken}`}
+                className="flex flex-col items-center gap-1 p-3 bg-[#F5F5F3] rounded-xl text-center hover:bg-[#EBEBEB] transition-colors"
+              >
+                <span className="text-xl">🍎</span>
+                <span className="text-xs font-medium text-[#1A1A1A]">Apple</span>
+              </a>
+              <a
+                href={`webcal://${typeof window !== 'undefined' ? window.location.host : ''}/api/calendar/${cleaner.calendarToken}`}
+                className="flex flex-col items-center gap-1 p-3 bg-[#F5F5F3] rounded-xl text-center hover:bg-[#EBEBEB] transition-colors"
+              >
+                <span className="text-xl">📘</span>
+                <span className="text-xs font-medium text-[#1A1A1A]">Outlook</span>
+              </a>
+            </div>
+
+            <p className="text-xs text-[#9B9B9B] text-center">
+              Your calendar will auto-update when bookings change
+            </p>
+          </div>
+        ) : (
+          <button
+            onClick={async () => {
+              setGeneratingToken(true)
+              try {
+                const res = await fetch('/api/dashboard/cleaner', { method: 'POST' })
+                if (res.ok) {
+                  const data = await res.json()
+                  onCalendarTokenUpdate(data.calendarToken)
+                }
+              } catch (error) {
+                console.error('Failed to generate calendar token:', error)
+              } finally {
+                setGeneratingToken(false)
+              }
+            }}
+            disabled={generatingToken}
+            className="w-full bg-[#1A1A1A] text-white py-3 rounded-xl font-medium hover:bg-[#333] transition-colors disabled:opacity-50"
+          >
+            {generatingToken ? 'Setting up...' : 'Enable calendar sync'}
+          </button>
+        )}
       </div>
     </div>
   )

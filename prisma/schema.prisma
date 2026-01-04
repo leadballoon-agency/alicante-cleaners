@@ -148,6 +148,7 @@ model Cleaner {
   rating        Decimal?      @db.Decimal(3, 2)
   reviewCount   Int           @default(0)
   featured      Boolean       @default(false)
+  calendarToken String?       @unique // For ICS feed URL
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 

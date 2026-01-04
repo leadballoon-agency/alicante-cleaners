@@ -49,6 +49,7 @@ export type Cleaner = {
   serviceAreas: string[]
   rating?: number | null
   reviewCount?: number
+  calendarToken?: string | null
 }
 
 export type InternalComment = {
@@ -265,7 +266,11 @@ export default function Dashboard() {
           />
         )}
         {activeTab === 'schedule' && (
-          <ScheduleTab bookings={bookings} />
+          <ScheduleTab
+            bookings={bookings}
+            cleaner={cleaner}
+            onCalendarTokenUpdate={(token) => setCleaner(prev => prev ? { ...prev, calendarToken: token } : prev)}
+          />
         )}
         {activeTab === 'profile' && (
           <ProfileTab cleaner={cleaner} />
