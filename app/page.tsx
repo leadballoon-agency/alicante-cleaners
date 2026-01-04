@@ -333,6 +333,12 @@ export default function HomePage() {
             <Link href="/about" className="hover:text-[#1A1A1A]">
               {t('nav.ourStory')}
             </Link>
+            <Link href="/privacy" className="hover:text-[#1A1A1A]">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-[#1A1A1A]">
+              Terms
+            </Link>
             <a href="mailto:hello@alicantecleaners.com" className="hover:text-[#1A1A1A]">
               hello@alicantecleaners.com
             </a>
