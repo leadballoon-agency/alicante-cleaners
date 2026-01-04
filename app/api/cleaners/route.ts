@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       where: { status: 'ACTIVE' },
       select: { serviceAreas: true },
     })
-    const areas = [...new Set(allCleaners.flatMap(c => c.serviceAreas))].sort()
+    const areas = Array.from(new Set(allCleaners.flatMap(c => c.serviceAreas))).sort()
 
     return NextResponse.json({
       cleaners: formattedCleaners,
