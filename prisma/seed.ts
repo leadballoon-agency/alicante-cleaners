@@ -68,6 +68,7 @@ async function main() {
       rating: 5.0,
       reviewCount: 25,
       totalBookings: 45,
+      featured: true,
     },
   })
   console.log('Created cleaner:', cleanerUser.phone)
@@ -100,6 +101,94 @@ async function main() {
     },
   })
   console.log('Created cleaner:', cleaner2User.phone)
+
+  // Create third test Cleaner
+  const cleaner3User = await prisma.user.upsert({
+    where: { phone: '+34634567890' },
+    update: {},
+    create: {
+      phone: '+34634567890',
+      name: 'Ana Martinez',
+      role: 'CLEANER',
+      phoneVerified: new Date(),
+    },
+  })
+
+  await prisma.cleaner.upsert({
+    where: { userId: cleaner3User.id },
+    update: {},
+    create: {
+      userId: cleaner3User.id,
+      slug: 'ana',
+      bio: 'Flexible scheduling and always reliable. I specialize in turnover cleans for vacation rentals.',
+      serviceAreas: ['San Juan', 'El Campello', 'Alicante City'],
+      hourlyRate: 17,
+      status: 'ACTIVE',
+      rating: 4.8,
+      reviewCount: 12,
+      totalBookings: 28,
+    },
+  })
+  console.log('Created cleaner:', cleaner3User.phone)
+
+  // Create fourth test Cleaner
+  const cleaner4User = await prisma.user.upsert({
+    where: { phone: '+34645678901' },
+    update: {},
+    create: {
+      phone: '+34645678901',
+      name: 'Sofia Ruiz',
+      role: 'CLEANER',
+      phoneVerified: new Date(),
+    },
+  })
+
+  await prisma.cleaner.upsert({
+    where: { userId: cleaner4User.id },
+    update: {},
+    create: {
+      userId: cleaner4User.id,
+      slug: 'sofia',
+      bio: 'Eco-friendly cleaning products and meticulous attention to detail. Your villa will shine!',
+      serviceAreas: ['Mutxamel', 'San Vicente', 'Jijona'],
+      hourlyRate: 15,
+      status: 'ACTIVE',
+      rating: 4.7,
+      reviewCount: 8,
+      totalBookings: 15,
+    },
+  })
+  console.log('Created cleaner:', cleaner4User.phone)
+
+  // Create fifth test Cleaner
+  const cleaner5User = await prisma.user.upsert({
+    where: { phone: '+34656789012' },
+    update: {},
+    create: {
+      phone: '+34656789012',
+      name: 'Carmen Fernandez',
+      role: 'CLEANER',
+      phoneVerified: new Date(),
+    },
+  })
+
+  await prisma.cleaner.upsert({
+    where: { userId: cleaner5User.id },
+    update: {},
+    create: {
+      userId: cleaner5User.id,
+      slug: 'carmen',
+      bio: '10+ years experience. I treat every villa like my own home. References available.',
+      serviceAreas: ['Alicante City', 'Playa de San Juan', 'San Juan', 'El Campello'],
+      hourlyRate: 20,
+      status: 'ACTIVE',
+      rating: 4.9,
+      reviewCount: 42,
+      totalBookings: 78,
+      featured: true,
+    },
+  })
+  console.log('Created cleaner:', cleaner5User.phone)
 
   // Create a Property for the owner
   const owner = await prisma.owner.findUnique({

@@ -1,402 +1,285 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
 
-export default function LandingPage() {
-  const [ownerEmail, setOwnerEmail] = useState('')
-  const [ownerTown, setOwnerTown] = useState('')
-  const [ownerSubmitted, setOwnerSubmitted] = useState(false)
-  const [ownerLoading, setOwnerLoading] = useState(false)
-  const [ownerError, setOwnerError] = useState('')
+type Cleaner = {
+  id: string
+  slug: string
+  name: string
+  photo: string | null
+  bio: string | null
+  serviceAreas: string[]
+  hourlyRate: number
+  rating: number
+  reviewCount: number
+  featured: boolean
+}
 
-  const [cleanerName, setCleanerName] = useState('')
-  const [cleanerPhone, setCleanerPhone] = useState('')
-  const [cleanerReferrer, setCleanerReferrer] = useState('')
-  const [cleanerSubmitted, setCleanerSubmitted] = useState(false)
-  const [cleanerLoading, setCleanerLoading] = useState(false)
-  const [cleanerError, setCleanerError] = useState('')
+export default function HomePage() {
+  const [cleaners, setCleaners] = useState<Cleaner[]>([])
+  const [areas, setAreas] = useState<string[]>([])
+  const [selectedArea, setSelectedArea] = useState('all')
+  const [loading, setLoading] = useState(true)
 
-  const [activeTab, setActiveTab] = useState<'owner' | 'cleaner'>('owner')
+  useEffect(() => {
+    fetchCleaners()
+  }, [selectedArea])
 
-  const towns = [
-    'Alicante City',
-    'San Juan',
-    'El Campello',
-    'Mutxamel',
-    'San Vicente',
-    'Jijona',
-    'Playa de San Juan',
-    'Other'
-  ]
-
-  const handleOwnerSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setOwnerError('')
-    setOwnerLoading(true)
-
+  const fetchCleaners = async () => {
     try {
-      const res = await fetch('/api/waitlist/owner', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: ownerEmail, town: ownerTown }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Something went wrong')
-      }
-
-      setOwnerSubmitted(true)
-    } catch (err) {
-      setOwnerError(err instanceof Error ? err.message : 'Something went wrong')
+      const res = await fetch(`/api/cleaners${selectedArea !== 'all' ? `?area=${selectedArea}` : ''}`)
+      const data = await res.json()
+      setCleaners(data.cleaners || [])
+      if (data.areas) setAreas(data.areas)
+    } catch (error) {
+      console.error('Error fetching cleaners:', error)
     } finally {
-      setOwnerLoading(false)
-    }
-  }
-
-  const handleCleanerSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setCleanerError('')
-    setCleanerLoading(true)
-
-    try {
-      const res = await fetch('/api/waitlist/cleaner', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: cleanerName,
-          phone: cleanerPhone,
-          referrer_name: cleanerReferrer
-        }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Something went wrong')
-      }
-
-      setCleanerSubmitted(true)
-    } catch (err) {
-      setCleanerError(err instanceof Error ? err.message : 'Something went wrong')
-    } finally {
-      setCleanerLoading(false)
+      setLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-safe">
       {/* Header */}
-      <header className="px-6 py-5 pt-safe flex items-center justify-between max-w-3xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#C4785A] rounded-lg flex items-center justify-center">
-            <span className="text-white font-semibold text-sm">V</span>
+      <header className="px-6 py-4 bg-white border-b border-[#EBEBEB] sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#C4785A] rounded-lg flex items-center justify-center">
+              <span className="text-white font-semibold text-sm">V</span>
+            </div>
+            <span className="font-semibold text-[#1A1A1A]">VillaCare</span>
           </div>
-          <span className="font-semibold text-[#1A1A1A]">VillaCare</span>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/onboarding/cleaner"
+              className="text-sm bg-[#1A1A1A] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#333] transition-colors"
+            >
+              Join as cleaner
+            </Link>
+          </div>
         </div>
-        <div className="text-sm text-[#6B6B6B]">Alicante</div>
       </header>
 
       {/* Hero */}
-      <main className="px-6 pt-8 pb-16 max-w-3xl mx-auto">
-        <div className="text-center mb-12">
+      <section className="px-6 py-12 bg-gradient-to-b from-white to-[#FAFAF8]">
+        <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1A1A] mb-4 leading-tight">
-            Your villa, ready<br />when you arrive
+            Trusted villa cleaning<br />in Alicante
           </h1>
-          <p className="text-[#6B6B6B] text-lg max-w-md mx-auto">
-            Trusted cleaners for villa owners in Alicante.
-            Coming soon.
+          <p className="text-[#6B6B6B] text-lg max-w-md mx-auto mb-8">
+            Book vetted, reliable cleaners for your holiday home. Photo proof included.
           </p>
-        </div>
 
-        {/* Tab Switcher */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-[#F5F5F3] p-1 rounded-xl inline-flex">
+          {/* Area Filter */}
+          <div className="flex flex-wrap justify-center gap-2">
             <button
-              onClick={() => setActiveTab('owner')}
-              className={`px-5 py-3 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'owner'
-                  ? 'bg-white text-[#1A1A1A] shadow-sm'
-                  : 'text-[#6B6B6B] active:bg-white/50'
+              onClick={() => setSelectedArea('all')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                selectedArea === 'all'
+                  ? 'bg-[#1A1A1A] text-white'
+                  : 'bg-white border border-[#DEDEDE] text-[#6B6B6B] hover:border-[#1A1A1A]'
               }`}
             >
-              I own a villa
+              All areas
             </button>
-            <button
-              onClick={() => setActiveTab('cleaner')}
-              className={`px-5 py-3 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'cleaner'
-                  ? 'bg-white text-[#1A1A1A] shadow-sm'
-                  : 'text-[#6B6B6B] active:bg-white/50'
-              }`}
-            >
-              I&apos;m a cleaner
-            </button>
+            {areas.map(area => (
+              <button
+                key={area}
+                onClick={() => setSelectedArea(area)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  selectedArea === area
+                    ? 'bg-[#1A1A1A] text-white'
+                    : 'bg-white border border-[#DEDEDE] text-[#6B6B6B] hover:border-[#1A1A1A]'
+                }`}
+              >
+                {area}
+              </button>
+            ))}
           </div>
         </div>
+      </section>
 
-        {/* Owner Form */}
-        {activeTab === 'owner' && (
-          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-[#EBEBEB] max-w-md mx-auto">
-            {!ownerSubmitted ? (
-              <form onSubmit={handleOwnerSubmit}>
-                <div className="text-center mb-6">
-                  <div className="text-4xl mb-3">🏠</div>
-                  <h2 className="text-xl font-semibold text-[#1A1A1A] mb-2">
-                    Join the waitlist
-                  </h2>
-                  <p className="text-[#6B6B6B] text-sm">
-                    Be first to access trusted cleaners when we launch
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={ownerEmail}
-                      onChange={(e) => setOwnerEmail(e.target.value)}
-                      placeholder="sandra@email.com"
-                      required
-                      className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                      Where&apos;s your property?
-                    </label>
-                    <select
-                      value={ownerTown}
-                      onChange={(e) => setOwnerTown(e.target.value)}
-                      required
-                      className="w-full px-4 py-3 pr-10 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors bg-white appearance-none"
-                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B6B6B' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-                    >
-                      <option value="">Select area</option>
-                      {towns.map(town => (
-                        <option key={town} value={town}>{town}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {ownerError && (
-                    <p className="text-[#C75050] text-sm text-center">{ownerError}</p>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={ownerLoading}
-                    className="w-full bg-[#1A1A1A] text-white py-3.5 rounded-xl font-medium text-base active:scale-[0.98] transition-all mt-2 disabled:opacity-50 disabled:pointer-events-none"
-                  >
-                    {ownerLoading ? 'Joining...' : 'Join waitlist'}
-                  </button>
-                </div>
-
-                <p className="text-center text-[#9B9B9B] text-xs mt-4">
-                  No spam. Just a note when we&apos;re ready for you.
-                </p>
-              </form>
-            ) : (
-              <div className="text-center py-8">
-                <div className="text-4xl mb-4">✓</div>
-                <h2 className="text-xl font-semibold text-[#1A1A1A] mb-2">
-                  You&apos;re on the list
-                </h2>
-                <p className="text-[#6B6B6B]">
-                  We&apos;ll be in touch soon.
-                </p>
-              </div>
+      {/* Cleaners Grid */}
+      <main className="px-6 py-8 max-w-5xl mx-auto">
+        {loading ? (
+          <div className="text-center py-12">
+            <span className="w-8 h-8 border-2 border-[#1A1A1A]/20 border-t-[#1A1A1A] rounded-full animate-spin inline-block" />
+            <p className="text-[#6B6B6B] mt-3">Loading cleaners...</p>
+          </div>
+        ) : cleaners.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-2xl border border-[#EBEBEB]">
+            <p className="text-4xl mb-4">🔍</p>
+            <h2 className="text-xl font-semibold text-[#1A1A1A] mb-2">No cleaners found</h2>
+            <p className="text-[#6B6B6B] mb-4">
+              {selectedArea !== 'all'
+                ? `No cleaners available in ${selectedArea} yet.`
+                : 'No cleaners available yet.'}
+            </p>
+            {selectedArea !== 'all' && (
+              <button
+                onClick={() => setSelectedArea('all')}
+                className="text-[#C4785A] font-medium hover:underline"
+              >
+                View all areas
+              </button>
             )}
           </div>
-        )}
-
-        {/* Cleaner Form */}
-        {activeTab === 'cleaner' && (
-          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-[#EBEBEB] max-w-md mx-auto">
-            {!cleanerSubmitted ? (
-              <form onSubmit={handleCleanerSubmit}>
-                <div className="text-center mb-6">
-                  <div className="text-4xl mb-3">✨</div>
-                  <h2 className="text-xl font-semibold text-[#1A1A1A] mb-2">
-                    By invitation only
-                  </h2>
-                  <p className="text-[#6B6B6B] text-sm">
-                    VillaCare cleaners are referred by existing members.
-                    Know someone on the inside?
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                      Your name
-                    </label>
-                    <input
-                      type="text"
-                      value={cleanerName}
-                      onChange={(e) => setCleanerName(e.target.value)}
-                      placeholder="Maria Garcia"
-                      required
-                      className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                      WhatsApp number
-                    </label>
-                    <input
-                      type="tel"
-                      value={cleanerPhone}
-                      onChange={(e) => setCleanerPhone(e.target.value)}
-                      placeholder="+34 612 345 678"
-                      required
-                      className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                      Who referred you?
-                    </label>
-                    <input
-                      type="text"
-                      value={cleanerReferrer}
-                      onChange={(e) => setCleanerReferrer(e.target.value)}
-                      placeholder="Their name"
-                      required
-                      className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
-                    />
-                  </div>
-
-                  {cleanerError && (
-                    <p className="text-[#C75050] text-sm text-center">{cleanerError}</p>
+        ) : (
+          <>
+            <p className="text-sm text-[#6B6B6B] mb-4">
+              {cleaners.length} cleaner{cleaners.length !== 1 ? 's' : ''} available
+              {selectedArea !== 'all' ? ` in ${selectedArea}` : ''}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {cleaners.map(cleaner => (
+                <Link
+                  key={cleaner.id}
+                  href={`/${cleaner.slug}`}
+                  className="bg-white rounded-2xl p-5 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-md transition-all group"
+                >
+                  {/* Featured badge */}
+                  {cleaner.featured && (
+                    <div className="mb-3">
+                      <span className="px-2 py-1 bg-[#FFF8F5] text-[#C4785A] text-xs font-medium rounded-full">
+                        Featured
+                      </span>
+                    </div>
                   )}
 
-                  <button
-                    type="submit"
-                    disabled={cleanerLoading}
-                    className="w-full bg-[#1A1A1A] text-white py-3.5 rounded-xl font-medium text-base active:scale-[0.98] transition-all mt-2 disabled:opacity-50 disabled:pointer-events-none"
-                  >
-                    {cleanerLoading ? 'Submitting...' : 'Request to join'}
-                  </button>
-                </div>
+                  {/* Cleaner info */}
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-16 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden relative flex-shrink-0">
+                      {cleaner.photo ? (
+                        <Image
+                          src={cleaner.photo}
+                          alt={cleaner.name}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <span className="text-2xl">👤</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-[#1A1A1A] group-hover:text-[#C4785A] transition-colors">
+                        {cleaner.name}
+                      </h3>
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-[#C4785A]">★</span>
+                        <span className="text-sm font-medium text-[#1A1A1A]">
+                          {cleaner.rating.toFixed(1)}
+                        </span>
+                        <span className="text-sm text-[#6B6B6B]">
+                          ({cleaner.reviewCount} review{cleaner.reviewCount !== 1 ? 's' : ''})
+                        </span>
+                      </div>
+                      <p className="text-sm text-[#6B6B6B] mt-1">
+                        From €{cleaner.hourlyRate * 3}/clean
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="mt-6 pt-6 border-t border-[#EBEBEB]">
-                  <p className="text-center text-[#6B6B6B] text-sm">
-                    Don&apos;t know anyone yet?
-                  </p>
-                  <p className="text-center text-[#9B9B9B] text-xs mt-1">
-                    We&apos;re starting with a small network of trusted cleaners.
-                    Check back soon — or ask around.
-                  </p>
-                </div>
-              </form>
-            ) : (
-              <div className="text-center py-8">
-                <div className="text-4xl mb-4">✓</div>
-                <h2 className="text-xl font-semibold text-[#1A1A1A] mb-2">
-                  Request received
-                </h2>
-                <p className="text-[#6B6B6B]">
-                  We&apos;ll verify your referral and be in touch within 48 hours.
-                </p>
-              </div>
-            )}
-          </div>
+                  {/* Bio */}
+                  {cleaner.bio && (
+                    <p className="text-sm text-[#6B6B6B] mt-3 line-clamp-2">
+                      {cleaner.bio}
+                    </p>
+                  )}
+
+                  {/* Areas */}
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {cleaner.serviceAreas.slice(0, 3).map(area => (
+                      <span
+                        key={area}
+                        className="px-2 py-0.5 bg-[#F5F5F3] text-[#6B6B6B] text-xs rounded-full"
+                      >
+                        {area}
+                      </span>
+                    ))}
+                    {cleaner.serviceAreas.length > 3 && (
+                      <span className="text-xs text-[#6B6B6B]">
+                        +{cleaner.serviceAreas.length - 3} more
+                      </span>
+                    )}
+                  </div>
+
+                  {/* CTA */}
+                  <div className="mt-4 pt-4 border-t border-[#EBEBEB]">
+                    <span className="text-sm font-medium text-[#C4785A] group-hover:underline">
+                      View profile & book →
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
-
-        {/* Value Props */}
-        <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-4 text-center">
-          <div className="flex sm:block items-center sm:items-start gap-4 sm:gap-0 text-left sm:text-center">
-            <div className="text-2xl sm:mb-2">🔒</div>
-            <div>
-              <h3 className="font-medium text-[#1A1A1A] text-base sm:text-sm mb-0.5 sm:mb-1">Trusted network</h3>
-              <p className="text-sm sm:text-xs text-[#6B6B6B]">Every cleaner is referred by someone we trust</p>
-            </div>
-          </div>
-          <div className="flex sm:block items-center sm:items-start gap-4 sm:gap-0 text-left sm:text-center">
-            <div className="text-2xl sm:mb-2">📸</div>
-            <div>
-              <h3 className="font-medium text-[#1A1A1A] text-base sm:text-sm mb-0.5 sm:mb-1">Photo proof</h3>
-              <p className="text-sm sm:text-xs text-[#6B6B6B]">See your villa is ready before you arrive</p>
-            </div>
-          </div>
-          <div className="flex sm:block items-center sm:items-start gap-4 sm:gap-0 text-left sm:text-center">
-            <div className="text-2xl sm:mb-2">💬</div>
-            <div>
-              <h3 className="font-medium text-[#1A1A1A] text-base sm:text-sm mb-0.5 sm:mb-1">WhatsApp updates</h3>
-              <p className="text-sm sm:text-xs text-[#6B6B6B]">Real-time notifications, no app to download</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Featured Reviews */}
-        <div className="mt-16">
-          <h2 className="text-xl font-semibold text-[#1A1A1A] text-center mb-6">
-            What villa owners say
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-            <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
-              <div className="flex gap-0.5 mb-3">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <span key={i} className="text-[#C4785A] text-sm">★</span>
-                ))}
-              </div>
-              <p className="text-[#1A1A1A] mb-3 text-sm">
-                &ldquo;Clara is amazing! She always leaves our villa spotless and even waters the plants. Highly recommend!&rdquo;
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-sm">
-                  S
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#1A1A1A]">Sandra M.</p>
-                  <p className="text-xs text-[#6B6B6B]">San Juan</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
-              <div className="flex gap-0.5 mb-3">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <span key={i} className="text-[#C4785A] text-sm">★</span>
-                ))}
-              </div>
-              <p className="text-[#1A1A1A] mb-3 text-sm">
-                &ldquo;Maria did a fantastic deep clean before our arrival. The villa was perfect! Will definitely book again.&rdquo;
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-sm">
-                  J
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#1A1A1A]">John D.</p>
-                  <p className="text-xs text-[#6B6B6B]">El Campello</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Social Proof */}
-        <div className="mt-12 text-center">
-          <p className="text-[#6B6B6B] text-sm mb-3">Launching with cleaners trusted by 100+ villas</p>
-          <div className="flex justify-center items-center gap-1">
-            <span className="text-[#C4785A]">★★★★★</span>
-            <span className="text-sm text-[#6B6B6B] ml-1">5.0 average</span>
-          </div>
-        </div>
       </main>
+
+      {/* Value Props */}
+      <section className="px-6 py-12 bg-white border-t border-[#EBEBEB]">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl font-semibold text-[#1A1A1A] text-center mb-8">
+            Why villa owners choose VillaCare
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="text-3xl mb-3">🔒</div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">Vetted cleaners</h3>
+              <p className="text-sm text-[#6B6B6B]">Every cleaner is referred and verified by our team</p>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-3">📸</div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">Photo proof</h3>
+              <p className="text-sm text-[#6B6B6B]">See your villa is ready before you arrive</p>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-3">💬</div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">WhatsApp updates</h3>
+              <p className="text-sm text-[#6B6B6B]">Real-time notifications, no app to download</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA for Cleaners */}
+      <section className="px-6 py-12 bg-[#1A1A1A]">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-xl font-semibold text-white mb-2">
+            Are you a cleaner in Alicante?
+          </h2>
+          <p className="text-white/70 mb-6">
+            Join our network of trusted professionals and grow your business
+          </p>
+          <Link
+            href="/onboarding/cleaner"
+            className="inline-block bg-white text-[#1A1A1A] px-6 py-3 rounded-xl font-medium hover:bg-[#F5F5F3] transition-colors"
+          >
+            Apply to join
+          </Link>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="px-6 py-6 border-t border-[#EBEBEB]">
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-[#9B9B9B]">
-            VillaCare · Alicante, Spain · hello@alicantecleaners.com
+            VillaCare · Alicante, Spain
           </p>
+          <div className="flex items-center gap-4 text-xs text-[#9B9B9B]">
+            <a href="mailto:hello@alicantecleaners.com" className="hover:text-[#1A1A1A]">
+              hello@alicantecleaners.com
+            </a>
+          </div>
         </div>
       </footer>
     </div>

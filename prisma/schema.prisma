@@ -147,6 +147,7 @@ model Cleaner {
   totalBookings Int           @default(0)
   rating        Decimal?      @db.Decimal(3, 2)
   reviewCount   Int           @default(0)
+  featured      Boolean       @default(false)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
