@@ -45,12 +45,15 @@ async function main() {
   // Create test Cleaner
   const cleanerUser = await prisma.user.upsert({
     where: { phone: '+34612345678' },
-    update: {},
+    update: {
+      image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&h=200&fit=crop&crop=face',
+    },
     create: {
       phone: '+34612345678',
       name: 'Clara Garcia',
       role: 'CLEANER',
       phoneVerified: new Date(),
+      image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&h=200&fit=crop&crop=face',
     },
   })
 
@@ -76,12 +79,15 @@ async function main() {
   // Create second test Cleaner
   const cleaner2User = await prisma.user.upsert({
     where: { phone: '+34623456789' },
-    update: {},
+    update: {
+      image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&h=200&fit=crop&crop=face',
+    },
     create: {
       phone: '+34623456789',
       name: 'Maria Lopez',
       role: 'CLEANER',
       phoneVerified: new Date(),
+      image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&h=200&fit=crop&crop=face',
     },
   })
 
@@ -105,12 +111,15 @@ async function main() {
   // Create third test Cleaner
   const cleaner3User = await prisma.user.upsert({
     where: { phone: '+34634567890' },
-    update: {},
+    update: {
+      image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face',
+    },
     create: {
       phone: '+34634567890',
       name: 'Ana Martinez',
       role: 'CLEANER',
       phoneVerified: new Date(),
+      image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face',
     },
   })
 
@@ -134,12 +143,15 @@ async function main() {
   // Create fourth test Cleaner
   const cleaner4User = await prisma.user.upsert({
     where: { phone: '+34645678901' },
-    update: {},
+    update: {
+      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
+    },
     create: {
       phone: '+34645678901',
       name: 'Sofia Ruiz',
       role: 'CLEANER',
       phoneVerified: new Date(),
+      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
     },
   })
 
@@ -163,12 +175,15 @@ async function main() {
   // Create fifth test Cleaner
   const cleaner5User = await prisma.user.upsert({
     where: { phone: '+34656789012' },
-    update: {},
+    update: {
+      image: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=200&h=200&fit=crop&crop=face',
+    },
     create: {
       phone: '+34656789012',
       name: 'Carmen Fernandez',
       role: 'CLEANER',
       phoneVerified: new Date(),
+      image: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=200&h=200&fit=crop&crop=face',
     },
   })
 

@@ -54,16 +54,16 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href="/login"
+              href="/onboarding/cleaner"
               className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
             >
-              Sign in
+              Join as cleaner
             </Link>
             <Link
-              href="/onboarding/cleaner"
-              className="text-sm bg-[#1A1A1A] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#333] transition-colors"
+              href="/login"
+              className="text-sm bg-[#C4785A] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#B56A4F] transition-colors"
             >
-              Join as cleaner
+              Book a clean
             </Link>
           </div>
         </div>
@@ -109,6 +109,44 @@ export default function HomePage() {
                 {area}
               </button>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it Works */}
+      <section className="px-6 py-10 bg-white border-y border-[#EBEBEB]">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl font-semibold text-[#1A1A1A] text-center mb-8">
+            How it works
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-[#C4785A] font-bold text-lg">1</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">Choose your cleaner</h3>
+              <p className="text-sm text-[#6B6B6B]">
+                Browse profiles, read reviews, and pick someone you trust
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-[#C4785A] font-bold text-lg">2</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">Book your clean</h3>
+              <p className="text-sm text-[#6B6B6B]">
+                Select a date and time that works for you. Pay securely online.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-[#C4785A] font-bold text-lg">3</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">Relax with photo proof</h3>
+              <p className="text-sm text-[#6B6B6B]">
+                Get photos via WhatsApp showing your villa is spotless
+              </p>
+            </div>
           </div>
         </div>
       </section>
