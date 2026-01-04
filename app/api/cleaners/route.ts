@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       bio: c.bio,
       serviceAreas: c.serviceAreas,
       hourlyRate: Number(c.hourlyRate),
-      rating: c.rating,
+      rating: Number(c.rating) || 0,
       reviewCount: c.reviewCount,
       featured: c.featured,
     }))
