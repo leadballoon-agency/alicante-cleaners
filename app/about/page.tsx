@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import LanguageSwitcher from '@/components/language-switcher'
 
 export default function AboutPage() {
   return (
@@ -15,75 +16,77 @@ export default function AboutPage() {
             </div>
             <span className="font-semibold text-[#1A1A1A]">VillaCare</span>
           </Link>
-          <Link
-            href="/"
-            className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
-          >
-            Back to home
-          </Link>
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Link
+              href="/"
+              className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
+            >
+              Back to home
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="px-6 py-12 max-w-3xl mx-auto">
         {/* Hero */}
         <div className="text-center mb-12">
+          <div className="inline-block px-3 py-1 bg-[#FFF8F5] text-[#C4785A] text-xs font-medium rounded-full mb-4">
+            Currently in beta
+          </div>
           <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1A1A] mb-4">
             Our Story
           </h1>
           <p className="text-lg text-[#6B6B6B] max-w-xl mx-auto">
-            How a villa owner and a cleaner built something better together
+            How a villa owner and a cleaner discovered they were solving two sides of the same problem
           </p>
         </div>
 
-        {/* The Problem */}
+        {/* The Setup */}
         <section className="mb-12">
           <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#EBEBEB]">
             <h2 className="text-xl font-semibold text-[#1A1A1A] mb-4">
-              The moment everything changed
+              Villa life in Alicante
             </h2>
             <div className="space-y-4 text-[#6B6B6B]">
               <p>
-                Picture this: You&apos;ve just landed in Alicante after a long flight.
-                You&apos;re tired, the kids are cranky, and all you want is to walk
-                into your villa, feel the cool tiles under your feet, and breathe in
-                that familiar smell of home.
+                We live in a 4-bedroom villa with large outside areas — terraces, a pool, gardens.
+                It&apos;s the kind of home that&apos;s common across the Costa Blanca. Ours isn&apos;t
+                a holiday home that sits empty most of the year. We&apos;re here about 10 months,
+                and we go elsewhere for our holidays.
               </p>
               <p>
-                Instead, you open the door to stale air, dusty surfaces, and that
-                sinking feeling that the cleaner you booked three weeks ago never
-                showed up. Again.
-              </p>
-              <p className="font-medium text-[#1A1A1A]">
-                That was me in 2023. And I knew there had to be a better way.
+                That means we need regular, reliable cleaning. Not just the occasional pre-arrival
+                deep clean, but ongoing maintenance of a property with a lot of outdoor space
+                that collects dust, leaves, and the general chaos of Spanish sunshine.
               </p>
             </div>
           </div>
         </section>
 
-        {/* The Search */}
+        {/* Finding Clara */}
         <section className="mb-12">
           <h2 className="text-xl font-semibold text-[#1A1A1A] mb-4">
-            Finding the right people
+            Finding Clara
           </h2>
           <div className="space-y-4 text-[#6B6B6B]">
             <p>
-              Like most villa owners, I&apos;d tried everything. Facebook groups where
-              you never knew who you were really getting. Agencies that sent different
+              Like most villa owners, we&apos;d tried the usual routes. Facebook groups where
+              you never really knew who you were getting. Agencies that sent different
               people every time. Friends of friends who were &quot;usually reliable&quot; but
               somehow never when it mattered.
             </p>
             <p>
-              The problem wasn&apos;t finding <em>a</em> cleaner. The problem was finding
-              someone I could actually trust with my home — someone who would show up,
-              do excellent work, and who I could rely on visit after visit.
+              Then we found Clara. She was brilliant — thorough, reliable, and took genuine
+              pride in her work. Finally, we had someone we could depend on.
             </p>
             <p>
-              Then I found Clara.
+              But there was a problem.
             </p>
           </div>
         </section>
 
-        {/* Clara's Story */}
+        {/* The Challenge */}
         <section className="mb-12">
           <div className="bg-[#FFF8F5] rounded-2xl p-6 sm:p-8 border border-[#F5E6E0]">
             <div className="flex items-start gap-4 mb-6">
@@ -98,135 +101,162 @@ export default function AboutPage() {
                 />
               </div>
               <div>
-                <h3 className="font-semibold text-[#1A1A1A]">Clara Garcia</h3>
-                <p className="text-sm text-[#C4785A]">Co-founder & Quality Director</p>
+                <h3 className="font-semibold text-[#1A1A1A]">Clara&apos;s challenges</h3>
+                <p className="text-sm text-[#C4785A]">What we discovered</p>
               </div>
             </div>
             <div className="space-y-4 text-[#6B6B6B]">
               <p>
-                Clara had been running her own cleaning business in Alicante for five
-                years. Her Google reviews were impeccable — all five stars, all genuine,
-                all from villa owners like me who&apos;d finally found someone they could
-                depend on.
+                We speak mainly English. Clara speaks Portuguese and Spanish. While we
+                managed with gestures and Google Translate, it wasn&apos;t ideal. Instructions
+                got lost, small details were missed, and there was always that slight
+                uncertainty on both sides.
               </p>
               <p>
-                But Clara had her own frustrations. She was spending hours every week
-                on WhatsApp coordinating schedules, chasing payments, and turning away
-                new clients because she couldn&apos;t keep track of it all. She had cleaners
-                she trusted who wanted more work, but no easy way to connect them with
-                owners who needed them.
+                But the bigger issue was backup. When Clara was sick, or her car broke down,
+                or she had a family emergency — she had no easy way to find cover. She&apos;d
+                be stressed trying to contact clients, often in a language she wasn&apos;t
+                comfortable with, while also dealing with whatever had come up.
+              </p>
+              <p>
+                She had other cleaners she trusted, colleagues who wanted more work, but no
+                simple way to hand over a job when she needed to. The whole system depended
+                on her being available, every single time.
               </p>
               <p className="font-medium text-[#1A1A1A]">
-                We realized we were solving two sides of the same problem.
+                That&apos;s when we started talking about building something better.
               </p>
             </div>
           </div>
         </section>
 
-        {/* The Solution */}
+        {/* The Solutions */}
         <section className="mb-12">
           <h2 className="text-xl font-semibold text-[#1A1A1A] mb-4">
-            Building it differently
+            What we&apos;re building
           </h2>
-          <div className="space-y-4 text-[#6B6B6B]">
+          <div className="space-y-4 text-[#6B6B6B] mb-8">
             <p>
-              Most cleaning platforms work like a lottery — you book whoever&apos;s
-              available and hope for the best. We wanted the opposite: a small
-              network of exceptional people where every single cleaner is someone
-              we&apos;d trust with our own homes.
-            </p>
-            <p>
-              So we made a decision that seemed crazy at first: <strong className="text-[#1A1A1A]">cleaners
-              can only join VillaCare by invitation.</strong>
+              VillaCare isn&apos;t just another cleaning marketplace. We&apos;re solving the
+              specific problems that villa owners and cleaners actually face — problems
+              we experienced firsthand.
             </p>
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            <div className="bg-white rounded-xl p-5 border border-[#EBEBEB]">
-              <div className="text-2xl mb-2">1</div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">Referred</h3>
-              <p className="text-sm text-[#6B6B6B]">
-                Every cleaner is personally recommended by someone already in the network
-              </p>
+          <div className="space-y-4">
+            {/* Team Function */}
+            <div className="bg-white rounded-xl p-6 border border-[#EBEBEB]">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl">👥</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[#1A1A1A] mb-2">Teams that cover each other</h3>
+                  <p className="text-sm text-[#6B6B6B]">
+                    Cleaners can form teams with colleagues they trust. When someone needs cover —
+                    sick day, car trouble, holiday — their team sees the job first and can pick
+                    it up instantly. No more frantic WhatsApp messages. No more letting clients down.
+                    Your regular cleaner stays in the loop, but you&apos;re never left without service.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white rounded-xl p-5 border border-[#EBEBEB]">
-              <div className="text-2xl mb-2">2</div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">Vouched for</h3>
-              <p className="text-sm text-[#6B6B6B]">
-                We verify with the referrer: &quot;Would you stake your reputation on them?&quot;
-              </p>
+
+            {/* Multilingual Messaging */}
+            <div className="bg-white rounded-xl p-6 border border-[#EBEBEB]">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl">🌍</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[#1A1A1A] mb-2">Messages in your language</h3>
+                  <p className="text-sm text-[#6B6B6B]">
+                    Write in English, German, French, Dutch, Italian, or Portuguese — your
+                    cleaner receives the message in Spanish (or their preferred language).
+                    They reply in Spanish, you read it in yours. No more miscommunication.
+                    No more lost instructions. Everyone understands exactly what&apos;s needed.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white rounded-xl p-5 border border-[#EBEBEB]">
-              <div className="text-2xl mb-2">3</div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">Accountable</h3>
-              <p className="text-sm text-[#6B6B6B]">
-                Your referral reflects on you. Quality is everyone&apos;s responsibility.
-              </p>
+
+            {/* Photo Proof */}
+            <div className="bg-white rounded-xl p-6 border border-[#EBEBEB]">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl">📸</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[#1A1A1A] mb-2">Photo proof via WhatsApp</h3>
+                  <p className="text-sm text-[#6B6B6B]">
+                    Every clean comes with photos sent directly to you. Whether you&apos;re
+                    upstairs working, away on holiday, or on a flight home — you can see
+                    your villa is ready. For owners who aren&apos;t there year-round, it&apos;s
+                    the peace of mind you need.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Vetted Network */}
+            <div className="bg-white rounded-xl p-6 border border-[#EBEBEB]">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl">🔒</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[#1A1A1A] mb-2">Invitation-only network</h3>
+                  <p className="text-sm text-[#6B6B6B]">
+                    Every cleaner on VillaCare is personally referred by someone already in
+                    the network. It keeps quality high and ensures that even if your regular
+                    cleaner needs cover, the person who steps in is someone they personally
+                    vouch for.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* The Mission */}
+        {/* Who it's for */}
         <section className="mb-12">
           <div className="bg-[#1A1A1A] rounded-2xl p-6 sm:p-8 text-white">
             <h2 className="text-xl font-semibold mb-4">
-              What we believe
+              For all kinds of villa owners
             </h2>
             <div className="space-y-4 text-white/80">
               <p>
-                Your villa isn&apos;t just a property. It&apos;s the place where you escape
-                to, where you make memories with family, where you come to feel like
-                yourself again.
+                Whether you live in your villa year-round like us, spend a few months
+                each winter escaping the northern European weather, or visit for family
+                holidays a few times a year — you need someone reliable looking after
+                your home.
               </p>
               <p>
-                You shouldn&apos;t have to worry about whether it&apos;s ready when you arrive.
-                You shouldn&apos;t have to wonder if your cleaner will actually show up.
-                You shouldn&apos;t have to explain everything from scratch every single time.
-              </p>
-              <p className="text-white font-medium">
-                VillaCare exists so you can simply come home.
+                VillaCare works for regular weekly cleans, pre-arrival preparations,
+                deep seasonal cleaning, or anything in between. The same trusted network,
+                the same photo proof, the same peace of mind.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Photo Proof */}
+        {/* Beta Note */}
         <section className="mb-12">
-          <h2 className="text-xl font-semibold text-[#1A1A1A] mb-4">
-            Peace of mind, built in
-          </h2>
-          <div className="space-y-4 text-[#6B6B6B]">
-            <p>
-              One thing I always wished for as a villa owner: being able to see that
-              everything was ready before I arrived. No more anxious wondering during
-              the flight. No more crossing fingers in the taxi from the airport.
+          <div className="bg-white rounded-xl p-6 border border-[#EBEBEB] border-dashed">
+            <h3 className="font-semibold text-[#1A1A1A] mb-2">We&apos;re just getting started</h3>
+            <p className="text-sm text-[#6B6B6B]">
+              VillaCare is currently in beta, focused on the Alicante and Costa Blanca region.
+              We&apos;re growing carefully, adding cleaners through referrals, and refining
+              the platform based on real feedback from owners and cleaners. If you&apos;d like
+              to be part of shaping how this works, we&apos;d love to hear from you.
             </p>
-            <p>
-              That&apos;s why every VillaCare clean comes with photo proof. Your cleaner
-              sends you photos via WhatsApp when they&apos;re done, so you can see your
-              villa is spotless before you even land.
-            </p>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-4 justify-center">
-            <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2 border border-[#EBEBEB]">
-              <span className="text-xl">📸</span>
-              <span className="text-sm text-[#1A1A1A]">Photo proof included</span>
-            </div>
-            <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2 border border-[#EBEBEB]">
-              <span className="text-xl">💬</span>
-              <span className="text-sm text-[#1A1A1A]">WhatsApp updates</span>
-            </div>
-            <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2 border border-[#EBEBEB]">
-              <span className="text-xl">🔒</span>
-              <span className="text-sm text-[#1A1A1A]">Vetted cleaners</span>
-            </div>
           </div>
         </section>
 
         {/* CTA */}
         <section className="text-center">
           <h2 className="text-xl font-semibold text-[#1A1A1A] mb-2">
-            Ready to come home to a ready home?
+            Find your Clara
           </h2>
           <p className="text-[#6B6B6B] mb-6">
             Browse our network of trusted cleaners in Alicante
@@ -255,6 +285,12 @@ export default function AboutPage() {
             VillaCare · Alicante, Spain
           </p>
           <div className="flex items-center gap-4 text-xs text-[#9B9B9B]">
+            <Link href="/privacy" className="hover:text-[#1A1A1A]">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-[#1A1A1A]">
+              Terms
+            </Link>
             <a href="mailto:hello@alicantecleaners.com" className="hover:text-[#1A1A1A]">
               hello@alicantecleaners.com
             </a>
