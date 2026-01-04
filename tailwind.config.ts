@@ -9,8 +9,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        'bg-primary': '#FAFAF8',
+        'bg-secondary': '#F5F5F3',
+        'bg-card': '#FFFFFF',
+        'text-primary': '#1A1A1A',
+        'text-secondary': '#6B6B6B',
+        'text-tertiary': '#9B9B9B',
+        'accent': '#C4785A',
+        'accent-light': '#F5EDE8',
+        'success': '#7C8B6F',
+        'error': '#C75050',
+        'border-light': '#EBEBEB',
+        'border-medium': '#DEDEDE',
+      },
+      minWidth: {
+        'mobile': '320px',
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
     },
   },

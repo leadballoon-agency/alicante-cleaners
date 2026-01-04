@@ -1,0 +1,253 @@
+// VillaCare Database Schema
+// Uses Neon PostgreSQL with NextAuth.js
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// EXISTING TABLES (from your Neon database)
+// ============================================
+
+model cleaner_applications {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String    @db.VarChar(255)
+  phone         String    @db.VarChar(20)
+  referrer_name String    @db.VarChar(255)
+  status        String?   @default("pending") @db.VarChar(20)
+  notes         String?
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  reviewed_at   DateTime? @db.Timestamptz(6)
+}
+
+model owner_waitlist {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email      String    @db.VarChar(255)
+  town       String    @db.VarChar(100)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+// ============================================
+// NextAuth.js Required Tables (NEW)
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  phone         String?   @unique
+  phoneVerified DateTime?
+  password      String?   // Hashed password for email login
+  image         String?
+  role          UserRole  @default(OWNER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  cleaner  Cleaner?
+  owner    Owner?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// VillaCare Domain Models (NEW)
+// ============================================
+
+enum UserRole {
+  OWNER
+  CLEANER
+  ADMIN
+}
+
+enum CleanerStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum FeedbackCategory {
+  IDEA
+  ISSUE
+  PRAISE
+  QUESTION
+}
+
+enum FeedbackMood {
+  LOVE
+  LIKE
+  MEH
+  FRUSTRATED
+}
+
+enum FeedbackStatus {
+  NEW
+  REVIEWED
+  PLANNED
+  DONE
+}
+
+model Cleaner {
+  id            String        @id @default(cuid())
+  userId        String        @unique
+  slug          String        @unique
+  bio           String?       @db.Text
+  reviewsLink   String?
+  serviceAreas  String[]
+  hourlyRate    Decimal       @db.Decimal(10, 2)
+  status        CleanerStatus @default(PENDING)
+  totalBookings Int           @default(0)
+  rating        Decimal?      @db.Decimal(3, 2)
+  reviewCount   Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+  reviews  Review[]
+}
+
+model Owner {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  trusted            Boolean  @default(false)
+  referredBy         String?
+  totalBookings      Int      @default(0)
+  cleanerRating      Decimal? @db.Decimal(3, 2)
+  cleanerReviewCount Int      @default(0)
+  referralCode       String   @unique
+  referralCredits    Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  properties Property[]
+  bookings   Booking[]
+  reviews    Review[]
+}
+
+model Property {
+  id        String   @id @default(cuid())
+  ownerId   String
+  name      String
+  address   String
+  bedrooms  Int
+  bathrooms Int
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner    Owner             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+  comments InternalComment[]
+}
+
+model Booking {
+  id         String        @id @default(cuid())
+  cleanerId  String
+  ownerId    String
+  propertyId String
+  status     BookingStatus @default(PENDING)
+  service    String
+  price      Decimal       @db.Decimal(10, 2)
+  hours      Int
+  date       DateTime
+  time       String
+  notes      String?       @db.Text
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  cleaner  Cleaner  @relation(fields: [cleanerId], references: [id])
+  owner    Owner    @relation(fields: [ownerId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+  review   Review?
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  bookingId String   @unique
+  cleanerId String
+  ownerId   String
+  rating    Int
+  text      String   @db.Text
+  featured  Boolean  @default(false)
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  cleaner Cleaner @relation(fields: [cleanerId], references: [id])
+  owner   Owner   @relation(fields: [ownerId], references: [id])
+}
+
+model InternalComment {
+  id          String   @id @default(cuid())
+  propertyId  String
+  cleanerId   String
+  cleanerName String
+  text        String   @db.Text
+  createdAt   DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model Feedback {
+  id        String           @id @default(cuid())
+  category  FeedbackCategory
+  mood      FeedbackMood
+  message   String?          @db.Text
+  page      String
+  userType  String?
+  userId    String?
+  status    FeedbackStatus   @default(NEW)
+  votes     Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
