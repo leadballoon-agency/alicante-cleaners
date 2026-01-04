@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { BookingData } from '../page'
 
 type Props = {
@@ -22,6 +22,23 @@ const TIME_SLOTS = [
 export default function DateTimePicker({ data, onUpdate, onNext }: Props) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(data.date)
   const [selectedTime, setSelectedTime] = useState(data.time)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (!scrollRef.current) return
+    const scrollAmount = 200
+    scrollRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    })
+  }
+
+  // Handle mouse wheel for horizontal scroll
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!scrollRef.current) return
+    e.preventDefault()
+    scrollRef.current.scrollLeft += e.deltaY
+  }
 
   // Generate next 14 days
   const dates = Array.from({ length: 14 }, (_, i) => {
@@ -73,10 +90,35 @@ export default function DateTimePicker({ data, onUpdate, onNext }: Props) {
 
       {/* Date selection */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-[#1A1A1A] mb-1">Choose a date</h2>
-        <p className="text-sm text-[#6B6B6B] mb-4">{formatMonthYear(dates[0])}</p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-[#1A1A1A] mb-1">Choose a date</h2>
+            <p className="text-sm text-[#6B6B6B]">{formatMonthYear(dates[0])}</p>
+          </div>
+          {/* Navigation arrows for desktop */}
+          <div className="hidden sm:flex gap-1">
+            <button
+              onClick={() => scroll('left')}
+              className="w-8 h-8 rounded-full border border-[#EBEBEB] bg-white flex items-center justify-center hover:bg-[#F5F5F3] transition-colors"
+              aria-label="Scroll left"
+            >
+              <span className="text-[#6B6B6B]">&larr;</span>
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              className="w-8 h-8 rounded-full border border-[#EBEBEB] bg-white flex items-center justify-center hover:bg-[#F5F5F3] transition-colors"
+              aria-label="Scroll right"
+            >
+              <span className="text-[#6B6B6B]">&rarr;</span>
+            </button>
+          </div>
+        </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
+        <div
+          ref={scrollRef}
+          onWheel={handleWheel}
+          className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide cursor-grab active:cursor-grabbing"
+        >
           {dates.map((date) => {
             const isSelected = selectedDate && isSameDay(date, selectedDate)
             const isWeekend = date.getDay() === 0 || date.getDay() === 6

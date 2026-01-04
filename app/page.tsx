@@ -54,6 +54,12 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-3">
             <Link
+              href="/about"
+              className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors hidden sm:block"
+            >
+              Our story
+            </Link>
+            <Link
               href="/onboarding/cleaner"
               className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
             >
@@ -320,6 +326,9 @@ export default function HomePage() {
             VillaCare · Alicante, Spain
           </p>
           <div className="flex items-center gap-4 text-xs text-[#9B9B9B]">
+            <Link href="/about" className="hover:text-[#1A1A1A]">
+              Our story
+            </Link>
             <a href="mailto:hello@alicantecleaners.com" className="hover:text-[#1A1A1A]">
               hello@alicantecleaners.com
             </a>

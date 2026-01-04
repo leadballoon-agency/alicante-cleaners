@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 
 type Activity = {
   id: string
   type: 'completed' | 'review' | 'booked'
   message: string
   area: string
+  photo: string | null
   timestamp: string
 }
 
@@ -14,12 +16,6 @@ const typeIcons = {
   completed: '✨',
   review: '⭐',
   booked: '📅',
-}
-
-const typeColors = {
-  completed: 'bg-[#E8F5E9] text-[#2E7D32]',
-  review: 'bg-[#FFF8E1] text-[#F57C00]',
-  booked: 'bg-[#E3F2FD] text-[#1565C0]',
 }
 
 function timeAgo(timestamp: string): string {
@@ -76,8 +72,23 @@ export default function ActivityFeed() {
 
   return (
     <div className="bg-white border border-[#EBEBEB] rounded-full px-4 py-2 inline-flex items-center gap-3 shadow-sm">
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${typeColors[current.type]}`}>
-        <span className="text-sm">{typeIcons[current.type]}</span>
+      <div className="relative">
+        <div className="w-8 h-8 rounded-full overflow-hidden bg-[#F5F5F3] flex items-center justify-center">
+          {current.photo ? (
+            <Image
+              src={current.photo}
+              alt=""
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          ) : (
+            <span className="text-sm">👤</span>
+          )}
+        </div>
+        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white flex items-center justify-center shadow-sm">
+          <span className="text-[10px]">{typeIcons[current.type]}</span>
+        </div>
       </div>
 
       <div

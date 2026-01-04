@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Cleaner } from '../page'
+import LanguageSelector from '@/components/language-selector'
 
 type Props = {
   cleaner: Cleaner
@@ -93,6 +94,12 @@ export default function ProfileTab({ cleaner }: Props) {
           <p className="text-xs text-[#6B6B6B]">reviews</p>
         </div>
       </div>
+
+      {/* Language preference */}
+      <LanguageSelector
+        label="Idioma preferido"
+        description="Los mensajes de los propietarios se traducirán a este idioma"
+      />
 
       {/* Menu items */}
       <div className="bg-white rounded-2xl border border-[#EBEBEB] divide-y divide-[#EBEBEB]">

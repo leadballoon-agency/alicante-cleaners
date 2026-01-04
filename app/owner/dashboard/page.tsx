@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from 'react'
 import HomeTab from './tabs/home'
 import BookingsTab from './tabs/bookings'
 import PropertiesTab from './tabs/properties'
+import MessagesTab from './tabs/messages'
 import AccountTab from './tabs/account'
 import ReviewModal from './components/review-modal'
 
-type Tab = 'home' | 'bookings' | 'properties' | 'account'
+type Tab = 'home' | 'bookings' | 'properties' | 'messages' | 'account'
 
 export type Owner = {
   id: string
@@ -156,6 +157,7 @@ export default function OwnerDashboard() {
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: 'home', label: 'Home', icon: '🏠' },
     { id: 'bookings', label: 'Bookings', icon: '📋' },
+    { id: 'messages', label: 'Messages', icon: '💬' },
     { id: 'properties', label: 'Villas', icon: '🏡' },
     { id: 'account', label: 'Account', icon: '👤' },
   ]
@@ -224,6 +226,7 @@ export default function OwnerDashboard() {
         {activeTab === 'bookings' && (
           <BookingsTab bookings={bookings} onLeaveReview={handleLeaveReview} />
         )}
+        {activeTab === 'messages' && <MessagesTab />}
         {activeTab === 'properties' && (
           <PropertiesTab properties={properties} onAddProperty={handleAddProperty} />
         )}

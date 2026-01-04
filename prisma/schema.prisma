@@ -37,17 +37,18 @@ model owner_waitlist {
 // ============================================
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  phone         String?   @unique
-  phoneVerified DateTime?
-  password      String?   // Hashed password for email login
-  image         String?
-  role          UserRole  @default(OWNER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  name              String?
+  email             String?   @unique
+  emailVerified     DateTime?
+  phone             String?   @unique
+  phoneVerified     DateTime?
+  password          String?   // Hashed password for email login
+  image             String?
+  role              UserRole  @default(OWNER)
+  preferredLanguage String    @default("en") @db.VarChar(10) // en, es, de, fr, nl, it, pt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   accounts Account[]
   sessions Session[]
@@ -152,9 +153,10 @@ model Cleaner {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookings Booking[]
-  reviews  Review[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings      Booking[]
+  reviews       Review[]
+  conversations Conversation[]
 }
 
 model Owner {
@@ -170,10 +172,11 @@ model Owner {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  properties Property[]
-  bookings   Booking[]
-  reviews    Review[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  properties    Property[]
+  bookings      Booking[]
+  reviews       Review[]
+  conversations Conversation[]
 }
 
 model Property {
@@ -187,9 +190,10 @@ model Property {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  owner    Owner             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  bookings Booking[]
-  comments InternalComment[]
+  owner         Owner             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  bookings      Booking[]
+  comments      InternalComment[]
+  conversations Conversation[]
 }
 
 model Booking {
@@ -252,4 +256,47 @@ model Feedback {
   votes     Int              @default(0)
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
+}
+
+// ============================================
+// Messaging with Translation
+// ============================================
+
+model Conversation {
+  id         String   @id @default(cuid())
+  ownerId    String
+  cleanerId  String
+  propertyId String?  // Optional: link to a specific property
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  owner    Owner     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  cleaner  Cleaner   @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  messages Message[]
+
+  @@unique([ownerId, cleanerId]) // One conversation per owner-cleaner pair
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String   // User ID of sender
+  senderRole     UserRole // OWNER or CLEANER
+
+  // Original message
+  originalText   String   @db.Text
+  originalLang   String   @db.VarChar(10) // e.g., 'en', 'es', 'de', 'fr'
+
+  // Translated message
+  translatedText String?  @db.Text
+  translatedLang String?  @db.VarChar(10)
+
+  // Metadata
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
 }

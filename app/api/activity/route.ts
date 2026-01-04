@@ -15,7 +15,7 @@ export async function GET() {
       include: {
         cleaner: {
           include: {
-            user: { select: { name: true } },
+            user: { select: { name: true, image: true } },
           },
         },
         property: { select: { name: true, address: true } },
@@ -35,7 +35,7 @@ export async function GET() {
       include: {
         cleaner: {
           include: {
-            user: { select: { name: true } },
+            user: { select: { name: true, image: true } },
           },
         },
       },
@@ -54,7 +54,7 @@ export async function GET() {
       include: {
         cleaner: {
           include: {
-            user: { select: { name: true } },
+            user: { select: { name: true, image: true } },
           },
         },
       },
@@ -68,6 +68,7 @@ export async function GET() {
       type: 'completed' | 'review' | 'booked'
       message: string
       area: string
+      photo: string | null
       timestamp: Date
     }[] = []
 
@@ -80,6 +81,7 @@ export async function GET() {
         type: 'completed',
         message: `${cleanerName} completed a clean`,
         area,
+        photo: booking.cleaner.user.image,
         timestamp: booking.updatedAt,
       })
     })
@@ -93,6 +95,7 @@ export async function GET() {
         type: 'review',
         message: `${cleanerName} received a ${stars} review`,
         area: '',
+        photo: review.cleaner.user.image,
         timestamp: review.createdAt,
       })
     })
@@ -105,6 +108,7 @@ export async function GET() {
         type: 'booked',
         message: `${cleanerName} accepted a new booking`,
         area: '',
+        photo: booking.cleaner.user.image,
         timestamp: booking.updatedAt,
       })
     })

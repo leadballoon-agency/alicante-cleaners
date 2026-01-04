@@ -18,29 +18,40 @@ async function main() {
   })
   console.log('Created admin:', admin.email)
 
-  // Create test Owner (uses magic link to sign in)
-  const ownerUser = await prisma.user.upsert({
-    where: { email: 'mark@example.com' },
-    update: {},
-    create: {
-      email: 'mark@example.com',
-      name: 'Mark Taylor',
-      role: 'OWNER',
-      emailVerified: new Date(),
-    },
-  })
+  // Create test Owners (use magic link to sign in)
+  const owners = [
+    { email: 'mark@example.com', name: 'Mark T.', code: 'MARK2024' },
+    { email: 'sarah@example.com', name: 'Sarah W.', code: 'SARA2024' },
+    { email: 'james@example.com', name: 'James M.', code: 'JAME2024' },
+    { email: 'emma@example.com', name: 'Emma B.', code: 'EMMA2024' },
+    { email: 'david@example.com', name: 'David K.', code: 'DAVI2024' },
+  ]
 
-  // Create Owner profile
-  await prisma.owner.upsert({
-    where: { userId: ownerUser.id },
-    update: {},
-    create: {
-      userId: ownerUser.id,
-      referralCode: 'MARK2024',
-      trusted: true,
-    },
-  })
-  console.log('Created owner:', ownerUser.email)
+  const ownerRecords = []
+  for (const ownerData of owners) {
+    const ownerUser = await prisma.user.upsert({
+      where: { email: ownerData.email },
+      update: {},
+      create: {
+        email: ownerData.email,
+        name: ownerData.name,
+        role: 'OWNER',
+        emailVerified: new Date(),
+      },
+    })
+
+    const owner = await prisma.owner.upsert({
+      where: { userId: ownerUser.id },
+      update: {},
+      create: {
+        userId: ownerUser.id,
+        referralCode: ownerData.code,
+        trusted: true,
+      },
+    })
+    ownerRecords.push({ user: ownerUser, owner })
+  }
+  console.log('Created owners:', owners.map(o => o.email).join(', '))
 
   // Create test Cleaner
   const cleanerUser = await prisma.user.upsert({
@@ -205,93 +216,90 @@ async function main() {
   })
   console.log('Created cleaner:', cleaner5User.phone)
 
-  // Create a Property for the owner
-  const owner = await prisma.owner.findUnique({
-    where: { userId: ownerUser.id },
-  })
+  // Create a Property for the first owner
+  const primaryOwner = ownerRecords[0]
 
-  if (owner) {
-    const property = await prisma.property.upsert({
-      where: { id: 'prop_sanjuan' },
+  const property = await prisma.property.upsert({
+    where: { id: 'prop_sanjuan' },
+    update: {},
+    create: {
+      id: 'prop_sanjuan',
+      ownerId: primaryOwner.owner.id,
+      name: 'San Juan Villa',
+      address: 'Calle del Mar 42, San Juan, Alicante',
+      bedrooms: 3,
+      bathrooms: 2,
+      notes: 'Key under the blue pot by the front door. Alarm code is 1234.',
+    },
+  })
+  console.log('Created property: San Juan Villa')
+
+  // Get cleaners for creating bookings and reviews
+  const carmen = await prisma.cleaner.findUnique({ where: { slug: 'carmen' } })
+  const clara = await prisma.cleaner.findUnique({ where: { slug: 'clara' } })
+  const maria = await prisma.cleaner.findUnique({ where: { slug: 'maria' } })
+
+  // Sample reviews data with different owners
+  const reviewsData = [
+    // Carmen's reviews (from different owners)
+    { cleanerId: carmen?.id, ownerIdx: 0, rating: 5, text: 'Carmen is absolutely fantastic! She left our villa spotless before our guests arrived. Highly recommend!', featured: true },
+    { cleanerId: carmen?.id, ownerIdx: 1, rating: 5, text: 'Very thorough and professional. Carmen even noticed some things that needed attention that we had missed.' },
+    { cleanerId: carmen?.id, ownerIdx: 2, rating: 5, text: 'Third time using Carmen and she never disappoints. The villa always looks perfect.' },
+    { cleanerId: carmen?.id, ownerIdx: 3, rating: 4, text: 'Great service, very reliable. Will definitely book again.' },
+    // Clara's reviews (from different owners)
+    { cleanerId: clara?.id, ownerIdx: 1, rating: 5, text: 'Clara did an amazing deep clean of our property. It has never looked better!', featured: true },
+    { cleanerId: clara?.id, ownerIdx: 2, rating: 5, text: 'So happy with Clara. She is punctual, thorough and very friendly.' },
+    { cleanerId: clara?.id, ownerIdx: 4, rating: 5, text: 'Excellent attention to detail. Clara left everything sparkling clean.' },
+    // Maria's reviews (from different owners)
+    { cleanerId: maria?.id, ownerIdx: 0, rating: 5, text: 'Maria specializes in move-out cleans and she is the best! Got our full deposit back.', featured: true },
+    { cleanerId: maria?.id, ownerIdx: 3, rating: 4, text: 'Very good service. Maria is reliable and does quality work.' },
+    { cleanerId: maria?.id, ownerIdx: 4, rating: 5, text: 'Highly professional. Maria went above and beyond our expectations.' },
+  ]
+
+  // Create bookings and reviews
+  for (let i = 0; i < reviewsData.length; i++) {
+    const reviewData = reviewsData[i]
+    if (!reviewData.cleanerId) continue
+
+    const reviewOwner = ownerRecords[reviewData.ownerIdx]
+    const bookingId = `booking_seed_${i}`
+    const reviewId = `review_seed_${i}`
+
+    // Create a completed booking
+    await prisma.booking.upsert({
+      where: { id: bookingId },
       update: {},
       create: {
-        id: 'prop_sanjuan',
-        ownerId: owner.id,
-        name: 'San Juan Villa',
-        address: 'Calle del Mar 42, San Juan, Alicante',
-        bedrooms: 3,
-        bathrooms: 2,
-        notes: 'Key under the blue pot by the front door. Alarm code is 1234.',
+        id: bookingId,
+        cleanerId: reviewData.cleanerId,
+        ownerId: reviewOwner.owner.id,
+        propertyId: property.id,
+        status: 'COMPLETED',
+        service: 'Regular Clean',
+        price: 60,
+        hours: 3,
+        date: new Date(Date.now() - (i + 1) * 7 * 24 * 60 * 60 * 1000), // Staggered dates
+        time: '10:00',
       },
     })
-    console.log('Created property: San Juan Villa')
 
-    // Get cleaners for creating bookings and reviews
-    const carmen = await prisma.cleaner.findUnique({ where: { slug: 'carmen' } })
-    const clara = await prisma.cleaner.findUnique({ where: { slug: 'clara' } })
-    const maria = await prisma.cleaner.findUnique({ where: { slug: 'maria' } })
-
-    // Sample reviews data
-    const reviewsData = [
-      // Carmen's reviews
-      { cleanerId: carmen?.id, rating: 5, text: 'Carmen is absolutely fantastic! She left our villa spotless before our guests arrived. Highly recommend!', featured: true },
-      { cleanerId: carmen?.id, rating: 5, text: 'Very thorough and professional. Carmen even noticed some things that needed attention that we had missed.' },
-      { cleanerId: carmen?.id, rating: 5, text: 'Third time using Carmen and she never disappoints. The villa always looks perfect.' },
-      { cleanerId: carmen?.id, rating: 4, text: 'Great service, very reliable. Will definitely book again.' },
-      // Clara's reviews
-      { cleanerId: clara?.id, rating: 5, text: 'Clara did an amazing deep clean of our property. It has never looked better!', featured: true },
-      { cleanerId: clara?.id, rating: 5, text: 'So happy with Clara. She is punctual, thorough and very friendly.' },
-      { cleanerId: clara?.id, rating: 5, text: 'Excellent attention to detail. Clara left everything sparkling clean.' },
-      // Maria's reviews
-      { cleanerId: maria?.id, rating: 5, text: 'Maria specializes in move-out cleans and she is the best! Got our full deposit back.', featured: true },
-      { cleanerId: maria?.id, rating: 4, text: 'Very good service. Maria is reliable and does quality work.' },
-      { cleanerId: maria?.id, rating: 5, text: 'Highly professional. Maria went above and beyond our expectations.' },
-    ]
-
-    // Create bookings and reviews
-    for (let i = 0; i < reviewsData.length; i++) {
-      const reviewData = reviewsData[i]
-      if (!reviewData.cleanerId) continue
-
-      const bookingId = `booking_seed_${i}`
-      const reviewId = `review_seed_${i}`
-
-      // Create a completed booking
-      await prisma.booking.upsert({
-        where: { id: bookingId },
-        update: {},
-        create: {
-          id: bookingId,
-          cleanerId: reviewData.cleanerId,
-          ownerId: owner.id,
-          propertyId: property.id,
-          status: 'COMPLETED',
-          service: 'Regular Clean',
-          price: 60,
-          hours: 3,
-          date: new Date(Date.now() - (i + 1) * 7 * 24 * 60 * 60 * 1000), // Staggered dates
-          time: '10:00',
-        },
-      })
-
-      // Create the review
-      await prisma.review.upsert({
-        where: { id: reviewId },
-        update: {},
-        create: {
-          id: reviewId,
-          bookingId,
-          cleanerId: reviewData.cleanerId,
-          ownerId: owner.id,
-          rating: reviewData.rating,
-          text: reviewData.text,
-          featured: reviewData.featured || false,
-          approved: true,
-        },
-      })
-    }
-    console.log('Created sample reviews')
+    // Create the review
+    await prisma.review.upsert({
+      where: { id: reviewId },
+      update: {},
+      create: {
+        id: reviewId,
+        bookingId,
+        cleanerId: reviewData.cleanerId,
+        ownerId: reviewOwner.owner.id,
+        rating: reviewData.rating,
+        text: reviewData.text,
+        featured: reviewData.featured || false,
+        approved: true,
+      },
+    })
   }
+  console.log('Created sample reviews from different owners')
 
   console.log('')
   console.log('Seed completed!')
@@ -299,7 +307,7 @@ async function main() {
   console.log('Test accounts:')
   console.log('-'.repeat(50))
   console.log('Admin:   admin@villacare.com (magic link)')
-  console.log('Owner:   mark@example.com (magic link)')
+  console.log('Owners:  mark@example.com, sarah@example.com, etc. (magic link)')
   console.log('Cleaner: +34612345678 (use code 123456)')
   console.log('Cleaner: +34623456789 (use code 123456)')
   console.log('-'.repeat(50))

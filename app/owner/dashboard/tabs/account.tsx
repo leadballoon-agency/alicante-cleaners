@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Owner } from '../page'
+import LanguageSelector from '@/components/language-selector'
 
 type Props = {
   owner: Owner
@@ -104,6 +105,12 @@ export default function AccountTab({ owner }: Props) {
           </p>
         )}
       </div>
+
+      {/* Language preference */}
+      <LanguageSelector
+        label="Preferred Language"
+        description="Messages from cleaners will be translated to this language"
+      />
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">

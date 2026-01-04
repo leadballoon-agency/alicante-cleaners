@@ -4,11 +4,12 @@ import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import HomeTab from './tabs/home'
 import BookingsTab from './tabs/bookings'
+import MessagesTab from './tabs/messages'
 import ScheduleTab from './tabs/schedule'
 import ProfileTab from './tabs/profile'
 import OwnerReviewModal from './components/owner-review-modal'
 
-type Tab = 'home' | 'bookings' | 'schedule' | 'profile'
+type Tab = 'home' | 'bookings' | 'messages' | 'schedule' | 'profile'
 
 export type Owner = {
   id: string
@@ -191,10 +192,11 @@ export default function Dashboard() {
   }
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'home', label: 'Home', icon: '🏠' },
-    { id: 'bookings', label: 'Bookings', icon: '📋' },
-    { id: 'schedule', label: 'Schedule', icon: '📅' },
-    { id: 'profile', label: 'Profile', icon: '👤' },
+    { id: 'home', label: 'Inicio', icon: '🏠' },
+    { id: 'bookings', label: 'Reservas', icon: '📋' },
+    { id: 'messages', label: 'Mensajes', icon: '💬' },
+    { id: 'schedule', label: 'Agenda', icon: '📅' },
+    { id: 'profile', label: 'Perfil', icon: '👤' },
   ]
 
   if (loading) {
@@ -265,6 +267,7 @@ export default function Dashboard() {
             onBookingAction={handleBookingAction}
           />
         )}
+        {activeTab === 'messages' && <MessagesTab />}
         {activeTab === 'schedule' && (
           <ScheduleTab
             bookings={bookings}
