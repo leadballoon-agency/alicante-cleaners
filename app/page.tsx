@@ -161,6 +161,123 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Technology Section */}
+      <section className="px-6 py-12 bg-[#FAFAF8]">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-[#1A1A1A] mb-3">
+              {t('tech.title')}
+            </h2>
+            <p className="text-[#6B6B6B] max-w-xl mx-auto">
+              {t('tech.subtitle')}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* For Villa Owners */}
+            <div className="bg-white rounded-2xl p-6 border border-[#EBEBEB]">
+              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-5 flex items-center gap-2">
+                <span className="text-xl">🏠</span>
+                {t('tech.forOwners')}
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">🌍</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A] text-sm">{t('tech.owner1Title')}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner1Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">📸</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A] text-sm">{t('tech.owner2Title')}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner2Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">🔒</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A] text-sm">{t('tech.owner3Title')}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner3Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">✈️</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A] text-sm">{t('tech.owner4Title')}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner4Desc')}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* For Cleaners */}
+            <div className="bg-[#1A1A1A] rounded-2xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-5 flex items-center gap-2">
+                <span className="text-xl">✨</span>
+                {t('tech.forCleaners')}
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">📈</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white text-sm">{t('tech.cleaner1Title')}</h4>
+                    <p className="text-sm text-white/70">{t('tech.cleaner1Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">🌍</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white text-sm">{t('tech.cleaner2Title')}</h4>
+                    <p className="text-sm text-white/70">{t('tech.cleaner2Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">💳</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white text-sm">{t('tech.cleaner3Title')}</h4>
+                    <p className="text-sm text-white/70">{t('tech.cleaner3Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">⭐</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white text-sm">{t('tech.cleaner4Title')}</h4>
+                    <p className="text-sm text-white/70">{t('tech.cleaner4Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">📅</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white text-sm">{t('tech.cleaner5Title')}</h4>
+                    <p className="text-sm text-white/70">{t('tech.cleaner5Desc')}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Cleaners Grid */}
       <main className="px-6 py-8 max-w-5xl mx-auto">
         {loading ? (
@@ -279,27 +396,74 @@ export default function HomePage() {
         )}
       </main>
 
+      {/* Built for Villa Life */}
+      <section className="px-6 py-12 bg-[#FFF8F5]">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-8">
+            <div className="flex-1">
+              <h2 className="text-2xl sm:text-3xl font-semibold text-[#1A1A1A] mb-4">
+                {t('villa.title')}
+              </h2>
+              <div className="space-y-4 text-[#6B6B6B]">
+                <p>{t('villa.p1')}</p>
+                <p>{t('villa.p2')}</p>
+                <p className="font-medium text-[#1A1A1A]">{t('villa.p3')}</p>
+              </div>
+            </div>
+            <div className="flex-shrink-0 grid grid-cols-2 gap-3">
+              <div className="w-24 h-24 bg-white rounded-xl flex items-center justify-center border border-[#EBEBEB]">
+                <span className="text-4xl">🏊</span>
+              </div>
+              <div className="w-24 h-24 bg-white rounded-xl flex items-center justify-center border border-[#EBEBEB]">
+                <span className="text-4xl">🌴</span>
+              </div>
+              <div className="w-24 h-24 bg-white rounded-xl flex items-center justify-center border border-[#EBEBEB]">
+                <span className="text-4xl">☀️</span>
+              </div>
+              <div className="w-24 h-24 bg-white rounded-xl flex items-center justify-center border border-[#EBEBEB]">
+                <span className="text-4xl">🏡</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Value Props */}
       <section className="px-6 py-12 bg-white border-t border-[#EBEBEB]">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <h2 className="text-xl font-semibold text-[#1A1A1A] text-center mb-8">
             {t('why.title')}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
             <div className="text-center">
-              <div className="text-3xl mb-3">🔒</div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('why.vettedTitle')}</h3>
-              <p className="text-sm text-[#6B6B6B]">{t('why.vettedDesc')}</p>
+              <div className="text-2xl mb-2">🔒</div>
+              <h3 className="font-medium text-[#1A1A1A] text-sm mb-1">{t('why.vettedTitle')}</h3>
+              <p className="text-xs text-[#6B6B6B]">{t('why.vettedDesc')}</p>
             </div>
             <div className="text-center">
-              <div className="text-3xl mb-3">📸</div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('why.photoTitle')}</h3>
-              <p className="text-sm text-[#6B6B6B]">{t('why.photoDesc')}</p>
+              <div className="text-2xl mb-2">📸</div>
+              <h3 className="font-medium text-[#1A1A1A] text-sm mb-1">{t('why.photoTitle')}</h3>
+              <p className="text-xs text-[#6B6B6B]">{t('why.photoDesc')}</p>
             </div>
             <div className="text-center">
-              <div className="text-3xl mb-3">💬</div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('why.whatsappTitle')}</h3>
-              <p className="text-sm text-[#6B6B6B]">{t('why.whatsappDesc')}</p>
+              <div className="text-2xl mb-2">💬</div>
+              <h3 className="font-medium text-[#1A1A1A] text-sm mb-1">{t('why.whatsappTitle')}</h3>
+              <p className="text-xs text-[#6B6B6B]">{t('why.whatsappDesc')}</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl mb-2">🌍</div>
+              <h3 className="font-medium text-[#1A1A1A] text-sm mb-1">{t('why.translateTitle')}</h3>
+              <p className="text-xs text-[#6B6B6B]">{t('why.translateDesc')}</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl mb-2">📅</div>
+              <h3 className="font-medium text-[#1A1A1A] text-sm mb-1">{t('why.calendarTitle')}</h3>
+              <p className="text-xs text-[#6B6B6B]">{t('why.calendarDesc')}</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl mb-2">💳</div>
+              <h3 className="font-medium text-[#1A1A1A] text-sm mb-1">{t('why.paymentTitle')}</h3>
+              <p className="text-xs text-[#6B6B6B]">{t('why.paymentDesc')}</p>
             </div>
           </div>
         </div>
