@@ -3,6 +3,9 @@
 import { useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import LanguageSwitcher from '@/components/language-switcher'
+import { useLanguage } from '@/components/language-context'
+import { LANGUAGES } from '@/lib/i18n'
 
 type Review = {
   id: string
@@ -22,6 +25,7 @@ type Cleaner = {
   areas: string[]
   hourlyRate: number
   bio: string
+  languages: string[]
   services: { type: string; name: string; price: number; hours: number; description: string }[]
   testimonial: { text: string; author: string; location: string; rating: number } | null
   reviews: Review[]
@@ -30,6 +34,7 @@ type Cleaner = {
 export default function CleanerProfile() {
   const params = useParams()
   const slug = params.slug as string
+  const { t } = useLanguage()
 
   const [cleaner, setCleaner] = useState<Cleaner | null>(null)
   const [loading, setLoading] = useState(true)
@@ -72,10 +77,10 @@ export default function CleanerProfile() {
       <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] flex items-center justify-center p-6">
         <div className="text-center">
           <div className="text-4xl mb-4">&#128269;</div>
-          <h1 className="text-xl font-semibold text-[#1A1A1A] mb-2">Cleaner not found</h1>
-          <p className="text-[#6B6B6B] mb-6">This profile doesn&apos;t exist or has been removed.</p>
+          <h1 className="text-xl font-semibold text-[#1A1A1A] mb-2">{t('profile.notFound')}</h1>
+          <p className="text-[#6B6B6B] mb-6">{t('profile.notFoundDesc')}</p>
           <Link href="/" className="text-[#1A1A1A] font-medium underline">
-            Go to homepage
+            {t('common.goHome')}
           </Link>
         </div>
       </div>
@@ -87,10 +92,10 @@ export default function CleanerProfile() {
       <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] flex items-center justify-center p-6">
         <div className="text-center">
           <div className="text-4xl mb-4">&#9888;</div>
-          <h1 className="text-xl font-semibold text-[#1A1A1A] mb-2">Something went wrong</h1>
-          <p className="text-[#6B6B6B] mb-6">Please try again later.</p>
+          <h1 className="text-xl font-semibold text-[#1A1A1A] mb-2">{t('common.error')}</h1>
+          <p className="text-[#6B6B6B] mb-6">{t('common.tryAgain')}</p>
           <Link href="/" className="text-[#1A1A1A] font-medium underline">
-            Go to homepage
+            {t('common.goHome')}
           </Link>
         </div>
       </div>
@@ -108,6 +113,7 @@ export default function CleanerProfile() {
             </div>
             <span className="font-semibold text-[#1A1A1A]">VillaCare</span>
           </Link>
+          <LanguageSwitcher />
         </div>
       </header>
 
@@ -123,11 +129,25 @@ export default function CleanerProfile() {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-semibold text-[#1A1A1A] mb-1">{cleaner.name}</h1>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-xl font-semibold text-[#1A1A1A]">{cleaner.name}</h1>
+              {cleaner.languages && cleaner.languages.length > 0 && (
+                <div className="flex gap-0.5">
+                  {cleaner.languages.map(lang => {
+                    const langInfo = LANGUAGES.find(l => l.code === lang)
+                    return langInfo ? (
+                      <span key={lang} className="text-sm" title={langInfo.name}>
+                        {langInfo.flag}
+                      </span>
+                    ) : null
+                  })}
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[#C4785A]">&#9733;</span>
               <span className="font-medium text-[#1A1A1A]">{cleaner.rating.toFixed(1)}</span>
-              <span className="text-[#6B6B6B]">&middot; {cleaner.reviewCount} reviews</span>
+              <span className="text-[#6B6B6B]">&middot; {cleaner.reviewCount} {t('cleaner.reviews')}</span>
             </div>
             <p className="text-sm text-[#6B6B6B]">{cleaner.areas.join(' · ')}</p>
           </div>
@@ -140,9 +160,9 @@ export default function CleanerProfile() {
 
         {/* Services */}
         <div className="space-y-3 mb-8">
-          <h2 className="text-sm font-medium text-[#1A1A1A]">Services</h2>
+          <h2 className="text-sm font-medium text-[#1A1A1A]">{t('profile.services')}</h2>
           {cleaner.services.map((service) => (
-            <ServiceCard key={service.type} service={service} slug={slug} />
+            <ServiceCard key={service.type} service={service} slug={slug} t={t} />
           ))}
         </div>
 
@@ -187,15 +207,15 @@ export default function CleanerProfile() {
         <div className="max-w-lg mx-auto flex justify-center gap-6 text-center">
           <div>
             <div className="text-lg mb-1">&#128274;</div>
-            <p className="text-xs text-[#6B6B6B]">Verified</p>
+            <p className="text-xs text-[#6B6B6B]">{t('profile.verified')}</p>
           </div>
           <div>
             <div className="text-lg mb-1">&#128179;</div>
-            <p className="text-xs text-[#6B6B6B]">Secure payment</p>
+            <p className="text-xs text-[#6B6B6B]">{t('profile.securePayment')}</p>
           </div>
           <div>
             <div className="text-lg mb-1">&#128247;</div>
-            <p className="text-xs text-[#6B6B6B]">Photo proof</p>
+            <p className="text-xs text-[#6B6B6B]">{t('profile.photoProof')}</p>
           </div>
         </div>
       </div>
@@ -203,9 +223,10 @@ export default function CleanerProfile() {
   )
 }
 
-function ServiceCard({ service, slug }: {
+function ServiceCard({ service, slug, t }: {
   service: { type: string; name: string; price: number; hours: number; description: string }
   slug: string
+  t: (key: string) => string
 }) {
   const icons: Record<string, string> = {
     regular: '&#129529;',
@@ -222,7 +243,7 @@ function ServiceCard({ service, slug }: {
             <h3 className="font-medium text-[#1A1A1A]">{service.name}</h3>
           </div>
           <p className="text-sm text-[#6B6B6B] mb-2">{service.description}</p>
-          <p className="text-xs text-[#9B9B9B]">{service.hours} hours</p>
+          <p className="text-xs text-[#9B9B9B]">{service.hours} {t('service.hours')}</p>
         </div>
         <div className="text-right flex-shrink-0">
           <p className="text-lg font-semibold text-[#1A1A1A] mb-2">&euro;{service.price}</p>
@@ -230,7 +251,7 @@ function ServiceCard({ service, slug }: {
             href={`/${slug}/booking?service=${service.type}`}
             className="inline-block bg-[#1A1A1A] text-white px-4 py-2 rounded-lg text-sm font-medium active:scale-[0.98] transition-all"
           >
-            Book
+            {t('profile.book')}
           </Link>
         </div>
       </div>

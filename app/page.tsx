@@ -127,34 +127,34 @@ export default function HomePage() {
       <section className="px-6 py-10 bg-white border-y border-[#EBEBEB]">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl font-semibold text-[#1A1A1A] text-center mb-8">
-            How it works
+            {t('howItWorks.title')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-[#C4785A] font-bold text-lg">1</span>
               </div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">Choose your cleaner</h3>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('howItWorks.step1Title')}</h3>
               <p className="text-sm text-[#6B6B6B]">
-                Browse profiles, read reviews, and pick someone you trust
+                {t('howItWorks.step1Desc')}
               </p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-[#C4785A] font-bold text-lg">2</span>
               </div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">Book your clean</h3>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('howItWorks.step2Title')}</h3>
               <p className="text-sm text-[#6B6B6B]">
-                Select a date and time that works for you. Pay securely online.
+                {t('howItWorks.step2Desc')}
               </p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-[#C4785A] font-bold text-lg">3</span>
               </div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">Relax with photo proof</h3>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('howItWorks.step3Title')}</h3>
               <p className="text-sm text-[#6B6B6B]">
-                Get photos via WhatsApp showing your villa is spotless
+                {t('howItWorks.step3Desc')}
               </p>
             </div>
           </div>
@@ -283,23 +283,23 @@ export default function HomePage() {
       <section className="px-6 py-12 bg-white border-t border-[#EBEBEB]">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl font-semibold text-[#1A1A1A] text-center mb-8">
-            Why villa owners choose VillaCare
+            {t('why.title')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="text-3xl mb-3">🔒</div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">Vetted cleaners</h3>
-              <p className="text-sm text-[#6B6B6B]">Every cleaner is referred and verified by our team</p>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('why.vettedTitle')}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t('why.vettedDesc')}</p>
             </div>
             <div className="text-center">
               <div className="text-3xl mb-3">📸</div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">Photo proof</h3>
-              <p className="text-sm text-[#6B6B6B]">See your villa is ready before you arrive</p>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('why.photoTitle')}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t('why.photoDesc')}</p>
             </div>
             <div className="text-center">
               <div className="text-3xl mb-3">💬</div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">WhatsApp updates</h3>
-              <p className="text-sm text-[#6B6B6B]">Real-time notifications, no app to download</p>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('why.whatsappTitle')}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t('why.whatsappDesc')}</p>
             </div>
           </div>
         </div>

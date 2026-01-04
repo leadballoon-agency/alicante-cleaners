@@ -71,12 +71,13 @@ async function main() {
   // Create Cleaner profile
   await prisma.cleaner.upsert({
     where: { userId: cleanerUser.id },
-    update: {},
+    update: { languages: ['es', 'en'] },
     create: {
       userId: cleanerUser.id,
       slug: 'clara',
       bio: 'Professional cleaner with 5 years of experience in villa cleaning. I take pride in leaving every home spotless!',
       serviceAreas: ['Alicante City', 'San Juan', 'Playa de San Juan'],
+      languages: ['es', 'en'],
       hourlyRate: 18,
       status: 'ACTIVE',
       rating: 5.0,
@@ -104,12 +105,13 @@ async function main() {
 
   await prisma.cleaner.upsert({
     where: { userId: cleaner2User.id },
-    update: {},
+    update: { languages: ['es', 'de'] },
     create: {
       userId: cleaner2User.id,
       slug: 'maria',
       bio: 'Dedicated and detail-oriented cleaner. Specialized in deep cleaning and move-in/move-out services.',
       serviceAreas: ['El Campello', 'Mutxamel', 'San Vicente'],
+      languages: ['es', 'de'],
       hourlyRate: 16,
       status: 'ACTIVE',
       rating: 4.9,
@@ -136,12 +138,13 @@ async function main() {
 
   await prisma.cleaner.upsert({
     where: { userId: cleaner3User.id },
-    update: {},
+    update: { languages: ['es', 'en', 'fr'] },
     create: {
       userId: cleaner3User.id,
       slug: 'ana',
       bio: 'Flexible scheduling and always reliable. I specialize in turnover cleans for vacation rentals.',
       serviceAreas: ['San Juan', 'El Campello', 'Alicante City'],
+      languages: ['es', 'en', 'fr'],
       hourlyRate: 17,
       status: 'ACTIVE',
       rating: 4.8,
@@ -168,12 +171,13 @@ async function main() {
 
   await prisma.cleaner.upsert({
     where: { userId: cleaner4User.id },
-    update: {},
+    update: { languages: ['es', 'nl'] },
     create: {
       userId: cleaner4User.id,
       slug: 'sofia',
       bio: 'Eco-friendly cleaning products and meticulous attention to detail. Your villa will shine!',
       serviceAreas: ['Mutxamel', 'San Vicente', 'Jijona'],
+      languages: ['es', 'nl'],
       hourlyRate: 15,
       status: 'ACTIVE',
       rating: 4.7,
@@ -200,12 +204,13 @@ async function main() {
 
   await prisma.cleaner.upsert({
     where: { userId: cleaner5User.id },
-    update: {},
+    update: { languages: ['es', 'en', 'it'] },
     create: {
       userId: cleaner5User.id,
       slug: 'carmen',
       bio: '10+ years experience. I treat every villa like my own home. References available.',
       serviceAreas: ['Alicante City', 'Playa de San Juan', 'San Juan', 'El Campello'],
+      languages: ['es', 'en', 'it'],
       hourlyRate: 20,
       status: 'ACTIVE',
       rating: 4.9,

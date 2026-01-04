@@ -104,6 +104,7 @@ export async function GET(
       rating: Number(cleaner.rating),
       reviewCount: cleaner.reviewCount,
       areas: cleaner.serviceAreas,
+      languages: cleaner.languages || ['es'],
       hourlyRate: Number(cleaner.hourlyRate),
       bio: cleaner.bio,
       services,

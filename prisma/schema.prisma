@@ -143,6 +143,7 @@ model Cleaner {
   bio           String?       @db.Text
   reviewsLink   String?
   serviceAreas  String[]
+  languages     String[]      @default(["es"]) // Languages the cleaner speaks (en, es, de, fr, nl, it, pt)
   hourlyRate    Decimal       @db.Decimal(10, 2)
   status        CleanerStatus @default(PENDING)
   totalBookings Int           @default(0)
