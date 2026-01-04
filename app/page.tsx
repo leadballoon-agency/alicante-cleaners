@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import ActivityFeed from '@/components/activity-feed'
 
 type Cleaner = {
   id: string
@@ -74,9 +75,14 @@ export default function HomePage() {
           <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1A1A] mb-4 leading-tight">
             Trusted villa cleaning<br />in Alicante
           </h1>
-          <p className="text-[#6B6B6B] text-lg max-w-md mx-auto mb-8">
+          <p className="text-[#6B6B6B] text-lg max-w-md mx-auto mb-6">
             Book vetted, reliable cleaners for your holiday home. Photo proof included.
           </p>
+
+          {/* Activity Feed */}
+          <div className="flex justify-center mb-8">
+            <ActivityFeed />
+          </div>
 
           {/* Area Filter */}
           <div className="flex flex-wrap justify-center gap-2">
