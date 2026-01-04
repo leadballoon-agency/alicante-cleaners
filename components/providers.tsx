@@ -1,6 +1,7 @@
 'use client'
 
 import { SessionProvider } from 'next-auth/react'
+import { LanguageProvider } from './language-context'
 
 type Props = {
   children: React.ReactNode
@@ -9,7 +10,9 @@ type Props = {
 export default function Providers({ children }: Props) {
   return (
     <SessionProvider>
-      {children}
+      <LanguageProvider>
+        {children}
+      </LanguageProvider>
     </SessionProvider>
   )
 }

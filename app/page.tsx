@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import ActivityFeed from '@/components/activity-feed'
+import LanguageSwitcher from '@/components/language-switcher'
+import { useLanguage } from '@/components/language-context'
 
 type Cleaner = {
   id: string
@@ -19,6 +21,7 @@ type Cleaner = {
 }
 
 export default function HomePage() {
+  const { t } = useLanguage()
   const [cleaners, setCleaners] = useState<Cleaner[]>([])
   const [areas, setAreas] = useState<string[]>([])
   const [selectedArea, setSelectedArea] = useState('all')
@@ -53,23 +56,24 @@ export default function HomePage() {
             <span className="font-semibold text-[#1A1A1A]">VillaCare</span>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <Link
               href="/about"
               className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors hidden sm:block"
             >
-              Our story
+              {t('nav.ourStory')}
             </Link>
             <Link
               href="/onboarding/cleaner"
-              className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
+              className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors hidden sm:block"
             >
-              Join as cleaner
+              {t('nav.joinAsCleaner')}
             </Link>
             <Link
               href="/login"
               className="text-sm bg-[#C4785A] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#B56A4F] transition-colors"
             >
-              Book a clean
+              {t('nav.bookClean')}
             </Link>
           </div>
         </div>
@@ -79,10 +83,10 @@ export default function HomePage() {
       <section className="px-6 py-12 bg-gradient-to-b from-white to-[#FAFAF8]">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1A1A] mb-4 leading-tight">
-            Trusted villa cleaning<br />in Alicante
+            {t('hero.title')}<br />{t('hero.titleLine2')}
           </h1>
           <p className="text-[#6B6B6B] text-lg max-w-md mx-auto mb-6">
-            Book vetted, reliable cleaners for your holiday home. Photo proof included.
+            {t('hero.subtitle')}
           </p>
 
           {/* Activity Feed */}
@@ -100,7 +104,7 @@ export default function HomePage() {
                   : 'bg-white border border-[#DEDEDE] text-[#6B6B6B] hover:border-[#1A1A1A]'
               }`}
             >
-              All areas
+              {t('filter.all')}
             </button>
             {areas.map(area => (
               <button
@@ -199,7 +203,7 @@ export default function HomePage() {
                   {cleaner.featured && (
                     <div className="mb-3">
                       <span className="px-2 py-1 bg-[#FFF8F5] text-[#C4785A] text-xs font-medium rounded-full">
-                        Featured
+                        {t('cleaner.featured')}
                       </span>
                     </div>
                   )}
@@ -233,7 +237,7 @@ export default function HomePage() {
                         </span>
                       </div>
                       <p className="text-sm text-[#6B6B6B] mt-1">
-                        From €{cleaner.hourlyRate * 3}/clean
+                        {t('cleaner.from')} €{cleaner.hourlyRate * 3}/clean
                       </p>
                     </div>
                   </div>
@@ -265,7 +269,7 @@ export default function HomePage() {
                   {/* CTA */}
                   <div className="mt-4 pt-4 border-t border-[#EBEBEB]">
                     <span className="text-sm font-medium text-[#C4785A] group-hover:underline">
-                      View profile & book →
+                      {t('cleaner.viewProfile')} →
                     </span>
                   </div>
                 </Link>
@@ -305,16 +309,16 @@ export default function HomePage() {
       <section className="px-6 py-12 bg-[#1A1A1A]">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-xl font-semibold text-white mb-2">
-            Are you a cleaner in Alicante?
+            {t('cta.cleanerTitle')}
           </h2>
           <p className="text-white/70 mb-6">
-            Join our network of trusted professionals and grow your business
+            {t('cta.cleanerSubtitle')}
           </p>
           <Link
             href="/onboarding/cleaner"
             className="inline-block bg-white text-[#1A1A1A] px-6 py-3 rounded-xl font-medium hover:bg-[#F5F5F3] transition-colors"
           >
-            Apply to join
+            {t('cta.applyJoin')}
           </Link>
         </div>
       </section>
@@ -323,11 +327,11 @@ export default function HomePage() {
       <footer className="px-6 py-6 border-t border-[#EBEBEB]">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-[#9B9B9B]">
-            VillaCare · Alicante, Spain
+            VillaCare · {t('footer.location')}
           </p>
           <div className="flex items-center gap-4 text-xs text-[#9B9B9B]">
             <Link href="/about" className="hover:text-[#1A1A1A]">
-              Our story
+              {t('nav.ourStory')}
             </Link>
             <a href="mailto:hello@alicantecleaners.com" className="hover:text-[#1A1A1A]">
               hello@alicantecleaners.com
