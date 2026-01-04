@@ -73,13 +73,13 @@ export default function ActivityFeed() {
   return (
     <div className="bg-white border border-[#EBEBEB] rounded-full px-4 py-2 inline-flex items-center gap-3 shadow-sm">
       <div className="relative">
-        <div className="w-8 h-8 rounded-full overflow-hidden bg-[#F5F5F3] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full overflow-hidden bg-[#F5F5F3] flex items-center justify-center relative">
           {current.photo ? (
             <Image
               src={current.photo}
               alt=""
               fill
-              className="object-cover"
+              className="object-cover rounded-full"
               unoptimized
             />
           ) : (
