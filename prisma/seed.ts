@@ -211,7 +211,7 @@ async function main() {
   })
 
   if (owner) {
-    await prisma.property.upsert({
+    const property = await prisma.property.upsert({
       where: { id: 'prop_sanjuan' },
       update: {},
       create: {
@@ -225,6 +225,72 @@ async function main() {
       },
     })
     console.log('Created property: San Juan Villa')
+
+    // Get cleaners for creating bookings and reviews
+    const carmen = await prisma.cleaner.findUnique({ where: { slug: 'carmen' } })
+    const clara = await prisma.cleaner.findUnique({ where: { slug: 'clara' } })
+    const maria = await prisma.cleaner.findUnique({ where: { slug: 'maria' } })
+
+    // Sample reviews data
+    const reviewsData = [
+      // Carmen's reviews
+      { cleanerId: carmen?.id, rating: 5, text: 'Carmen is absolutely fantastic! She left our villa spotless before our guests arrived. Highly recommend!', featured: true },
+      { cleanerId: carmen?.id, rating: 5, text: 'Very thorough and professional. Carmen even noticed some things that needed attention that we had missed.' },
+      { cleanerId: carmen?.id, rating: 5, text: 'Third time using Carmen and she never disappoints. The villa always looks perfect.' },
+      { cleanerId: carmen?.id, rating: 4, text: 'Great service, very reliable. Will definitely book again.' },
+      // Clara's reviews
+      { cleanerId: clara?.id, rating: 5, text: 'Clara did an amazing deep clean of our property. It has never looked better!', featured: true },
+      { cleanerId: clara?.id, rating: 5, text: 'So happy with Clara. She is punctual, thorough and very friendly.' },
+      { cleanerId: clara?.id, rating: 5, text: 'Excellent attention to detail. Clara left everything sparkling clean.' },
+      // Maria's reviews
+      { cleanerId: maria?.id, rating: 5, text: 'Maria specializes in move-out cleans and she is the best! Got our full deposit back.', featured: true },
+      { cleanerId: maria?.id, rating: 4, text: 'Very good service. Maria is reliable and does quality work.' },
+      { cleanerId: maria?.id, rating: 5, text: 'Highly professional. Maria went above and beyond our expectations.' },
+    ]
+
+    // Create bookings and reviews
+    for (let i = 0; i < reviewsData.length; i++) {
+      const reviewData = reviewsData[i]
+      if (!reviewData.cleanerId) continue
+
+      const bookingId = `booking_seed_${i}`
+      const reviewId = `review_seed_${i}`
+
+      // Create a completed booking
+      await prisma.booking.upsert({
+        where: { id: bookingId },
+        update: {},
+        create: {
+          id: bookingId,
+          cleanerId: reviewData.cleanerId,
+          ownerId: owner.id,
+          propertyId: property.id,
+          status: 'COMPLETED',
+          service: 'Regular Clean',
+          price: 60,
+          hours: 3,
+          date: new Date(Date.now() - (i + 1) * 7 * 24 * 60 * 60 * 1000), // Staggered dates
+          time: '10:00',
+        },
+      })
+
+      // Create the review
+      await prisma.review.upsert({
+        where: { id: reviewId },
+        update: {},
+        create: {
+          id: reviewId,
+          bookingId,
+          cleanerId: reviewData.cleanerId,
+          ownerId: owner.id,
+          rating: reviewData.rating,
+          text: reviewData.text,
+          featured: reviewData.featured || false,
+          approved: true,
+        },
+      })
+    }
+    console.log('Created sample reviews')
   }
 
   console.log('')

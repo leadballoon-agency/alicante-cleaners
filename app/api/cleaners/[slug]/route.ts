@@ -68,6 +68,25 @@ export async function GET(
       orderBy: { createdAt: 'desc' },
     })
 
+    // Get all approved reviews for this cleaner
+    const reviews = await db.review.findMany({
+      where: {
+        cleanerId: cleaner.id,
+        approved: true,
+      },
+      include: {
+        owner: {
+          include: {
+            user: {
+              select: { name: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    })
+
     // Calculate services with pricing based on hourly rate
     const services = SERVICES.map((service) => ({
       type: service.type,
@@ -96,6 +115,13 @@ export async function GET(
             rating: featuredReview.rating,
           }
         : null,
+      reviews: reviews.map((review) => ({
+        id: review.id,
+        rating: review.rating,
+        text: review.text,
+        author: review.owner.user.name || 'Villa Owner',
+        createdAt: review.createdAt,
+      })),
     }
 
     return NextResponse.json(response)

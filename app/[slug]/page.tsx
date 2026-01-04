@@ -4,6 +4,14 @@ import { useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
+type Review = {
+  id: string
+  rating: number
+  text: string
+  author: string
+  createdAt: string
+}
+
 type Cleaner = {
   id: string
   slug: string
@@ -16,6 +24,7 @@ type Cleaner = {
   bio: string
   services: { type: string; name: string; price: number; hours: number; description: string }[]
   testimonial: { text: string; author: string; location: string; rating: number } | null
+  reviews: Review[]
 }
 
 export default function CleanerProfile() {
@@ -137,9 +146,29 @@ export default function CleanerProfile() {
           ))}
         </div>
 
-        {/* Testimonial */}
-        {cleaner.testimonial && (
-          <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
+        {/* Reviews Section */}
+        {cleaner.reviews && cleaner.reviews.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-medium text-[#1A1A1A]">
+                Reviews ({cleaner.reviewCount})
+              </h2>
+              <div className="flex items-center gap-1">
+                <span className="text-[#C4785A]">&#9733;</span>
+                <span className="font-medium text-[#1A1A1A]">{cleaner.rating.toFixed(1)}</span>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {cleaner.reviews.map((review) => (
+                <ReviewCard key={review.id} review={review} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Fallback testimonial if no reviews */}
+        {(!cleaner.reviews || cleaner.reviews.length === 0) && cleaner.testimonial && (
+          <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB] mb-8">
             <div className="flex gap-1 mb-3">
               {[1, 2, 3, 4, 5].map(i => (
                 <span key={i} className={`text-sm ${i <= cleaner.testimonial!.rating ? 'text-[#C4785A]' : 'text-[#DEDEDE]'}`}>&#9733;</span>
@@ -205,6 +234,38 @@ function ServiceCard({ service, slug }: {
           </Link>
         </div>
       </div>
+    </div>
+  )
+}
+
+function ReviewCard({ review }: { review: Review }) {
+  const timeAgo = (dateString: string) => {
+    const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000)
+    if (seconds < 86400) return 'Today'
+    if (seconds < 172800) return 'Yesterday'
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`
+    if (seconds < 2592000) return `${Math.floor(seconds / 604800)} weeks ago`
+    if (seconds < 31536000) return `${Math.floor(seconds / 2592000)} months ago`
+    return `${Math.floor(seconds / 31536000)} years ago`
+  }
+
+  return (
+    <div className="bg-white rounded-2xl p-4 border border-[#EBEBEB]">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex gap-0.5">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <span
+              key={i}
+              className={`text-sm ${i <= review.rating ? 'text-[#C4785A]' : 'text-[#DEDEDE]'}`}
+            >
+              &#9733;
+            </span>
+          ))}
+        </div>
+        <span className="text-xs text-[#9B9B9B]">{timeAgo(review.createdAt)}</span>
+      </div>
+      <p className="text-sm text-[#1A1A1A] mb-2">{review.text}</p>
+      <p className="text-xs text-[#6B6B6B]">&mdash; {review.author}</p>
     </div>
   )
 }
