@@ -5,20 +5,26 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token
     const path = req.nextUrl.pathname
+    const role = token?.role
+
+    // ADMIN can access everything
+    if (role === 'ADMIN') {
+      return NextResponse.next()
+    }
 
     // Admin routes - require ADMIN role
-    if (path.startsWith('/admin') && token?.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/login?error=unauthorized', req.url))
+    if (path.startsWith('/admin')) {
+      return NextResponse.redirect(new URL('/login?error=admin_only', req.url))
     }
 
     // Cleaner dashboard - require CLEANER role
-    if (path.startsWith('/dashboard') && token?.role !== 'CLEANER') {
-      return NextResponse.redirect(new URL('/login?error=unauthorized', req.url))
+    if (path.startsWith('/dashboard') && role !== 'CLEANER') {
+      return NextResponse.redirect(new URL('/login?error=cleaner_only', req.url))
     }
 
     // Owner dashboard - require OWNER role
-    if (path.startsWith('/owner/dashboard') && token?.role !== 'OWNER') {
-      return NextResponse.redirect(new URL('/login?error=unauthorized', req.url))
+    if (path.startsWith('/owner/dashboard') && role !== 'OWNER') {
+      return NextResponse.redirect(new URL('/login?error=owner_only', req.url))
     }
 
     return NextResponse.next()

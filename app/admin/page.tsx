@@ -6,6 +6,7 @@ import CleanersTab from './tabs/cleaners'
 import BookingsTab from './tabs/bookings'
 import ReviewsTab from './tabs/reviews'
 import FeedbackTab from './tabs/feedback'
+import Image from 'next/image'
 
 type Tab = 'overview' | 'cleaners' | 'bookings' | 'reviews' | 'feedback'
 
@@ -334,11 +335,15 @@ export default function AdminDashboard() {
       <header className="px-6 py-4 bg-[#1A1A1A] text-white">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#C4785A] rounded-lg flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">V</span>
-            </div>
+            <Image
+              src="/villacare-horizontal-logo.png"
+              alt="VillaCare"
+              width={140}
+              height={40}
+              className="object-contain"
+            />
             <div>
-              <h1 className="font-semibold">VillaCare Admin</h1>
+              <h1 className="font-semibold text-lg">Admin</h1>
               <p className="text-xs text-white/60">Platform Manager</p>
             </div>
           </div>

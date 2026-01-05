@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import LanguageSwitcher from '@/components/language-switcher'
 import { useLanguage } from '@/components/language-context'
 import { LANGUAGES } from '@/lib/i18n'
@@ -119,11 +120,14 @@ export default function CleanerProfile() {
       {/* Header */}
       <header className="px-6 pt-6 pb-4 bg-white border-b border-[#EBEBEB] sticky top-0 z-10">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#C4785A] rounded-lg flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">V</span>
-            </div>
-            <span className="font-semibold text-[#1A1A1A]">VillaCare</span>
+          <Link href="/">
+            <Image
+              src="/villacare-horizontal-logo.png"
+              alt="VillaCare"
+              width={140}
+              height={40}
+              className="object-contain"
+            />
           </Link>
           <LanguageSwitcher />
         </div>
@@ -209,41 +213,51 @@ export default function CleanerProfile() {
 
       <main className="px-6 py-6 max-w-lg mx-auto">
 
-        {/* Team Members Section - Only show for team leaders */}
-        {cleaner.teamLeader && cleaner.teamMembers && cleaner.teamMembers.length > 0 && (
+        {/* Team Section - Show for team leaders */}
+        {cleaner.teamLeader && cleaner.teamName && (
           <div className="mb-8">
-            <h2 className="text-sm font-medium text-[#1A1A1A] mb-3">
-              {cleaner.teamName || t('profile.myTeam')}
-            </h2>
-            <div className="bg-white rounded-2xl p-4 border border-[#EBEBEB]">
-              <p className="text-sm text-[#6B6B6B] mb-4">
+            <div className="bg-gradient-to-br from-[#FFF8F5] to-white rounded-2xl p-4 border border-[#EBEBEB]">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">&#128081;</span>
+                <div>
+                  <h2 className="font-semibold text-[#1A1A1A]">{cleaner.teamName}</h2>
+                  <p className="text-xs text-[#6B6B6B]">
+                    {cleaner.teamMembers && cleaner.teamMembers.length > 0
+                      ? `${cleaner.teamMembers.length + 1} cleaners · Coverage guaranteed`
+                      : 'Team leader'}
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-[#6B6B6B] mb-3">
                 {t('profile.teamCoverage')}
               </p>
-              <div className="flex flex-wrap gap-3">
-                {cleaner.teamMembers.map((member) => (
-                  <Link
-                    key={member.id}
-                    href={`/${member.slug}`}
-                    className="flex items-center gap-2 bg-[#F5F5F3] rounded-full pl-1 pr-3 py-1 hover:bg-[#EBEBEB] transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {member.photo ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-sm">&#128100;</span>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-[#1A1A1A] truncate">{member.name}</p>
-                      <div className="flex items-center gap-1">
-                        <span className="text-[#C4785A] text-xs">&#9733;</span>
-                        <span className="text-xs text-[#6B6B6B]">{member.rating.toFixed(1)}</span>
+              {cleaner.teamMembers && cleaner.teamMembers.length > 0 && (
+                <div className="flex flex-wrap gap-3 pt-3 border-t border-[#EBEBEB]/50">
+                  {cleaner.teamMembers.map((member) => (
+                    <Link
+                      key={member.id}
+                      href={`/${member.slug}`}
+                      className="flex items-center gap-2 bg-white rounded-full pl-1 pr-3 py-1 hover:bg-[#F5F5F3] transition-colors border border-[#EBEBEB]"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {member.photo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-sm">&#128100;</span>
+                        )}
                       </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-[#1A1A1A] truncate">{member.name}</p>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[#C4785A] text-xs">&#9733;</span>
+                          <span className="text-xs text-[#6B6B6B]">{member.rating.toFixed(1)}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -41,16 +41,22 @@ export async function GET() {
     // In production, you'd track referrals in a separate table
     const referrals: { name: string; joinedAt: Date; hasBooked: boolean }[] = []
 
+    // Generate a friendly display name
+    const displayName = owner.user.name ||
+      (owner.user.email ? owner.user.email.split('@')[0] : null) ||
+      (owner.user.phone ? `Owner ${owner.user.phone.slice(-4)}` : 'Villa Owner')
+
     return NextResponse.json({
       owner: {
         id: owner.id,
-        name: owner.user.name || 'Unknown',
+        name: displayName,
         email: owner.user.email || '',
         phone: owner.user.phone || '',
         referralCode: owner.referralCode,
         referralCredits: Number(owner.referralCredits),
         totalBookings: owner.totalBookings,
         referrals,
+        needsName: !owner.user.name, // Flag to prompt user to set their name
       },
     })
   } catch (error) {

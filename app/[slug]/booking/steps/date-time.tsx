@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { BookingData } from '../page'
-import { Loader2, Calendar } from 'lucide-react'
+import { Loader2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 
 type Props = {
   data: BookingData
@@ -34,12 +34,17 @@ const TIME_SLOTS = [
   '16:00',
 ]
 
+const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
 export default function DateTimePicker({ data, onUpdate, onNext, cleanerSlug }: Props) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(data.date)
   const [selectedTime, setSelectedTime] = useState(data.time)
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(null)
   const [loadingAvailability, setLoadingAvailability] = useState(false)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const today = new Date()
+    return new Date(today.getFullYear(), today.getMonth(), 1)
+  })
 
   // Fetch availability when date changes
   const fetchAvailability = useCallback(async (date: Date) => {
@@ -67,36 +72,40 @@ export default function DateTimePicker({ data, onUpdate, onNext, cleanerSlug }: 
     }
   }, [selectedDate, fetchAvailability])
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (!scrollRef.current) return
-    const scrollAmount = 200
-    scrollRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
-    })
-  }
+  // Generate calendar grid for current month
+  const calendarDays = useMemo(() => {
+    const year = currentMonth.getFullYear()
+    const month = currentMonth.getMonth()
 
-  // Handle mouse wheel for horizontal scroll
-  const handleWheel = (e: React.WheelEvent) => {
-    if (!scrollRef.current) return
-    e.preventDefault()
-    scrollRef.current.scrollLeft += e.deltaY
-  }
+    // First day of month (0 = Sunday, adjust for Monday start)
+    const firstDay = new Date(year, month, 1)
+    let startOffset = firstDay.getDay() - 1
+    if (startOffset < 0) startOffset = 6 // Sunday becomes 6
 
-  // Generate next 14 days
-  const dates = Array.from({ length: 14 }, (_, i) => {
-    const date = new Date()
-    date.setDate(date.getDate() + i + 1) // Start from tomorrow
-    return date
-  })
+    // Days in month
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
 
-  const formatDayName = (date: Date) => {
-    return date.toLocaleDateString('en-US', { weekday: 'short' })
-  }
+    // Create array of day objects
+    const days: (Date | null)[] = []
 
-  const formatDayNumber = (date: Date) => {
-    return date.getDate()
-  }
+    // Add empty slots for offset
+    for (let i = 0; i < startOffset; i++) {
+      days.push(null)
+    }
+
+    // Add actual days
+    for (let d = 1; d <= daysInMonth; d++) {
+      days.push(new Date(year, month, d))
+    }
+
+    return days
+  }, [currentMonth])
+
+  const today = useMemo(() => {
+    const t = new Date()
+    t.setHours(0, 0, 0, 0)
+    return t
+  }, [])
 
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -107,6 +116,27 @@ export default function DateTimePicker({ data, onUpdate, onNext, cleanerSlug }: 
       d1.getMonth() === d2.getMonth() &&
       d1.getFullYear() === d2.getFullYear()
   }
+
+  const isPastDate = (date: Date) => {
+    return date <= today
+  }
+
+  const isWithinBookingWindow = (date: Date) => {
+    const maxDate = new Date(today)
+    maxDate.setDate(maxDate.getDate() + 60) // Allow booking up to 60 days ahead
+    return date <= maxDate
+  }
+
+  const goToPreviousMonth = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
+  }
+
+  const goToNextMonth = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
+  }
+
+  const canGoBack = currentMonth > new Date(today.getFullYear(), today.getMonth(), 1)
+  const canGoForward = currentMonth < new Date(today.getFullYear(), today.getMonth() + 2, 1)
 
   const handleContinue = () => {
     if (!selectedDate || !selectedTime) return
@@ -131,61 +161,83 @@ export default function DateTimePicker({ data, onUpdate, onNext, cleanerSlug }: 
         </div>
       )}
 
-      {/* Date selection */}
+      {/* Date selection - Calendar Grid */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-semibold text-[#1A1A1A] mb-1">Choose a date</h2>
-            <p className="text-sm text-[#6B6B6B]">{formatMonthYear(dates[0])}</p>
-          </div>
-          {/* Navigation arrows for desktop */}
-          <div className="hidden sm:flex gap-1">
-            <button
-              onClick={() => scroll('left')}
-              className="w-8 h-8 rounded-full border border-[#EBEBEB] bg-white flex items-center justify-center hover:bg-[#F5F5F3] transition-colors"
-              aria-label="Scroll left"
-            >
-              <span className="text-[#6B6B6B]">&larr;</span>
-            </button>
-            <button
-              onClick={() => scroll('right')}
-              className="w-8 h-8 rounded-full border border-[#EBEBEB] bg-white flex items-center justify-center hover:bg-[#F5F5F3] transition-colors"
-              aria-label="Scroll right"
-            >
-              <span className="text-[#6B6B6B]">&rarr;</span>
-            </button>
-          </div>
+          <h2 className="text-lg font-semibold text-[#1A1A1A]">Choose a date</h2>
         </div>
 
-        <div
-          ref={scrollRef}
-          onWheel={handleWheel}
-          className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide cursor-grab active:cursor-grabbing"
-        >
-          {dates.map((date) => {
-            const isSelected = selectedDate && isSameDay(date, selectedDate)
-            const isWeekend = date.getDay() === 0 || date.getDay() === 6
+        <div className="bg-white rounded-2xl border border-[#EBEBEB] p-4">
+          {/* Month navigation */}
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={goToPreviousMonth}
+              disabled={!canGoBack}
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#F5F5F3] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="w-5 h-5 text-[#6B6B6B]" />
+            </button>
+            <span className="font-semibold text-[#1A1A1A]">
+              {formatMonthYear(currentMonth)}
+            </span>
+            <button
+              onClick={goToNextMonth}
+              disabled={!canGoForward}
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#F5F5F3] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Next month"
+            >
+              <ChevronRight className="w-5 h-5 text-[#6B6B6B]" />
+            </button>
+          </div>
 
-            return (
-              <button
-                key={date.toISOString()}
-                onClick={() => setSelectedDate(date)}
-                className={`flex-shrink-0 w-14 py-3 rounded-xl border-2 transition-all active:scale-[0.98] ${
-                  isSelected
-                    ? 'border-[#1A1A1A] bg-[#1A1A1A] text-white'
-                    : 'border-[#EBEBEB] bg-white text-[#1A1A1A]'
-                }`}
-              >
-                <div className={`text-xs mb-1 ${isSelected ? 'text-white/70' : 'text-[#6B6B6B]'}`}>
-                  {formatDayName(date)}
-                </div>
-                <div className="text-lg font-semibold">{formatDayNumber(date)}</div>
-                {isWeekend && !isSelected && (
-                  <div className="text-[10px] text-[#C4785A] mt-0.5">Popular</div>
-                )}
-              </button>
-            )
-          })}
+          {/* Day headers */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {DAY_NAMES.map((day) => (
+              <div key={day} className="text-center text-xs font-medium text-[#6B6B6B] py-2">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map((date, idx) => {
+              if (!date) {
+                return <div key={`empty-${idx}`} className="aspect-square" />
+              }
+
+              const isSelected = selectedDate && isSameDay(date, selectedDate)
+              const isPast = isPastDate(date)
+              const isToday = isSameDay(date, today)
+              const isWeekend = date.getDay() === 0 || date.getDay() === 6
+              const isBookable = !isPast && isWithinBookingWindow(date)
+
+              return (
+                <button
+                  key={date.toISOString()}
+                  onClick={() => isBookable && setSelectedDate(date)}
+                  disabled={!isBookable}
+                  className={`aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-medium transition-all ${
+                    isSelected
+                      ? 'bg-[#1A1A1A] text-white'
+                      : isPast
+                      ? 'text-[#DEDEDE] cursor-not-allowed'
+                      : isToday
+                      ? 'bg-[#FFF8F5] text-[#C4785A] border border-[#C4785A]'
+                      : isWeekend
+                      ? 'bg-[#F5F5F3] text-[#1A1A1A] hover:bg-[#EBEBEB]'
+                      : 'text-[#1A1A1A] hover:bg-[#F5F5F3]'
+                  } ${isBookable && !isSelected ? 'active:scale-95' : ''}`}
+                >
+                  <span>{date.getDate()}</span>
+                  {isWeekend && !isPast && !isSelected && (
+                    <span className="text-[8px] text-[#C4785A] -mt-0.5">Popular</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
 

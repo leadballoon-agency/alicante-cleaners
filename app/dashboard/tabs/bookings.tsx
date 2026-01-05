@@ -1,21 +1,82 @@
 'use client'
 
 import { useState } from 'react'
-import { Booking, InternalComment } from '../page'
+import Image from 'next/image'
+import { Booking, InternalComment, TeamInfo, TeamMember } from '../page'
 
 type Props = {
   bookings: Booking[]
   comments: InternalComment[]
+  teamInfo?: TeamInfo | null
   onAddComment: (propertyId: string, ownerId: string, text: string) => void
   onReviewOwner: (bookingId: string, ownerId: string, ownerName: string) => void
-  onBookingAction?: (bookingId: string, action: 'accept' | 'decline' | 'complete') => void
+  onBookingAction?: (bookingId: string, action: 'accept' | 'decline' | 'complete' | 'assign', assignToCleanerId?: string) => void
 }
 
 type Filter = 'all' | 'pending' | 'confirmed' | 'completed'
 
-export default function BookingsTab({ bookings, comments, onAddComment, onReviewOwner, onBookingAction }: Props) {
+// Team member selection modal
+function AssignModal({
+  members,
+  onSelect,
+  onClose,
+}: {
+  members: TeamMember[]
+  onSelect: (memberId: string) => void
+  onClose: () => void
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+      <div className="bg-white rounded-2xl max-w-sm w-full p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-[#1A1A1A]">Assign to team member</h3>
+          <button onClick={onClose} className="text-[#6B6B6B] text-xl">&times;</button>
+        </div>
+        <p className="text-sm text-[#6B6B6B] mb-4">
+          Select a team member to accept and handle this booking
+        </p>
+        <div className="space-y-2">
+          {members.map((member) => (
+            <button
+              key={member.id}
+              onClick={() => onSelect(member.id)}
+              className="w-full flex items-center gap-3 p-3 rounded-xl border border-[#EBEBEB] hover:border-[#C4785A] hover:bg-[#FFF8F5] transition-all"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#F5F5F3] overflow-hidden relative flex-shrink-0">
+                {member.photo ? (
+                  <Image src={member.photo} alt={member.name} fill className="object-cover" unoptimized />
+                ) : (
+                  <span className="w-full h-full flex items-center justify-center text-lg">👤</span>
+                )}
+              </div>
+              <span className="font-medium text-[#1A1A1A]">{member.name}</span>
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={onClose}
+          className="w-full mt-4 py-2 text-sm text-[#6B6B6B] hover:text-[#1A1A1A]"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default function BookingsTab({ bookings, comments, teamInfo, onAddComment, onReviewOwner, onBookingAction }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null)
+  const [assignModalBookingId, setAssignModalBookingId] = useState<string | null>(null)
+
+  const isTeamLeader = teamInfo?.role === 'leader' && teamInfo.members && teamInfo.members.length > 0
+
+  const handleAssign = (memberId: string) => {
+    if (assignModalBookingId) {
+      onBookingAction?.(assignModalBookingId, 'assign', memberId)
+      setAssignModalBookingId(null)
+    }
+  }
   const [newComment, setNewComment] = useState('')
 
   const filters: { id: Filter; label: string }[] = [
@@ -251,9 +312,17 @@ export default function BookingsTab({ bookings, comments, onAddComment, onReview
                     >
                       Accept
                     </button>
+                    {isTeamLeader && (
+                      <button
+                        onClick={() => setAssignModalBookingId(booking.id)}
+                        className="flex-1 bg-[#C4785A] text-white py-2 rounded-lg text-sm font-medium active:scale-[0.98] transition-all"
+                      >
+                        Assign
+                      </button>
+                    )}
                     <button
                       onClick={() => onBookingAction?.(booking.id, 'decline')}
-                      className="flex-1 bg-white border border-[#DEDEDE] text-[#1A1A1A] py-2 rounded-lg text-sm font-medium active:scale-[0.98] transition-all"
+                      className={`${isTeamLeader ? 'px-4' : 'flex-1'} bg-white border border-[#DEDEDE] text-[#1A1A1A] py-2 rounded-lg text-sm font-medium active:scale-[0.98] transition-all`}
                     >
                       Decline
                     </button>
@@ -294,6 +363,15 @@ export default function BookingsTab({ bookings, comments, onAddComment, onReview
             )
           })}
         </div>
+      )}
+
+      {/* Assign Modal */}
+      {assignModalBookingId && teamInfo?.members && (
+        <AssignModal
+          members={teamInfo.members}
+          onSelect={handleAssign}
+          onClose={() => setAssignModalBookingId(null)}
+        />
       )}
     </div>
   )

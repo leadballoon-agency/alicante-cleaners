@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { useToast } from '@/components/ui/toast'
 
 type TeamRole = 'leader' | 'member' | 'independent'
 
@@ -54,6 +55,7 @@ type TeamData = {
 }
 
 export default function TeamTab() {
+  const { showToast } = useToast()
   const [teamData, setTeamData] = useState<TeamData | null>(null)
   const [browseTeams, setBrowseTeams] = useState<BrowseTeam[]>([])
   const [loading, setLoading] = useState(true)
@@ -115,7 +117,7 @@ export default function TeamTab() {
       setNewTeamName('')
       await fetchTeamData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create team')
+      showToast(err instanceof Error ? err.message : 'Failed to create team', 'error')
     } finally {
       setActionLoading(null)
     }
@@ -136,7 +138,7 @@ export default function TeamTab() {
       setJoinMessage('')
       await fetchBrowseTeams()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to join team')
+      showToast(err instanceof Error ? err.message : 'Failed to join team', 'error')
     } finally {
       setActionLoading(null)
     }
@@ -151,7 +153,7 @@ export default function TeamTab() {
       if (!response.ok) throw new Error('Failed to cancel request')
       await fetchBrowseTeams()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to cancel request')
+      showToast(err instanceof Error ? err.message : 'Failed to cancel request', 'error')
     } finally {
       setActionLoading(null)
     }
@@ -168,7 +170,7 @@ export default function TeamTab() {
       if (!response.ok) throw new Error('Failed to approve request')
       await fetchTeamData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to approve request')
+      showToast(err instanceof Error ? err.message : 'Failed to approve request', 'error')
     } finally {
       setActionLoading(null)
     }
@@ -185,7 +187,7 @@ export default function TeamTab() {
       if (!response.ok) throw new Error('Failed to reject request')
       await fetchTeamData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to reject request')
+      showToast(err instanceof Error ? err.message : 'Failed to reject request', 'error')
     } finally {
       setActionLoading(null)
     }
@@ -201,7 +203,7 @@ export default function TeamTab() {
       if (!response.ok) throw new Error('Failed to remove member')
       await fetchTeamData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to remove member')
+      showToast(err instanceof Error ? err.message : 'Failed to remove member', 'error')
     } finally {
       setActionLoading(null)
     }
@@ -217,7 +219,7 @@ export default function TeamTab() {
       if (!response.ok) throw new Error('Failed to leave team')
       await fetchTeamData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to leave team')
+      showToast(err instanceof Error ? err.message : 'Failed to leave team', 'error')
     } finally {
       setActionLoading(null)
     }
@@ -226,13 +228,13 @@ export default function TeamTab() {
   const copyReferralCode = () => {
     if (teamData?.team?.referralCode) {
       navigator.clipboard.writeText(teamData.team.referralCode)
-      alert('Referral code copied!')
+      showToast('Referral code copied!', 'info')
     }
   }
 
   const handleReferCleaner = async () => {
     if (!referralName.trim() || !referralPhone.trim() || !referralNote.trim()) {
-      alert('Please fill in all fields')
+      showToast('Please fill in all fields', 'error')
       return
     }
     setActionLoading('refer')
@@ -254,9 +256,9 @@ export default function TeamTab() {
       setReferralName('')
       setReferralPhone('')
       setReferralNote('')
-      alert('Referral submitted successfully! They will receive an invitation to join VillaCare.')
+      showToast('Referral submitted! They will receive an invitation to join.', 'success')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to submit referral')
+      showToast(err instanceof Error ? err.message : 'Failed to submit referral', 'error')
     } finally {
       setActionLoading(null)
     }

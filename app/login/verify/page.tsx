@@ -1,16 +1,20 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function VerifyRequestPage() {
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans flex flex-col">
       <header className="px-6 py-4">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-[#C4785A] to-[#A66347] rounded-lg flex items-center justify-center">
-            <span className="text-white font-semibold text-sm">V</span>
-          </div>
-          <span className="font-semibold text-[#1A1A1A]">VillaCare</span>
+        <Link href="/">
+          <Image
+            src="/villacare-horizontal-logo.png"
+            alt="VillaCare"
+            width={140}
+            height={40}
+            className="object-contain"
+          />
         </Link>
       </header>
 

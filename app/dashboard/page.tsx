@@ -73,11 +73,24 @@ export type InternalComment = {
   createdAt: Date
 }
 
+export type TeamMember = {
+  id: string
+  name: string
+  photo: string | null
+  slug: string
+}
+
+export type TeamInfo = {
+  role: 'leader' | 'member' | 'independent'
+  members?: TeamMember[]
+}
+
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const [cleaner, setCleaner] = useState<Cleaner | null>(null)
   const [bookings, setBookings] = useState<Booking[]>([])
   const [comments, setComments] = useState<InternalComment[]>([])
+  const [teamInfo, setTeamInfo] = useState<TeamInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [ownerReviewModal, setOwnerReviewModal] = useState<{
@@ -114,10 +127,11 @@ export default function Dashboard() {
   // Fetch cleaner profile and bookings
   const fetchDashboardData = useCallback(async () => {
     try {
-      const [cleanerRes, bookingsRes, commentsRes] = await Promise.all([
+      const [cleanerRes, bookingsRes, commentsRes, teamRes] = await Promise.all([
         fetch('/api/dashboard/cleaner'),
         fetch('/api/dashboard/cleaner/bookings'),
         fetch('/api/dashboard/cleaner/comments'),
+        fetch('/api/dashboard/cleaner/team'),
       ])
 
       if (!cleanerRes.ok) {
@@ -127,10 +141,21 @@ export default function Dashboard() {
       const cleanerData = await cleanerRes.json()
       const bookingsData = await bookingsRes.json()
       const commentsData = await commentsRes.json()
+      const teamData = await teamRes.json()
 
       setCleaner(cleanerData.cleaner)
       setBookings(bookingsData.bookings || [])
       setComments(commentsData.comments || [])
+
+      // Set team info for team leaders
+      if (teamData.role === 'leader' && teamData.team?.members) {
+        setTeamInfo({
+          role: 'leader',
+          members: teamData.team.members,
+        })
+      } else {
+        setTeamInfo({ role: teamData.role || 'independent' })
+      }
     } catch (err) {
       console.error('Dashboard error:', err)
       setError('Failed to load dashboard. Please try again.')
@@ -203,12 +228,12 @@ export default function Dashboard() {
     }
   }
 
-  const handleBookingAction = async (bookingId: string, action: 'accept' | 'decline' | 'complete') => {
+  const handleBookingAction = async (bookingId: string, action: 'accept' | 'decline' | 'complete' | 'assign', assignToCleanerId?: string) => {
     try {
       const response = await fetch(`/api/dashboard/cleaner/bookings/${bookingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, assignToCleanerId }),
       })
 
       if (!response.ok) {
@@ -217,10 +242,15 @@ export default function Dashboard() {
 
       const result = await response.json()
 
-      // Update local state
-      setBookings(prev => prev.map(b =>
-        b.id === bookingId ? { ...b, status: result.booking.status } : b
-      ))
+      if (action === 'assign') {
+        // Remove the booking from our list (it now belongs to team member)
+        setBookings(prev => prev.filter(b => b.id !== bookingId))
+      } else {
+        // Update local state
+        setBookings(prev => prev.map(b =>
+          b.id === bookingId ? { ...b, status: result.booking.status } : b
+        ))
+      }
     } catch (err) {
       console.error('Error updating booking:', err)
     }
@@ -315,6 +345,7 @@ export default function Dashboard() {
           <BookingsTab
             bookings={bookings}
             comments={comments}
+            teamInfo={teamInfo}
             onAddComment={handleAddComment}
             onReviewOwner={handleReviewOwner}
             onBookingAction={handleBookingAction}
