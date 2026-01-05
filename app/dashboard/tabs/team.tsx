@@ -48,10 +48,21 @@ type BrowseTeam = {
   hasPendingRequest: boolean
 }
 
+type TeamLeaderProgress = {
+  totalHoursWorked: number
+  requiredHours: number
+  hoursRemaining: number
+  currentRating: number
+  requiredRating: number
+  hasMinHours: boolean
+  hasMinRating: boolean
+}
+
 type TeamData = {
   role: TeamRole
   team: Team | null
   canCreateTeam?: boolean
+  teamLeaderProgress?: TeamLeaderProgress
 }
 
 export default function TeamTab() {
@@ -564,7 +575,91 @@ export default function TeamTab() {
         </p>
       </div>
 
-      {/* Create Team (if team leader) */}
+      {/* Progress to Team Leader */}
+      {!teamData?.canCreateTeam && teamData?.teamLeaderProgress && (
+        <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-2xl">🎯</span>
+            <div>
+              <h3 className="font-semibold text-[#1A1A1A]">Become a Team Leader</h3>
+              <p className="text-xs text-[#6B6B6B]">Complete these requirements to create your own team</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {/* Hours Progress */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-[#6B6B6B]">Hours Worked</span>
+                <span className="text-sm font-medium text-[#1A1A1A]">
+                  {teamData.teamLeaderProgress.totalHoursWorked} / {teamData.teamLeaderProgress.requiredHours}h
+                </span>
+              </div>
+              <div className="h-2 bg-[#F5F5F3] rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    teamData.teamLeaderProgress.hasMinHours ? 'bg-[#2E7D32]' : 'bg-[#C4785A]'
+                  }`}
+                  style={{
+                    width: `${Math.min(100, (teamData.teamLeaderProgress.totalHoursWorked / teamData.teamLeaderProgress.requiredHours) * 100)}%`
+                  }}
+                />
+              </div>
+              {teamData.teamLeaderProgress.hasMinHours ? (
+                <p className="text-xs text-[#2E7D32] mt-1 flex items-center gap-1">
+                  <span>✓</span> Requirement met!
+                </p>
+              ) : (
+                <p className="text-xs text-[#6B6B6B] mt-1">
+                  {teamData.teamLeaderProgress.hoursRemaining} more hours needed
+                </p>
+              )}
+            </div>
+
+            {/* Rating Progress */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-[#6B6B6B]">Average Rating</span>
+                <span className="text-sm font-medium text-[#1A1A1A] flex items-center gap-1">
+                  <span className="text-[#C4785A]">★</span>
+                  {teamData.teamLeaderProgress.currentRating.toFixed(1)} / {teamData.teamLeaderProgress.requiredRating.toFixed(1)}
+                </span>
+              </div>
+              <div className="h-2 bg-[#F5F5F3] rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    teamData.teamLeaderProgress.hasMinRating ? 'bg-[#2E7D32]' : 'bg-[#C4785A]'
+                  }`}
+                  style={{
+                    width: `${Math.min(100, (teamData.teamLeaderProgress.currentRating / teamData.teamLeaderProgress.requiredRating) * 100)}%`
+                  }}
+                />
+              </div>
+              {teamData.teamLeaderProgress.hasMinRating ? (
+                <p className="text-xs text-[#2E7D32] mt-1 flex items-center gap-1">
+                  <span>✓</span> Requirement met!
+                </p>
+              ) : teamData.teamLeaderProgress.currentRating === 0 ? (
+                <p className="text-xs text-[#6B6B6B] mt-1">
+                  Complete bookings and get reviewed to build your rating
+                </p>
+              ) : (
+                <p className="text-xs text-[#6B6B6B] mt-1">
+                  Need {teamData.teamLeaderProgress.requiredRating}-star rating to qualify
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-[#EBEBEB]">
+            <p className="text-xs text-[#9B9B9B] text-center">
+              Keep providing excellent service to unlock team leadership!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Create Team (if eligible) */}
       {teamData?.canCreateTeam && (
         <div className="bg-gradient-to-br from-[#FFF8F5] to-[#FAFAF8] rounded-2xl p-5 border border-[#EBEBEB]">
           <div className="flex items-center gap-3 mb-3">
@@ -572,7 +667,7 @@ export default function TeamTab() {
             <h3 className="font-semibold text-[#1A1A1A]">Create Your Team</h3>
           </div>
           <p className="text-sm text-[#6B6B6B] mb-4">
-            As a team leader, you can create a team and invite other cleaners to join.
+            You&apos;ve earned team leader status! Create a team and invite other cleaners to join.
           </p>
           {showCreateTeam ? (
             <div className="space-y-3">

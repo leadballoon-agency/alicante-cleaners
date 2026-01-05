@@ -62,6 +62,28 @@ export async function GET() {
       return NextResponse.json({ error: 'Cleaner not found' }, { status: 404 })
     }
 
+    // Calculate total hours from completed bookings
+    const completedBookings = await db.booking.aggregate({
+      where: {
+        cleanerId: cleaner.id,
+        status: 'COMPLETED',
+      },
+      _sum: {
+        hours: true,
+      },
+    })
+    const totalHoursWorked = completedBookings._sum.hours || 0
+    const TEAM_LEADER_THRESHOLD_HOURS = 50
+    const TEAM_LEADER_MIN_RATING = 5.0
+
+    // Get cleaner's current rating
+    const cleanerRating = cleaner.rating ? Number(cleaner.rating) : 0
+    const hasMinRating = cleanerRating >= TEAM_LEADER_MIN_RATING
+    const hasMinHours = totalHoursWorked >= TEAM_LEADER_THRESHOLD_HOURS
+
+    // Cleaner can create team if: already a teamLeader OR (50+ hours AND 5-star rating)
+    const canCreateTeam = cleaner.teamLeader || (hasMinHours && hasMinRating)
+
     // If cleaner is a team leader
     if (cleaner.ledTeam) {
       return NextResponse.json({
@@ -120,7 +142,16 @@ export async function GET() {
     // Cleaner is independent (no team)
     return NextResponse.json({
       role: 'independent',
-      canCreateTeam: cleaner.teamLeader,
+      canCreateTeam,
+      teamLeaderProgress: {
+        totalHoursWorked,
+        requiredHours: TEAM_LEADER_THRESHOLD_HOURS,
+        hoursRemaining: Math.max(0, TEAM_LEADER_THRESHOLD_HOURS - totalHoursWorked),
+        currentRating: cleanerRating,
+        requiredRating: TEAM_LEADER_MIN_RATING,
+        hasMinHours,
+        hasMinRating,
+      },
       team: null,
     })
   } catch (error) {
@@ -146,10 +177,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cleaner not found' }, { status: 404 })
     }
 
-    // Must be a team leader to create a team
-    if (!cleaner.teamLeader) {
+    // Calculate total hours from completed bookings
+    const completedBookings = await db.booking.aggregate({
+      where: {
+        cleanerId: cleaner.id,
+        status: 'COMPLETED',
+      },
+      _sum: {
+        hours: true,
+      },
+    })
+    const totalHoursWorked = completedBookings._sum.hours || 0
+    const TEAM_LEADER_THRESHOLD_HOURS = 50
+    const TEAM_LEADER_MIN_RATING = 5.0
+
+    const cleanerRating = cleaner.rating ? Number(cleaner.rating) : 0
+    const hasMinRating = cleanerRating >= TEAM_LEADER_MIN_RATING
+    const hasMinHours = totalHoursWorked >= TEAM_LEADER_THRESHOLD_HOURS
+
+    // Must be a team leader OR (50+ hours AND 5-star rating) to create a team
+    const canCreateTeam = cleaner.teamLeader || (hasMinHours && hasMinRating)
+    if (!canCreateTeam) {
+      const issues = []
+      if (!hasMinHours) {
+        issues.push(`${TEAM_LEADER_THRESHOLD_HOURS - totalHoursWorked} more hours of work`)
+      }
+      if (!hasMinRating) {
+        issues.push(`a ${TEAM_LEADER_MIN_RATING}-star rating (currently ${cleanerRating.toFixed(1)})`)
+      }
       return NextResponse.json(
-        { error: 'Only team leaders can create teams' },
+        { error: `To create a team you need: ${issues.join(' and ')}` },
         { status: 403 }
       )
     }
