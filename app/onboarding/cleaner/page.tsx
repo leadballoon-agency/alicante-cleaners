@@ -9,6 +9,7 @@ import ServiceAreas from './steps/service-areas'
 import Pricing from './steps/pricing'
 import CalendarSync from './steps/calendar-sync'
 import Success from './steps/success'
+import { OnboardingChatWidget } from '@/components/ai/onboarding-chat-widget'
 
 export type OnboardingData = {
   phone: string
@@ -118,6 +119,9 @@ function CleanerOnboardingContent() {
           <Success data={data} />
         )}
       </div>
+
+      {/* AI Help Widget - shows on all steps except success */}
+      {step < 7 && <OnboardingChatWidget currentStep={step} />}
     </div>
   )
 }
