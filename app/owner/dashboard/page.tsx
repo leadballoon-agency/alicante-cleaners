@@ -265,7 +265,7 @@ export default function OwnerDashboard() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all rounded-lg mx-0.5 ${
                 activeTab === tab.id
-                  ? 'text-[#1A1A1A] bg-[#F5F5F3]'
+                  ? 'text-[#C4785A] bg-[#FFF8F5]'
                   : 'text-[#9B9B9B]'
               }`}
             >
