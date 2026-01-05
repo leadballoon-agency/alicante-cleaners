@@ -15,7 +15,7 @@ export async function GET() {
       )
     }
 
-    const owner = await db.owner.findUnique({
+    let owner = await db.owner.findUnique({
       where: { userId: session.user.id },
       include: {
         user: {
@@ -29,11 +29,46 @@ export async function GET() {
       },
     })
 
+    // Auto-create owner profile if user doesn't have one
     if (!owner) {
-      return NextResponse.json(
-        { error: 'Owner profile not found' },
-        { status: 404 }
-      )
+      // Get user details for referral code generation
+      const user = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { name: true, email: true, phone: true, image: true },
+      })
+
+      if (!user) {
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        )
+      }
+
+      // Generate referral code
+      const nameForCode = user.name || user.email?.split('@')[0] || 'USER'
+      const cleanName = nameForCode.split(' ')[0].toUpperCase().slice(0, 4).replace(/[^A-Z]/g, 'X')
+      const year = new Date().getFullYear()
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+      const referralCode = `${cleanName}${year}${random}`
+
+      // Create owner profile
+      owner = await db.owner.create({
+        data: {
+          userId: session.user.id,
+          referralCode,
+          trusted: false,
+        },
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+              phone: true,
+              image: true,
+            },
+          },
+        },
+      })
     }
 
     // Get referral count by counting users who were referred by this owner

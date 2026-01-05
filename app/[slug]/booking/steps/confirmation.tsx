@@ -136,8 +136,15 @@ export default function Confirmation({ data, cleaner, slug }: Props) {
         </button>
 
         <Link
+          href="/owner/dashboard"
+          className="w-full bg-[#C4785A] text-white py-3.5 rounded-xl font-medium text-base active:scale-[0.98] transition-all block text-center"
+        >
+          View my bookings
+        </Link>
+
+        <Link
           href={`/${slug}`}
-          className="w-full bg-white border border-[#DEDEDE] text-[#1A1A1A] py-3.5 rounded-xl font-medium text-base active:scale-[0.98] transition-all block"
+          className="w-full bg-white border border-[#DEDEDE] text-[#1A1A1A] py-3.5 rounded-xl font-medium text-base active:scale-[0.98] transition-all block text-center"
         >
           Book another clean
         </Link>
