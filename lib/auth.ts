@@ -28,11 +28,11 @@ export const authOptions: NextAuthOptions = {
   providers: [
     // Magic Link for Owners
     EmailProvider({
-      from: process.env.EMAIL_FROM || 'VillaCare <noreply@villacare.com>',
+      from: process.env.EMAIL_FROM || 'VillaCare <noreply@alicantecleaners.com>',
       sendVerificationRequest: async ({ identifier: email, url }) => {
         try {
           await getResend().emails.send({
-            from: process.env.EMAIL_FROM || 'VillaCare <noreply@villacare.com>',
+            from: process.env.EMAIL_FROM || 'VillaCare <noreply@alicantecleaners.com>',
             to: email,
             subject: 'Sign in to VillaCare',
             html: `
