@@ -155,6 +155,26 @@ export default function OwnerDashboard() {
     }
   }
 
+  const handleMessage = async (cleanerId: string, _cleanerName: string, propertyId?: string) => {
+    try {
+      // Create or get existing conversation
+      const response = await fetch('/api/messages/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cleanerId, propertyId }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to start conversation')
+      }
+
+      // Switch to messages tab
+      setActiveTab('messages')
+    } catch (err) {
+      console.error('Error starting conversation:', err)
+    }
+  }
+
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: 'home', label: 'Home', icon: '🏠' },
     { id: 'bookings', label: 'Bookings', icon: '📋' },
@@ -225,7 +245,7 @@ export default function OwnerDashboard() {
           />
         )}
         {activeTab === 'bookings' && (
-          <BookingsTab bookings={bookings} onLeaveReview={handleLeaveReview} />
+          <BookingsTab bookings={bookings} onLeaveReview={handleLeaveReview} onMessage={handleMessage} />
         )}
         {activeTab === 'messages' && <MessagesTab />}
         {activeTab === 'properties' && (

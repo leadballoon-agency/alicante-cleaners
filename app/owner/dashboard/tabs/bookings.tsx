@@ -8,11 +8,12 @@ import { OwnerBooking } from '../page'
 type Props = {
   bookings: OwnerBooking[]
   onLeaveReview?: (bookingId: string, cleanerId: string, cleanerName: string) => void
+  onMessage?: (cleanerId: string, cleanerName: string, propertyId?: string) => void
 }
 
 type Filter = 'all' | 'upcoming' | 'completed'
 
-export default function BookingsTab({ bookings, onLeaveReview }: Props) {
+export default function BookingsTab({ bookings, onLeaveReview, onMessage }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
 
   const now = new Date()
@@ -124,24 +125,35 @@ export default function BookingsTab({ bookings, onLeaveReview }: Props) {
                   <p className="text-sm font-medium text-[#1A1A1A]">{booking.cleaner.name}</p>
                   <p className="text-xs text-[#6B6B6B]">{booking.property.name}</p>
                 </div>
-                {booking.status === 'completed' && (
-                  <div className="flex gap-2">
-                    {onLeaveReview && (
-                      <button
-                        onClick={() => onLeaveReview(booking.id, booking.cleaner.id, booking.cleaner.name)}
-                        className="text-sm bg-[#C4785A] px-3 py-1.5 rounded-lg text-white font-medium active:scale-[0.98] transition-all"
-                      >
-                        Review
-                      </button>
-                    )}
-                    <Link
-                      href={`/${booking.cleaner.slug}`}
-                      className="text-sm bg-[#F5F5F3] px-3 py-1.5 rounded-lg text-[#1A1A1A] font-medium active:scale-[0.98] transition-all"
+                <div className="flex gap-2">
+                  {onMessage && (
+                    <button
+                      onClick={() => onMessage(booking.cleaner.id, booking.cleaner.name, booking.property.id)}
+                      className="text-sm bg-[#F5F5F3] px-3 py-1.5 rounded-lg text-[#1A1A1A] font-medium active:scale-[0.98] transition-all flex items-center gap-1"
                     >
-                      Book again
-                    </Link>
-                  </div>
-                )}
+                      <span>💬</span>
+                      Message
+                    </button>
+                  )}
+                  {booking.status === 'completed' && (
+                    <>
+                      {onLeaveReview && (
+                        <button
+                          onClick={() => onLeaveReview(booking.id, booking.cleaner.id, booking.cleaner.name)}
+                          className="text-sm bg-[#C4785A] px-3 py-1.5 rounded-lg text-white font-medium active:scale-[0.98] transition-all"
+                        >
+                          Review
+                        </button>
+                      )}
+                      <Link
+                        href={`/${booking.cleaner.slug}`}
+                        className="text-sm bg-[#F5F5F3] px-3 py-1.5 rounded-lg text-[#1A1A1A] font-medium active:scale-[0.98] transition-all"
+                      >
+                        Book again
+                      </Link>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           ))}

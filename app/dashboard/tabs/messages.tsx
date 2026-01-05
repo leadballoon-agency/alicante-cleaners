@@ -59,7 +59,18 @@ export default function MessagesTab() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [showOriginal, setShowOriginal] = useState<Record<string, boolean>>({})
+  const [copied, setCopied] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const copyToClipboard = async (text: string, messageId: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(messageId)
+      setTimeout(() => setCopied(null), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
 
   // Fetch conversations
   useEffect(() => {
@@ -329,16 +340,39 @@ export default function MessagesTab() {
 
                 {/* Show original text if toggled */}
                 {!msg.isMine && showOriginal[msg.id] && msg.originalText !== msg.text && (
-                  <p className="text-xs text-[#9B9B9B] mt-2 pt-2 border-t border-[#EBEBEB]">
-                    Original ({LANGUAGE_NAMES[msg.originalLang] || msg.originalLang}): {msg.originalText}
-                  </p>
+                  <div className="text-xs text-[#9B9B9B] mt-2 pt-2 border-t border-[#EBEBEB]">
+                    <p>Original ({LANGUAGE_NAMES[msg.originalLang] || msg.originalLang}): {msg.originalText}</p>
+                    <button
+                      onClick={() => copyToClipboard(msg.originalText, `${msg.id}-orig`)}
+                      className="text-[#C4785A] hover:text-[#A66048] mt-1 flex items-center gap-1"
+                    >
+                      {copied === `${msg.id}-orig` ? (
+                        <>✓ Copiado!</>
+                      ) : (
+                        <>📋 Copiar original</>
+                      )}
+                    </button>
+                  </div>
                 )}
 
-                {/* Show translation info for sent messages */}
+                {/* Show translation with copy for sent messages */}
                 {msg.isMine && msg.translatedText && (
-                  <p className="text-xs opacity-60 mt-1">
-                    → Traducido a {LANGUAGE_NAMES[msg.translatedLang || 'en'] || 'inglés'}
-                  </p>
+                  <div className="mt-2 pt-2 border-t border-white/20">
+                    <p className="text-xs opacity-60 mb-1">
+                      Traducción en {LANGUAGE_NAMES[msg.translatedLang || 'en'] || 'inglés'}:
+                    </p>
+                    <p className="text-xs opacity-80 italic">{msg.translatedText}</p>
+                    <button
+                      onClick={() => copyToClipboard(msg.translatedText!, `${msg.id}-trans`)}
+                      className="text-xs opacity-60 hover:opacity-100 mt-1 flex items-center gap-1"
+                    >
+                      {copied === `${msg.id}-trans` ? (
+                        <>✓ Copiado!</>
+                      ) : (
+                        <>📋 Copiar para WhatsApp</>
+                      )}
+                    </button>
+                  </div>
                 )}
 
                 <p
