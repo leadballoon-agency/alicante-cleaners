@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import PhoneEntry from './steps/phone-entry'
 import VerifyCode from './steps/verify-code'
@@ -21,7 +21,7 @@ export type OnboardingData = {
   slug: string
 }
 
-export default function CleanerOnboarding() {
+function CleanerOnboardingContent() {
   const searchParams = useSearchParams()
   const initialStep = process.env.NODE_ENV === 'development'
     ? parseInt(searchParams.get('step') || '1', 10)
@@ -119,5 +119,17 @@ export default function CleanerOnboarding() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function CleanerOnboarding() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#1A1A1A] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <CleanerOnboardingContent />
+    </Suspense>
   )
 }

@@ -72,7 +72,6 @@ export async function GET(
 
     for (let hour = WORKING_HOURS.start; hour < WORKING_HOURS.end; hour++) {
       const timeStr = `${hour.toString().padStart(2, '0')}:00`
-      const endTimeStr = `${(hour + SLOT_DURATION).toString().padStart(2, '0')}:00`
 
       // Check if this slot overlaps with any unavailable slot
       const conflict = unavailableSlots.find((slot) => {

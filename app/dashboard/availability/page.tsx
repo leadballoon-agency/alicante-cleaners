@@ -11,7 +11,6 @@ import {
   Check,
   X,
   Loader2,
-  ExternalLink,
 } from 'lucide-react'
 
 type CalendarStatus = {
@@ -30,7 +29,7 @@ type AvailabilityBlock = {
 }
 
 export default function AvailabilityPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null)
   const [availability, setAvailability] = useState<AvailabilityBlock[]>([])
   const [loading, setLoading] = useState(true)

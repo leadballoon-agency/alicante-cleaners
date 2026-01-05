@@ -44,7 +44,7 @@ export default function CalendarSync({ onBack, onNext }: CalendarSyncProps) {
         callbackUrl: `${window.location.origin}/onboarding/cleaner/calendar-callback`,
         redirect: true,
       })
-    } catch (err) {
+    } catch {
       setError('Failed to connect to Google')
       setStatus('error')
     }
@@ -71,10 +71,6 @@ export default function CalendarSync({ onBack, onNext }: CalendarSyncProps) {
       setError(err instanceof Error ? err.message : 'Sync failed')
       setStatus('error')
     }
-  }
-
-  const handleSkip = () => {
-    onNext()
   }
 
   return (
