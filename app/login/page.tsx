@@ -12,6 +12,7 @@ function LoginContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
   const callbackUrl = searchParams.get('callbackUrl') || '/owner/dashboard'
+  const isAdminLogin = callbackUrl.includes('/admin')
 
   const [step, setStep] = useState<Step>('select')
   const [isLoading, setIsLoading] = useState(false)
@@ -172,43 +173,49 @@ function LoginContent() {
             <div className="space-y-6">
               <div className="text-center">
                 <h1 className="text-2xl font-semibold text-[#1A1A1A] mb-2">
-                  Welcome back
+                  {isAdminLogin ? 'Admin Access' : 'Welcome back'}
                 </h1>
                 <p className="text-[#6B6B6B]">
-                  How would you like to sign in?
+                  {isAdminLogin ? 'Sign in to access the admin panel' : 'How would you like to sign in?'}
                 </p>
               </div>
 
               <div className="space-y-3">
                 <button
                   onClick={() => setStep('owner-email')}
-                  className="w-full bg-white border-2 border-[#EBEBEB] hover:border-[#C4785A] rounded-2xl p-5 text-left transition-all group"
+                  className={`w-full bg-white border-2 rounded-2xl p-5 text-left transition-all group ${isAdminLogin ? 'border-[#1A1A1A]' : 'border-[#EBEBEB] hover:border-[#C4785A]'}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-[#FFF8F5] rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                      &#127968;
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform ${isAdminLogin ? 'bg-[#1A1A1A]' : 'bg-[#FFF8F5]'}`}>
+                      {isAdminLogin ? (
+                        <span className="text-white text-xl">&#128274;</span>
+                      ) : (
+                        <span>&#127968;</span>
+                      )}
                     </div>
                     <div>
-                      <p className="font-semibold text-[#1A1A1A]">Property Owner</p>
+                      <p className="font-semibold text-[#1A1A1A]">{isAdminLogin ? 'Admin' : 'Property Owner'}</p>
                       <p className="text-sm text-[#6B6B6B]">Sign in with email link</p>
                     </div>
                   </div>
                 </button>
 
-                <button
-                  onClick={() => setStep('cleaner-phone')}
-                  className="w-full bg-white border-2 border-[#EBEBEB] hover:border-[#C4785A] rounded-2xl p-5 text-left transition-all group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-[#FFF8F5] rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                      &#10024;
+                {!isAdminLogin && (
+                  <button
+                    onClick={() => setStep('cleaner-phone')}
+                    className="w-full bg-white border-2 border-[#EBEBEB] hover:border-[#C4785A] rounded-2xl p-5 text-left transition-all group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#FFF8F5] rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                        &#10024;
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[#1A1A1A]">Cleaner</p>
+                        <p className="text-sm text-[#6B6B6B]">Sign in with phone</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-[#1A1A1A]">Cleaner</p>
-                      <p className="text-sm text-[#6B6B6B]">Sign in with phone</p>
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -224,11 +231,15 @@ function LoginContent() {
                   &larr; Back
                 </button>
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center text-xl">
-                    &#127968;
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl ${isAdminLogin ? 'bg-[#1A1A1A]' : 'bg-[#FFF8F5]'}`}>
+                    {isAdminLogin ? (
+                      <span className="text-white text-base">&#128274;</span>
+                    ) : (
+                      <span>&#127968;</span>
+                    )}
                   </div>
                   <h1 className="text-xl font-semibold text-[#1A1A1A]">
-                    Owner Sign In
+                    {isAdminLogin ? 'Admin Sign In' : 'Owner Sign In'}
                   </h1>
                 </div>
                 <p className="text-[#6B6B6B]">
@@ -251,7 +262,7 @@ function LoginContent() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder={isAdminLogin ? 'admin@villacare.com' : 'you@example.com'}
                     required
                     className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
                   />
@@ -273,9 +284,11 @@ function LoginContent() {
                 </button>
               </form>
 
-              <p className="text-center text-sm text-[#6B6B6B]">
-                No account? No problem! We&apos;ll create one for you.
-              </p>
+              {!isAdminLogin && (
+                <p className="text-center text-sm text-[#6B6B6B]">
+                  No account? No problem! We&apos;ll create one for you.
+                </p>
+              )}
             </div>
           )}
 
