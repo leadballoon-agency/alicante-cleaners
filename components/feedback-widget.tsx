@@ -46,6 +46,8 @@ export default function FeedbackWidget() {
 
   // Hide on admin pages (admins view feedback, not submit)
   const isAdminPage = pathname?.startsWith('/admin') ?? false
+  // Hide on dashboard pages (where bottom nav exists and would conflict)
+  const isDashboardPage = pathname?.includes('/dashboard') ?? false
 
   // Prevent hydration mismatch by only rendering after mount
   useEffect(() => {
@@ -129,15 +131,15 @@ export default function FeedbackWidget() {
     return pathname
   }
 
-  // Don't render until mounted (prevents hydration mismatch) or on admin pages
-  if (!mounted || isAdminPage) return null
+  // Don't render until mounted, on admin pages, or on dashboard pages (bottom nav conflict)
+  if (!mounted || isAdminPage || isDashboardPage) return null
 
   return (
     <>
-      {/* Floating Trigger Button */}
+      {/* Floating Trigger Button - positioned above bottom nav on dashboards */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-[#C4785A] to-[#A66347] text-white shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${
+        className={`fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full bg-gradient-to-br from-[#C4785A] to-[#A66347] text-white shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${
           isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'
         }`}
         aria-label="Send feedback"
@@ -174,7 +176,7 @@ export default function FeedbackWidget() {
 
       {/* Modal */}
       <div
-        className={`fixed bottom-6 right-6 z-50 w-[calc(100vw-48px)] max-w-md transition-all duration-300 ease-out ${
+        className={`fixed bottom-24 right-4 z-50 w-[calc(100vw-32px)] max-w-md transition-all duration-300 ease-out ${
           isOpen
             ? 'opacity-100 translate-y-0 scale-100'
             : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
