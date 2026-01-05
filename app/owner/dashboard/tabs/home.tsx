@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Owner, Property, OwnerBooking } from '../page'
@@ -27,6 +27,24 @@ export default function HomeTab({ owner, properties, bookings }: Props) {
   const [arrivalTime, setArrivalTime] = useState('14:00')
   const [selectedExtras, setSelectedExtras] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [preferredExtras, setPreferredExtras] = useState<string[]>([])
+  const [savePreferences, setSavePreferences] = useState(true)
+
+  // Fetch owner's preferred extras on mount
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      try {
+        const res = await fetch('/api/dashboard/owner/preferences')
+        if (res.ok) {
+          const data = await res.json()
+          setPreferredExtras(data.preferences?.extras || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch preferences:', error)
+      }
+    }
+    fetchPreferences()
+  }, [])
 
   const upcomingBookings = bookings
     .filter(b => new Date(b.date) > new Date() && b.status !== 'completed')
@@ -57,13 +75,44 @@ export default function HomeTab({ owner, properties, bookings }: Props) {
 
   const handleContinueToExtras = () => {
     if (!selectedProperty || !arrivalDate) return
+    // Pre-select preferred extras
+    if (preferredExtras.length > 0) {
+      setSelectedExtras(preferredExtras)
+    }
     setStep('extras')
   }
 
   const handleArrivalSubmit = async () => {
+    if (!selectedProperty?.savedCleaner) {
+      setStep('confirmed')
+      return
+    }
+
     setSubmitting(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    try {
+      const res = await fetch('/api/dashboard/owner/arrival-prep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyId: selectedProperty.id,
+          cleanerId: selectedProperty.savedCleaner.id,
+          arrivalDate,
+          arrivalTime,
+          extras: selectedExtras,
+          savePreferences: savePreferences && selectedExtras.length > 0,
+        }),
+      })
+
+      if (res.ok) {
+        // Update local preferred extras if saved
+        if (savePreferences && selectedExtras.length > 0) {
+          const mergedExtras = Array.from(new Set([...preferredExtras, ...selectedExtras]))
+          setPreferredExtras(mergedExtras)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save arrival prep:', error)
+    }
     setSubmitting(false)
     setStep('confirmed')
   }
@@ -355,6 +404,11 @@ export default function HomeTab({ owner, properties, bookings }: Props) {
                   <p className="text-sm text-[#6B6B6B]">
                     {selectedProperty?.savedCleaner?.name.split(' ')[0]} can help with extras
                   </p>
+                  {preferredExtras.length > 0 && (
+                    <p className="text-xs text-[#C4785A] mt-2">
+                      We&apos;ve pre-selected your usual preferences
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-3 mb-6">
@@ -381,13 +435,28 @@ export default function HomeTab({ owner, properties, bookings }: Props) {
                 </div>
 
                 {selectedExtras.length > 0 && (
-                  <div className="bg-[#FFF8F5] rounded-xl p-4 mb-6 border border-[#F5E6E0]">
-                    <div className="flex items-start gap-2">
-                      <span>💬</span>
-                      <p className="text-sm text-[#6B6B6B]">
-                        You&apos;ll chat with {selectedProperty?.savedCleaner?.name.split(' ')[0]} on WhatsApp to share details and arrange payment via Bizum
-                      </p>
+                  <div className="space-y-4 mb-6">
+                    <div className="bg-[#FFF8F5] rounded-xl p-4 border border-[#F5E6E0]">
+                      <div className="flex items-start gap-2">
+                        <span>💬</span>
+                        <p className="text-sm text-[#6B6B6B]">
+                          You&apos;ll chat with {selectedProperty?.savedCleaner?.name.split(' ')[0]} on WhatsApp to share details and arrange payment via Bizum
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Save preferences checkbox */}
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={savePreferences}
+                        onChange={(e) => setSavePreferences(e.target.checked)}
+                        className="w-5 h-5 rounded border-[#DEDEDE] text-[#1A1A1A] focus:ring-[#1A1A1A]"
+                      />
+                      <span className="text-sm text-[#6B6B6B]">
+                        Remember these preferences for next time
+                      </span>
+                    </label>
                   </div>
                 )}
 

@@ -1,15 +1,30 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { BookingData } from '../page'
+import { Loader2, Calendar } from 'lucide-react'
 
 type Props = {
   data: BookingData
   onUpdate: (data: Partial<BookingData>) => void
   onNext: () => void
+  cleanerSlug: string
+}
+
+type TimeSlot = {
+  time: string
+  available: boolean
+  reason?: string
+}
+
+type AvailabilityResponse = {
+  slots: TimeSlot[]
+  calendarConnected: boolean
+  lastSynced: string | null
 }
 
 const TIME_SLOTS = [
+  '08:00',
   '09:00',
   '10:00',
   '11:00',
@@ -19,10 +34,38 @@ const TIME_SLOTS = [
   '16:00',
 ]
 
-export default function DateTimePicker({ data, onUpdate, onNext }: Props) {
+export default function DateTimePicker({ data, onUpdate, onNext, cleanerSlug }: Props) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(data.date)
   const [selectedTime, setSelectedTime] = useState(data.time)
+  const [availability, setAvailability] = useState<AvailabilityResponse | null>(null)
+  const [loadingAvailability, setLoadingAvailability] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Fetch availability when date changes
+  const fetchAvailability = useCallback(async (date: Date) => {
+    setLoadingAvailability(true)
+    setAvailability(null)
+    setSelectedTime('') // Reset selected time when date changes
+
+    try {
+      const dateStr = date.toISOString().split('T')[0]
+      const res = await fetch(`/api/cleaners/${cleanerSlug}/availability?date=${dateStr}`)
+      if (res.ok) {
+        const data = await res.json()
+        setAvailability(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch availability:', err)
+    } finally {
+      setLoadingAvailability(false)
+    }
+  }, [cleanerSlug])
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchAvailability(selectedDate)
+    }
+  }, [selectedDate, fetchAvailability])
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return
@@ -148,27 +191,55 @@ export default function DateTimePicker({ data, onUpdate, onNext }: Props) {
 
       {/* Time selection */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-[#1A1A1A] mb-4">Choose a time</h2>
-
-        <div className="grid grid-cols-3 gap-3">
-          {TIME_SLOTS.map((time) => {
-            const isSelected = selectedTime === time
-
-            return (
-              <button
-                key={time}
-                onClick={() => setSelectedTime(time)}
-                className={`py-3 rounded-xl border-2 font-medium transition-all active:scale-[0.98] ${
-                  isSelected
-                    ? 'border-[#1A1A1A] bg-[#F5F5F3] text-[#1A1A1A]'
-                    : 'border-[#EBEBEB] bg-white text-[#6B6B6B]'
-                }`}
-              >
-                {time}
-              </button>
-            )
-          })}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-[#1A1A1A]">Choose a time</h2>
+          {availability?.calendarConnected && (
+            <div className="flex items-center gap-1 text-xs text-green-600">
+              <Calendar className="w-3 h-3" />
+              <span>Calendar synced</span>
+            </div>
+          )}
         </div>
+
+        {loadingAvailability ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 text-[#6B6B6B] animate-spin" />
+          </div>
+        ) : !selectedDate ? (
+          <div className="text-center py-8 text-[#6B6B6B]">
+            Select a date first
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-3">
+            {TIME_SLOTS.map((time) => {
+              const slotInfo = availability?.slots.find(s => s.time === time)
+              const isAvailable = slotInfo?.available !== false
+              const isSelected = selectedTime === time
+
+              return (
+                <button
+                  key={time}
+                  onClick={() => isAvailable && setSelectedTime(time)}
+                  disabled={!isAvailable}
+                  className={`py-3 rounded-xl border-2 font-medium transition-all ${
+                    !isAvailable
+                      ? 'border-[#EBEBEB] bg-[#F5F5F3] text-[#BEBEBE] cursor-not-allowed'
+                      : isSelected
+                      ? 'border-[#1A1A1A] bg-[#F5F5F3] text-[#1A1A1A] active:scale-[0.98]'
+                      : 'border-[#EBEBEB] bg-white text-[#6B6B6B] active:scale-[0.98]'
+                  }`}
+                >
+                  <span>{time}</span>
+                  {!isAvailable && (
+                    <span className="block text-[10px] text-[#BEBEBE] mt-0.5">
+                      {slotInfo?.reason || 'Unavailable'}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         <p className="text-xs text-[#9B9B9B] mt-3 text-center">
           All times are in local Spain time (CET)

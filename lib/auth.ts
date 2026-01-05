@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import EmailProvider from 'next-auth/providers/email'
+import GoogleProvider from 'next-auth/providers/google'
 import { Resend } from 'resend'
 import { cookies } from 'next/headers'
 import { db } from './db'
@@ -158,6 +159,23 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+
+    // Google OAuth (for Calendar Sync - cleaners connect during onboarding)
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            authorization: {
+              params: {
+                scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly',
+                access_type: 'offline',
+                prompt: 'consent',
+              },
+            },
+          }),
+        ]
+      : []),
   ],
   callbacks: {
     async signIn({ user, account }) {
@@ -190,6 +208,28 @@ export const authOptions: NextAuthOptions = {
           }
         }
       }
+
+      // For Google OAuth (calendar linking), store tokens in Account table
+      // The PrismaAdapter handles this automatically, but we need to update
+      // the cleaner's googleCalendarConnected status
+      if (account?.provider === 'google' && user.id) {
+        // Find the cleaner associated with this user
+        const cleaner = await db.cleaner.findUnique({
+          where: { userId: user.id },
+        })
+
+        if (cleaner && account.access_token) {
+          // Mark the cleaner as having connected their Google Calendar
+          await db.cleaner.update({
+            where: { id: cleaner.id },
+            data: {
+              googleCalendarConnected: true,
+              googleCalendarSyncedAt: new Date(),
+            },
+          })
+        }
+      }
+
       return true
     },
     async jwt({ token, user, trigger }) {

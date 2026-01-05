@@ -164,6 +164,7 @@ export default function BookingPage() {
         {step === 'date-time' && (
           <DateTimePicker
             data={data}
+            cleanerSlug={slug}
             onUpdate={updateData}
             onNext={() => goToStep('property')}
           />

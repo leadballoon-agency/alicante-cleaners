@@ -7,6 +7,7 @@ import PropertiesTab from './tabs/properties'
 import MessagesTab from './tabs/messages'
 import AccountTab from './tabs/account'
 import ReviewModal from './components/review-modal'
+import { ChatWidget } from '@/components/ai/chat-widget'
 
 type Tab = 'home' | 'bookings' | 'properties' | 'messages' | 'account'
 
@@ -265,6 +266,13 @@ export default function OwnerDashboard() {
           onSubmit={handleSubmitReview}
         />
       )}
+
+      {/* AI Chat Widget */}
+      <ChatWidget
+        agentType="owner"
+        agentName="Villa Assistant"
+        agentDescription="Your personal villa management helper"
+      />
     </div>
   )
 }

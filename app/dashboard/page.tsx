@@ -8,6 +8,7 @@ import MessagesTab from './tabs/messages'
 import TeamTab from './tabs/team'
 import ProfileTab from './tabs/profile'
 import OwnerReviewModal from './components/owner-review-modal'
+import { ChatWidget } from '@/components/ai/chat-widget'
 
 // Helper to read cookie on client
 function getCookie(name: string): string | null {
@@ -356,6 +357,13 @@ export default function Dashboard() {
           onSubmit={handleSubmitOwnerReview}
         />
       )}
+
+      {/* AI Chat Widget */}
+      <ChatWidget
+        agentType="cleaner"
+        agentName="Pro Assistant"
+        agentDescription="Tu asistente profesional de limpieza"
+      />
     </div>
   )
 }

@@ -111,6 +111,22 @@ export default function PhoneEntry({ phone, onUpdate, onNext }: Props) {
       <p className="text-center text-[#9B9B9B] text-xs mt-6">
         By continuing, you agree to our Terms of Service and Privacy Policy
       </p>
+
+      {/* Dev mode skip */}
+      {process.env.NODE_ENV === 'development' && (
+        <button
+          type="button"
+          onClick={() => {
+            onUpdate({ phone: '+34600000000' })
+            onNext()
+            // Skip verification step too
+            setTimeout(() => onNext(), 100)
+          }}
+          className="w-full mt-4 py-2 text-sm text-[#9B9B9B] hover:text-[#6B6B6B]"
+        >
+          [Dev] Skip phone verification
+        </button>
+      )}
     </div>
   )
 }

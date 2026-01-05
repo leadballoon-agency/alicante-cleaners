@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import PhoneEntry from './steps/phone-entry'
 import VerifyCode from './steps/verify-code'
 import NamePhoto from './steps/name-photo'
 import ServiceAreas from './steps/service-areas'
 import Pricing from './steps/pricing'
+import CalendarSync from './steps/calendar-sync'
 import Success from './steps/success'
 
 export type OnboardingData = {
@@ -20,7 +22,11 @@ export type OnboardingData = {
 }
 
 export default function CleanerOnboarding() {
-  const [step, setStep] = useState(1)
+  const searchParams = useSearchParams()
+  const initialStep = process.env.NODE_ENV === 'development'
+    ? parseInt(searchParams.get('step') || '1', 10)
+    : 1
+  const [step, setStep] = useState(initialStep)
   const [data, setData] = useState<OnboardingData>({
     phone: '',
     name: '',
@@ -42,11 +48,11 @@ export default function CleanerOnboarding() {
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-safe">
       {/* Progress bar */}
-      {step < 6 && (
+      {step < 7 && (
         <div className="px-6 pt-safe">
           <div className="max-w-md mx-auto pt-4">
             <div className="flex gap-1.5">
-              {[1, 2, 3, 4, 5].map(i => (
+              {[1, 2, 3, 4, 5, 6].map(i => (
                 <div
                   key={i}
                   className={`h-1 flex-1 rounded-full transition-colors ${
@@ -103,6 +109,12 @@ export default function CleanerOnboarding() {
           />
         )}
         {step === 6 && (
+          <CalendarSync
+            onBack={prevStep}
+            onNext={nextStep}
+          />
+        )}
+        {step === 7 && (
           <Success data={data} />
         )}
       </div>

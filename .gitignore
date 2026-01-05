@@ -38,3 +38,5 @@ next-env.d.ts
 /lib/generated/prisma
 .env
 .playwright-mcp/
+client_secret_*.json
+client_secret_*.json

@@ -160,6 +160,11 @@ model Cleaner {
   calendarToken  String?       @unique // For ICS feed URL
   teamId         String?       // Team this cleaner belongs to (null = independent)
   referredByCode String?       // Team referral code used during signup
+
+  // Google Calendar Integration
+  googleCalendarConnected Boolean   @default(false)
+  googleCalendarSyncedAt  DateTime?
+
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -170,6 +175,8 @@ model Cleaner {
   ledTeam          Team?             @relation("TeamLeader")
   memberOfTeam     Team?             @relation("TeamMembers", fields: [teamId], references: [id])
   teamJoinRequests TeamJoinRequest[]
+  arrivalPreps     ArrivalPrep[]
+  availability     CleanerAvailability[]
 }
 
 model Owner {
@@ -182,6 +189,7 @@ model Owner {
   cleanerReviewCount Int      @default(0)
   referralCode       String   @unique
   referralCredits    Decimal  @default(0) @db.Decimal(10, 2)
+  preferredExtras    String[] @default([]) // Remember favorite arrival extras
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -190,6 +198,7 @@ model Owner {
   bookings      Booking[]
   reviews       Review[]
   conversations Conversation[]
+  arrivalPreps  ArrivalPrep[]
 }
 
 model Property {
@@ -207,6 +216,7 @@ model Property {
   bookings      Booking[]
   comments      InternalComment[]
   conversations Conversation[]
+  arrivalPreps  ArrivalPrep[]
 }
 
 model Booking {
@@ -344,4 +354,63 @@ model TeamJoinRequest {
   cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, cleanerId])
+}
+
+// ============================================
+// Arrival Prep (I'm Coming Home Feature)
+// ============================================
+
+enum ArrivalPrepStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model ArrivalPrep {
+  id          String            @id @default(cuid())
+  ownerId     String
+  propertyId  String
+  cleanerId   String
+  arrivalDate DateTime
+  arrivalTime String            // e.g., "14:00"
+  extras      String[]          // ["fridge", "flowers", "linens", "basket"]
+  notes       String?           @db.Text
+  status      ArrivalPrepStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  owner    Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  cleaner  Cleaner  @relation(fields: [cleanerId], references: [id])
+}
+
+// ============================================
+// Cleaner Availability (Google Calendar Sync)
+// ============================================
+
+enum AvailabilitySource {
+  MANUAL
+  GOOGLE_CALENDAR
+  BOOKING
+}
+
+model CleanerAvailability {
+  id            String             @id @default(cuid())
+  cleanerId     String
+  date          DateTime           @db.Date
+  startTime     String             // "09:00" format
+  endTime       String             // "17:00" format
+  isAvailable   Boolean            @default(true) // false = blocked/busy
+  source        AvailabilitySource @default(MANUAL)
+  googleEventId String?            // For synced Google Calendar events
+  title         String?            // Optional event title (for display)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+
+  @@unique([cleanerId, date, startTime, endTime])
+  @@index([cleanerId, date])
+  @@index([cleanerId, date, isAvailable])
 }
