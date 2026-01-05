@@ -42,6 +42,7 @@ export async function GET() {
       totalBookings: c.totalBookings,
       rating: c.rating ? Number(c.rating) : 0,
       reviewCount: c.reviewCount,
+      teamLeader: c.teamLeader || false,
     }))
 
     return NextResponse.json({ cleaners: formattedCleaners })

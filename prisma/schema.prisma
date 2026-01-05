@@ -136,28 +136,40 @@ enum FeedbackStatus {
   DONE
 }
 
-model Cleaner {
-  id            String        @id @default(cuid())
-  userId        String        @unique
-  slug          String        @unique
-  bio           String?       @db.Text
-  reviewsLink   String?
-  serviceAreas  String[]
-  languages     String[]      @default(["es"]) // Languages the cleaner speaks (en, es, de, fr, nl, it, pt)
-  hourlyRate    Decimal       @db.Decimal(10, 2)
-  status        CleanerStatus @default(PENDING)
-  totalBookings Int           @default(0)
-  rating        Decimal?      @db.Decimal(3, 2)
-  reviewCount   Int           @default(0)
-  featured      Boolean       @default(false)
-  calendarToken String?       @unique // For ICS feed URL
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+enum TeamJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
 
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookings      Booking[]
-  reviews       Review[]
-  conversations Conversation[]
+model Cleaner {
+  id             String        @id @default(cuid())
+  userId         String        @unique
+  slug           String        @unique
+  bio            String?       @db.Text
+  reviewsLink    String?
+  serviceAreas   String[]
+  languages      String[]      @default(["es"]) // Languages the cleaner speaks (en, es, de, fr, nl, it, pt)
+  hourlyRate     Decimal       @db.Decimal(10, 2)
+  status         CleanerStatus @default(PENDING)
+  totalBookings  Int           @default(0)
+  rating         Decimal?      @db.Decimal(3, 2)
+  reviewCount    Int           @default(0)
+  featured       Boolean       @default(false)
+  teamLeader     Boolean       @default(false) // Team leaders can manage backup cleaners
+  calendarToken  String?       @unique // For ICS feed URL
+  teamId         String?       // Team this cleaner belongs to (null = independent)
+  referredByCode String?       // Team referral code used during signup
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings         Booking[]
+  reviews          Review[]
+  conversations    Conversation[]
+  ledTeam          Team?             @relation("TeamLeader")
+  memberOfTeam     Team?             @relation("TeamMembers", fields: [teamId], references: [id])
+  teamJoinRequests TeamJoinRequest[]
 }
 
 model Owner {
@@ -300,4 +312,36 @@ model Message {
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
+}
+
+// ============================================
+// Team Management
+// ============================================
+
+model Team {
+  id           String   @id @default(cuid())
+  name         String
+  leaderId     String   @unique
+  referralCode String   @unique // TEAM-{slug}-{4digits}
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  leader       Cleaner           @relation("TeamLeader", fields: [leaderId], references: [id])
+  members      Cleaner[]         @relation("TeamMembers")
+  joinRequests TeamJoinRequest[]
+}
+
+model TeamJoinRequest {
+  id          String                @id @default(cuid())
+  teamId      String
+  cleanerId   String
+  status      TeamJoinRequestStatus @default(PENDING)
+  message     String?               @db.Text
+  createdAt   DateTime              @default(now())
+  respondedAt DateTime?
+
+  team    Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, cleanerId])
 }

@@ -3,6 +3,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import EmailProvider from 'next-auth/providers/email'
 import { Resend } from 'resend'
+import { cookies } from 'next/headers'
 import { db } from './db'
 
 // Lazy initialize Resend only when needed (avoids build-time errors if API key missing)
@@ -159,6 +160,42 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string
         session.user.role = token.role as string
       }
+
+      // Check for impersonation
+      try {
+        const cookieStore = await cookies()
+        const impersonatingUserId = cookieStore.get('impersonating_user_id')?.value
+        const adminUserId = cookieStore.get('admin_user_id')?.value
+
+        if (impersonatingUserId && adminUserId && session.user) {
+          // Verify the admin is still valid
+          const admin = await db.user.findUnique({
+            where: { id: adminUserId },
+            select: { role: true },
+          })
+
+          if (admin?.role === 'ADMIN') {
+            // Get the impersonated user's info
+            const impersonatedUser = await db.user.findUnique({
+              where: { id: impersonatingUserId },
+              select: { id: true, name: true, email: true, image: true, role: true },
+            })
+
+            if (impersonatedUser) {
+              session.user.id = impersonatedUser.id
+              session.user.name = impersonatedUser.name
+              session.user.email = impersonatedUser.email
+              session.user.image = impersonatedUser.image
+              session.user.role = impersonatedUser.role || 'CLEANER'
+              session.user.isImpersonating = true
+              session.user.adminId = adminUserId
+            }
+          }
+        }
+      } catch {
+        // Cookies not available in this context, continue normally
+      }
+
       return session
     },
   },

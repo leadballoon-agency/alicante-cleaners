@@ -39,6 +39,20 @@ export async function GET(
             image: true,
           },
         },
+        ledTeam: {
+          include: {
+            members: {
+              include: {
+                user: {
+                  select: {
+                    name: true,
+                    image: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     })
 
@@ -96,6 +110,16 @@ export async function GET(
       price: Number(cleaner.hourlyRate) * service.hoursMultiplier,
     }))
 
+    // Get team members if this cleaner is a team leader
+    const teamMembers = cleaner.ledTeam?.members.map(member => ({
+      id: member.id,
+      slug: member.slug,
+      name: member.user.name || 'Team Member',
+      photo: member.user.image,
+      rating: Number(member.rating) || 0,
+      reviewCount: member.reviewCount,
+    })) || []
+
     const response = {
       id: cleaner.id,
       slug: cleaner.slug,
@@ -107,6 +131,9 @@ export async function GET(
       languages: cleaner.languages || ['es'],
       hourlyRate: Number(cleaner.hourlyRate),
       bio: cleaner.bio,
+      teamLeader: cleaner.teamLeader || false,
+      teamName: cleaner.ledTeam?.name || null,
+      teamMembers,
       services,
       testimonial: featuredReview
         ? {

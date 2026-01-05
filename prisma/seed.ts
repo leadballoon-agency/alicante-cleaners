@@ -31,7 +31,7 @@ async function main() {
   for (const ownerData of owners) {
     const ownerUser = await prisma.user.upsert({
       where: { email: ownerData.email },
-      update: {},
+      update: { name: ownerData.name },
       create: {
         email: ownerData.email,
         name: ownerData.name,
@@ -57,33 +57,40 @@ async function main() {
   const cleanerUser = await prisma.user.upsert({
     where: { phone: '+34612345678' },
     update: {
-      image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&h=200&fit=crop&crop=face',
+      name: 'Clara Rodrigues',
+      image: '/cleaners/Clara-Rodrigues.jpeg',
     },
     create: {
       phone: '+34612345678',
-      name: 'Clara Garcia',
+      name: 'Clara Rodrigues',
       role: 'CLEANER',
       phoneVerified: new Date(),
-      image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&h=200&fit=crop&crop=face',
+      image: '/cleaners/Clara-Rodrigues.jpeg',
     },
   })
 
   // Create Cleaner profile
   await prisma.cleaner.upsert({
     where: { userId: cleanerUser.id },
-    update: { languages: ['es', 'en'] },
+    update: {
+      slug: 'clara',
+      bio: 'Team leader with 5 years of experience in villa cleaning. I manage a network of trusted cleaners and take pride in leaving every home spotless!',
+      languages: ['es', 'en', 'pt'],
+      teamLeader: true,
+    },
     create: {
       userId: cleanerUser.id,
       slug: 'clara',
-      bio: 'Professional cleaner with 5 years of experience in villa cleaning. I take pride in leaving every home spotless!',
+      bio: 'Team leader with 5 years of experience in villa cleaning. I manage a network of trusted cleaners and take pride in leaving every home spotless!',
       serviceAreas: ['Alicante City', 'San Juan', 'Playa de San Juan'],
-      languages: ['es', 'en'],
+      languages: ['es', 'en', 'pt'],
       hourlyRate: 18,
       status: 'ACTIVE',
       rating: 5.0,
       reviewCount: 25,
       totalBookings: 45,
       featured: true,
+      teamLeader: true,
     },
   })
   console.log('Created cleaner:', cleanerUser.phone)
@@ -291,7 +298,12 @@ async function main() {
     // Create the review
     await prisma.review.upsert({
       where: { id: reviewId },
-      update: {},
+      update: {
+        text: reviewData.text,
+        rating: reviewData.rating,
+        ownerId: reviewOwner.owner.id,
+        featured: reviewData.featured || false,
+      },
       create: {
         id: reviewId,
         bookingId,

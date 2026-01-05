@@ -6,6 +6,8 @@ declare module 'next-auth' {
     user: {
       id: string
       role: string
+      isImpersonating?: boolean
+      adminId?: string
     } & DefaultSession['user']
   }
 

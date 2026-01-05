@@ -18,6 +18,7 @@ type Cleaner = {
   rating: number
   reviewCount: number
   featured: boolean
+  teamLeader: boolean
 }
 
 export default function HomePage() {
@@ -26,6 +27,7 @@ export default function HomePage() {
   const [areas, setAreas] = useState<string[]>([])
   const [selectedArea, setSelectedArea] = useState('all')
   const [loading, setLoading] = useState(true)
+  const [techTab, setTechTab] = useState<'owner' | 'partner'>('owner')
 
   useEffect(() => {
     fetchCleaners()
@@ -123,162 +125,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it Works */}
-      <section className="px-6 py-10 bg-white border-y border-[#EBEBEB]">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl font-semibold text-[#1A1A1A] text-center mb-8">
-            {t('howItWorks.title')}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-[#C4785A] font-bold text-lg">1</span>
-              </div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('howItWorks.step1Title')}</h3>
-              <p className="text-sm text-[#6B6B6B]">
-                {t('howItWorks.step1Desc')}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-[#C4785A] font-bold text-lg">2</span>
-              </div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('howItWorks.step2Title')}</h3>
-              <p className="text-sm text-[#6B6B6B]">
-                {t('howItWorks.step2Desc')}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-[#C4785A] font-bold text-lg">3</span>
-              </div>
-              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('howItWorks.step3Title')}</h3>
-              <p className="text-sm text-[#6B6B6B]">
-                {t('howItWorks.step3Desc')}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Technology Section */}
-      <section className="px-6 py-12 bg-[#FAFAF8]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-semibold text-[#1A1A1A] mb-3">
-              {t('tech.title')}
-            </h2>
-            <p className="text-[#6B6B6B] max-w-xl mx-auto">
-              {t('tech.subtitle')}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* For Villa Owners */}
-            <div className="bg-white rounded-2xl p-6 border border-[#EBEBEB]">
-              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-5 flex items-center gap-2">
-                <span className="text-xl">🏠</span>
-                {t('tech.forOwners')}
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">🌍</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-[#1A1A1A] text-sm">{t('tech.owner1Title')}</h4>
-                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner1Desc')}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">📸</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-[#1A1A1A] text-sm">{t('tech.owner2Title')}</h4>
-                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner2Desc')}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">🔒</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-[#1A1A1A] text-sm">{t('tech.owner3Title')}</h4>
-                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner3Desc')}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">✈️</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-[#1A1A1A] text-sm">{t('tech.owner4Title')}</h4>
-                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner4Desc')}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* For Cleaners */}
-            <div className="bg-[#1A1A1A] rounded-2xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-5 flex items-center gap-2">
-                <span className="text-xl">✨</span>
-                {t('tech.forCleaners')}
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">📈</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white text-sm">{t('tech.cleaner1Title')}</h4>
-                    <p className="text-sm text-white/70">{t('tech.cleaner1Desc')}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">🌍</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white text-sm">{t('tech.cleaner2Title')}</h4>
-                    <p className="text-sm text-white/70">{t('tech.cleaner2Desc')}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">💳</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white text-sm">{t('tech.cleaner3Title')}</h4>
-                    <p className="text-sm text-white/70">{t('tech.cleaner3Desc')}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">⭐</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white text-sm">{t('tech.cleaner4Title')}</h4>
-                    <p className="text-sm text-white/70">{t('tech.cleaner4Desc')}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">📅</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white text-sm">{t('tech.cleaner5Title')}</h4>
-                    <p className="text-sm text-white/70">{t('tech.cleaner5Desc')}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Cleaners Grid */}
+      {/* Partners Grid */}
       <main className="px-6 py-8 max-w-5xl mx-auto">
         {loading ? (
           <div>
@@ -320,7 +167,7 @@ export default function HomePage() {
         ) : (
           <>
             <p className="text-sm text-[#6B6B6B] mb-4">
-              {cleaners.length} cleaner{cleaners.length !== 1 ? 's' : ''} available
+              {cleaners.length} partner{cleaners.length !== 1 ? 's' : ''} available
               {selectedArea !== 'all' ? ` in ${selectedArea}` : ''}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -330,7 +177,6 @@ export default function HomePage() {
                   href={`/${cleaner.slug}`}
                   className="bg-white rounded-2xl p-5 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-md transition-all group"
                 >
-                  {/* Featured badge */}
                   {cleaner.featured && (
                     <div className="mb-3">
                       <span className="px-2 py-1 bg-[#FFF8F5] text-[#C4785A] text-xs font-medium rounded-full">
@@ -338,8 +184,6 @@ export default function HomePage() {
                       </span>
                     </div>
                   )}
-
-                  {/* Cleaner info */}
                   <div className="flex items-start gap-4">
                     <div className="w-16 h-16 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden relative flex-shrink-0">
                       {cleaner.photo ? (
@@ -355,9 +199,16 @@ export default function HomePage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-[#1A1A1A] group-hover:text-[#C4785A] transition-colors">
-                        {cleaner.name}
-                      </h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-[#1A1A1A] group-hover:text-[#C4785A] transition-colors">
+                          {cleaner.name}
+                        </h3>
+                        {cleaner.teamLeader && (
+                          <span className="px-2 py-0.5 bg-[#C4785A] text-white text-xs font-medium rounded-full">
+                            Team Leader
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1 mt-1">
                         <span className="text-[#C4785A]">★</span>
                         <span className="text-sm font-medium text-[#1A1A1A]">
@@ -372,15 +223,11 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-
-                  {/* Bio */}
                   {cleaner.bio && (
                     <p className="text-sm text-[#6B6B6B] mt-3 line-clamp-2">
                       {cleaner.bio}
                     </p>
                   )}
-
-                  {/* Areas */}
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {cleaner.serviceAreas.slice(0, 3).map(area => (
                       <span
@@ -396,8 +243,6 @@ export default function HomePage() {
                       </span>
                     )}
                   </div>
-
-                  {/* CTA */}
                   <div className="mt-4 pt-4 border-t border-[#EBEBEB]">
                     <span className="text-sm font-medium text-[#C4785A] group-hover:underline">
                       {t('cleaner.viewProfile')} →
@@ -409,6 +254,174 @@ export default function HomePage() {
           </>
         )}
       </main>
+
+      {/* How it Works */}
+      <section className="px-6 py-10 bg-white border-y border-[#EBEBEB]">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl font-semibold text-[#1A1A1A] text-center mb-8">
+            {t('howItWorks.title')}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-[#C4785A] font-bold text-lg">1</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('howItWorks.step1Title')}</h3>
+              <p className="text-sm text-[#6B6B6B]">
+                {t('howItWorks.step1Desc')}
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-[#C4785A] font-bold text-lg">2</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('howItWorks.step2Title')}</h3>
+              <p className="text-sm text-[#6B6B6B]">
+                {t('howItWorks.step2Desc')}
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-[#C4785A] font-bold text-lg">3</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('howItWorks.step3Title')}</h3>
+              <p className="text-sm text-[#6B6B6B]">
+                {t('howItWorks.step3Desc')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Technology Section */}
+      <section className="px-6 py-12 bg-[#FAFAF8]">
+        <div className="max-w-xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-semibold text-[#1A1A1A] mb-3">
+              {t('tech.title')}
+            </h2>
+            <p className="text-[#6B6B6B]">
+              {t('tech.subtitle')}
+            </p>
+          </div>
+
+          {/* Tab Switcher */}
+          <div className="flex justify-center gap-2 mb-6">
+            <button
+              onClick={() => setTechTab('owner')}
+              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+                techTab === 'owner'
+                  ? 'bg-[#1A1A1A] text-white'
+                  : 'bg-white border border-[#DEDEDE] text-[#6B6B6B] hover:border-[#1A1A1A]'
+              }`}
+            >
+              {t('tech.forOwners')}
+            </button>
+            <button
+              onClick={() => setTechTab('partner')}
+              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+                techTab === 'partner'
+                  ? 'bg-[#1A1A1A] text-white'
+                  : 'bg-white border border-[#DEDEDE] text-[#6B6B6B] hover:border-[#1A1A1A]'
+              }`}
+            >
+              {t('tech.forPartners')}
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className={`rounded-2xl p-6 ${techTab === 'owner' ? 'bg-white border border-[#EBEBEB]' : 'bg-[#1A1A1A]'}`}>
+            {techTab === 'owner' ? (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>🌍</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">{t('tech.owner1Title')}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner1Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>📸</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">{t('tech.owner2Title')}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner2Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>🔒</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">{t('tech.owner3Title')}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner3Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>✈️</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">{t('tech.owner4Title')}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t('tech.owner4Desc')}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>📈</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">{t('tech.cleaner1Title')}</h4>
+                    <p className="text-sm text-white/70">{t('tech.cleaner1Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>🌍</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">{t('tech.cleaner2Title')}</h4>
+                    <p className="text-sm text-white/70">{t('tech.cleaner2Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>💳</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">{t('tech.cleaner3Title')}</h4>
+                    <p className="text-sm text-white/70">{t('tech.cleaner3Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>⭐</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">{t('tech.cleaner4Title')}</h4>
+                    <p className="text-sm text-white/70">{t('tech.cleaner4Desc')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>📅</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">{t('tech.cleaner5Title')}</h4>
+                    <p className="text-sm text-white/70">{t('tech.cleaner5Desc')}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* Testimonials */}
       <section className="px-6 py-12 bg-white border-t border-[#EBEBEB]">

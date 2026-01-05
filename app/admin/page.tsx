@@ -34,6 +34,7 @@ export type Cleaner = {
   totalBookings: number
   rating: number
   reviewCount: number
+  teamLeader: boolean
 }
 
 export type Booking = {
@@ -171,6 +172,49 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error('Error rejecting cleaner:', err)
+    }
+  }
+
+  const handleToggleTeamLeader = async (id: string) => {
+    const cleaner = cleaners.find(c => c.id === id)
+    if (!cleaner) return
+
+    try {
+      const response = await fetch(`/api/admin/cleaners/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: cleaner.teamLeader ? 'removeTeamLeader' : 'makeTeamLeader' }),
+      })
+
+      if (response.ok) {
+        setCleaners(prev => prev.map(c =>
+          c.id === id ? { ...c, teamLeader: !c.teamLeader } : c
+        ))
+      }
+    } catch (err) {
+      console.error('Error toggling team leader:', err)
+    }
+  }
+
+  const handleLoginAs = async (cleanerId: string) => {
+    try {
+      const response = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cleanerId }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Redirect to cleaner dashboard
+        window.location.href = data.redirectTo || '/dashboard'
+      } else {
+        const data = await response.json()
+        alert(data.error || 'Failed to login as cleaner')
+      }
+    } catch (err) {
+      console.error('Error logging in as cleaner:', err)
+      alert('Failed to login as cleaner')
     }
   }
 
@@ -339,6 +383,8 @@ export default function AdminDashboard() {
             cleaners={cleaners}
             onApprove={handleApproveCleaner}
             onReject={handleRejectCleaner}
+            onToggleTeamLeader={handleToggleTeamLeader}
+            onLoginAs={handleLoginAs}
           />
         )}
         {activeTab === 'bookings' && (

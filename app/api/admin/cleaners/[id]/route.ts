@@ -21,9 +21,9 @@ export async function PATCH(
     const { id } = await params
     const { action } = await request.json()
 
-    if (!action || !['approve', 'suspend', 'activate'].includes(action)) {
+    if (!action || !['approve', 'suspend', 'activate', 'makeTeamLeader', 'removeTeamLeader'].includes(action)) {
       return NextResponse.json(
-        { error: 'Invalid action. Use "approve", "suspend", or "activate"' },
+        { error: 'Invalid action' },
         { status: 400 }
       )
     }
@@ -39,6 +39,23 @@ export async function PATCH(
       )
     }
 
+    // Handle team leader toggle
+    if (action === 'makeTeamLeader' || action === 'removeTeamLeader') {
+      const updatedCleaner = await db.cleaner.update({
+        where: { id },
+        data: { teamLeader: action === 'makeTeamLeader' },
+      })
+
+      return NextResponse.json({
+        success: true,
+        cleaner: {
+          id: updatedCleaner.id,
+          teamLeader: updatedCleaner.teamLeader,
+        },
+      })
+    }
+
+    // Handle status changes
     let newStatus: 'ACTIVE' | 'SUSPENDED' | 'PENDING'
     switch (action) {
       case 'approve':

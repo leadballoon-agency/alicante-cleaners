@@ -5,11 +5,20 @@ import Image from 'next/image'
 import HomeTab from './tabs/home'
 import BookingsTab from './tabs/bookings'
 import MessagesTab from './tabs/messages'
-import ScheduleTab from './tabs/schedule'
+import TeamTab from './tabs/team'
 import ProfileTab from './tabs/profile'
 import OwnerReviewModal from './components/owner-review-modal'
 
-type Tab = 'home' | 'bookings' | 'messages' | 'schedule' | 'profile'
+// Helper to read cookie on client
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null
+  return null
+}
+
+type Tab = 'home' | 'bookings' | 'messages' | 'team' | 'profile'
 
 export type Owner = {
   id: string
@@ -75,6 +84,31 @@ export default function Dashboard() {
     ownerId: string
     ownerName: string
   } | null>(null)
+  const [impersonating, setImpersonating] = useState<string | null>(null)
+
+  // Check for impersonation on mount
+  useEffect(() => {
+    const impersonatedName = getCookie('impersonating_user_name')
+    if (impersonatedName) {
+      setImpersonating(decodeURIComponent(impersonatedName))
+    }
+  }, [])
+
+  // Exit impersonation
+  const handleExitImpersonation = async () => {
+    try {
+      const response = await fetch('/api/admin/impersonate', {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        window.location.href = data.redirectTo || '/admin'
+      }
+    } catch (err) {
+      console.error('Error exiting impersonation:', err)
+    }
+  }
 
   // Fetch cleaner profile and bookings
   const fetchDashboardData = useCallback(async () => {
@@ -195,7 +229,7 @@ export default function Dashboard() {
     { id: 'home', label: 'Inicio', icon: '🏠' },
     { id: 'bookings', label: 'Reservas', icon: '📋' },
     { id: 'messages', label: 'Mensajes', icon: '💬' },
-    { id: 'schedule', label: 'Agenda', icon: '📅' },
+    { id: 'team', label: 'Equipo', icon: '👥' },
     { id: 'profile', label: 'Perfil', icon: '👤' },
   ]
 
@@ -234,6 +268,24 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-20">
+      {/* Impersonation Banner */}
+      {impersonating && (
+        <div className="bg-[#1A1A1A] text-white px-4 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">👁</span>
+            <span className="text-sm">
+              Viewing as <span className="font-medium">{impersonating}</span>
+            </span>
+          </div>
+          <button
+            onClick={handleExitImpersonation}
+            className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full font-medium transition-colors"
+          >
+            Exit
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <header className="px-6 py-4 pt-safe bg-white border-b border-[#EBEBEB]">
         <div className="max-w-lg mx-auto flex items-center justify-between">
@@ -268,13 +320,7 @@ export default function Dashboard() {
           />
         )}
         {activeTab === 'messages' && <MessagesTab />}
-        {activeTab === 'schedule' && (
-          <ScheduleTab
-            bookings={bookings}
-            cleaner={cleaner}
-            onCalendarTokenUpdate={(token) => setCleaner(prev => prev ? { ...prev, calendarToken: token } : prev)}
-          />
-        )}
+        {activeTab === 'team' && <TeamTab />}
         {activeTab === 'profile' && (
           <ProfileTab cleaner={cleaner} />
         )}

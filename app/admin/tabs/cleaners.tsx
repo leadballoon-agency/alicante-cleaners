@@ -8,11 +8,13 @@ type Props = {
   cleaners: Cleaner[]
   onApprove: (id: string) => void
   onReject: (id: string) => void
+  onToggleTeamLeader: (id: string) => void
+  onLoginAs: (id: string) => void
 }
 
 type Filter = 'all' | 'active' | 'pending'
 
-export default function CleanersTab({ cleaners, onApprove, onReject }: Props) {
+export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTeamLeader, onLoginAs }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
 
@@ -137,6 +139,7 @@ export default function CleanersTab({ cleaners, onApprove, onReject }: Props) {
                   <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Rate</th>
                   <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Bookings</th>
                   <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Rating</th>
+                  <th className="text-center text-xs font-medium text-[#6B6B6B] px-4 py-3">Team Leader</th>
                   <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Joined</th>
                   <th className="text-right text-xs font-medium text-[#6B6B6B] px-4 py-3">Actions</th>
                 </tr>
@@ -178,14 +181,36 @@ export default function CleanersTab({ cleaners, onApprove, onReject }: Props) {
                           <span className="text-xs text-[#6B6B6B]">({cleaner.reviewCount})</span>
                         </div>
                       </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => onToggleTeamLeader(cleaner.id)}
+                          className={`w-10 h-5 rounded-full relative transition-colors ${
+                            cleaner.teamLeader ? 'bg-[#C4785A]' : 'bg-[#DEDEDE]'
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform shadow-sm ${
+                              cleaner.teamLeader ? 'left-5' : 'left-0.5'
+                            }`}
+                          />
+                        </button>
+                      </td>
                       <td className="px-4 py-3 text-sm text-[#6B6B6B]">{formatDate(cleaner.joinedAt)}</td>
                       <td className="px-4 py-3 text-right">
-                        <Link
-                          href={`/${cleaner.slug}`}
-                          className="text-sm text-[#C4785A] font-medium hover:underline"
-                        >
-                          View profile
-                        </Link>
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            onClick={() => onLoginAs(cleaner.id)}
+                            className="text-sm text-[#6B6B6B] font-medium hover:text-[#1A1A1A] transition-colors"
+                          >
+                            Login as
+                          </button>
+                          <Link
+                            href={`/${cleaner.slug}`}
+                            className="text-sm text-[#C4785A] font-medium hover:underline"
+                          >
+                            View profile
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

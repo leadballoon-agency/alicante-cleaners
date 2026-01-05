@@ -15,6 +15,15 @@ type Review = {
   createdAt: string
 }
 
+type TeamMember = {
+  id: string
+  slug: string
+  name: string
+  photo: string | null
+  rating: number
+  reviewCount: number
+}
+
 type Cleaner = {
   id: string
   slug: string
@@ -26,6 +35,9 @@ type Cleaner = {
   hourlyRate: number
   bio: string
   languages: string[]
+  teamLeader: boolean
+  teamName: string | null
+  teamMembers: TeamMember[]
   services: { type: string; name: string; price: number; hours: number; description: string }[]
   testimonial: { text: string; author: string; location: string; rating: number } | null
   reviews: Review[]
@@ -105,7 +117,7 @@ export default function CleanerProfile() {
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-safe">
       {/* Header */}
-      <header className="px-6 py-4 pt-safe bg-white border-b border-[#EBEBEB]">
+      <header className="px-6 pt-6 pb-4 bg-white border-b border-[#EBEBEB] sticky top-0 z-10">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#C4785A] rounded-lg flex items-center justify-center">
@@ -117,45 +129,123 @@ export default function CleanerProfile() {
         </div>
       </header>
 
-      <main className="px-6 py-6 max-w-lg mx-auto">
-        {/* Profile Header */}
-        <div className="flex items-start gap-4 mb-6">
-          <div className="w-20 h-20 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden flex-shrink-0">
-            {cleaner.photo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={cleaner.photo} alt={cleaner.name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-3xl">&#128100;</span>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-xl font-semibold text-[#1A1A1A]">{cleaner.name}</h1>
+      {/* Hero Profile Section */}
+      <div className="bg-gradient-to-b from-[#FFF8F5] to-[#FAFAF8] px-6 py-8">
+        <div className="max-w-lg mx-auto">
+          {/* Profile Header */}
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-24 h-24 rounded-2xl bg-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0 border-2 border-white">
+              {cleaner.photo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={cleaner.photo} alt={cleaner.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-4xl">&#128100;</span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <h1 className="text-2xl font-semibold text-[#1A1A1A]">{cleaner.name}</h1>
+                {cleaner.teamLeader && (
+                  <span className="px-2 py-0.5 bg-[#C4785A] text-white text-xs font-medium rounded-full">
+                    Team Leader
+                  </span>
+                )}
+              </div>
               {cleaner.languages && cleaner.languages.length > 0 && (
-                <div className="flex gap-0.5">
+                <div className="flex gap-1 mb-2">
                   {cleaner.languages.map(lang => {
                     const langInfo = LANGUAGES.find(l => l.code === lang)
                     return langInfo ? (
-                      <span key={lang} className="text-sm" title={langInfo.name}>
+                      <span key={lang} className="text-base" title={langInfo.name}>
                         {langInfo.flag}
                       </span>
                     ) : null
                   })}
                 </div>
               )}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <span className="text-[#C4785A]">&#9733;</span>
+                  <span className="font-semibold text-[#1A1A1A]">{cleaner.rating.toFixed(1)}</span>
+                  <span className="text-[#6B6B6B] text-sm">({cleaner.reviewCount})</span>
+                </div>
+                <span className="text-[#DEDEDE]">|</span>
+                <span className="font-semibold text-[#C4785A]">&euro;{cleaner.hourlyRate}/hr</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[#C4785A]">&#9733;</span>
-              <span className="font-medium text-[#1A1A1A]">{cleaner.rating.toFixed(1)}</span>
-              <span className="text-[#6B6B6B]">&middot; {cleaner.reviewCount} {t('cleaner.reviews')}</span>
+          </div>
+
+          {/* Areas */}
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {cleaner.areas.map(area => (
+              <span key={area} className="px-2.5 py-1 bg-white text-[#6B6B6B] text-xs rounded-full border border-[#EBEBEB]">
+                {area}
+              </span>
+            ))}
+          </div>
+
+          {/* Bio */}
+          {cleaner.bio && (
+            <p className="text-[#6B6B6B] text-sm">{cleaner.bio}</p>
+          )}
+
+          {/* Trust badges - inline */}
+          <div className="flex gap-4 mt-4 pt-4 border-t border-[#EBEBEB]/50">
+            <div className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
+              <span className="text-base">&#9989;</span>
+              {t('profile.verified')}
             </div>
-            <p className="text-sm text-[#6B6B6B]">{cleaner.areas.join(' · ')}</p>
+            <div className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
+              <span className="text-base">&#128247;</span>
+              {t('profile.photoProof')}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
+              <span className="text-base">&#128179;</span>
+              {t('profile.securePayment')}
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Bio */}
-        {cleaner.bio && (
-          <p className="text-[#6B6B6B] text-sm mb-6">{cleaner.bio}</p>
+      <main className="px-6 py-6 max-w-lg mx-auto">
+
+        {/* Team Members Section - Only show for team leaders */}
+        {cleaner.teamLeader && cleaner.teamMembers && cleaner.teamMembers.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-sm font-medium text-[#1A1A1A] mb-3">
+              {cleaner.teamName || t('profile.myTeam')}
+            </h2>
+            <div className="bg-white rounded-2xl p-4 border border-[#EBEBEB]">
+              <p className="text-sm text-[#6B6B6B] mb-4">
+                {t('profile.teamCoverage')}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {cleaner.teamMembers.map((member) => (
+                  <Link
+                    key={member.id}
+                    href={`/${member.slug}`}
+                    className="flex items-center gap-2 bg-[#F5F5F3] rounded-full pl-1 pr-3 py-1 hover:bg-[#EBEBEB] transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {member.photo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-sm">&#128100;</span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#1A1A1A] truncate">{member.name}</p>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[#C4785A] text-xs">&#9733;</span>
+                        <span className="text-xs text-[#6B6B6B]">{member.rating.toFixed(1)}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Services */}
@@ -202,23 +292,6 @@ export default function CleanerProfile() {
         )}
       </main>
 
-      {/* Trust badges */}
-      <div className="px-6 py-6 border-t border-[#EBEBEB]">
-        <div className="max-w-lg mx-auto flex justify-center gap-6 text-center">
-          <div>
-            <div className="text-lg mb-1">&#128274;</div>
-            <p className="text-xs text-[#6B6B6B]">{t('profile.verified')}</p>
-          </div>
-          <div>
-            <div className="text-lg mb-1">&#128179;</div>
-            <p className="text-xs text-[#6B6B6B]">{t('profile.securePayment')}</p>
-          </div>
-          <div>
-            <div className="text-lg mb-1">&#128247;</div>
-            <p className="text-xs text-[#6B6B6B]">{t('profile.photoProof')}</p>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
