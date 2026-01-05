@@ -177,6 +177,13 @@ model Cleaner {
   teamJoinRequests TeamJoinRequest[]
   arrivalPreps     ArrivalPrep[]
   availability     CleanerAvailability[]
+
+  // AI Sales Agent
+  aiSettings           CleanerAISettings?
+  aiUsageLogs          AIUsageLog[]
+  conversationSummaries ConversationSummary[]
+  pendingOnboardings   PendingOnboarding[]
+  responseTrackers     BookingResponseTracker[]
 }
 
 model Owner {
@@ -230,14 +237,16 @@ model Booking {
   hours      Int
   date       DateTime
   time       String
-  notes      String?       @db.Text
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  notes       String?       @db.Text
+  createdByAI Boolean       @default(false) // Booking created by AI sales agent
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   cleaner  Cleaner  @relation(fields: [cleanerId], references: [id])
   owner    Owner    @relation(fields: [ownerId], references: [id])
   property Property @relation(fields: [propertyId], references: [id])
   review   Review?
+  responseTracker BookingResponseTracker?
 }
 
 model Review {
@@ -317,6 +326,7 @@ model Message {
 
   // Metadata
   isRead         Boolean  @default(false)
+  isAIGenerated  Boolean  @default(false)
   createdAt      DateTime @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -413,4 +423,149 @@ model CleanerAvailability {
   @@unique([cleanerId, date, startTime, endTime])
   @@index([cleanerId, date])
   @@index([cleanerId, date, isAvailable])
+}
+
+// ============================================
+// AI Sales Agent
+// ============================================
+
+model CleanerAISettings {
+  id          String   @id @default(cuid())
+  cleanerId   String   @unique
+  aiEnabled   Boolean  @default(true)  // AI responds to owner messages
+  autoBooking Boolean  @default(true)  // AI can create confirmed bookings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+}
+
+model AIUsageLog {
+  id             String   @id @default(cuid())
+  cleanerId      String
+  conversationId String
+  action         String   // RESPONSE, BOOKING_CREATED
+  tokensUsed     Int
+  createdAt      DateTime @default(now())
+
+  cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+
+  @@index([cleanerId, createdAt])
+}
+
+model ConversationSummary {
+  id             String   @id @default(cuid())
+  conversationId String
+  cleanerId      String
+  summary        String   @db.Text
+  bookingCreated Boolean  @default(false)
+  bookingId      String?
+  createdAt      DateTime @default(now())
+
+  cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+
+  @@index([cleanerId, createdAt])
+}
+
+// ============================================
+// Public AI Onboarding (Magic Link Signup)
+// ============================================
+
+enum OnboardingStatus {
+  PENDING     // Waiting for user to click magic link
+  COMPLETED   // User signed up and booking created
+  EXPIRED     // Link expired (24 hours)
+}
+
+// ============================================
+// Notifications
+// ============================================
+
+enum NotificationType {
+  BOOKING_REQUEST     // New booking needs confirmation
+  BOOKING_REMINDER    // Reminder to respond to booking
+  BOOKING_ESCALATED   // Booking escalated to team
+  BOOKING_AUTO_DECLINED // Booking auto-declined
+  BOOKING_CONFIRMED   // Booking was confirmed
+  BOOKING_COMPLETED   // Booking was completed
+  TEAM_COVERAGE       // Team member covered a booking
+  NEW_REVIEW          // New review received
+  AI_ACTION           // AI took an action
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String           // User to notify
+  type        NotificationType
+  title       String
+  message     String           @db.Text
+  data        Json?            // Additional data (bookingId, etc)
+  read        Boolean          @default(false)
+  actionUrl   String?          // Link to take action
+  createdAt   DateTime         @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+// Track booking response deadlines
+model BookingResponseTracker {
+  id            String   @id @default(cuid())
+  bookingId     String   @unique
+  cleanerId     String
+
+  // Reminder schedule
+  reminder1SentAt  DateTime?  // After 1 hour
+  reminder2SentAt  DateTime?  // After 2 hours (also escalate to team)
+  escalatedAt      DateTime?  // When team was notified
+  autoDeclinedAt   DateTime?  // After 6 hours
+  respondedAt      DateTime?  // When cleaner responded
+
+  createdAt     DateTime @default(now())
+
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  cleaner       Cleaner  @relation(fields: [cleanerId], references: [id])
+
+  @@index([cleanerId, createdAt])
+}
+
+model PendingOnboarding {
+  id          String            @id @default(cuid())
+  cleanerId   String            // Cleaner being booked
+  token       String            @unique // Magic link token
+
+  cleaner     Cleaner           @relation(fields: [cleanerId], references: [id])
+
+  // Collected visitor info
+  visitorName  String
+  visitorPhone String
+  visitorEmail String?
+
+  // Property details
+  bedrooms     Int
+  bathrooms    Int
+  outdoorAreas String[]         // ["pool", "garden", "terrace"]
+  accessNotes  String?          @db.Text // Key location, gate codes, parking
+  address      String?
+
+  // Booking details
+  serviceType  String           // regular, deep, arrival
+  servicePrice Decimal          @db.Decimal(10, 2)
+  serviceHours Int
+  preferredDate DateTime
+  preferredTime String
+
+  // Status
+  status       OnboardingStatus @default(PENDING)
+  expiresAt    DateTime         // 24 hours from creation
+  createdAt    DateTime         @default(now())
+  completedAt  DateTime?
+
+  // Result (after completion)
+  userId       String?          // Created user ID
+  ownerId      String?          // Created owner ID
+  propertyId   String?          // Created property ID
+  bookingId    String?          // Created booking ID
+
+  @@index([token])
+  @@index([cleanerId, status])
 }

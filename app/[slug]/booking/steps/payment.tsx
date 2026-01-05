@@ -85,10 +85,10 @@ export default function Payment({ data, cleaner, cleanerSlug, onUpdate, onNext }
       <div className="text-center mb-6">
         <div className="text-4xl mb-4">&#128179;</div>
         <h1 className="text-xl font-semibold text-[#1A1A1A] mb-2">
-          Confirm & pay
+          Confirm booking
         </h1>
         <p className="text-[#6B6B6B] text-sm">
-          Review your booking details
+          Review your details and confirm
         </p>
       </div>
 
@@ -185,14 +185,14 @@ export default function Payment({ data, cleaner, cleanerSlug, onUpdate, onNext }
           </p>
         </div>
 
-        {/* Payment placeholder */}
+        {/* Payment info */}
         <div className="bg-[#F5F5F3] rounded-xl p-4 border border-[#EBEBEB]">
           <div className="flex items-center gap-3 mb-3">
-            <span className="text-lg">&#128274;</span>
-            <span className="text-sm font-medium text-[#1A1A1A]">Secure payment</span>
+            <span className="text-lg">&#128176;</span>
+            <span className="text-sm font-medium text-[#1A1A1A]">Payment</span>
           </div>
           <p className="text-xs text-[#6B6B6B]">
-            Payment processing will be enabled soon. For now, your booking will be confirmed directly.
+            Pay your cleaner directly after the clean. Online payments coming soon.
           </p>
         </div>
 

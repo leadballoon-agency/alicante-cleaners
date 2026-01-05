@@ -13,6 +13,7 @@ type Message = {
   isMine: boolean
   senderRole: 'OWNER' | 'CLEANER'
   isRead: boolean
+  isAIGenerated?: boolean
   createdAt: string
 }
 
@@ -325,6 +326,15 @@ export default function MessagesTab() {
                     : 'bg-white border border-[#EBEBEB] text-[#1A1A1A] rounded-bl-md'
                 }`}
               >
+                {/* AI Badge for AI-generated messages */}
+                {!msg.isMine && msg.isAIGenerated && (
+                  <div className="flex items-center gap-1 mb-1.5">
+                    <span className="text-[10px] bg-gradient-to-r from-purple-500 to-blue-500 text-white px-1.5 py-0.5 rounded-full font-medium">
+                      AI
+                    </span>
+                    <span className="text-[10px] text-[#9B9B9B]">Auto-response</span>
+                  </div>
+                )}
                 <p className="text-sm">{msg.text}</p>
 
                 {/* Show translation toggle for received messages */}

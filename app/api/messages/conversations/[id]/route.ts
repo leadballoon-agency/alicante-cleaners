@@ -103,6 +103,7 @@ export async function GET(
         isMine,
         senderRole: msg.senderRole,
         isRead: msg.isRead,
+        isAIGenerated: msg.isAIGenerated,
         createdAt: msg.createdAt,
       }
     })

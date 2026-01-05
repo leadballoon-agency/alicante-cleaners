@@ -7,6 +7,7 @@ import Image from 'next/image'
 import LanguageSwitcher from '@/components/language-switcher'
 import { useLanguage } from '@/components/language-context'
 import { LANGUAGES } from '@/lib/i18n'
+import { PublicChatWidget } from '@/components/ai/public-chat-widget'
 
 type Review = {
   id: string
@@ -306,6 +307,16 @@ export default function CleanerProfile() {
         )}
       </main>
 
+      {/* AI Chat Widget for public visitors */}
+      <PublicChatWidget
+        cleaner={{
+          id: cleaner.id,
+          slug: cleaner.slug,
+          name: cleaner.name,
+          hourlyRate: cleaner.hourlyRate,
+          serviceAreas: cleaner.areas,
+        }}
+      />
     </div>
   )
 }

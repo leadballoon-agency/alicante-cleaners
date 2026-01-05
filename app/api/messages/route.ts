@@ -107,6 +107,22 @@ export async function POST(request: NextRequest) {
       data: { updatedAt: new Date() },
     })
 
+    // Trigger AI response for owner messages (async - don't block response)
+    if (role === 'OWNER') {
+      // Fire and forget - AI will respond asynchronously
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      fetch(`${baseUrl}/api/ai/sales-agent/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId,
+          messageId: message.id,
+        }),
+      }).catch(err => {
+        console.error('Failed to trigger AI response:', err)
+      })
+    }
+
     return NextResponse.json({
       message: {
         id: message.id,
