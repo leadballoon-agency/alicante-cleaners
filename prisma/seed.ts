@@ -5,18 +5,26 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Seeding database...')
 
-  // Create Admin user (can still use email magic link to sign in)
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@villacare.com' },
-    update: {},
-    create: {
-      email: 'admin@villacare.com',
-      name: 'Admin',
-      role: 'ADMIN',
-      emailVerified: new Date(),
-    },
-  })
-  console.log('Created admin:', admin.email)
+  // Create Admin users (can use email magic link to sign in)
+  const admins = [
+    { email: 'admin@villacare.com', name: 'Admin' },
+    { email: 'mark@leadballoon.co.uk', name: 'Mark' },
+    { email: 'kerry@leadballoon.co.uk', name: 'Kerry' },
+  ]
+
+  for (const adminData of admins) {
+    const admin = await prisma.user.upsert({
+      where: { email: adminData.email },
+      update: { role: 'ADMIN' },
+      create: {
+        email: adminData.email,
+        name: adminData.name,
+        role: 'ADMIN',
+        emailVerified: new Date(),
+      },
+    })
+    console.log('Created admin:', admin.email)
+  }
 
   // Create test Owners (use magic link to sign in)
   const owners = [

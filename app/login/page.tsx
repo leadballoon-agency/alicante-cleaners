@@ -5,7 +5,7 @@ import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-type Step = 'select' | 'owner-email' | 'cleaner-phone' | 'cleaner-verify'
+type Step = 'select' | 'owner-method' | 'owner-email' | 'owner-phone' | 'owner-verify' | 'cleaner-phone' | 'cleaner-verify'
 
 function LoginContent() {
   const router = useRouter()
@@ -22,9 +22,10 @@ function LoginContent() {
   // Owner login state
   const [email, setEmail] = useState('')
 
-  // Cleaner login state
+  // Phone login state (shared by owner and cleaner)
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
+  const [loginType, setLoginType] = useState<'owner' | 'cleaner'>('owner')
 
   const handleOwnerMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,16 +61,19 @@ function LoginContent() {
     // For now, simulate sending code
     await new Promise(resolve => setTimeout(resolve, 1000))
 
-    setStep('cleaner-verify')
+    setStep(loginType === 'owner' ? 'owner-verify' : 'cleaner-verify')
     setIsLoading(false)
   }
 
-  const handleCleanerLogin = async (e: React.FormEvent) => {
+  const handlePhoneLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setFormError(null)
 
-    const result = await signIn('cleaner-login', {
+    const providerId = loginType === 'owner' ? 'owner-phone-login' : 'cleaner-login'
+    const redirectPath = loginType === 'owner' ? '/owner/dashboard' : '/dashboard'
+
+    const result = await signIn(providerId, {
       phone,
       code,
       redirect: false,
@@ -80,7 +84,7 @@ function LoginContent() {
     if (result?.error) {
       setFormError('Invalid verification code')
     } else {
-      router.push('/dashboard')
+      router.push(redirectPath)
       router.refresh()
     }
   }
@@ -91,6 +95,15 @@ function LoginContent() {
     if (step === 'cleaner-verify') {
       setStep('cleaner-phone')
       setCode('')
+    } else if (step === 'owner-verify') {
+      setStep('owner-phone')
+      setCode('')
+    } else if (step === 'owner-email' || step === 'owner-phone') {
+      setStep(isAdminLogin ? 'select' : 'owner-method')
+      setEmail('')
+      setPhone('')
+    } else if (step === 'owner-method') {
+      setStep('select')
     } else {
       setStep('select')
       setEmail('')
@@ -182,7 +195,10 @@ function LoginContent() {
 
               <div className="space-y-3">
                 <button
-                  onClick={() => setStep('owner-email')}
+                  onClick={() => {
+                    setLoginType('owner')
+                    setStep(isAdminLogin ? 'owner-email' : 'owner-method')
+                  }}
                   className={`w-full bg-white border-2 rounded-2xl p-5 text-left transition-all group ${isAdminLogin ? 'border-[#1A1A1A]' : 'border-[#EBEBEB] hover:border-[#C4785A]'}`}
                 >
                   <div className="flex items-center gap-4">
@@ -195,14 +211,17 @@ function LoginContent() {
                     </div>
                     <div>
                       <p className="font-semibold text-[#1A1A1A]">{isAdminLogin ? 'Admin' : 'Property Owner'}</p>
-                      <p className="text-sm text-[#6B6B6B]">Sign in with email link</p>
+                      <p className="text-sm text-[#6B6B6B]">{isAdminLogin ? 'Sign in with email link' : 'Email or phone'}</p>
                     </div>
                   </div>
                 </button>
 
                 {!isAdminLogin && (
                   <button
-                    onClick={() => setStep('cleaner-phone')}
+                    onClick={() => {
+                      setLoginType('cleaner')
+                      setStep('cleaner-phone')
+                    }}
                     className="w-full bg-white border-2 border-[#EBEBEB] hover:border-[#C4785A] rounded-2xl p-5 text-left transition-all group"
                   >
                     <div className="flex items-center gap-4">
@@ -216,6 +235,63 @@ function LoginContent() {
                     </div>
                   </button>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Step: Owner method selection */}
+          {step === 'owner-method' && (
+            <div className="space-y-6">
+              <div>
+                <button
+                  onClick={handleBack}
+                  className="text-sm text-[#6B6B6B] flex items-center gap-1 mb-4 hover:text-[#1A1A1A]"
+                >
+                  &larr; Back
+                </button>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center text-xl">
+                    &#127968;
+                  </div>
+                  <h1 className="text-xl font-semibold text-[#1A1A1A]">
+                    Owner Sign In
+                  </h1>
+                </div>
+                <p className="text-[#6B6B6B]">
+                  How would you like to sign in?
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => setStep('owner-email')}
+                  className="w-full bg-white border-2 border-[#EBEBEB] hover:border-[#C4785A] rounded-2xl p-4 text-left transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#F5F5F3] rounded-lg flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                      &#9993;
+                    </div>
+                    <div>
+                      <p className="font-medium text-[#1A1A1A]">Email link</p>
+                      <p className="text-sm text-[#6B6B6B]">We&apos;ll send you a sign-in link</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setStep('owner-phone')}
+                  className="w-full bg-white border-2 border-[#EBEBEB] hover:border-[#C4785A] rounded-2xl p-4 text-left transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#F5F5F3] rounded-lg flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                      &#128241;
+                    </div>
+                    <div>
+                      <p className="font-medium text-[#1A1A1A]">Phone code</p>
+                      <p className="text-sm text-[#6B6B6B]">We&apos;ll send you a verification code</p>
+                    </div>
+                  </div>
+                </button>
               </div>
             </div>
           )}
@@ -289,6 +365,147 @@ function LoginContent() {
                   No account? No problem! We&apos;ll create one for you.
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Step: Owner phone entry */}
+          {step === 'owner-phone' && (
+            <div className="space-y-6">
+              <div>
+                <button
+                  onClick={handleBack}
+                  className="text-sm text-[#6B6B6B] flex items-center gap-1 mb-4 hover:text-[#1A1A1A]"
+                >
+                  &larr; Back
+                </button>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center text-xl">
+                    &#127968;
+                  </div>
+                  <h1 className="text-xl font-semibold text-[#1A1A1A]">
+                    Owner Sign In
+                  </h1>
+                </div>
+                <p className="text-[#6B6B6B]">
+                  We&apos;ll send a verification code to your phone
+                </p>
+              </div>
+
+              {formError && (
+                <div className="p-4 bg-[#FFEBEE] border border-[#C75050] rounded-xl text-[#C75050] text-sm">
+                  {formError}
+                </div>
+              )}
+
+              <form onSubmit={handleSendCode} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+34 612 345 678"
+                    required
+                    className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-[#1A1A1A] text-white py-3.5 rounded-xl font-medium active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Sending code...
+                    </>
+                  ) : (
+                    'Send Verification Code'
+                  )}
+                </button>
+              </form>
+
+              <p className="text-center text-sm text-[#6B6B6B]">
+                No account? No problem! We&apos;ll create one for you.
+              </p>
+            </div>
+          )}
+
+          {/* Step: Owner verify code */}
+          {step === 'owner-verify' && (
+            <div className="space-y-6">
+              <div>
+                <button
+                  onClick={handleBack}
+                  className="text-sm text-[#6B6B6B] flex items-center gap-1 mb-4 hover:text-[#1A1A1A]"
+                >
+                  &larr; Back
+                </button>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-[#E8F5E9] rounded-xl flex items-center justify-center text-xl">
+                    &#128241;
+                  </div>
+                  <h1 className="text-xl font-semibold text-[#1A1A1A]">
+                    Enter Code
+                  </h1>
+                </div>
+                <p className="text-[#6B6B6B]">
+                  We sent a 6-digit code to <span className="font-medium text-[#1A1A1A]">{phone}</span>
+                </p>
+              </div>
+
+              {formError && (
+                <div className="p-4 bg-[#FFEBEE] border border-[#C75050] rounded-xl text-[#C75050] text-sm">
+                  {formError}
+                </div>
+              )}
+
+              <form onSubmit={handlePhoneLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                    Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="123456"
+                    required
+                    maxLength={6}
+                    className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] text-base text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:border-[#1A1A1A] transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || code.length !== 6}
+                  className="w-full bg-[#1A1A1A] text-white py-3.5 rounded-xl font-medium active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify & Sign In'
+                  )}
+                </button>
+              </form>
+
+              <div className="text-center">
+                <p className="text-sm text-[#6B6B6B]">
+                  Didn&apos;t receive the code?{' '}
+                  <button
+                    onClick={() => handleSendCode({ preventDefault: () => {} } as React.FormEvent)}
+                    className="text-[#C4785A] font-medium hover:underline"
+                  >
+                    Resend
+                  </button>
+                </p>
+              </div>
             </div>
           )}
 
@@ -390,7 +607,7 @@ function LoginContent() {
                 </div>
               )}
 
-              <form onSubmit={handleCleanerLogin} className="space-y-4">
+              <form onSubmit={handlePhoneLogin} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
                     Verification Code

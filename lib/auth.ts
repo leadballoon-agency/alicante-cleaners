@@ -63,6 +63,63 @@ export const authOptions: NextAuthOptions = {
       },
     }),
 
+    // Phone OTP for Owners
+    CredentialsProvider({
+      id: 'owner-phone-login',
+      name: 'Owner Phone Login',
+      credentials: {
+        phone: { label: 'Phone', type: 'tel' },
+        code: { label: 'Verification Code', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.phone || !credentials?.code) {
+          return null
+        }
+
+        // TODO: Verify OTP code from SMS service (Twilio, etc.)
+        // For now, accept code "123456" for testing
+        if (credentials.code !== '123456') {
+          return null
+        }
+
+        // Find or create user
+        let user = await db.user.findUnique({
+          where: { phone: credentials.phone },
+          include: { owner: true },
+        })
+
+        if (!user) {
+          // Create new owner user
+          user = await db.user.create({
+            data: {
+              phone: credentials.phone,
+              role: 'OWNER',
+              phoneVerified: new Date(),
+              owner: {
+                create: {
+                  referralCode: generateOwnerReferralCode(),
+                  trusted: false,
+                },
+              },
+            },
+            include: { owner: true },
+          })
+        } else if (user.role !== 'OWNER' && user.role !== 'ADMIN') {
+          // Phone belongs to a cleaner, not an owner
+          return null
+        }
+
+        return {
+          id: user.id,
+          email: user.email ?? undefined,
+          name: user.name ?? undefined,
+          phone: user.phone ?? undefined,
+          image: user.image ?? undefined,
+          role: user.role,
+        }
+      },
+    }),
+
     // Phone OTP for Cleaners
     CredentialsProvider({
       id: 'cleaner-login',
@@ -206,4 +263,10 @@ function generateReferralCode(name: string): string {
   const year = new Date().getFullYear()
   const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
   return `${cleanName}${year}${random}`
+}
+
+function generateOwnerReferralCode(): string {
+  const year = new Date().getFullYear()
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+  return `OWN${year}${random}`
 }
