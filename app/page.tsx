@@ -28,7 +28,6 @@ export default function HomePage() {
   const [areas, setAreas] = useState<string[]>([])
   const [selectedArea, setSelectedArea] = useState('all')
   const [loading, setLoading] = useState(true)
-  const [techTab, setTechTab] = useState<'owner' | 'partner'>('owner')
 
   useEffect(() => {
     fetchCleaners()
@@ -89,10 +88,10 @@ export default function HomePage() {
       <section className="px-6 py-12 bg-gradient-to-b from-white to-[#FAFAF8]">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1A1A] mb-4 leading-tight">
-            {t('hero.title')}<br />{t('hero.titleLine2')}
+            Your villa, ready<br />when you are
           </h1>
-          <p className="text-[#6B6B6B] text-lg max-w-md mx-auto mb-6">
-            {t('hero.subtitle')}
+          <p className="text-[#6B6B6B] text-lg max-w-lg mx-auto mb-6">
+            Vetted cleaners. Photo proof. Auto-translation. No passwords, no apps, no hassle.
           </p>
 
           {/* Activity Feed */}
@@ -125,6 +124,50 @@ export default function HomePage() {
                 {area}
               </button>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Badges Bar */}
+      <section className="px-6 py-6 bg-white border-y border-[#EBEBEB]">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8">
+            <div className="flex items-center gap-3 justify-center">
+              <div className="w-10 h-10 bg-[#FFF8F5] rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-lg">🔑</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#1A1A1A]">No passwords</p>
+                <p className="text-xs text-[#6B6B6B]">Magic link login</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 justify-center">
+              <div className="w-10 h-10 bg-[#FFF8F5] rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-lg">🌐</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#1A1A1A]">No app needed</p>
+                <p className="text-xs text-[#6B6B6B]">Works in browser</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 justify-center">
+              <div className="w-10 h-10 bg-[#FFF8F5] rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-lg">🌍</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#1A1A1A]">Auto-translate</p>
+                <p className="text-xs text-[#6B6B6B]">7 languages</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 justify-center">
+              <div className="w-10 h-10 bg-[#FFF8F5] rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-lg">✅</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#1A1A1A]">Vetted network</p>
+                <p className="text-xs text-[#6B6B6B]">Referral only</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -259,6 +302,41 @@ export default function HomePage() {
         )}
       </main>
 
+      {/* Problem Section - Pain Points */}
+      <section className="px-6 py-12 bg-[#FFF8F5]">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl font-semibold text-[#1A1A1A] text-center mb-8">
+            Sound familiar?
+          </h2>
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl p-5 border-l-4 border-[#C4785A]">
+              <div className="flex items-start gap-4">
+                <span className="text-2xl">✈️</span>
+                <p className="text-[#6B6B6B]">
+                  You&apos;re 2,000km away wondering if the villa is ready for your guests arriving tomorrow
+                </p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-5 border-l-4 border-[#C4785A]">
+              <div className="flex items-start gap-4">
+                <span className="text-2xl">💬</span>
+                <p className="text-[#6B6B6B]">
+                  Google Translate isn&apos;t quite getting your cleaning instructions across
+                </p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-5 border-l-4 border-[#C4785A]">
+              <div className="flex items-start gap-4">
+                <span className="text-2xl">📅</span>
+                <p className="text-[#6B6B6B]">
+                  Your usual cleaner is sick and you have no backup - guests arrive in 48 hours
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How it Works */}
       <section className="px-6 py-10 bg-white border-y border-[#EBEBEB]">
         <div className="max-w-4xl mx-auto">
@@ -297,157 +375,154 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Technology Section with Screenshots */}
-      <section className="px-6 py-12 bg-[#FAFAF8] overflow-hidden">
+      {/* For Villa Owners Section */}
+      <section className="px-6 py-12 bg-white overflow-hidden">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-semibold text-[#1A1A1A] mb-3">
-              {t('tech.title')}
-            </h2>
-            <p className="text-[#6B6B6B]">
-              {t('tech.subtitle')}
-            </p>
-          </div>
-
-          {/* Tab Switcher */}
-          <div className="flex justify-center gap-2 mb-10">
-            <button
-              onClick={() => setTechTab('owner')}
-              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
-                techTab === 'owner'
-                  ? 'bg-[#1A1A1A] text-white'
-                  : 'bg-white border border-[#DEDEDE] text-[#6B6B6B] hover:border-[#1A1A1A]'
-              }`}
-            >
-              {t('tech.forOwners')}
-            </button>
-            <button
-              onClick={() => setTechTab('partner')}
-              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
-                techTab === 'partner'
-                  ? 'bg-[#1A1A1A] text-white'
-                  : 'bg-white border border-[#DEDEDE] text-[#6B6B6B] hover:border-[#1A1A1A]'
-              }`}
-            >
-              {t('tech.forPartners')}
-            </button>
-          </div>
-
-          {/* Content with Phone Mockups */}
-          {techTab === 'owner' ? (
-            <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
-              {/* Phone Mockup */}
-              <div className="flex-shrink-0 order-1 lg:order-2">
-                <PhoneMockup
-                  src="/screenshots/messaging-translation.png"
-                  alt="Auto-translation messaging"
-                />
-              </div>
-
-              {/* Features */}
-              <div className="flex-1 order-2 lg:order-1">
-                <div className="bg-white rounded-2xl p-6 border border-[#EBEBEB] space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span>🌍</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-[#1A1A1A]">{t('tech.owner1Title')}</h4>
-                      <p className="text-sm text-[#6B6B6B]">{t('tech.owner1Desc')}</p>
-                    </div>
+          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+            {/* Content */}
+            <div className="flex-1 order-2 lg:order-1">
+              <h2 className="text-2xl sm:text-3xl font-semibold text-[#1A1A1A] mb-4">
+                Arrive to a home that&apos;s ready
+              </h2>
+              <p className="text-[#6B6B6B] mb-6">
+                Everything you need to manage your villa cleaning, from anywhere in the world.
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>🏠</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span>📸</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-[#1A1A1A]">{t('tech.owner2Title')}</h4>
-                      <p className="text-sm text-[#6B6B6B]">{t('tech.owner2Desc')}</p>
-                    </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">Add your villas</h4>
+                    <p className="text-sm text-[#6B6B6B]">Bedrooms, access notes, special instructions - all saved for every clean</p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span>🔒</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-[#1A1A1A]">{t('tech.owner3Title')}</h4>
-                      <p className="text-sm text-[#6B6B6B]">{t('tech.owner3Desc')}</p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>📅</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span>✈️</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-[#1A1A1A]">{t('tech.owner4Title')}</h4>
-                      <p className="text-sm text-[#6B6B6B]">{t('tech.owner4Desc')}</p>
-                    </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">Book in seconds</h4>
+                    <p className="text-sm text-[#6B6B6B]">Pick a date, choose your service, done. No phone calls needed</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>🌍</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">Message in any language</h4>
+                    <p className="text-sm text-[#6B6B6B]">Write in yours, they read in theirs. Auto-translation built in</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>📸</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">Get photo proof</h4>
+                    <p className="text-sm text-[#6B6B6B]">See your spotless villa via WhatsApp before you even land</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>🔑</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">No passwords ever</h4>
+                    <p className="text-sm text-[#6B6B6B]">Magic link login. Tap your email, you&apos;re in. Nothing to remember</p>
                   </div>
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
-              {/* Phone Mockup */}
-              <div className="flex-shrink-0">
-                <PhoneMockup
-                  src="/screenshots/cleaner-dashboard.png"
-                  alt="Cleaner dashboard"
-                />
-              </div>
+            {/* Phone Mockup */}
+            <div className="flex-shrink-0 order-1 lg:order-2">
+              <PhoneMockup
+                src="/screenshots/messaging-translation.png"
+                alt="Auto-translation messaging"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
-              {/* Features */}
-              <div className="flex-1">
-                <div className="bg-[#1A1A1A] rounded-2xl p-6 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span>📈</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-white">{t('tech.cleaner1Title')}</h4>
-                      <p className="text-sm text-white/70">{t('tech.cleaner1Desc')}</p>
-                    </div>
+      {/* For Cleaners Section */}
+      <section className="px-6 py-12 bg-[#1A1A1A] overflow-hidden">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+            {/* Phone Mockup */}
+            <div className="flex-shrink-0">
+              <PhoneMockup
+                src="/screenshots/cleaner-dashboard.png"
+                alt="Cleaner dashboard"
+              />
+            </div>
+            {/* Content */}
+            <div className="flex-1">
+              <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-4">
+                Built for cleaning professionals
+              </h2>
+              <p className="text-white/70 mb-6">
+                Tools to grow your business, not more admin work.
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>📱</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span>🌍</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-white">{t('tech.cleaner2Title')}</h4>
-                      <p className="text-sm text-white/70">{t('tech.cleaner2Desc')}</p>
-                    </div>
+                  <div>
+                    <h4 className="font-medium text-white">Sign up with your phone</h4>
+                    <p className="text-sm text-white/70">No email needed. Just your mobile number + a code</p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span>💳</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-white">{t('tech.cleaner3Title')}</h4>
-                      <p className="text-sm text-white/70">{t('tech.cleaner3Desc')}</p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>📈</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span>⭐</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-white">{t('tech.cleaner4Title')}</h4>
-                      <p className="text-sm text-white/70">{t('tech.cleaner4Desc')}</p>
-                    </div>
+                  <div>
+                    <h4 className="font-medium text-white">See your earnings</h4>
+                    <p className="text-sm text-white/70">Track this week, this month, and what&apos;s coming up</p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span>📅</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-white">{t('tech.cleaner5Title')}</h4>
-                      <p className="text-sm text-white/70">{t('tech.cleaner5Desc')}</p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>✅</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">Accept bookings instantly</h4>
+                    <p className="text-sm text-white/70">One tap to confirm. Decline if you&apos;re busy. Simple</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>📅</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">Sync to your calendar</h4>
+                    <p className="text-sm text-white/70">Google Calendar, Apple Calendar, Outlook - automatic</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>👥</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">Build your team</h4>
+                    <p className="text-sm text-white/70">Invite trusted colleagues. Cover for each other. Never let clients down</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>🤖</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">AI assistant included</h4>
+                    <p className="text-sm text-white/70">Handles inquiries while you focus on cleaning</p>
                   </div>
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </section>
 
@@ -481,6 +556,73 @@ export default function HomePage() {
               <p className="text-sm font-medium text-[#1A1A1A]">
                 {t('testimonial3.author')}
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Translation Spotlight */}
+      <section className="px-6 py-12 bg-[#FAFAF8]">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-[#1A1A1A] mb-3">
+              Speak your language. They&apos;ll understand.
+            </h2>
+            <p className="text-[#6B6B6B] max-w-2xl mx-auto">
+              Write in English, German, French, Dutch, Italian, or Portuguese. Your cleaner reads it in Spanish.
+              They reply in Spanish, you read it in yours. No more Google Translate screenshots.
+            </p>
+          </div>
+
+          {/* Language Flags */}
+          <div className="flex flex-wrap justify-center gap-4 mb-10">
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
+              <span className="text-xl">🇬🇧</span>
+              <span className="text-sm text-[#6B6B6B]">English</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
+              <span className="text-xl">🇪🇸</span>
+              <span className="text-sm text-[#6B6B6B]">Español</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
+              <span className="text-xl">🇩🇪</span>
+              <span className="text-sm text-[#6B6B6B]">Deutsch</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
+              <span className="text-xl">🇫🇷</span>
+              <span className="text-sm text-[#6B6B6B]">Français</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
+              <span className="text-xl">🇳🇱</span>
+              <span className="text-sm text-[#6B6B6B]">Nederlands</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
+              <span className="text-xl">🇮🇹</span>
+              <span className="text-sm text-[#6B6B6B]">Italiano</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
+              <span className="text-xl">🇵🇹</span>
+              <span className="text-sm text-[#6B6B6B]">Português</span>
+            </div>
+          </div>
+
+          {/* How it works */}
+          <div className="bg-white rounded-2xl p-6 border border-[#EBEBEB]">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🇬🇧</span>
+                <span className="text-sm text-[#6B6B6B]">You write in English</span>
+              </div>
+              <span className="text-[#C4785A] font-bold">→</span>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🤖</span>
+                <span className="text-sm text-[#6B6B6B]">Auto-translated</span>
+              </div>
+              <span className="text-[#C4785A] font-bold">→</span>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🇪🇸</span>
+                <span className="text-sm text-[#6B6B6B]">Cleaner reads in Spanish</span>
+              </div>
             </div>
           </div>
         </div>
@@ -559,21 +701,43 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA for Cleaners */}
+      {/* Dual CTA Section */}
       <section className="px-6 py-12 bg-[#1A1A1A]">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-xl font-semibold text-white mb-2">
-            {t('cta.cleanerTitle')}
-          </h2>
-          <p className="text-white/70 mb-6">
-            {t('cta.cleanerSubtitle')}
-          </p>
-          <Link
-            href="/onboarding/cleaner"
-            className="inline-block bg-white text-[#1A1A1A] px-6 py-3 rounded-xl font-medium hover:bg-[#F5F5F3] transition-colors"
-          >
-            {t('cta.applyJoin')}
-          </Link>
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* For Owners */}
+            <div className="bg-white/10 rounded-2xl p-6 text-center">
+              <div className="text-4xl mb-4">🏠</div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Ready to find your cleaner?
+              </h3>
+              <p className="text-white/70 text-sm mb-6">
+                Browse vetted professionals in your area
+              </p>
+              <Link
+                href="/login"
+                className="inline-block bg-white text-[#1A1A1A] px-6 py-3 rounded-xl font-medium hover:bg-[#F5F5F3] transition-colors w-full sm:w-auto"
+              >
+                Find a cleaner
+              </Link>
+            </div>
+            {/* For Cleaners */}
+            <div className="bg-white/10 rounded-2xl p-6 text-center">
+              <div className="text-4xl mb-4">✨</div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Are you a cleaning professional?
+              </h3>
+              <p className="text-white/70 text-sm mb-6">
+                Join our invitation-only network
+              </p>
+              <Link
+                href="/onboarding/cleaner"
+                className="inline-block bg-[#C4785A] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#B56A4F] transition-colors w-full sm:w-auto"
+              >
+                Apply to join
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
