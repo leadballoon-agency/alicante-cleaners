@@ -14,8 +14,30 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "VillaCare | Trusted Villa Cleaning in Alicante",
-  description: "Your villa, ready when you arrive. Trusted cleaners for villa owners in Alicante, Spain.",
+  description: "Your villa, ready when you are. Vetted cleaners, photo proof, auto-translation. No passwords, no apps, no hassle.",
   metadataBase: new URL("https://alicantecleaners.com"),
+  openGraph: {
+    title: "VillaCare | Trusted Villa Cleaning in Alicante",
+    description: "Your villa, ready when you are. Vetted cleaners, photo proof, auto-translation. No passwords, no apps, no hassle.",
+    url: "https://alicantecleaners.com",
+    siteName: "VillaCare",
+    images: [
+      {
+        url: "/api/og",
+        width: 1200,
+        height: 630,
+        alt: "VillaCare - Trusted Villa Cleaning in Alicante",
+      },
+    ],
+    locale: "en_GB",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VillaCare | Trusted Villa Cleaning in Alicante",
+    description: "Your villa, ready when you are. Vetted cleaners, photo proof, auto-translation.",
+    images: ["/api/og"],
+  },
 };
 
 export const viewport: Viewport = {
