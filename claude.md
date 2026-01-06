@@ -16,6 +16,7 @@
 | Auth | NextAuth.js (magic links + phone OTP) |
 | Email | Resend |
 | AI/Translation | OpenAI GPT-4o-mini |
+| AI/Admin | Anthropic Claude (Haiku + Sonnet) |
 | Hosting | Vercel (auto-deploy from GitHub) |
 
 ---
@@ -29,7 +30,9 @@
 - **Cleaner onboarding** - Phone OTP flow, profile setup, pricing
 - **Cleaner dashboard** - Bookings, calendar sync (ICS), messaging, profile
 - **Owner dashboard** - Properties, booking history, reviews, messaging
-- **Admin dashboard** - Platform stats, cleaner management, review approval
+- **Admin dashboard** - Platform stats, cleaner management, review approval, owners view
+- **Admin AI Agent** - Claude-powered assistant with 18 tools for platform management
+- **Knowledge Base** - Markdown-based documentation for AI context injection
 - **ICS Calendar feeds** - Cleaners can sync bookings to Google/Apple/Outlook
 - **Activity feed** - Social proof showing recent bookings, reviews, completions
 - **Multilingual messaging** - Auto-translation between owners and cleaners
@@ -76,6 +79,8 @@
 /api/admin/cleaners/[id]   PATCH - Approve/suspend
 /api/admin/reviews         GET - All reviews
 /api/admin/reviews/[id]    PATCH - Approve/feature
+/api/admin/owners          GET - All owners with properties
+/api/admin/ai/chat         POST - Admin AI Agent conversation
 ```
 
 ### Pages
@@ -88,7 +93,7 @@
 /onboarding/cleaner    Cleaner signup flow
 /dashboard             Cleaner dashboard (5 tabs: Home, Bookings, Messages, Schedule, Profile)
 /owner/dashboard       Owner dashboard (5 tabs: Home, Bookings, Messages, Villas, Account)
-/admin                 Admin dashboard
+/admin                 Admin dashboard (7 tabs: Overview, Cleaners, Owners, Bookings, Reviews, Feedback, AI)
 ```
 
 ---
@@ -98,7 +103,7 @@
 | Model | Purpose |
 |-------|---------|
 | User | All users (email/phone, role, preferredLanguage) |
-| Owner | Owner profile (referralCode, trusted status) |
+| Owner | Owner profile (referralCode, trusted status, adminNotes for CRM) |
 | Cleaner | Cleaner profile (slug, bio, areas, rates, stats, calendarToken) |
 | Property | Villa details (address, bedrooms, access notes) |
 | Booking | Cleaning appointments |
@@ -135,6 +140,71 @@
 - `app/api/messages/route.ts` - Message sending with translation
 - `app/dashboard/tabs/messages.tsx` - Cleaner messaging UI (Spanish)
 - `app/owner/dashboard/tabs/messages.tsx` - Owner messaging UI (English)
+
+---
+
+## Admin AI Agent
+
+Claude-powered AI assistant for platform administration with tool-use capabilities.
+
+### Capabilities
+- Query and manage cleaners, owners, bookings, reviews
+- Approve/reject cleaners and reviews
+- Send translated messages to cleaners
+- Generate WhatsApp invite links for onboarding
+- Update cleaner profiles (phone, email, rates, areas)
+- View and update owner CRM notes
+
+### Tools Available (18 total)
+| Tool | Description |
+|------|-------------|
+| get_dashboard_stats | Platform KPIs by period |
+| query_cleaners | Search cleaners by status/area/name |
+| query_owners | Search owners with booking history |
+| query_bookings | Filter bookings by status/date |
+| query_reviews | Find pending or rated reviews |
+| get_cleaner_details | Full cleaner profile with history |
+| get_owner_details | Full owner profile with CRM notes |
+| approve_cleaner | Activate pending cleaner |
+| reject_cleaner | Remove cleaner application |
+| approve_review | Publish pending review |
+| feature_cleaner | Toggle homepage featured status |
+| update_cleaner | Modify profile fields |
+| update_owner_notes | Add/update CRM notes |
+| send_message_to_cleaner | Auto-translated in-app message |
+| generate_whatsapp_invite | Pre-filled WhatsApp links |
+
+### Optimization
+- Dynamic tool selection based on query keywords
+- Haiku model for simple queries (faster, cheaper)
+- Sonnet model for complex operations
+- Conversation history limited to 6 messages
+- Compact JSON responses
+
+### Key Files
+- `lib/ai/admin-agent.ts` - Agent implementation with all tools
+- `app/api/admin/ai/chat/route.ts` - Chat API endpoint
+- `app/admin/tabs/ai.tsx` - Admin chat UI
+
+---
+
+## Knowledge Base
+
+Markdown-based documentation that AI agents can dynamically load for context.
+
+### Files
+- `knowledge/cleaner.md` - Cleaner app guide, booking workflow, team features
+- `knowledge/owner.md` - Owner app guide, services, "I'm Coming Home" feature
+- `knowledge/admin.md` - Platform stats, approval process, common issues
+
+### Features
+- 5-minute cache with auto-refresh
+- Keyword-based section search
+- Role-appropriate knowledge injection
+- Version-controlled documentation
+
+### Key Files
+- `lib/ai/knowledge.ts` - loadKnowledge(), searchKnowledge()
 
 ---
 
@@ -208,6 +278,9 @@ RESEND_API_KEY="..."
 
 # OpenAI (for message translation)
 OPENAI_API_KEY="sk-..."
+
+# Anthropic (for admin AI agent)
+ANTHROPIC_API_KEY="sk-ant-..."
 
 # App
 NEXT_PUBLIC_APP_URL="https://villacare.app"
@@ -361,11 +434,18 @@ Updates every 4 seconds with fade animation.
 - [x] Cleaner onboarding (phone OTP)
 - [x] Cleaner dashboard with calendar sync
 - [x] Owner dashboard
-- [x] Admin dashboard (cleaners, reviews, stats)
+- [x] Admin dashboard (cleaners, reviews, stats, owners, AI)
+- [x] Admin AI Agent with 18 tools
+- [x] Knowledge base system
+- [x] Owner CRM notes
 - [x] Review system with moderation
 - [x] ICS calendar feeds
 - [x] Multilingual messaging with auto-translation
+- [x] Admin-cleaner messaging
 - [x] Language preference settings
+
+### In Progress
+- [ ] Unified support messaging (AI-first with human escalation)
 
 ### Planned
 - [ ] Stripe payment integration
@@ -375,6 +455,7 @@ Updates every 4 seconds with fade animation.
 - [ ] SMS verification (production)
 - [ ] Referral rewards system
 - [ ] Voice input for messages
+- [ ] Admin-owner messaging
 
 ---
 
