@@ -41,15 +41,39 @@ export async function sendWhatsAppMessage(
 }
 
 /**
- * Send OTP code via WhatsApp
+ * Send OTP code via WhatsApp using approved template
  */
 export async function sendOTP(
   phone: string,
   code: string
 ): Promise<{ success: boolean; error?: string }> {
-  const message = `Your VillaCare verification code is: *${code}*\n\nThis code expires in 10 minutes. Do not share it with anyone.`
+  if (!client || !whatsappNumber) {
+    console.error('Twilio not configured - missing credentials')
+    return { success: false, error: 'WhatsApp not configured' }
+  }
 
-  return sendWhatsAppMessage(phone, message)
+  try {
+    const formattedTo = phone.startsWith('whatsapp:') ? phone : `whatsapp:${phone}`
+
+    // Use approved content template for OTP
+    const message = await client.messages.create({
+      from: whatsappNumber,
+      to: formattedTo,
+      contentSid: 'HXd51dff05eb6c956bea552062455bda1b',
+      contentVariables: JSON.stringify({
+        '1': code,
+      }),
+    })
+
+    console.log(`WhatsApp OTP sent: ${message.sid}`)
+    return { success: true, messageId: message.sid }
+  } catch (error) {
+    console.error('Failed to send WhatsApp OTP:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }
+  }
 }
 
 /**
