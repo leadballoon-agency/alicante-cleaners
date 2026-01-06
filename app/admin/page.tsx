@@ -8,11 +8,42 @@ import OwnersTab from './tabs/owners'
 import BookingsTab from './tabs/bookings'
 import ReviewsTab from './tabs/reviews'
 import FeedbackTab from './tabs/feedback'
+import SupportTab from './tabs/support'
 import AITab from './tabs/ai'
 import Image from 'next/image'
 import Link from 'next/link'
 
-type Tab = 'overview' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'ai'
+type Tab = 'overview' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'support' | 'ai'
+
+type SupportConversation = {
+  id: string
+  userType: string
+  userName: string
+  userEmail?: string
+  status: 'active' | 'resolved' | 'escalated'
+  sentiment?: string
+  topic?: string
+  summary?: string
+  page: string
+  messageCount: number
+  lastMessage?: string
+  createdAt: Date
+  updatedAt: Date
+  messages: {
+    id: string
+    role: 'user' | 'assistant'
+    content: string
+    isAI: boolean
+    createdAt: Date
+  }[]
+}
+
+type SupportStats = {
+  total: number
+  active: number
+  escalated: number
+  resolved: number
+}
 
 export type Stats = {
   totalCleaners: number
@@ -133,6 +164,8 @@ export default function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [feedback, setFeedback] = useState<Feedback[]>([])
+  const [supportConversations, setSupportConversations] = useState<SupportConversation[]>([])
+  const [supportStats, setSupportStats] = useState<SupportStats>({ total: 0, active: 0, escalated: 0, resolved: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -146,6 +179,20 @@ export default function AdminDashboard() {
   // Get pending reviews count
   const pendingReviewsCount = reviews.filter(r => r.status === 'pending').length
 
+  // Fetch support conversations
+  const fetchSupportData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/support')
+      if (response.ok) {
+        const data = await response.json()
+        setSupportConversations(data.conversations || [])
+        setSupportStats(data.stats || { total: 0, active: 0, escalated: 0, resolved: 0 })
+      }
+    } catch (err) {
+      console.error('Error fetching support data:', err)
+    }
+  }, [])
+
   // Fetch all admin data
   const fetchAdminData = useCallback(async () => {
     try {
@@ -157,6 +204,9 @@ export default function AdminDashboard() {
         fetch('/api/admin/reviews'),
         fetch('/api/admin/feedback'),
       ])
+
+      // Also fetch support data
+      fetchSupportData()
 
       if (!statsRes.ok) {
         throw new Error('Failed to load admin dashboard')
@@ -344,9 +394,34 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleResolveSupportConversation = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/support/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'RESOLVED' }),
+      })
+
+      if (response.ok) {
+        setSupportConversations(prev => prev.map(c =>
+          c.id === id ? { ...c, status: 'resolved' } : c
+        ))
+        setSupportStats(prev => ({
+          ...prev,
+          active: Math.max(0, prev.active - 1),
+          escalated: prev.escalated - (supportConversations.find(c => c.id === id)?.status === 'escalated' ? 1 : 0),
+          resolved: prev.resolved + 1,
+        }))
+      }
+    } catch (err) {
+      console.error('Error resolving support conversation:', err)
+    }
+  }
+
   const tabs: { id: Tab; label: string; icon: string; badge?: number }[] = [
     { id: 'overview', label: 'Home', icon: '🏠' },
     { id: 'ai', label: 'AI', icon: '🤖' },
+    { id: 'support', label: 'Support', icon: '💬', badge: supportStats.escalated },
     { id: 'cleaners', label: 'Cleaners', icon: '🧹', badge: cleaners.filter(c => c.status === 'pending').length },
     { id: 'owners', label: 'Owners', icon: '👤' },
     { id: 'bookings', label: 'Bookings', icon: '📋' },
@@ -449,6 +524,14 @@ export default function AdminDashboard() {
           <FeedbackTab
             feedback={feedback}
             onUpdateStatus={handleUpdateFeedbackStatus}
+          />
+        )}
+        {activeTab === 'support' && (
+          <SupportTab
+            conversations={supportConversations}
+            stats={supportStats}
+            onResolve={handleResolveSupportConversation}
+            onRefresh={fetchSupportData}
           />
         )}
       </main>

@@ -50,11 +50,12 @@ model User {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  accounts           Account[]
-  sessions           Session[]
-  cleaner            Cleaner?
-  owner              Owner?
-  adminConversations Conversation[] @relation("AdminConversations")
+  accounts               Account[]
+  sessions               Session[]
+  cleaner                Cleaner?
+  owner                  Owner?
+  adminConversations     Conversation[]        @relation("AdminConversations")
+  supportConversations   SupportConversation[]
 }
 
 model Account {
@@ -573,4 +574,64 @@ model PendingOnboarding {
 
   @@index([token])
   @@index([cleanerId, status])
+}
+
+// ============================================
+// Support Conversations
+// ============================================
+
+enum SupportConversationStatus {
+  ACTIVE      // Ongoing conversation
+  RESOLVED    // Marked as resolved
+  ESCALATED   // Needs human attention
+}
+
+model SupportConversation {
+  id          String                    @id @default(cuid())
+
+  // User context (one of these will be set)
+  userId      String?                   // Logged-in user
+  userType    String                    // 'owner', 'cleaner', 'visitor'
+  userName    String?                   // Display name
+  userEmail   String?                   // For follow-up
+
+  // Context
+  page        String                    // Page where chat started
+  sessionId   String                    // Browser session ID for anonymous users
+
+  // Status
+  status      SupportConversationStatus @default(ACTIVE)
+  resolvedBy  String?                   // Admin who resolved
+
+  // Summary for admin
+  summary     String?                   @db.Text
+  sentiment   String?                   // 'positive', 'neutral', 'negative'
+  topic       String?                   // AI-detected topic
+
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+
+  messages    SupportMessage[]
+  user        User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+  @@index([sessionId])
+}
+
+model SupportMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+
+  role           String   // 'user' or 'assistant'
+  content        String   @db.Text
+
+  // For assistant messages
+  isAI           Boolean  @default(true)
+
+  createdAt      DateTime @default(now())
+
+  conversation   SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
 }
