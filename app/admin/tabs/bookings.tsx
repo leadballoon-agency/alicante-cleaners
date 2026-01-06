@@ -20,12 +20,20 @@ export default function BookingsTab({ bookings }: Props) {
       b.owner.name.toLowerCase().includes(search.toLowerCase()) ||
       b.property.toLowerCase().includes(search.toLowerCase())
     )
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'short',
       month: 'short',
       day: 'numeric',
+    })
+  }
+
+  const formatTime = (date: Date) => {
+    return new Date(date).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
     })
   }
 
@@ -36,129 +44,116 @@ export default function BookingsTab({ bookings }: Props) {
     cancelled: 'bg-[#FFEBEE] text-[#C62828]',
   }
 
-  const pendingCount = bookings.filter(b => b.status === 'pending').length
-  const confirmedCount = bookings.filter(b => b.status === 'confirmed').length
-  const completedCount = bookings.filter(b => b.status === 'completed').length
-  const cancelledCount = bookings.filter(b => b.status === 'cancelled').length
+  const statusDots = {
+    pending: 'bg-[#E65100]',
+    confirmed: 'bg-[#2E7D32]',
+    completed: 'bg-[#6B6B6B]',
+    cancelled: 'bg-[#C62828]',
+  }
+
+  const counts = {
+    all: bookings.length,
+    pending: bookings.filter(b => b.status === 'pending').length,
+    confirmed: bookings.filter(b => b.status === 'confirmed').length,
+    completed: bookings.filter(b => b.status === 'completed').length,
+    cancelled: bookings.filter(b => b.status === 'cancelled').length,
+  }
 
   const totalRevenue = bookings.reduce((sum, b) => sum + b.price, 0)
-  const thisMonthRevenue = bookings
-    .filter(b => {
-      const bookingDate = new Date(b.date)
-      const now = new Date()
-      return bookingDate.getMonth() === now.getMonth() &&
-             bookingDate.getFullYear() === now.getFullYear()
-    })
-    .reduce((sum, b) => sum + b.price, 0)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-[#1A1A1A]">All Bookings</h2>
-          <p className="text-sm text-[#6B6B6B]">
-            {bookings.length} total bookings · €{totalRevenue} revenue
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            placeholder="Search bookings..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A]"
-          />
-        </div>
+      <div>
+        <h2 className="text-xl font-semibold text-[#1A1A1A]">Bookings</h2>
+        <p className="text-sm text-[#6B6B6B]">{bookings.length} total · €{totalRevenue} revenue</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-[#EBEBEB]">
-          <p className="text-sm text-[#6B6B6B] mb-1">Pending</p>
-          <p className="text-2xl font-semibold text-[#E65100]">{pendingCount}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-[#EBEBEB]">
-          <p className="text-sm text-[#6B6B6B] mb-1">Confirmed</p>
-          <p className="text-2xl font-semibold text-[#2E7D32]">{confirmedCount}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-[#EBEBEB]">
-          <p className="text-sm text-[#6B6B6B] mb-1">Completed</p>
-          <p className="text-2xl font-semibold text-[#6B6B6B]">{completedCount}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-[#EBEBEB]">
-          <p className="text-sm text-[#6B6B6B] mb-1">Cancelled</p>
-          <p className="text-2xl font-semibold text-[#C62828]">{cancelledCount}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-[#EBEBEB]">
-          <p className="text-sm text-[#6B6B6B] mb-1">This Month</p>
-          <p className="text-2xl font-semibold text-[#1A1A1A]">€{thisMonthRevenue}</p>
-        </div>
-      </div>
+      {/* Search */}
+      <input
+        type="text"
+        placeholder="Search by cleaner, owner, or property..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A]"
+      />
 
       {/* Filters */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {(['all', 'pending', 'confirmed', 'completed', 'cancelled'] as Filter[]).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
               filter === f
                 ? 'bg-[#1A1A1A] text-white'
-                : 'bg-white border border-[#EBEBEB] text-[#6B6B6B] hover:bg-[#F5F5F3]'
+                : 'bg-white border border-[#EBEBEB] text-[#6B6B6B]'
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
+            {counts[f] > 0 && (
+              <span className={`ml-1.5 text-xs ${filter === f ? 'text-white/70' : 'text-[#9B9B9B]'}`}>
+                {counts[f]}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
-      {/* Bookings table */}
-      <div className="bg-white rounded-xl border border-[#EBEBEB] overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-[#F5F5F3] border-b border-[#EBEBEB]">
-            <tr>
-              <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Service</th>
-              <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Cleaner</th>
-              <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Owner</th>
-              <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Property</th>
-              <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Date</th>
-              <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Status</th>
-              <th className="text-right text-xs font-medium text-[#6B6B6B] px-4 py-3">Amount</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#EBEBEB]">
-            {filteredBookings.map((booking) => (
-              <tr key={booking.id} className="hover:bg-[#F5F5F3]/50">
-                <td className="px-4 py-3">
-                  <p className="font-medium text-[#1A1A1A] text-sm">{booking.service}</p>
-                </td>
-                <td className="px-4 py-3">
-                  <p className="text-sm text-[#1A1A1A]">{booking.cleaner.name}</p>
-                </td>
-                <td className="px-4 py-3">
-                  <p className="text-sm text-[#1A1A1A]">{booking.owner.name}</p>
-                  <p className="text-xs text-[#6B6B6B]">{booking.owner.email}</p>
-                </td>
-                <td className="px-4 py-3 text-sm text-[#6B6B6B]">{booking.property}</td>
-                <td className="px-4 py-3 text-sm text-[#6B6B6B]">{formatDate(booking.date)}</td>
-                <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-1 rounded-full ${statusColors[booking.status]}`}>
-                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right font-medium text-[#1A1A1A]">€{booking.price}</td>
-              </tr>
-            ))}
-            {filteredBookings.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-[#6B6B6B]">
-                  No bookings found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* Booking Cards */}
+      <div className="space-y-3">
+        {filteredBookings.length === 0 ? (
+          <div className="bg-[#F5F5F3] rounded-2xl p-8 text-center">
+            <p className="text-3xl mb-2">📋</p>
+            <p className="text-[#6B6B6B]">No bookings found</p>
+          </div>
+        ) : (
+          filteredBookings.map((booking) => (
+            <div
+              key={booking.id}
+              className="bg-white rounded-2xl p-4 border border-[#EBEBEB]"
+            >
+              {/* Header Row */}
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-sm text-[#6B6B6B]">
+                    {formatDate(booking.date)} · {formatTime(booking.date)}
+                  </p>
+                  <p className="font-semibold text-[#1A1A1A] text-lg">{booking.service}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${statusDots[booking.status]}`} />
+                  <span className="text-sm text-[#6B6B6B] capitalize">{booking.status}</span>
+                </div>
+              </div>
+
+              {/* Details */}
+              <div className="space-y-2 mb-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-[#9B9B9B]">🧹</span>
+                  <span className="text-[#1A1A1A]">{booking.cleaner.name}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-[#9B9B9B]">👤</span>
+                  <span className="text-[#1A1A1A]">{booking.owner.name}</span>
+                  <span className="text-[#6B6B6B]">({booking.owner.email})</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-[#9B9B9B]">🏠</span>
+                  <span className="text-[#6B6B6B]">{booking.property}</span>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between pt-3 border-t border-[#EBEBEB]">
+                <span className={`text-xs px-2.5 py-1 rounded-full ${statusColors[booking.status]}`}>
+                  {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                </span>
+                <span className="font-semibold text-[#1A1A1A]">€{booking.price}</span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )

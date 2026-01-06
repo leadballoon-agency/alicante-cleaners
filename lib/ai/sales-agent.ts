@@ -131,8 +131,8 @@ export async function buildSalesAgentContext(
     bio: cleaner.bio,
 
     conversationId,
-    ownerName: conversation.owner.user.name || 'Owner',
-    ownerLanguage: conversation.owner.user.preferredLanguage || 'en',
+    ownerName: conversation.owner?.user.name || 'Owner',
+    ownerLanguage: conversation.owner?.user.preferredLanguage || 'en',
     propertyName: conversation.property?.name || null,
 
     nextAvailableDates,

@@ -41,6 +41,31 @@ export async function GET() {
     })
 
     if (!cleaner) {
+      // Check if user is an admin - they should go to admin dashboard
+      const user = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { role: true },
+      })
+
+      if (user?.role === 'ADMIN') {
+        return NextResponse.json(
+          { error: 'Admin user', role: 'ADMIN', redirect: '/admin' },
+          { status: 403 }
+        )
+      }
+
+      // Check if user is an owner - they should go to owner dashboard
+      const owner = await db.owner.findUnique({
+        where: { userId: session.user.id },
+      })
+
+      if (owner) {
+        return NextResponse.json(
+          { error: 'Owner user', role: 'OWNER', redirect: '/owner/dashboard' },
+          { status: 403 }
+        )
+      }
+
       return NextResponse.json(
         { error: 'Cleaner profile not found' },
         { status: 404 }

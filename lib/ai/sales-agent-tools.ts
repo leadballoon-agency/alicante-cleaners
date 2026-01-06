@@ -186,10 +186,17 @@ async function createBooking(
     }
   }
 
+  if (!conversation.ownerId) {
+    return {
+      success: false,
+      message: 'This conversation is not associated with an owner. Cannot create booking.',
+    }
+  }
+
   // Find or use property
   let propertyId = conversation.propertyId
 
-  if (!propertyId) {
+  if (!propertyId && conversation.ownerId) {
     // Try to find property by address or create a placeholder
     if (params.propertyAddress) {
       const existingProperty = await db.property.findFirst({
@@ -228,6 +235,13 @@ async function createBooking(
           message: 'No property found. Please ask for the property address.',
         }
       }
+    }
+  }
+
+  if (!propertyId) {
+    return {
+      success: false,
+      message: 'No property found. Please ask for the property address.',
     }
   }
 

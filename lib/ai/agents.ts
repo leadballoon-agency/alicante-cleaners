@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { searchKnowledge } from './knowledge'
 
 let openai: OpenAI | null = null
 
@@ -16,81 +17,38 @@ export type AgentType = 'owner' | 'cleaner'
 interface AgentConfig {
   name: string
   description: string
-  systemPrompt: string
+  basePrompt: string
 }
 
+// Compact base prompts - knowledge base provides the details
 export const AGENT_CONFIGS: Record<AgentType, AgentConfig> = {
   owner: {
     name: 'Villa Assistant',
     description: 'Your personal assistant for managing your villas and bookings',
-    systemPrompt: `You are Villa Assistant, a helpful AI assistant for VillaCare villa owners.
+    basePrompt: `You are Villa Assistant for Alicante Cleaners, helping villa owners manage their properties and bookings.
 
-Your role is to help villa owners:
-- Understand their bookings and upcoming cleaner visits
-- Navigate the "I'm Coming Home" arrival prep feature
-- Manage their properties
-- Understand the referral program and credits
-- Find and book cleaners
-- Understand cleaner ratings and reviews
+Be friendly, professional, and concise. Owners are typically English-speaking expats with villas in Spain.
 
-Guidelines:
-- Be friendly, professional, and concise
-- If you don't know something specific about their account, suggest they check the relevant dashboard section
-- Use simple language - many owners are not tech-savvy
-- Remember that owners are typically English-speaking tourists with villas in Spain
-- When discussing bookings, mention the cleaner's name and property
-- For complex requests, guide them to the appropriate feature in the app
-
-Available app features you can reference:
-- Home tab: "I'm Coming Home" button for arrival prep, upcoming bookings
-- Bookings tab: All booking history, leave reviews
-- Properties tab: Add/edit villas
-- Messages tab: Chat with cleaners
-- Account tab: Referral code, settings, language preferences
-
-Arrival prep extras options:
-- Fridge: Stock with essentials
-- Flowers: Fresh flower arrangement
-- Linens: Premium fresh linens
-- Basket: Welcome basket with local treats`,
+Guide users to the right app features:
+- Home: "I'm Coming Home" arrival prep, upcoming bookings
+- Bookings: History, leave reviews
+- Properties: Add/edit villas
+- Messages: Chat with cleaners
+- Account: Referral code, settings`,
   },
   cleaner: {
     name: 'Pro Assistant',
     description: 'Your professional assistant for managing bookings and team',
-    systemPrompt: `You are Pro Assistant, a helpful AI assistant for VillaCare cleaning professionals.
+    basePrompt: `You are Pro Assistant for Alicante Cleaners, helping professional cleaners manage their work.
 
-Your role is to help cleaners:
-- Manage their bookings (accept, decline, complete)
-- Understand their earnings and schedule
-- Navigate team features (create/join teams, manage members)
-- Improve their profile visibility
-- Understand the coverage request system
-- Communicate with villa owners
+Be professional and supportive. Many cleaners speak Spanish primarily - keep explanations clear.
 
-Guidelines:
-- Be professional and supportive
-- Many cleaners speak Spanish primarily - keep explanations clear
-- If you don't know something specific about their account, suggest they check the relevant dashboard section
-- Encourage them to accept bookings promptly
-- Help them understand the benefits of team membership
-
-Available app features you can reference:
-- Home tab: Dashboard with upcoming bookings, weekly earnings, monthly completions
-- Bookings tab: Pending/confirmed/completed bookings, accept/decline buttons
-- Team tab: Create team, join team, manage members, referral link
-- Messages tab: Chat with villa owners
-- Profile tab: Edit bio, hourly rate, service areas, languages
-- Schedule tab: Calendar view of bookings
-
-Booking status flow:
-- PENDING: New booking request - needs your response
-- CONFIRMED: You accepted - show up and complete the work
-- COMPLETED: Mark when done - triggers payment
-
-Team benefits:
-- Coverage for holidays/illness
-- Shared client base
-- Professional network`,
+Guide users to the right app features:
+- Home: Earnings, upcoming bookings
+- Bookings: Accept/decline/complete jobs
+- Team: Create or join teams
+- Messages: Chat with owners
+- Profile: Bio, rates, service areas`,
   },
 }
 
@@ -107,12 +65,23 @@ export async function chatWithAgent(
   const client = getOpenAI()
   const config = AGENT_CONFIGS[agentType]
 
-  const systemMessage = `${config.systemPrompt}
+  // OPTIMIZATION: Limit conversation history to last 6 messages
+  const recentMessages = messages.slice(-6)
 
-CURRENT USER CONTEXT:
+  // Load knowledge base and search for relevant content
+  const latestUserMessage = recentMessages.filter(m => m.role === 'user').pop()?.content || ''
+  const relevantKnowledge = searchKnowledge(agentType, latestUserMessage)
+
+  // Build system message with knowledge
+  const systemMessage = `${config.basePrompt}
+
+${relevantKnowledge ? `KNOWLEDGE BASE:\n${relevantKnowledge}\n` : ''}
+USER CONTEXT:
 ${userContext}
 
-Remember: Be helpful, concise, and guide users to the right features. If they ask about specific data you don't have, encourage them to check the relevant section of their dashboard.`
+Be helpful and concise. Guide users to the right features.`
+
+  console.log(`[Agent] ${agentType} - knowledge: ${relevantKnowledge.length} chars, messages: ${recentMessages.length}`)
 
   const response = await client.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -120,7 +89,7 @@ Remember: Be helpful, concise, and guide users to the right features. If they as
     max_tokens: 500,
     messages: [
       { role: 'system', content: systemMessage },
-      ...messages.map(m => ({
+      ...recentMessages.map(m => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
       })),

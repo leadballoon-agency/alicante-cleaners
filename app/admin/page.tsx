@@ -1,14 +1,18 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import OverviewTab from './tabs/overview'
 import CleanersTab from './tabs/cleaners'
+import OwnersTab from './tabs/owners'
 import BookingsTab from './tabs/bookings'
 import ReviewsTab from './tabs/reviews'
 import FeedbackTab from './tabs/feedback'
+import AITab from './tabs/ai'
 import Image from 'next/image'
+import Link from 'next/link'
 
-type Tab = 'overview' | 'cleaners' | 'bookings' | 'reviews' | 'feedback'
+type Tab = 'overview' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'ai'
 
 export type Stats = {
   totalCleaners: number
@@ -28,6 +32,7 @@ export type Cleaner = {
   slug: string
   phone: string
   email: string
+  photo?: string
   status: 'pending' | 'active' | 'suspended'
   joinedAt: Date
   areas: string[]
@@ -74,6 +79,39 @@ export type Feedback = {
   votes: number
 }
 
+export type Owner = {
+  id: string
+  name: string
+  email: string
+  phone: string
+  preferredLanguage: string
+  trusted: boolean
+  referralCode: string
+  referralCredits: number
+  totalBookings: number
+  rating: number | null
+  reviewsGiven: number
+  joinedAt: Date
+  propertyCount: number
+  bookingCount: number
+  properties: {
+    id: string
+    name: string
+    address: string
+    bedrooms: number
+    bathrooms: number
+  }[]
+  recentBookings: {
+    id: string
+    status: string
+    service: string
+    price: number
+    date: Date
+    cleanerName: string
+    propertyName: string
+  }[]
+}
+
 const DEFAULT_STATS: Stats = {
   totalCleaners: 0,
   activeCleaners: 0,
@@ -87,21 +125,34 @@ const DEFAULT_STATS: Stats = {
 }
 
 export default function AdminDashboard() {
+  const { data: session } = useSession()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS)
   const [cleaners, setCleaners] = useState<Cleaner[]>([])
+  const [owners, setOwners] = useState<Owner[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [feedback, setFeedback] = useState<Feedback[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Get today's bookings
+  const todayBookings = bookings.filter(b => {
+    const bookingDate = new Date(b.date)
+    const today = new Date()
+    return bookingDate.toDateString() === today.toDateString()
+  }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+  // Get pending reviews count
+  const pendingReviewsCount = reviews.filter(r => r.status === 'pending').length
+
   // Fetch all admin data
   const fetchAdminData = useCallback(async () => {
     try {
-      const [statsRes, cleanersRes, bookingsRes, reviewsRes, feedbackRes] = await Promise.all([
+      const [statsRes, cleanersRes, ownersRes, bookingsRes, reviewsRes, feedbackRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/admin/cleaners'),
+        fetch('/api/admin/owners'),
         fetch('/api/admin/bookings'),
         fetch('/api/admin/reviews'),
         fetch('/api/admin/feedback'),
@@ -113,12 +164,14 @@ export default function AdminDashboard() {
 
       const statsData = await statsRes.json()
       const cleanersData = await cleanersRes.json()
+      const ownersData = await ownersRes.json()
       const bookingsData = await bookingsRes.json()
       const reviewsData = await reviewsRes.json()
       const feedbackData = await feedbackRes.json()
 
       setStats(statsData.stats || DEFAULT_STATS)
       setCleaners(cleanersData.cleaners || [])
+      setOwners(ownersData.owners || [])
       setBookings(bookingsData.bookings || [])
       setReviews(reviewsData.reviews || [])
       setFeedback(feedbackData.feedback || [])
@@ -207,7 +260,6 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         const data = await response.json()
-        // Redirect to cleaner dashboard
         window.location.href = data.redirectTo || '/dashboard'
       } else {
         const data = await response.json()
@@ -293,11 +345,12 @@ export default function AdminDashboard() {
   }
 
   const tabs: { id: Tab; label: string; icon: string; badge?: number }[] = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'cleaners', label: 'Cleaners', icon: '👥', badge: cleaners.filter(c => c.status === 'pending').length },
+    { id: 'overview', label: 'Home', icon: '🏠' },
+    { id: 'ai', label: 'AI', icon: '🤖' },
+    { id: 'cleaners', label: 'Cleaners', icon: '🧹', badge: cleaners.filter(c => c.status === 'pending').length },
+    { id: 'owners', label: 'Owners', icon: '👤' },
     { id: 'bookings', label: 'Bookings', icon: '📋' },
     { id: 'reviews', label: 'Reviews', icon: '⭐', badge: reviews.filter(r => r.status === 'pending').length },
-    { id: 'feedback', label: 'Feedback', icon: '💬', badge: feedback.filter(f => f.status === 'new').length },
   ]
 
   if (loading) {
@@ -330,58 +383,44 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans">
-      {/* Header */}
-      <header className="px-6 py-4 bg-[#1A1A1A] text-white">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-20">
+      {/* Minimal Header */}
+      <header className="px-4 py-3 bg-white border-b border-[#EBEBEB] sticky top-0 z-10">
+        <div className="flex items-center justify-between">
+          <Link href="/">
             <Image
               src="/villacare-horizontal-logo.png"
               alt="VillaCare"
-              width={140}
-              height={40}
+              width={120}
+              height={32}
               className="object-contain"
             />
-            <div>
-              <h1 className="font-semibold text-lg">Admin</h1>
-              <p className="text-xs text-white/60">Platform Manager</p>
+          </Link>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#6B6B6B] hidden sm:block">Admin</span>
+            <div className="w-8 h-8 bg-[#1A1A1A] rounded-full flex items-center justify-center">
+              <span className="text-white text-xs font-medium">
+                {session?.user?.name?.charAt(0) || 'A'}
+              </span>
             </div>
           </div>
-          <button className="text-sm text-white/60 hover:text-white">
-            Log out
-          </button>
         </div>
       </header>
 
-      {/* Tab navigation */}
-      <nav className="px-6 py-3 bg-white border-b border-[#EBEBEB]">
-        <div className="max-w-5xl mx-auto flex gap-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                activeTab === tab.id
-                  ? 'bg-[#1A1A1A] text-white'
-                  : 'text-[#6B6B6B] hover:bg-[#F5F5F3]'
-              }`}
-            >
-              <span>{tab.icon}</span>
-              <span>{tab.label}</span>
-              {tab.badge && tab.badge > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-xs bg-[#C4785A] text-white">
-                  {tab.badge}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </nav>
-
       {/* Tab content */}
-      <main className="px-6 py-6 max-w-5xl mx-auto">
+      <main className="px-4 py-4">
         {activeTab === 'overview' && (
-          <OverviewTab stats={stats} recentBookings={bookings.slice(0, 5)} />
+          <OverviewTab
+            stats={stats}
+            recentBookings={bookings.slice(0, 5)}
+            todayBookings={todayBookings}
+            pendingReviews={pendingReviewsCount}
+            adminName={session?.user?.name || 'Admin'}
+            onTabChange={(tab) => setActiveTab(tab as Tab)}
+          />
+        )}
+        {activeTab === 'ai' && (
+          <AITab adminName={session?.user?.name || 'Admin'} />
         )}
         {activeTab === 'cleaners' && (
           <CleanersTab
@@ -391,6 +430,9 @@ export default function AdminDashboard() {
             onToggleTeamLeader={handleToggleTeamLeader}
             onLoginAs={handleLoginAs}
           />
+        )}
+        {activeTab === 'owners' && (
+          <OwnersTab owners={owners} />
         )}
         {activeTab === 'bookings' && (
           <BookingsTab bookings={bookings} />
@@ -410,6 +452,33 @@ export default function AdminDashboard() {
           />
         )}
       </main>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#EBEBEB] pb-safe z-50">
+        <div className="flex justify-around py-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg min-w-[56px] transition-colors ${
+                activeTab === tab.id
+                  ? 'text-[#C4785A]'
+                  : 'text-[#9B9B9B]'
+              }`}
+            >
+              <div className="relative">
+                <span className="text-xl">{tab.icon}</span>
+                {tab.badge && tab.badge > 0 && (
+                  <span className="absolute -top-1 -right-2 w-4 h-4 bg-[#C4785A] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {tab.badge > 9 ? '9+' : tab.badge}
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] font-medium">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   )
 }

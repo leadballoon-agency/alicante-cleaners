@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user.id
-    const role = session.user.role as 'OWNER' | 'CLEANER'
+    const role = session.user.role as 'OWNER' | 'CLEANER' | 'ADMIN'
 
-    if (role !== 'OWNER' && role !== 'CLEANER') {
+    if (role !== 'OWNER' && role !== 'CLEANER' && role !== 'ADMIN') {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
     }
 
@@ -44,6 +44,9 @@ export async function POST(request: NextRequest) {
             user: { select: { id: true, preferredLanguage: true } },
           },
         },
+        admin: {
+          select: { id: true, preferredLanguage: true },
+        },
       },
     })
 
@@ -52,17 +55,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Check authorization
-    const isOwner = conversation.owner.user.id === userId
+    const isOwner = conversation.owner?.user.id === userId
     const isCleaner = conversation.cleaner.user.id === userId
+    const isAdmin = conversation.admin?.id === userId
 
-    if (!isOwner && !isCleaner) {
+    if (!isOwner && !isCleaner && !isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     // Get recipient's preferred language
     const recipientLang = isOwner
       ? conversation.cleaner.user.preferredLanguage
-      : conversation.owner.user.preferredLanguage
+      : isAdmin
+        ? conversation.cleaner.user.preferredLanguage
+        : (conversation.owner?.user.preferredLanguage || conversation.admin?.preferredLanguage || 'en')
 
     // Validate it's a supported language, default to 'es' for cleaners, 'en' for owners
     const targetLang: LanguageCode = (recipientLang in SUPPORTED_LANGUAGES)

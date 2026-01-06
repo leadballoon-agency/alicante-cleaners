@@ -50,10 +50,11 @@ model User {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  cleaner  Cleaner?
-  owner    Owner?
+  accounts           Account[]
+  sessions           Session[]
+  cleaner            Cleaner?
+  owner              Owner?
+  adminConversations Conversation[] @relation("AdminConversations")
 }
 
 model Account {
@@ -197,6 +198,7 @@ model Owner {
   referralCode       String   @unique
   referralCredits    Decimal  @default(0) @db.Decimal(10, 2)
   preferredExtras    String[] @default([]) // Remember favorite arrival extras
+  adminNotes         String?  @db.Text      // CRM notes (preferences, special instructions)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -296,18 +298,21 @@ model Feedback {
 
 model Conversation {
   id         String   @id @default(cuid())
-  ownerId    String
+  ownerId    String?  // Optional: for owner-cleaner conversations
   cleanerId  String
+  adminId    String?  // Optional: for admin-cleaner conversations
   propertyId String?  // Optional: link to a specific property
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  owner    Owner     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner    Owner?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   cleaner  Cleaner   @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+  admin    User?     @relation("AdminConversations", fields: [adminId], references: [id], onDelete: Cascade)
   property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
   messages Message[]
 
   @@unique([ownerId, cleanerId]) // One conversation per owner-cleaner pair
+  @@unique([adminId, cleanerId]) // One conversation per admin-cleaner pair
 }
 
 model Message {

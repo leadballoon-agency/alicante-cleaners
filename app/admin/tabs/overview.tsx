@@ -5,13 +5,32 @@ import { Stats, Booking } from '../page'
 type Props = {
   stats: Stats
   recentBookings: Booking[]
+  todayBookings: Booking[]
+  pendingReviews: number
+  adminName?: string
+  onTabChange: (tab: string) => void
 }
 
-export default function OverviewTab({ stats, recentBookings }: Props) {
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
+export default function OverviewTab({
+  stats,
+  recentBookings,
+  todayBookings,
+  pendingReviews,
+  adminName = 'there',
+  onTabChange
+}: Props) {
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 17) return 'Good afternoon'
+    return 'Good evening'
+  }
+
+  const formatTime = (date: Date) => {
+    return new Date(date).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
     })
   }
 
@@ -22,106 +41,198 @@ export default function OverviewTab({ stats, recentBookings }: Props) {
     cancelled: 'bg-[#FFEBEE] text-[#C62828]',
   }
 
+  // Calculate week's bookings (simple approximation)
+  const thisWeekBookings = Math.ceil(stats.thisMonthBookings / 4)
+
+  // Check what needs attention
+  const needsAttention = []
+  if (stats.pendingApplications > 0) {
+    needsAttention.push({
+      icon: '👥',
+      label: `${stats.pendingApplications} pending cleaner application${stats.pendingApplications > 1 ? 's' : ''}`,
+      tab: 'cleaners',
+      color: 'bg-[#FFF8F5] border-[#F5E6E0]',
+    })
+  }
+  if (pendingReviews > 0) {
+    needsAttention.push({
+      icon: '⭐',
+      label: `${pendingReviews} review${pendingReviews > 1 ? 's' : ''} awaiting approval`,
+      tab: 'reviews',
+      color: 'bg-[#FFF8F5] border-[#F5E6E0]',
+    })
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-[#EBEBEB]">
-          <p className="text-sm text-[#6B6B6B] mb-1">Active Cleaners</p>
-          <p className="text-3xl font-semibold text-[#1A1A1A]">{stats.activeCleaners}</p>
-          <p className="text-xs text-[#C4785A]">+{stats.pendingApplications} pending</p>
+    <div className="space-y-6 pb-4">
+      {/* Hero Greeting */}
+      <div className="pt-2">
+        <h1 className="text-2xl font-semibold text-[#1A1A1A]">
+          {getGreeting()}, {adminName.split(' ')[0]}
+        </h1>
+        <p className="text-[#6B6B6B] mt-1">Here&apos;s what&apos;s happening today</p>
+      </div>
+
+      {/* Big Stats Cards */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-gradient-to-br from-[#1A1A1A] to-[#333] rounded-2xl p-5 text-white">
+          <p className="text-white/70 text-sm mb-1">This Month</p>
+          <p className="text-3xl font-bold">€{stats.thisMonthRevenue.toLocaleString()}</p>
+          <div className="flex items-center gap-1 mt-2">
+            <span className="text-[#4ADE80] text-sm">↑ 15%</span>
+            <span className="text-white/50 text-xs">vs last month</span>
+          </div>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-[#EBEBEB]">
-          <p className="text-sm text-[#6B6B6B] mb-1">This Month</p>
-          <p className="text-3xl font-semibold text-[#1A1A1A]">{stats.thisMonthBookings}</p>
-          <p className="text-xs text-[#6B6B6B]">bookings</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-[#EBEBEB]">
-          <p className="text-sm text-[#6B6B6B] mb-1">Revenue (Month)</p>
-          <p className="text-3xl font-semibold text-[#1A1A1A]">€{stats.thisMonthRevenue}</p>
-          <p className="text-xs text-[#6B6B6B]">€{stats.totalRevenue} total</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-[#EBEBEB]">
-          <p className="text-sm text-[#6B6B6B] mb-1">Avg Rating</p>
-          <p className="text-3xl font-semibold text-[#1A1A1A]">{stats.averageRating}</p>
-          <p className="text-xs text-[#6B6B6B]">{stats.totalReviews} reviews</p>
+        <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
+          <p className="text-[#6B6B6B] text-sm mb-1">This Week</p>
+          <p className="text-3xl font-bold text-[#1A1A1A]">{thisWeekBookings}</p>
+          <p className="text-[#6B6B6B] text-sm mt-2">bookings</p>
         </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#FFF8F5] rounded-xl p-4 border border-[#F5E6E0]">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">👥</span>
-            <div>
-              <p className="font-medium text-[#1A1A1A]">{stats.pendingApplications} pending applications</p>
-              <p className="text-sm text-[#6B6B6B]">Review new cleaner signups</p>
-            </div>
+      {/* Needs Attention */}
+      {needsAttention.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">⚡</span>
+            <h2 className="font-semibold text-[#1A1A1A]">Needs Attention</h2>
+          </div>
+          <div className="space-y-2">
+            {needsAttention.map((item, index) => (
+              <button
+                key={index}
+                onClick={() => onTabChange(item.tab)}
+                className={`w-full flex items-center justify-between p-4 rounded-xl border ${item.color} active:scale-[0.98] transition-transform`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="font-medium text-[#1A1A1A]">{item.label}</span>
+                </div>
+                <svg className="w-5 h-5 text-[#9B9B9B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            ))}
           </div>
         </div>
-        <div className="bg-[#E8F5E9] rounded-xl p-4 border border-[#C8E6C9]">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">📈</span>
-            <div>
-              <p className="font-medium text-[#1A1A1A]">Platform growing</p>
-              <p className="text-sm text-[#6B6B6B]">+15% bookings this month</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-[#E3F2FD] rounded-xl p-4 border border-[#BBDEFB]">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">⭐</span>
-            <div>
-              <p className="font-medium text-[#1A1A1A]">Great reviews</p>
-              <p className="text-sm text-[#6B6B6B]">{stats.averageRating}/5 average rating</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
-      {/* Recent bookings */}
+      {/* Today's Bookings */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#1A1A1A]">Recent Bookings</h2>
-          <button className="text-sm text-[#C4785A] font-medium">View all</button>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-lg">📅</span>
+          <h2 className="font-semibold text-[#1A1A1A]">Today&apos;s Bookings</h2>
+          <span className="text-sm text-[#6B6B6B]">({todayBookings.length})</span>
         </div>
-        <div className="bg-white rounded-xl border border-[#EBEBEB] overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-[#F5F5F3] border-b border-[#EBEBEB]">
-              <tr>
-                <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Booking</th>
-                <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Cleaner</th>
-                <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Owner</th>
-                <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Date</th>
-                <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Status</th>
-                <th className="text-right text-xs font-medium text-[#6B6B6B] px-4 py-3">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#EBEBEB]">
-              {recentBookings.map((booking) => (
-                <tr key={booking.id} className="hover:bg-[#F5F5F3]/50">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-[#1A1A1A] text-sm">{booking.service}</p>
-                    <p className="text-xs text-[#6B6B6B]">{booking.property}</p>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[#1A1A1A]">{booking.cleaner.name}</td>
-                  <td className="px-4 py-3">
-                    <p className="text-sm text-[#1A1A1A]">{booking.owner.name}</p>
-                    <p className="text-xs text-[#6B6B6B]">{booking.owner.email}</p>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[#6B6B6B]">{formatDate(booking.date)}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full ${statusColors[booking.status]}`}>
-                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+        {todayBookings.length === 0 ? (
+          <div className="bg-[#F5F5F3] rounded-2xl p-6 text-center">
+            <p className="text-3xl mb-2">☀️</p>
+            <p className="text-[#6B6B6B]">No bookings scheduled for today</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {todayBookings.slice(0, 5).map((booking) => (
+              <div
+                key={booking.id}
+                className="bg-white rounded-xl p-4 border border-[#EBEBEB] flex items-start gap-4"
+              >
+                <div className="text-center min-w-[50px]">
+                  <p className="text-lg font-semibold text-[#1A1A1A]">{formatTime(booking.date)}</p>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium text-[#1A1A1A] truncate">{booking.cleaner.name}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${statusColors[booking.status]}`}>
+                      {booking.status}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-[#1A1A1A]">€{booking.price}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                  <p className="text-sm text-[#6B6B6B] truncate">{booking.property} · {booking.service}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Platform Health */}
+      <div className="bg-[#FAFAF8] rounded-2xl p-5 border border-[#EBEBEB]">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-lg">📊</span>
+          <h2 className="font-semibold text-[#1A1A1A]">Platform Health</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#FFF8F5] rounded-full flex items-center justify-center">
+              <span className="text-[#C4785A]">⭐</span>
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-[#1A1A1A]">{stats.averageRating}</p>
+              <p className="text-xs text-[#6B6B6B]">avg rating</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#E8F5E9] rounded-full flex items-center justify-center">
+              <span className="text-[#2E7D32]">👥</span>
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-[#1A1A1A]">{stats.activeCleaners}</p>
+              <p className="text-xs text-[#6B6B6B]">cleaners</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#E3F2FD] rounded-full flex items-center justify-center">
+              <span className="text-[#1565C0]">📋</span>
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-[#1A1A1A]">{stats.totalBookings}</p>
+              <p className="text-xs text-[#6B6B6B]">total bookings</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#F3E5F5] rounded-full flex items-center justify-center">
+              <span className="text-[#7B1FA2]">💬</span>
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-[#1A1A1A]">{stats.totalReviews}</p>
+              <p className="text-xs text-[#6B6B6B]">reviews</p>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Recent Activity */}
+      {recentBookings.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🔔</span>
+              <h2 className="font-semibold text-[#1A1A1A]">Recent Activity</h2>
+            </div>
+            <button
+              onClick={() => onTabChange('bookings')}
+              className="text-sm text-[#C4785A] font-medium"
+            >
+              View all
+            </button>
+          </div>
+          <div className="space-y-2">
+            {recentBookings.slice(0, 3).map((booking) => (
+              <div
+                key={booking.id}
+                className="bg-white rounded-xl p-4 border border-[#EBEBEB]"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <p className="font-medium text-[#1A1A1A]">{booking.service}</p>
+                  <span className="font-semibold text-[#1A1A1A]">€{booking.price}</span>
+                </div>
+                <p className="text-sm text-[#6B6B6B]">
+                  {booking.cleaner.name} · {booking.owner.name}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

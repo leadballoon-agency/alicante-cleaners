@@ -85,6 +85,9 @@ export async function GET() {
               },
             },
           },
+          admin: {
+            select: { id: true, name: true, image: true },
+          },
           property: {
             select: { name: true, address: true },
           },
@@ -96,21 +99,32 @@ export async function GET() {
         orderBy: { updatedAt: 'desc' },
       })
 
-      // Transform for response
-      const result = conversations.map((conv) => ({
-        id: conv.id,
-        otherParty: {
-          id: conv.owner.id,
-          name: conv.owner.user.name,
-          image: conv.owner.user.image,
-          role: 'OWNER',
-        },
-        property: conv.property
-          ? { name: conv.property.name, address: conv.property.address }
-          : null,
-        lastMessage: conv.messages[0] || null,
-        updatedAt: conv.updatedAt,
-      }))
+      // Transform for response - handle both owner and admin conversations
+      const result = conversations.map((conv) => {
+        const isAdminConversation = conv.adminId && !conv.ownerId
+        return {
+          id: conv.id,
+          otherParty: isAdminConversation
+            ? {
+                id: conv.admin!.id,
+                name: conv.admin!.name || 'VillaCare',
+                image: conv.admin!.image,
+                role: 'ADMIN' as const,
+              }
+            : {
+                id: conv.owner!.id,
+                name: conv.owner!.user.name,
+                image: conv.owner!.user.image,
+                role: 'OWNER' as const,
+              },
+          property: conv.property
+            ? { name: conv.property.name, address: conv.property.address }
+            : null,
+          lastMessage: conv.messages[0] || null,
+          updatedAt: conv.updatedAt,
+          isAdminConversation,
+        }
+      })
 
       return NextResponse.json({ conversations: result })
     }

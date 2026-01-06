@@ -3,6 +3,8 @@ import { db } from '@/lib/db'
 export interface OwnerContext {
   name: string
   email: string
+  memberSince: string
+  trusted: boolean
   totalBookings: number
   referralCode: string
   referralCredits: number
@@ -56,7 +58,7 @@ export async function buildOwnerContext(userId: string): Promise<string> {
     const owner = await db.owner.findUnique({
       where: { userId },
       include: {
-        user: { select: { name: true, email: true } },
+        user: { select: { name: true, email: true, createdAt: true } },
         properties: {
           select: { id: true, name: true, address: true, bedrooms: true },
           take: 10,
@@ -86,9 +88,17 @@ export async function buildOwnerContext(userId: string): Promise<string> {
       return 'User is not registered as an owner.'
     }
 
+    // Calculate how long they've been a member
+    const memberSince = owner.user.createdAt
+    const monthsAsMember = Math.floor(
+      (new Date().getTime() - memberSince.getTime()) / (1000 * 60 * 60 * 24 * 30)
+    )
+
     const context: OwnerContext = {
       name: owner.user.name || 'Owner',
       email: owner.user.email || '',
+      memberSince: memberSince.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
+      trusted: owner.trusted,
       totalBookings: owner.totalBookings,
       referralCode: owner.referralCode,
       referralCredits: Number(owner.referralCredits),
@@ -117,6 +127,8 @@ export async function buildOwnerContext(userId: string): Promise<string> {
     return `
 Owner Name: ${context.name}
 Email: ${context.email}
+Member Since: ${context.memberSince}${monthsAsMember > 6 ? ' (loyal customer)' : ''}
+Status: ${context.trusted ? 'Trusted Owner' : 'Standard'}
 Total Bookings: ${context.totalBookings}
 Referral Code: ${context.referralCode}
 Referral Credits: €${context.referralCredits.toFixed(2)}

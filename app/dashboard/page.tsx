@@ -135,7 +135,15 @@ export default function Dashboard() {
       ])
 
       if (!cleanerRes.ok) {
-        throw new Error('Failed to load dashboard')
+        const errorData = await cleanerRes.json().catch(() => ({}))
+
+        // Handle role-based redirects gracefully
+        if (errorData.redirect) {
+          window.location.href = errorData.redirect
+          return
+        }
+
+        throw new Error(errorData.error || 'Failed to load dashboard')
       }
 
       const cleanerData = await cleanerRes.json()
@@ -278,20 +286,34 @@ export default function Dashboard() {
   if (error || !cleaner) {
     return (
       <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] flex items-center justify-center px-6">
-        <div className="text-center">
-          <p className="text-4xl mb-4">😕</p>
+        <div className="text-center max-w-sm">
+          <p className="text-4xl mb-4">🧹</p>
           <h1 className="text-xl font-semibold text-[#1A1A1A] mb-2">
-            {error || 'Dashboard unavailable'}
+            Cleaner Dashboard
           </h1>
-          <p className="text-[#6B6B6B] mb-4">
-            Please make sure you&apos;re logged in as a cleaner.
+          <p className="text-[#6B6B6B] mb-6">
+            This dashboard is for cleaners. If you&apos;re looking for a different dashboard, use the links below.
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-[#1A1A1A] text-white px-6 py-2.5 rounded-xl font-medium"
-          >
-            Try again
-          </button>
+          <div className="space-y-3">
+            <a
+              href="/admin"
+              className="block w-full bg-[#1A1A1A] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#333] transition-colors"
+            >
+              Go to Admin Dashboard
+            </a>
+            <a
+              href="/owner/dashboard"
+              className="block w-full bg-white text-[#1A1A1A] px-6 py-3 rounded-xl font-medium border border-[#DEDEDE] hover:border-[#1A1A1A] transition-colors"
+            >
+              Go to Owner Dashboard
+            </a>
+            <a
+              href="/"
+              className="block text-sm text-[#6B6B6B] hover:text-[#1A1A1A] mt-4"
+            >
+              ← Back to Home
+            </a>
+          </div>
         </div>
       </div>
     )

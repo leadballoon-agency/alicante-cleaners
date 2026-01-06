@@ -39,6 +39,9 @@ export async function GET(
         property: {
           select: { name: true, address: true },
         },
+        admin: {
+          select: { id: true, name: true, image: true },
+        },
         messages: {
           orderBy: { createdAt: 'asc' },
         },
@@ -50,15 +53,16 @@ export async function GET(
     }
 
     // Check authorization
-    const isOwner = conversation.owner.user.id === userId
+    const isOwner = conversation.owner?.user.id === userId
     const isCleaner = conversation.cleaner.user.id === userId
+    const isAdmin = conversation.admin?.id === userId
 
-    if (!isOwner && !isCleaner) {
+    if (!isOwner && !isCleaner && !isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     // Mark unread messages as read for the current user
-    const myRole = isOwner ? 'OWNER' : 'CLEANER'
+    const myRole = isOwner ? 'OWNER' : isAdmin ? 'ADMIN' : 'CLEANER'
     await db.message.updateMany({
       where: {
         conversationId: id,
@@ -76,12 +80,33 @@ export async function GET(
           image: conversation.cleaner.user.image,
           role: 'CLEANER' as const,
         }
-      : {
-          id: conversation.owner.id,
-          name: conversation.owner.user.name,
-          image: conversation.owner.user.image,
-          role: 'OWNER' as const,
-        }
+      : isAdmin
+        ? {
+            id: conversation.cleaner.id,
+            name: conversation.cleaner.user.name,
+            image: conversation.cleaner.user.image,
+            role: 'CLEANER' as const,
+          }
+        : conversation.owner
+          ? {
+              id: conversation.owner.id,
+              name: conversation.owner.user.name,
+              image: conversation.owner.user.image,
+              role: 'OWNER' as const,
+            }
+          : conversation.admin
+            ? {
+                id: conversation.admin.id,
+                name: conversation.admin.name,
+                image: conversation.admin.image,
+                role: 'ADMIN' as const,
+              }
+            : {
+                id: 'unknown',
+                name: 'Unknown',
+                image: null,
+                role: 'OWNER' as const,
+              }
 
     // Format messages - show appropriate language version based on viewer role
     const messages = conversation.messages.map((msg) => {

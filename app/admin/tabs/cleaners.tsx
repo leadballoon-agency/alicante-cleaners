@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Cleaner } from '../page'
 
 type Props = {
@@ -25,51 +26,49 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
       c.email.toLowerCase().includes(search.toLowerCase())
     )
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
-
   const pendingCount = cleaners.filter(c => c.status === 'pending').length
   const activeCount = cleaners.filter(c => c.status === 'active').length
 
+  const statusColors = {
+    pending: 'bg-[#FFF3E0] text-[#E65100]',
+    active: 'bg-[#E8F5E9] text-[#2E7D32]',
+    suspended: 'bg-[#FFEBEE] text-[#C62828]',
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-[#1A1A1A]">Cleaners</h2>
-          <p className="text-sm text-[#6B6B6B]">{activeCount} active, {pendingCount} pending approval</p>
-        </div>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            placeholder="Search cleaners..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A]"
-          />
-        </div>
+      <div>
+        <h2 className="text-xl font-semibold text-[#1A1A1A]">Cleaners</h2>
+        <p className="text-sm text-[#6B6B6B]">{activeCount} active, {pendingCount} pending</p>
       </div>
 
+      {/* Search */}
+      <input
+        type="text"
+        placeholder="Search by name or email..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A]"
+      />
+
       {/* Filters */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {(['all', 'pending', 'active'] as Filter[]).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
               filter === f
                 ? 'bg-[#1A1A1A] text-white'
-                : 'bg-white border border-[#EBEBEB] text-[#6B6B6B] hover:bg-[#F5F5F3]'
+                : 'bg-white border border-[#EBEBEB] text-[#6B6B6B]'
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
             {f === 'pending' && pendingCount > 0 && (
-              <span className="ml-2 px-1.5 py-0.5 rounded-full text-xs bg-[#C4785A] text-white">
+              <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
+                filter === f ? 'bg-white/20 text-white' : 'bg-[#C4785A] text-white'
+              }`}>
                 {pendingCount}
               </span>
             )}
@@ -77,148 +76,128 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
         ))}
       </div>
 
-      {/* Pending applications */}
-      {filter !== 'active' && pendingCount > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-[#6B6B6B]">Pending Applications</h3>
-          {filteredCleaners
-            .filter(c => c.status === 'pending')
-            .map((cleaner) => (
-              <div key={cleaner.id} className="bg-[#FFF8F5] rounded-xl p-4 border border-[#F5E6E0]">
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-full bg-[#F5F5F3] flex items-center justify-center">
-                      <span className="text-xl">👤</span>
-                    </div>
+      {/* Cleaner Cards */}
+      <div className="space-y-3">
+        {filteredCleaners.length === 0 ? (
+          <div className="bg-[#F5F5F3] rounded-2xl p-8 text-center">
+            <p className="text-3xl mb-2">🔍</p>
+            <p className="text-[#6B6B6B]">No cleaners found</p>
+          </div>
+        ) : (
+          filteredCleaners.map((cleaner) => (
+            <div
+              key={cleaner.id}
+              className={`rounded-2xl p-4 border ${
+                cleaner.status === 'pending'
+                  ? 'bg-[#FFF8F5] border-[#F5E6E0]'
+                  : 'bg-white border-[#EBEBEB]'
+              }`}
+            >
+              {/* Header Row */}
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-12 h-12 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden relative flex-shrink-0">
+                  {cleaner.photo ? (
+                    <Image
+                      src={cleaner.photo}
+                      alt={cleaner.name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <span className="text-xl">👤</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h4 className="font-medium text-[#1A1A1A]">{cleaner.name}</h4>
-                      <p className="text-sm text-[#6B6B6B]">{cleaner.email}</p>
+                      <h3 className="font-semibold text-[#1A1A1A]">{cleaner.name}</h3>
                       <p className="text-sm text-[#6B6B6B]">{cleaner.phone}</p>
-                      <div className="flex gap-2 mt-2">
-                        {cleaner.areas.map(area => (
-                          <span key={area} className="text-xs bg-white px-2 py-1 rounded-full text-[#6B6B6B]">
-                            {area}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-sm text-[#6B6B6B] mt-2">
-                        €{cleaner.hourlyRate}/hour · Applied {formatDate(cleaner.joinedAt)}
-                      </p>
                     </div>
+                    <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${statusColors[cleaner.status]}`}>
+                      {cleaner.status === 'active' ? '✓ Active' : cleaner.status.charAt(0).toUpperCase() + cleaner.status.slice(1)}
+                    </span>
                   </div>
-                  <div className="flex gap-2">
+                </div>
+              </div>
+
+              {/* Stats Row */}
+              {cleaner.status === 'active' && (
+                <div className="flex items-center gap-4 text-sm mb-3">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[#C4785A]">★</span>
+                    <span className="text-[#1A1A1A]">{cleaner.rating || '-'}</span>
+                    <span className="text-[#9B9B9B]">({cleaner.reviewCount})</span>
+                  </div>
+                  <span className="text-[#6B6B6B]">€{cleaner.hourlyRate}/hr</span>
+                  <span className="text-[#6B6B6B]">{cleaner.totalBookings} bookings</span>
+                  {cleaner.teamLeader && (
+                    <span className="text-[#C4785A] font-medium">👑 Leader</span>
+                  )}
+                </div>
+              )}
+
+              {/* Areas */}
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {cleaner.areas.map(area => (
+                  <span
+                    key={area}
+                    className="text-xs bg-[#F5F5F3] text-[#6B6B6B] px-2 py-1 rounded-full"
+                  >
+                    {area}
+                  </span>
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2 border-t border-[#EBEBEB]/50">
+                {cleaner.status === 'pending' ? (
+                  <>
                     <button
                       onClick={() => onApprove(cleaner.id)}
-                      className="px-4 py-2 bg-[#2E7D32] text-white rounded-lg text-sm font-medium hover:bg-[#1B5E20] transition-colors"
+                      className="flex-1 py-2.5 bg-[#2E7D32] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
                     >
                       Approve
                     </button>
                     <button
                       onClick={() => onReject(cleaner.id)}
-                      className="px-4 py-2 bg-white border border-[#DEDEDE] text-[#6B6B6B] rounded-lg text-sm font-medium hover:bg-[#F5F5F3] transition-colors"
+                      className="flex-1 py-2.5 bg-white border border-[#DEDEDE] text-[#6B6B6B] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
                     >
                       Reject
                     </button>
-                  </div>
-                </div>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => onLoginAs(cleaner.id)}
+                      className="flex-1 py-2.5 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                    >
+                      Login As
+                    </button>
+                    <Link
+                      href={`/${cleaner.slug}`}
+                      className="flex-1 py-2.5 bg-white border border-[#DEDEDE] text-[#1A1A1A] rounded-xl text-sm font-medium text-center active:scale-[0.98] transition-transform"
+                    >
+                      View Profile
+                    </Link>
+                    <button
+                      onClick={() => onToggleTeamLeader(cleaner.id)}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-medium active:scale-[0.98] transition-all ${
+                        cleaner.teamLeader
+                          ? 'bg-[#C4785A] text-white'
+                          : 'bg-white border border-[#DEDEDE] text-[#6B6B6B]'
+                      }`}
+                      title={cleaner.teamLeader ? 'Remove as team leader' : 'Make team leader'}
+                    >
+                      👑
+                    </button>
+                  </>
+                )}
               </div>
-            ))}
-        </div>
-      )}
-
-      {/* Active cleaners table */}
-      {filter !== 'pending' && (
-        <div>
-          <h3 className="text-sm font-medium text-[#6B6B6B] mb-3">Active Cleaners</h3>
-          <div className="bg-white rounded-xl border border-[#EBEBEB] overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-[#F5F5F3] border-b border-[#EBEBEB]">
-                <tr>
-                  <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Cleaner</th>
-                  <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Areas</th>
-                  <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Rate</th>
-                  <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Bookings</th>
-                  <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Rating</th>
-                  <th className="text-center text-xs font-medium text-[#6B6B6B] px-4 py-3">Team Leader</th>
-                  <th className="text-left text-xs font-medium text-[#6B6B6B] px-4 py-3">Joined</th>
-                  <th className="text-right text-xs font-medium text-[#6B6B6B] px-4 py-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#EBEBEB]">
-                {filteredCleaners
-                  .filter(c => c.status === 'active')
-                  .map((cleaner) => (
-                    <tr key={cleaner.id} className="hover:bg-[#F5F5F3]/50">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center">
-                            <span className="text-sm">👤</span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-[#1A1A1A] text-sm">{cleaner.name}</p>
-                            <p className="text-xs text-[#6B6B6B]">{cleaner.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {cleaner.areas.slice(0, 2).map(area => (
-                            <span key={area} className="text-xs bg-[#F5F5F3] px-2 py-0.5 rounded text-[#6B6B6B]">
-                              {area}
-                            </span>
-                          ))}
-                          {cleaner.areas.length > 2 && (
-                            <span className="text-xs text-[#6B6B6B]">+{cleaner.areas.length - 2}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[#1A1A1A]">€{cleaner.hourlyRate}/h</td>
-                      <td className="px-4 py-3 text-sm text-[#1A1A1A]">{cleaner.totalBookings}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          <span className="text-[#C4785A]">★</span>
-                          <span className="text-sm text-[#1A1A1A]">{cleaner.rating || '-'}</span>
-                          <span className="text-xs text-[#6B6B6B]">({cleaner.reviewCount})</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => onToggleTeamLeader(cleaner.id)}
-                          className={`w-10 h-5 rounded-full relative transition-colors ${
-                            cleaner.teamLeader ? 'bg-[#C4785A]' : 'bg-[#DEDEDE]'
-                          }`}
-                        >
-                          <span
-                            className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform shadow-sm ${
-                              cleaner.teamLeader ? 'left-5' : 'left-0.5'
-                            }`}
-                          />
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[#6B6B6B]">{formatDate(cleaner.joinedAt)}</td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-3">
-                          <button
-                            onClick={() => onLoginAs(cleaner.id)}
-                            className="text-sm text-[#6B6B6B] font-medium hover:text-[#1A1A1A] transition-colors"
-                          >
-                            Login as
-                          </button>
-                          <Link
-                            href={`/${cleaner.slug}`}
-                            className="text-sm text-[#C4785A] font-medium hover:underline"
-                          >
-                            View profile
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   )
 }

@@ -95,7 +95,7 @@ export default function AboutPage() {
             <div className="flex items-start gap-4 mb-6">
               <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center overflow-hidden flex-shrink-0 border-2 border-[#C4785A]">
                 <Image
-                  src="https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&h=200&fit=crop&crop=face"
+                  src="/cleaners/Clara-Rodrigues.jpeg"
                   alt="Clara"
                   width={64}
                   height={64}
