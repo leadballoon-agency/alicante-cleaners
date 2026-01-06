@@ -59,7 +59,7 @@ export async function sendOTP(
     const message = await client.messages.create({
       from: whatsappNumber,
       to: formattedTo,
-      contentSid: 'HXd51dff05eb6c956bea552062455bda1b',
+      contentSid: 'HXdfb10f6cd1fe20796fb566a4c75d40f4',
       contentVariables: JSON.stringify({
         '1': code,
       }),
@@ -138,7 +138,7 @@ See you tomorrow!
 }
 
 /**
- * Send message to cleaner about new booking
+ * Send message to cleaner about new booking using approved template
  */
 export async function notifyCleanerNewBooking(
   phone: string,
@@ -151,20 +151,37 @@ export async function notifyCleanerNewBooking(
     price: string
   }
 ): Promise<{ success: boolean; error?: string }> {
-  const message = `*New Booking Request!* 🎉
+  if (!client || !whatsappNumber) {
+    console.error('Twilio not configured - missing credentials')
+    return { success: false, error: 'WhatsApp not configured' }
+  }
 
-*Client:* ${details.ownerName}
-*Date:* ${details.date}
-*Time:* ${details.time}
-*Service:* ${details.service}
-*Price:* ${details.price}
+  try {
+    const formattedTo = phone.startsWith('whatsapp:') ? phone : `whatsapp:${phone}`
 
-*Address:*
-${details.address}
+    // Use approved content template for new booking
+    const message = await client.messages.create({
+      from: whatsappNumber,
+      to: formattedTo,
+      contentSid: 'HX471e05200d0c4dfd136550601d4dd703',
+      contentVariables: JSON.stringify({
+        '1': details.ownerName,
+        '2': details.date,
+        '3': details.time,
+        '4': `${details.service} - ${details.price}`,
+        '5': details.address,
+      }),
+    })
 
-Reply ACCEPT or DECLINE`
-
-  return sendWhatsAppMessage(phone, message)
+    console.log(`WhatsApp new booking notification sent: ${message.sid}`)
+    return { success: true, messageId: message.sid }
+  } catch (error) {
+    console.error('Failed to send WhatsApp booking notification:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }
+  }
 }
 
 /**
