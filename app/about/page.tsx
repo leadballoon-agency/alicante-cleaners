@@ -67,10 +67,10 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Finding Clara */}
+        {/* Meeting Clara */}
         <section className="mb-12">
           <h2 className="text-xl font-semibold text-[#1A1A1A] mb-4">
-            Finding Clara
+            Meeting Clara
           </h2>
           <div className="space-y-4 text-[#6B6B6B]">
             <p>
@@ -80,11 +80,11 @@ export default function AboutPage() {
               somehow never when it mattered.
             </p>
             <p>
-              Then we found Clara. She was brilliant — thorough, reliable, and took genuine
+              Then we met Clara. She was brilliant — thorough, reliable, and took genuine
               pride in her work. Finally, we had someone we could depend on.
             </p>
             <p>
-              But there was a problem.
+              But as we got to know each other, we realised she was facing challenges too.
             </p>
           </div>
         </section>
@@ -104,8 +104,8 @@ export default function AboutPage() {
                 />
               </div>
               <div>
-                <h3 className="font-semibold text-[#1A1A1A]">Clara&apos;s challenges</h3>
-                <p className="text-sm text-[#C4785A]">What we discovered</p>
+                <h3 className="font-semibold text-[#1A1A1A]">Clara&apos;s perspective</h3>
+                <p className="text-sm text-[#C4785A]">The cleaner&apos;s side of the story</p>
               </div>
             </div>
             <div className="space-y-4 text-[#6B6B6B]">
@@ -127,7 +127,8 @@ export default function AboutPage() {
                 on her being available, every single time.
               </p>
               <p className="font-medium text-[#1A1A1A]">
-                That&apos;s when we started talking about building something better.
+                That&apos;s when Clara said something that stuck: &quot;We need this platform
+                as much as the owners do.&quot; So we decided to build it together.
               </p>
             </div>
           </div>
@@ -136,13 +137,16 @@ export default function AboutPage() {
         {/* The Solutions */}
         <section className="mb-12">
           <h2 className="text-xl font-semibold text-[#1A1A1A] mb-4">
-            What we&apos;re building
+            What we&apos;re building together
           </h2>
           <div className="space-y-4 text-[#6B6B6B] mb-8">
             <p>
-              VillaCare isn&apos;t just another cleaning marketplace. We&apos;re solving the
-              specific problems that villa owners and cleaners actually face — problems
-              we experienced firsthand.
+              VillaCare isn&apos;t just another cleaning marketplace. It&apos;s built by both
+              an owner and a cleaner — which means we&apos;re solving real problems from
+              both sides. Clara brings the cleaner perspective: what actually makes the
+              job easier, how teams should work, what cleaners really need. We bring the
+              owner view: the anxiety of remote management, the communication gaps, the
+              need for reliability.
             </p>
           </div>
 

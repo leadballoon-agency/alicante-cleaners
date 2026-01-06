@@ -757,7 +757,7 @@ export default function HomePage() {
                   {t('nav.ourStory')}
                 </h3>
                 <p className="text-sm text-[#6B6B6B]">
-                  How two villa owners in Alicante built the service they wished existed
+                  How a villa owner and a cleaner built the service they both wished existed
                 </p>
               </div>
               <div className="flex-shrink-0 text-[#C4785A] group-hover:translate-x-1 transition-transform">
