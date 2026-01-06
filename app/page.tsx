@@ -783,7 +783,7 @@ export default function HomePage() {
               />
               <span className="text-xs text-[#9B9B9B]">· {t('footer.location')}</span>
             </div>
-            <div className="flex items-center gap-4 text-xs text-[#9B9B9B]">
+            <div className="flex items-center gap-3 text-xs text-[#9B9B9B]">
               <Link href="/privacy" className="hover:text-[#1A1A1A] transition-colors">
                 Privacy
               </Link>
@@ -791,10 +791,6 @@ export default function HomePage() {
               <Link href="/terms" className="hover:text-[#1A1A1A] transition-colors">
                 Terms
               </Link>
-              <span className="text-[#DEDEDE]">·</span>
-              <a href="mailto:hello@alicantecleaners.com" className="hover:text-[#1A1A1A] transition-colors">
-                Contact
-              </a>
             </div>
           </div>
         </div>

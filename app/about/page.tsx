@@ -291,16 +291,14 @@ export default function AboutPage() {
           <p className="text-xs text-[#9B9B9B]">
             VillaCare · Alicante, Spain
           </p>
-          <div className="flex items-center gap-4 text-xs text-[#9B9B9B]">
+          <div className="flex items-center gap-3 text-xs text-[#9B9B9B]">
             <Link href="/privacy" className="hover:text-[#1A1A1A]">
               Privacy
             </Link>
+            <span className="text-[#DEDEDE]">·</span>
             <Link href="/terms" className="hover:text-[#1A1A1A]">
               Terms
             </Link>
-            <a href="mailto:hello@alicantecleaners.com" className="hover:text-[#1A1A1A]">
-              hello@alicantecleaners.com
-            </a>
           </div>
         </div>
       </footer>
