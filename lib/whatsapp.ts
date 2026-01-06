@@ -66,7 +66,7 @@ export async function sendOTP(
     })
 
     console.log(`WhatsApp OTP sent: ${message.sid}`)
-    return { success: true, messageId: message.sid }
+    return { success: true }
   } catch (error) {
     console.error('Failed to send WhatsApp OTP:', error)
     return {
@@ -174,7 +174,7 @@ export async function notifyCleanerNewBooking(
     })
 
     console.log(`WhatsApp new booking notification sent: ${message.sid}`)
-    return { success: true, messageId: message.sid }
+    return { success: true }
   } catch (error) {
     console.error('Failed to send WhatsApp booking notification:', error)
     return {
