@@ -235,14 +235,19 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id
-        // Fetch role from database for magic link users
+      }
+
+      // Always refresh role from database to prevent stale sessions
+      // This ensures users who become ADMIN after their initial login get the correct role
+      if (token.id) {
         const dbUser = await db.user.findUnique({
-          where: { id: user.id },
+          where: { id: token.id as string },
           select: { role: true },
         })
-        token.role = dbUser?.role || 'OWNER'
+        token.role = dbUser?.role || token.role || 'OWNER'
       }
-      // Refresh role on session update
+
+      // Handle explicit session update trigger
       if (trigger === 'update' && token.id) {
         const dbUser = await db.user.findUnique({
           where: { id: token.id as string },

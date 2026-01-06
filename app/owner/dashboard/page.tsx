@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 import HomeTab from './tabs/home'
 import BookingsTab from './tabs/bookings'
 import PropertiesTab from './tabs/properties'
@@ -57,6 +59,10 @@ export type OwnerBooking = {
 }
 
 export default function OwnerDashboard() {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'ADMIN'
+  const [showAdminBanner, setShowAdminBanner] = useState(true)
+
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const [owner, setOwner] = useState<Owner | null>(null)
   const [properties, setProperties] = useState<Property[]>([])
@@ -218,6 +224,33 @@ export default function OwnerDashboard() {
 
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-20">
+      {/* Admin Banner - shown when an admin user lands on owner dashboard */}
+      {isAdmin && showAdminBanner && (
+        <div className="bg-[#1A1A1A] text-white px-4 py-3">
+          <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-lg">🔐</span>
+              <span className="text-sm truncate">You&apos;re logged in as Admin</span>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link
+                href="/admin"
+                className="bg-white text-[#1A1A1A] px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+              >
+                Admin Panel
+              </Link>
+              <button
+                onClick={() => setShowAdminBanner(false)}
+                className="text-white/70 hover:text-white p-1"
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="px-6 py-4 pt-safe bg-white border-b border-[#EBEBEB]">
         <div className="max-w-lg mx-auto flex items-center justify-between">

@@ -3,7 +3,8 @@
  *
  * These tools allow the AI to:
  * 1. check_availability - Query the cleaner's calendar for specific dates
- * 2. create_booking - Create a confirmed booking directly
+ * 2. create_booking - Create a confirmed booking directly (with optional extras)
+ * 3. request_human_handoff - Flag conversation for cleaner's personal attention
  *
  * Tool execution happens server-side with full database access.
  */
@@ -38,7 +39,7 @@ export const salesAgentTools: ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'create_booking',
-      description: 'Create a confirmed booking for the owner. Only use after confirming all details with the owner.',
+      description: 'Create a confirmed booking for the owner. Only use after confirming all details with the owner. For Arrival prep, you can include extras.',
       parameters: {
         type: 'object',
         properties: {
@@ -55,6 +56,14 @@ export const salesAgentTools: ChatCompletionTool[] = [
             type: 'string',
             description: 'Preferred start time in HH:MM format (e.g., "10:00")',
           },
+          extras: {
+            type: 'array',
+            items: {
+              type: 'string',
+              enum: ['fridge', 'flowers', 'linens', 'basket'],
+            },
+            description: 'Optional extras for Arrival prep: fridge (stock essentials), flowers (fresh arrangement), linens (fresh bedding), basket (welcome treats)',
+          },
           propertyAddress: {
             type: 'string',
             description: 'Property address if not already known from conversation',
@@ -68,6 +77,28 @@ export const salesAgentTools: ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'request_human_handoff',
+      description: 'Flag this conversation for the cleaner\'s personal attention. Use when: owner is frustrated/angry, complex negotiations needed, complaints about past service, requests you cannot handle, or anything you\'re uncertain about.',
+      parameters: {
+        type: 'object',
+        properties: {
+          reason: {
+            type: 'string',
+            enum: ['complaint', 'complex_question', 'price_negotiation', 'special_request', 'angry_customer', 'uncertain'],
+            description: 'Why human attention is needed',
+          },
+          summary: {
+            type: 'string',
+            description: 'Brief summary of the situation for the cleaner',
+          },
+        },
+        required: ['reason', 'summary'],
+      },
+    },
+  },
 ]
 
 export interface ToolResult {
@@ -75,6 +106,8 @@ export interface ToolResult {
   message: string
   data?: Record<string, unknown>
   bookingId?: string
+  handoffRequested?: boolean
+  handoffReason?: string
 }
 
 /**
@@ -155,6 +188,7 @@ async function createBooking(
     service: string
     date: string
     time: string
+    extras?: string[]
     propertyAddress?: string
     notes?: string
   },
@@ -167,8 +201,21 @@ async function createBooking(
     'Arrival prep': 4,
   }
 
+  // Extras pricing
+  const extrasPricing: Record<string, number> = {
+    'fridge': 25,
+    'flowers': 20,
+    'linens': 20,
+    'basket': 30,
+  }
+
   const hours = serviceHours[params.service] || 3
   const price = context.hourlyRate * hours
+
+  // Calculate extras cost
+  const selectedExtras = params.extras || []
+  const extrasCost = selectedExtras.reduce((sum, extra) => sum + (extrasPricing[extra] || 0), 0)
+  const totalPrice = price + extrasCost
 
   // Get owner and property
   const conversation = await db.conversation.findUnique({
@@ -265,6 +312,13 @@ async function createBooking(
     }
   }
 
+  // Build notes with extras info
+  let bookingNotes = params.notes || ''
+  if (selectedExtras.length > 0) {
+    const extrasNote = `Arrival extras requested: ${selectedExtras.join(', ')}`
+    bookingNotes = bookingNotes ? `${bookingNotes}\n${extrasNote}` : extrasNote
+  }
+
   // Create the booking as CONFIRMED (AI has authority)
   const booking = await db.booking.create({
     data: {
@@ -273,14 +327,38 @@ async function createBooking(
       propertyId: propertyId,
       status: 'CONFIRMED',
       service: params.service,
-      price,
+      price: totalPrice,
       hours,
       date: bookingDate,
       time: params.time,
-      notes: params.notes || null,
+      notes: bookingNotes || null,
       createdByAI: true,
     },
   })
+
+  // Create ArrivalPrep record if extras were selected
+  if (params.service === 'Arrival prep' && selectedExtras.length > 0) {
+    await db.arrivalPrep.create({
+      data: {
+        ownerId: conversation.ownerId,
+        propertyId: propertyId,
+        cleanerId: context.cleanerId,
+        arrivalDate: bookingDate,
+        arrivalTime: params.time,
+        extras: selectedExtras,
+        notes: params.notes || null,
+        status: 'CONFIRMED',
+      },
+    })
+
+    // Update owner's preferred extras to remember their choices
+    const currentExtras = conversation.owner?.preferredExtras || []
+    const newExtras = Array.from(new Set([...currentExtras, ...selectedExtras]))
+    await db.owner.update({
+      where: { id: conversation.ownerId },
+      data: { preferredExtras: newExtras },
+    })
+  }
 
   // Update cleaner stats
   await db.cleaner.update({
@@ -298,28 +376,99 @@ async function createBooking(
     },
   })
 
+  // Create notification for cleaner
+  await db.notification.create({
+    data: {
+      userId: context.cleanerUserId,
+      type: 'AI_ACTION',
+      title: 'AI Created Booking',
+      message: `Your AI assistant confirmed a ${params.service} for ${context.ownerName} on ${params.date} at ${params.time}. Total: €${totalPrice.toFixed(2)}${selectedExtras.length > 0 ? ` (includes: ${selectedExtras.join(', ')})` : ''}`,
+      data: { bookingId: booking.id, extras: selectedExtras },
+      actionUrl: '/dashboard?tab=bookings',
+    },
+  })
+
   // Create conversation summary
+  const extrasSummary = selectedExtras.length > 0 ? ` with extras: ${selectedExtras.join(', ')}` : ''
   await db.conversationSummary.create({
     data: {
       conversationId: context.conversationId,
       cleanerId: context.cleanerId,
-      summary: `AI created booking: ${params.service} on ${params.date} at ${params.time} for ${context.ownerName}. Price: ${price}`,
+      summary: `AI created booking: ${params.service} on ${params.date} at ${params.time} for ${context.ownerName}${extrasSummary}. Total: €${totalPrice.toFixed(2)}`,
       bookingCreated: true,
       bookingId: booking.id,
     },
   })
 
+  // Build confirmation message
+  let confirmationMessage = `Booking confirmed! ${params.service} on ${params.date} at ${params.time}`
+  if (selectedExtras.length > 0) {
+    confirmationMessage += ` with ${selectedExtras.join(', ')}`
+  }
+  confirmationMessage += `. Total: €${totalPrice.toFixed(2)}`
+
   return {
     success: true,
-    message: `Booking confirmed! ${params.service} on ${params.date} at ${params.time} for ${price} total.`,
+    message: confirmationMessage,
     bookingId: booking.id,
     data: {
       bookingId: booking.id,
       service: params.service,
       date: params.date,
       time: params.time,
-      price,
+      extras: selectedExtras,
+      servicePrice: price,
+      extrasCost,
+      totalPrice,
       hours,
+    },
+  }
+}
+
+/**
+ * Request human handoff - flags conversation for cleaner's personal attention
+ */
+async function requestHumanHandoff(
+  params: {
+    reason: string
+    summary: string
+  },
+  context: SalesAgentContext
+): Promise<ToolResult> {
+  // Create notification for cleaner
+  await db.notification.create({
+    data: {
+      userId: context.cleanerUserId,
+      type: 'BOOKING_REQUEST', // Reusing existing type that implies action needed
+      title: 'Conversation Needs Your Attention',
+      message: `AI flagged a conversation with ${context.ownerName} for your attention. Reason: ${params.reason}. Summary: ${params.summary}`,
+      data: {
+        conversationId: context.conversationId,
+        reason: params.reason,
+        summary: params.summary,
+      },
+      actionUrl: '/dashboard?tab=messages',
+    },
+  })
+
+  // Create conversation summary
+  await db.conversationSummary.create({
+    data: {
+      conversationId: context.conversationId,
+      cleanerId: context.cleanerId,
+      summary: `AI requested human handoff. Reason: ${params.reason}. Summary: ${params.summary}`,
+      bookingCreated: false,
+    },
+  })
+
+  return {
+    success: true,
+    message: `Flagged for ${context.cleanerName}'s attention. They will respond personally soon.`,
+    handoffRequested: true,
+    handoffReason: params.reason,
+    data: {
+      reason: params.reason,
+      summary: params.summary,
     },
   }
 }
@@ -342,8 +491,18 @@ export async function executeTool(
           service: string
           date: string
           time: string
+          extras?: string[]
           propertyAddress?: string
           notes?: string
+        },
+        context
+      )
+
+    case 'request_human_handoff':
+      return requestHumanHandoff(
+        args as {
+          reason: string
+          summary: string
         },
         context
       )

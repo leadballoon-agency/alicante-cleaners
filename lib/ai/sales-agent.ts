@@ -18,10 +18,24 @@ import { db } from '@/lib/db'
 import { getOpenAI } from './agents'
 import { salesAgentTools, executeTool, type ToolResult } from './sales-agent-tools'
 
+export interface PreviousBooking {
+  date: string
+  service: string
+  rating: number | null
+}
+
+export interface OwnerProperty {
+  id: string
+  name: string
+  address: string
+  bedrooms: number
+}
+
 export interface SalesAgentContext {
   cleanerId: string
   cleanerName: string
   cleanerPhone: string
+  cleanerUserId: string
   hourlyRate: number
   serviceAreas: string[]
   languages: string[]
@@ -34,6 +48,16 @@ export interface SalesAgentContext {
   ownerName: string
   ownerLanguage: string
   propertyName: string | null
+
+  // Rich owner context
+  ownerId: string | null
+  ownerMemberSince: string | null
+  ownerIsLoyalCustomer: boolean
+  ownerTrusted: boolean
+  ownerTotalBookings: number
+  ownerPreferredExtras: string[]
+  ownerProperties: OwnerProperty[]
+  previousBookingsWithCleaner: PreviousBooking[]
 
   // Availability summary
   nextAvailableDates: string[]
@@ -57,12 +81,16 @@ export async function buildSalesAgentContext(
     include: {
       cleaner: {
         include: {
-          user: { select: { name: true, phone: true, preferredLanguage: true } },
+          user: { select: { id: true, name: true, phone: true, preferredLanguage: true } },
         },
       },
       owner: {
         include: {
-          user: { select: { name: true, preferredLanguage: true } },
+          user: { select: { name: true, preferredLanguage: true, createdAt: true } },
+          properties: {
+            select: { id: true, name: true, address: true, bedrooms: true },
+            take: 10,
+          },
         },
       },
       property: { select: { name: true } },
@@ -72,6 +100,7 @@ export async function buildSalesAgentContext(
   if (!conversation) return null
 
   const cleaner = conversation.cleaner
+  const owner = conversation.owner
 
   // Get next 14 days of availability
   const today = new Date()
@@ -119,10 +148,40 @@ export async function buildSalesAgentContext(
     }
   }
 
+  // Get previous bookings between this owner and cleaner
+  let previousBookingsWithCleaner: PreviousBooking[] = []
+  if (owner) {
+    const pastBookings = await db.booking.findMany({
+      where: {
+        cleanerId: cleaner.id,
+        ownerId: owner.id,
+        status: 'COMPLETED',
+      },
+      include: {
+        review: { select: { rating: true } },
+      },
+      orderBy: { date: 'desc' },
+      take: 5,
+    })
+
+    previousBookingsWithCleaner = pastBookings.map(b => ({
+      date: b.date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }),
+      service: b.service,
+      rating: b.review?.rating ?? null,
+    }))
+  }
+
+  // Calculate if loyal customer (member for 6+ months)
+  const memberSince = owner?.user.createdAt
+  const monthsAsMember = memberSince
+    ? Math.floor((today.getTime() - memberSince.getTime()) / (1000 * 60 * 60 * 24 * 30))
+    : 0
+
   return {
     cleanerId: cleaner.id,
     cleanerName: cleaner.user.name || 'Cleaner',
     cleanerPhone: cleaner.user.phone || '',
+    cleanerUserId: cleaner.user.id,
     hourlyRate: Number(cleaner.hourlyRate),
     serviceAreas: cleaner.serviceAreas,
     languages: cleaner.languages,
@@ -131,9 +190,26 @@ export async function buildSalesAgentContext(
     bio: cleaner.bio,
 
     conversationId,
-    ownerName: conversation.owner?.user.name || 'Owner',
-    ownerLanguage: conversation.owner?.user.preferredLanguage || 'en',
+    ownerName: owner?.user.name || 'Owner',
+    ownerLanguage: owner?.user.preferredLanguage || 'en',
     propertyName: conversation.property?.name || null,
+
+    // Rich owner context
+    ownerId: owner?.id || null,
+    ownerMemberSince: memberSince
+      ? memberSince.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+      : null,
+    ownerIsLoyalCustomer: monthsAsMember >= 6,
+    ownerTrusted: owner?.trusted ?? false,
+    ownerTotalBookings: owner?.totalBookings ?? 0,
+    ownerPreferredExtras: owner?.preferredExtras ?? [],
+    ownerProperties: owner?.properties.map(p => ({
+      id: p.id,
+      name: p.name,
+      address: p.address,
+      bedrooms: p.bedrooms,
+    })) ?? [],
+    previousBookingsWithCleaner,
 
     nextAvailableDates,
     busyDates: Array.from(new Set(busyDates)),
@@ -171,6 +247,22 @@ function buildSystemPrompt(context: SalesAgentContext): string {
     { name: 'Arrival prep', hours: 4, price: context.hourlyRate * 4 },
   ]
 
+  // Build owner context section
+  let ownerContext = ''
+  if (context.ownerId) {
+    const loyaltyNote = context.ownerIsLoyalCustomer ? ' (loyal customer!)' : ''
+    const trustedNote = context.ownerTrusted ? ' - Trusted Owner' : ''
+
+    ownerContext = `
+OWNER CONTEXT:
+- ${context.ownerName}${loyaltyNote}${trustedNote}
+- Member since: ${context.ownerMemberSince || 'Recently joined'}
+- Total bookings on platform: ${context.ownerTotalBookings}
+${context.ownerPreferredExtras.length > 0 ? `- Favorite extras: ${context.ownerPreferredExtras.join(', ')}` : ''}
+${context.previousBookingsWithCleaner.length > 0 ? `- Previous bookings with you: ${context.previousBookingsWithCleaner.map(b => `${b.service} (${b.date})`).join(', ')}` : '- First time booking with you!'}
+${context.ownerProperties.length > 0 ? `- Properties: ${context.ownerProperties.map(p => `${p.name} (${p.bedrooms} beds, ${p.address})`).join('; ')}` : ''}`
+  }
+
   return `You are the AI assistant responding on behalf of ${context.cleanerName}, a professional villa cleaner in Alicante, Spain.
 
 YOUR ROLE:
@@ -178,6 +270,7 @@ YOUR ROLE:
 - Use first person ("I", "my") when speaking
 - Be warm, professional, and helpful
 - You have FULL authority to create bookings
+- Personalize responses based on owner history
 
 CLEANER PROFILE:
 - Name: ${context.cleanerName}
@@ -190,9 +283,16 @@ ${context.bio ? `- Bio: ${context.bio}` : ''}
 SERVICES OFFERED:
 ${services.map(s => `- ${s.name}: ${s.hours} hours = €${s.price.toFixed(2)}`).join('\n')}
 
+ARRIVAL EXTRAS (for Arrival prep only):
+- Fridge stocking: Stock essentials before arrival (~€20-30)
+- Fresh flowers: Beautiful arrangement (~€15-25)
+- Premium linens: Crisp fresh bedding (~€20)
+- Welcome basket: Local treats and essentials (~€25-35)
+
 AVAILABILITY (next 2 weeks):
 - Available dates: ${context.nextAvailableDates.length > 0 ? context.nextAvailableDates.join(', ') : 'Check calendar'}
 - Busy dates: ${context.busyDates.length > 0 ? context.busyDates.join(', ') : 'None'}
+${ownerContext}
 
 CURRENT CONVERSATION:
 - Owner: ${context.ownerName}
@@ -201,21 +301,41 @@ ${context.propertyName ? `- Property: ${context.propertyName}` : ''}
 
 INSTRUCTIONS:
 1. ALWAYS respond in the owner's preferred language (${context.ownerLanguage})
-2. Be helpful and try to close bookings when appropriate
-3. Before confirming a booking, verify:
-   - Service type (Regular, Deep, or Arrival)
+2. Greet returning customers warmly and reference their history if relevant
+3. Be helpful and try to close bookings when appropriate
+4. Before confirming a booking, verify:
+   - Service type (Regular, Deep, or Arrival prep)
    - Date and preferred time
    - Property address (if not already known)
-4. Use the check_availability tool to verify dates before confirming
-5. Use the create_booking tool to create confirmed bookings
-6. Keep responses conversational and friendly
-7. If asked about something you can't do, politely explain
+5. Use the check_availability tool to verify dates before confirming
+6. Use the create_booking tool to create confirmed bookings
+7. Keep responses conversational and friendly
+
+REVENUE TIPS (use naturally, never pushy):
+- For arrival prep: Offer extras the owner has used before, or suggest new ones
+- For large properties (4+ bedrooms): Suggest deep clean for better results
+- Returning customers: "Would you like the same as last time?"
+- After confirming a booking: Mention our referral program if appropriate
+${context.ownerPreferredExtras.length > 0 ? `- This owner likes: ${context.ownerPreferredExtras.join(', ')} - offer these again!` : ''}
+
+WHEN TO ESCALATE TO HUMAN:
+- Owner expresses frustration or anger
+- Complex negotiations (custom pricing, bulk discounts)
+- Complaints about past service
+- Requests outside your capabilities
+- Anything you're uncertain about
+Use the request_human_handoff tool and say: "I want to make sure ${context.cleanerName} sees this personally. I've flagged this for their attention."
+
+IF UNCERTAIN:
+- Don't guess or make up information
+- Say "I'm not 100% sure about that - let me check with ${context.cleanerName}"
+- Never commit to things outside your tools
 
 LANGUAGE NOTES:
-- If owner writes in English, respond in English
-- If owner writes in Spanish, respond in Spanish
-- If owner writes in German, respond in German
-- Match the owner's language for a seamless experience`
+- Match the owner's language for a seamless experience
+- If they write in English, respond in English
+- If they write in Spanish, respond in Spanish
+- If they write in German, respond in German`
 }
 
 /**

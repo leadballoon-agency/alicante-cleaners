@@ -183,13 +183,15 @@ function LoginContent() {
             </div>
           )}
           {error === 'admin_only' && (
-            <div className="mb-6 p-4 bg-[#FFEBEE] border border-[#C75050] rounded-xl text-[#C75050] text-sm">
-              That page is only accessible to administrators.
+            <div className="mb-6 p-4 bg-[#1A1A1A] rounded-xl text-white text-sm">
+              <p className="font-medium mb-1">🔐 Admin Access Required</p>
+              <p className="text-white/80">Sign in with your admin email to access the admin panel.</p>
             </div>
           )}
           {error === 'owner_only' && (
-            <div className="mb-6 p-4 bg-[#FFEBEE] border border-[#C75050] rounded-xl text-[#C75050] text-sm">
-              Please sign in as a property owner to access the owner dashboard.
+            <div className="mb-6 p-4 bg-[#FFF8F5] border border-[#C4785A] rounded-xl text-[#1A1A1A] text-sm">
+              <p className="font-medium mb-1">🏠 Owner Dashboard</p>
+              <p className="text-[#6B6B6B]">Sign in as a property owner to access your villa dashboard. If you&apos;re an admin, <Link href="/login?callbackUrl=/admin" className="text-[#C4785A] underline">sign in to admin panel</Link> instead.</p>
             </div>
           )}
           {error === 'cleaner_only' && (

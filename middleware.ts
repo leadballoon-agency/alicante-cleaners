@@ -7,24 +7,24 @@ export default withAuth(
     const path = req.nextUrl.pathname
     const role = token?.role
 
-    // ADMIN can access everything
+    // ADMIN can access everything (admin, owner, cleaner dashboards)
     if (role === 'ADMIN') {
       return NextResponse.next()
     }
 
     // Admin routes - require ADMIN role
     if (path.startsWith('/admin')) {
-      return NextResponse.redirect(new URL('/login?error=admin_only', req.url))
+      return NextResponse.redirect(new URL('/login?error=admin_only&callbackUrl=/admin', req.url))
     }
 
-    // Cleaner dashboard - require CLEANER role
+    // Cleaner dashboard - require CLEANER role (or ADMIN, handled above)
     if (path.startsWith('/dashboard') && role !== 'CLEANER') {
-      return NextResponse.redirect(new URL('/login?error=cleaner_only', req.url))
+      return NextResponse.redirect(new URL('/login?error=cleaner_only&callbackUrl=/dashboard', req.url))
     }
 
-    // Owner dashboard - require OWNER role
+    // Owner dashboard - require OWNER role (or ADMIN, handled above)
     if (path.startsWith('/owner/dashboard') && role !== 'OWNER') {
-      return NextResponse.redirect(new URL('/login?error=owner_only', req.url))
+      return NextResponse.redirect(new URL('/login?error=owner_only&callbackUrl=/owner/dashboard', req.url))
     }
 
     return NextResponse.next()

@@ -741,25 +741,61 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Origin Story Section */}
+      <section className="px-6 py-10 bg-gradient-to-b from-[#FAFAF8] to-white">
+        <div className="max-w-md mx-auto">
+          <Link
+            href="/about"
+            className="block bg-white rounded-2xl p-6 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-lg transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-[#C4785A] to-[#A66347] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                <span className="text-2xl">📖</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-[#1A1A1A] group-hover:text-[#C4785A] transition-colors">
+                  {t('nav.ourStory')}
+                </h3>
+                <p className="text-sm text-[#6B6B6B]">
+                  How two villa owners in Alicante built the service they wished existed
+                </p>
+              </div>
+              <div className="flex-shrink-0 text-[#C4785A] group-hover:translate-x-1 transition-transform">
+                →
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="px-6 py-6 border-t border-[#EBEBEB]">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-[#9B9B9B]">
-            VillaCare · {t('footer.location')}
-          </p>
-          <div className="flex items-center gap-4 text-xs text-[#9B9B9B]">
-            <Link href="/about" className="hover:text-[#1A1A1A]">
-              {t('nav.ourStory')}
-            </Link>
-            <Link href="/privacy" className="hover:text-[#1A1A1A]">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-[#1A1A1A]">
-              Terms
-            </Link>
-            <a href="mailto:hello@alicantecleaners.com" className="hover:text-[#1A1A1A]">
-              hello@alicantecleaners.com
-            </a>
+      <footer className="px-6 py-6 bg-white border-t border-[#EBEBEB]">
+        <div className="max-w-5xl mx-auto">
+          {/* Mobile: Stack vertically */}
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+            <div className="flex items-center gap-2">
+              <Image
+                src="/villacare-horizontal-logo.png"
+                alt="VillaCare"
+                width={100}
+                height={28}
+                className="object-contain opacity-60"
+              />
+              <span className="text-xs text-[#9B9B9B]">· {t('footer.location')}</span>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-[#9B9B9B]">
+              <Link href="/privacy" className="hover:text-[#1A1A1A] transition-colors">
+                Privacy
+              </Link>
+              <span className="text-[#DEDEDE]">·</span>
+              <Link href="/terms" className="hover:text-[#1A1A1A] transition-colors">
+                Terms
+              </Link>
+              <span className="text-[#DEDEDE]">·</span>
+              <a href="mailto:hello@alicantecleaners.com" className="hover:text-[#1A1A1A] transition-colors">
+                Contact
+              </a>
+            </div>
           </div>
         </div>
       </footer>
