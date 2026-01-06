@@ -59,7 +59,7 @@ export async function sendOTP(
     const message = await client.messages.create({
       from: whatsappNumber,
       to: formattedTo,
-      contentSid: 'HXdfb10f6cd1fe20796fb566a4c75d40f4',
+      contentSid: 'HX1bf4d7bc921048c623fa47605c777ce1',
       contentVariables: JSON.stringify({
         '1': code,
       }),
