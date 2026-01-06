@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { notifyCleanerNewBooking, sendBookingConfirmation } from '@/lib/whatsapp'
 
 export async function POST(request: NextRequest) {
   try {
@@ -164,6 +165,46 @@ export async function POST(request: NextRequest) {
         property: true,
       },
     })
+
+    // Format date for notifications
+    const formattedDate = new Date(date).toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+
+    // Send WhatsApp notification to cleaner
+    const cleanerPhone = booking.cleaner.user.phone
+    if (cleanerPhone) {
+      // Get owner details for the notification
+      const owner = await db.owner.findUnique({
+        where: { id: ownerId },
+        include: { user: { select: { name: true, phone: true } } },
+      })
+
+      notifyCleanerNewBooking(cleanerPhone, {
+        ownerName: owner?.user.name || guestName || 'Villa Owner',
+        date: formattedDate,
+        time,
+        address: propertyAddress,
+        service: service.type,
+        price: `€${service.price}`,
+      }).catch((err) => console.error('Failed to notify cleaner:', err))
+    }
+
+    // Send WhatsApp confirmation to owner (if they have a phone)
+    const ownerPhone = guestPhone || (session?.user as { phone?: string })?.phone
+    if (ownerPhone) {
+      sendBookingConfirmation(ownerPhone, {
+        cleanerName: booking.cleaner.user.name || 'Your cleaner',
+        date: formattedDate,
+        time,
+        address: propertyAddress,
+        service: service.type,
+        price: `€${service.price}`,
+      }).catch((err) => console.error('Failed to confirm to owner:', err))
+    }
 
     return NextResponse.json({
       success: true,

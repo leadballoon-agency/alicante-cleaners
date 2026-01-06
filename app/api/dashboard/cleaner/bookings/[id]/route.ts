@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { sendWhatsAppMessage, sendBookingCompleted } from '@/lib/whatsapp'
 
 // PATCH /api/dashboard/cleaner/bookings/[id] - Accept/decline/assign booking
 export async function PATCH(
@@ -160,6 +161,15 @@ export async function PATCH(
     const updatedBooking = await db.booking.update({
       where: { id },
       data: { status: newStatus },
+      include: {
+        owner: {
+          include: { user: { select: { name: true, phone: true } } },
+        },
+        cleaner: {
+          include: { user: { select: { name: true } } },
+        },
+        property: { select: { address: true } },
+      },
     })
 
     // Update cleaner's total bookings if completed
@@ -173,6 +183,35 @@ export async function PATCH(
         where: { id: booking.ownerId },
         data: { totalBookings: { increment: 1 } },
       })
+    }
+
+    // Send WhatsApp notifications to owner
+    const ownerPhone = updatedBooking.owner.user.phone
+    if (ownerPhone) {
+      const cleanerName = updatedBooking.cleaner.user.name || 'Your cleaner'
+      const formattedDate = updatedBooking.date.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      })
+
+      if (newStatus === 'CONFIRMED') {
+        sendWhatsAppMessage(
+          ownerPhone,
+          `*Booking Confirmed!* ✅\n\n${cleanerName} has accepted your booking for ${formattedDate} at ${updatedBooking.time}.\n\nAddress: ${updatedBooking.property.address}\n\n- VillaCare`
+        ).catch((err) => console.error('Failed to notify owner of confirmation:', err))
+      } else if (newStatus === 'CANCELLED') {
+        sendWhatsAppMessage(
+          ownerPhone,
+          `*Booking Declined* ❌\n\nUnfortunately, ${cleanerName} is not available for ${formattedDate}.\n\nPlease try booking with another cleaner at villacare.app\n\n- VillaCare`
+        ).catch((err) => console.error('Failed to notify owner of cancellation:', err))
+      } else if (newStatus === 'COMPLETED') {
+        const reviewLink = `${process.env.NEXT_PUBLIC_APP_URL}/owner/dashboard?tab=bookings&review=${updatedBooking.id}`
+        sendBookingCompleted(ownerPhone, {
+          cleanerName,
+          reviewLink,
+        }).catch((err) => console.error('Failed to notify owner of completion:', err))
+      }
     }
 
     return NextResponse.json({

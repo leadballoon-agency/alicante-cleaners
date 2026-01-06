@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSession } from 'next-auth/react'
 import ActivityFeed from '@/components/activity-feed'
 import LanguageSwitcher from '@/components/language-switcher'
 import { useLanguage } from '@/components/language-context'
@@ -23,11 +24,15 @@ type Cleaner = {
 }
 
 export default function HomePage() {
+  const { data: session } = useSession()
   const { t } = useLanguage()
   const [cleaners, setCleaners] = useState<Cleaner[]>([])
   const [areas, setAreas] = useState<string[]>([])
   const [selectedArea, setSelectedArea] = useState('all')
   const [loading, setLoading] = useState(true)
+
+  // Check if user is a cleaner (show them a banner to go to their dashboard)
+  const isCleaner = session?.user?.role === 'CLEANER'
 
   useEffect(() => {
     fetchCleaners()
@@ -69,7 +74,7 @@ export default function HomePage() {
               {t('nav.ourStory')}
             </Link>
             <Link
-              href="/onboarding/cleaner"
+              href="/join"
               className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors hidden sm:block"
             >
               {t('nav.joinAsCleaner')}
@@ -84,14 +89,32 @@ export default function HomePage() {
         </div>
       </header>
 
+      {/* Cleaner Banner */}
+      {isCleaner && (
+        <div className="bg-[#1A1A1A] text-white px-6 py-3 text-center">
+          <span className="text-sm">
+            Looking for your dashboard?{' '}
+            <Link href="/dashboard" className="text-[#C4785A] font-medium hover:underline">
+              Go to Dashboard →
+            </Link>
+          </span>
+        </div>
+      )}
+
       {/* Hero */}
       <section className="px-6 py-12 bg-gradient-to-b from-white to-[#FAFAF8]">
         <div className="max-w-3xl mx-auto text-center">
+          {/* Beta Badge */}
+          <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#FFF8F5] text-[#C4785A] text-sm font-medium rounded-full border border-[#C4785A] mb-6">
+            <span className="w-2 h-2 bg-[#C4785A] rounded-full animate-pulse" />
+            Beta - Join {cleaners.length || 50}+ owners testing with us
+          </span>
+
           <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1A1A] mb-4 leading-tight">
-            Your villa, ready<br />when you are
+            Trusted villa cleaning<br />in Alicante
           </h1>
           <p className="text-[#6B6B6B] text-lg max-w-lg mx-auto mb-6">
-            Vetted cleaners. Photo proof. Auto-translation. No passwords, no apps, no hassle.
+            Vetted cleaners. Photo proof. Auto-translation. Whether you&apos;re here year-round or visiting - your villa stays cared for.
           </p>
 
           {/* Activity Feed */}
@@ -302,35 +325,109 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* Problem Section - Pain Points */}
+      {/* Problem → Solution Section */}
       <section className="px-6 py-12 bg-[#FFF8F5]">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-semibold text-[#1A1A1A] text-center mb-8">
-            Sound familiar?
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-semibold text-[#1A1A1A] text-center mb-3">
+            Your problems, solved
           </h2>
-          <div className="space-y-4">
-            <div className="bg-white rounded-xl p-5 border-l-4 border-[#C4785A]">
+          <p className="text-[#6B6B6B] text-center mb-10 max-w-xl mx-auto">
+            We built VillaCare to fix the frustrations villa owners told us about
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Problem 1 */}
+            <div className="bg-white rounded-xl p-5 border border-[#EBEBEB]">
               <div className="flex items-start gap-4">
-                <span className="text-2xl">✈️</span>
-                <p className="text-[#6B6B6B]">
-                  You&apos;re 2,000km away wondering if the villa is ready for your guests arriving tomorrow
-                </p>
+                <div className="w-10 h-10 bg-[#FFEBEE] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">😫</span>
+                </div>
+                <div>
+                  <p className="text-sm text-[#C75050] font-medium mb-1">The problem</p>
+                  <p className="text-[#1A1A1A]">Language barrier with cleaners</p>
+                </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl p-5 border-l-4 border-[#C4785A]">
+            <div className="bg-white rounded-xl p-5 border border-[#C4785A]">
               <div className="flex items-start gap-4">
-                <span className="text-2xl">💬</span>
-                <p className="text-[#6B6B6B]">
-                  Google Translate isn&apos;t quite getting your cleaning instructions across
-                </p>
+                <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">🌍</span>
+                </div>
+                <div>
+                  <p className="text-sm text-[#C4785A] font-medium mb-1">Our solution</p>
+                  <p className="text-[#1A1A1A]">Auto-translation - write English, they read Spanish</p>
+                </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl p-5 border-l-4 border-[#C4785A]">
+
+            {/* Problem 2 */}
+            <div className="bg-white rounded-xl p-5 border border-[#EBEBEB]">
               <div className="flex items-start gap-4">
-                <span className="text-2xl">📅</span>
-                <p className="text-[#6B6B6B]">
-                  Your usual cleaner is sick and you have no backup - guests arrive in 48 hours
-                </p>
+                <div className="w-10 h-10 bg-[#FFEBEE] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">😫</span>
+                </div>
+                <div>
+                  <p className="text-sm text-[#C75050] font-medium mb-1">The problem</p>
+                  <p className="text-[#1A1A1A]">2,000km away wondering if it&apos;s clean</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-5 border border-[#C4785A]">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">📸</span>
+                </div>
+                <div>
+                  <p className="text-sm text-[#C4785A] font-medium mb-1">Our solution</p>
+                  <p className="text-[#1A1A1A]">Photo proof via WhatsApp before you land</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Problem 3 */}
+            <div className="bg-white rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-[#FFEBEE] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">😫</span>
+                </div>
+                <div>
+                  <p className="text-sm text-[#C75050] font-medium mb-1">The problem</p>
+                  <p className="text-[#1A1A1A]">Cleaner sick, guests arriving in 48 hours</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-5 border border-[#C4785A]">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">👥</span>
+                </div>
+                <div>
+                  <p className="text-sm text-[#C4785A] font-medium mb-1">Our solution</p>
+                  <p className="text-[#1A1A1A]">Teams cover each other - always someone available</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Problem 4 */}
+            <div className="bg-white rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-[#FFEBEE] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">😫</span>
+                </div>
+                <div>
+                  <p className="text-sm text-[#C75050] font-medium mb-1">The problem</p>
+                  <p className="text-[#1A1A1A]">Endless WhatsApp back-and-forth for bookings</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-5 border border-[#C4785A]">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">🤖</span>
+                </div>
+                <div>
+                  <p className="text-sm text-[#C4785A] font-medium mb-1">Our solution</p>
+                  <p className="text-[#1A1A1A]">AI handles booking while cleaner works</p>
+                </div>
               </div>
             </div>
           </div>
@@ -441,86 +538,6 @@ export default function HomePage() {
                 src="/screenshots/messaging-translation.png"
                 alt="Auto-translation messaging"
               />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* For Cleaners Section */}
-      <section className="px-6 py-12 bg-[#1A1A1A] overflow-hidden">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
-            {/* Phone Mockup */}
-            <div className="flex-shrink-0">
-              <PhoneMockup
-                src="/screenshots/cleaner-dashboard.png"
-                alt="Cleaner dashboard"
-              />
-            </div>
-            {/* Content */}
-            <div className="flex-1">
-              <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-4">
-                Built for cleaning professionals
-              </h2>
-              <p className="text-white/70 mb-6">
-                Tools to grow your business, not more admin work.
-              </p>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span>📱</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white">Sign up with your phone</h4>
-                    <p className="text-sm text-white/70">No email needed. Just your mobile number + a code</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span>📈</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white">See your earnings</h4>
-                    <p className="text-sm text-white/70">Track this week, this month, and what&apos;s coming up</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span>✅</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white">Accept bookings instantly</h4>
-                    <p className="text-sm text-white/70">One tap to confirm. Decline if you&apos;re busy. Simple</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span>📅</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white">Sync to your calendar</h4>
-                    <p className="text-sm text-white/70">Google Calendar, Apple Calendar, Outlook - automatic</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span>👥</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white">Build your team</h4>
-                    <p className="text-sm text-white/70">Invite trusted colleagues. Cover for each other. Never let clients down</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span>🤖</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white">AI assistant included</h4>
-                    <p className="text-sm text-white/70">Handles inquiries while you focus on cleaning</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -731,10 +748,10 @@ export default function HomePage() {
                 Join our invitation-only network
               </p>
               <Link
-                href="/onboarding/cleaner"
+                href="/join"
                 className="inline-block bg-[#C4785A] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#B56A4F] transition-colors w-full sm:w-auto"
               >
-                Apply to join
+                Learn more
               </Link>
             </div>
           </div>

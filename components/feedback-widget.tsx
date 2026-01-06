@@ -161,8 +161,18 @@ export default function FeedbackWidget() {
   }
   const t = greetings[userLang] || greetings.en
 
-  // Hide on admin pages
+  // Hide on admin, onboarding, and cleaner profile pages (they have their own chat widgets)
   const isAdminPage = pathname?.startsWith('/admin') ?? false
+  const isOnboardingPage = pathname?.startsWith('/onboarding') ?? false
+
+  // Cleaner profiles are single-segment paths like /clara, /maria that aren't known routes
+  const isCleanerProfilePage = (() => {
+    if (!pathname) return false
+    const segments = pathname.split('/').filter(Boolean)
+    if (segments.length !== 1) return false
+    const knownRoots = ['about', 'login', 'join', 'dashboard', 'owner', 'admin', 'onboarding', 'privacy', 'terms']
+    return !knownRoots.includes(segments[0])
+  })()
 
   // Mount effect
   useEffect(() => {
@@ -401,8 +411,8 @@ ${t.askServices}`
     }
   }
 
-  // Don't render on admin pages or until mounted
-  if (!mounted || isAdminPage) return null
+  // Don't render on admin/onboarding/cleaner profile pages or until mounted
+  if (!mounted || isAdminPage || isOnboardingPage || isCleanerProfilePage) return null
 
   return (
     <>
