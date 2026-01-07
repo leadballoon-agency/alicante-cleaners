@@ -102,7 +102,8 @@ function LoginContent() {
     setIsLoading(false)
 
     if (result?.error) {
-      setFormError('Invalid verification code')
+      // NextAuth doesn't pass through detailed error, so give helpful guidance
+      setFormError('Invalid or expired code. Please request a new code and try again.')
     } else {
       router.push(redirectPath)
       router.refresh()

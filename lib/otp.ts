@@ -25,6 +25,8 @@ export async function sendVerificationCode(
     return { success: true, channel: 'dev-bypass' }
   }
 
+  console.log(`[OTP SEND] Sending verification to ${phone} via ${channel}`)
+
   if (!client || !verifyServiceSid) {
     console.error('Twilio Verify not configured - missing credentials or service SID')
     return { success: false, channel, error: 'OTP service not configured' }
@@ -111,6 +113,8 @@ export async function verifyCode(
   try {
     const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`
 
+    console.log(`[OTP VERIFY] Attempting verification for ${formattedPhone} with code ${code.substring(0, 2)}****`)
+
     const verification = await client.verify.v2
       .services(verifyServiceSid)
       .verificationChecks.create({
@@ -121,24 +125,38 @@ export async function verifyCode(
     const isValid = verification.status === 'approved'
 
     if (!isValid) {
-      console.log(`OTP verification failed for ${formattedPhone}: ${verification.status}`)
+      console.log(`[OTP VERIFY] Failed for ${formattedPhone}: status=${verification.status}`)
+      return {
+        success: true,
+        valid: false,
+        error: verification.status === 'pending'
+          ? 'Incorrect code. Please check and try again.'
+          : `Verification ${verification.status}. Please request a new code.`
+      }
     }
 
+    console.log(`[OTP VERIFY] Success for ${formattedPhone}`)
     return { success: true, valid: isValid }
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error(`[OTP VERIFY] Error for phone: ${errorMessage}`)
+
     // Twilio throws specific errors for invalid codes
-    if (error instanceof Error && error.message.includes('not found')) {
-      return { success: true, valid: false, error: 'Code expired or not found. Please request a new one.' }
+    if (errorMessage.includes('not found') || errorMessage.includes('VerificationCheck was not found')) {
+      return { success: true, valid: false, error: 'No pending verification found. Please request a new code.' }
     }
-    if (error instanceof Error && error.message.includes('max check attempts')) {
-      return { success: true, valid: false, error: 'Too many attempts. Please request a new code.' }
+    if (errorMessage.includes('max check attempts')) {
+      return { success: true, valid: false, error: 'Too many attempts. Please wait 10 minutes and request a new code.' }
+    }
+    if (errorMessage.includes('expired')) {
+      return { success: true, valid: false, error: 'Code has expired. Please request a new code.' }
     }
 
     console.error('OTP verification error:', error)
     return {
       success: false,
       valid: false,
-      error: error instanceof Error ? error.message : 'Verification failed',
+      error: 'Verification failed. Please try again.',
     }
   }
 }

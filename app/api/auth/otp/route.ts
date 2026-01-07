@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendVerificationCode, sendVerificationCodeWithFallback, verifyCode, normalizePhone } from '@/lib/otp'
 import { checkRateLimitStrict, getClientIdentifier, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
+import { db } from '@/lib/db'
 import { z } from 'zod'
 
 // Zod schemas for input validation
@@ -9,6 +10,7 @@ const sendOtpSchema = z.object({
   action: z.literal('send'),
   channel: z.enum(['sms', 'whatsapp']).optional(), // If not specified, uses SMS (works immediately)
   forceWhatsapp: z.boolean().optional().default(false), // For "Try WhatsApp" button (optional)
+  context: z.enum(['onboarding', 'login']).optional(), // Context to check for existing users
 })
 
 const verifyOtpSchema = z.object({
@@ -44,8 +46,31 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const { phone, channel, forceWhatsapp } = parseResult.data
+      const { phone, channel, forceWhatsapp, context } = parseResult.data
       const normalizedPhone = normalizePhone(phone)
+
+      // Check for existing user during onboarding
+      if (context === 'onboarding') {
+        const existingUser = await db.user.findUnique({
+          where: { phone: normalizedPhone },
+          select: {
+            id: true,
+            name: true,
+            cleaner: { select: { id: true, status: true } }
+          },
+        })
+
+        if (existingUser) {
+          // User already exists - tell frontend to redirect to login
+          return NextResponse.json({
+            success: false,
+            existingUser: true,
+            hasCleanerProfile: !!existingUser.cleaner,
+            cleanerStatus: existingUser.cleaner?.status || null,
+            message: 'An account with this phone number already exists. Please sign in instead.',
+          }, { status: 409 }) // 409 Conflict
+        }
+      }
 
       // Send OTP via Twilio Verify
       let result
