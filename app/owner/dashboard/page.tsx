@@ -285,7 +285,7 @@ export default function OwnerDashboard() {
           <PropertiesTab properties={properties} onAddProperty={handleAddProperty} />
         )}
         {activeTab === 'account' && (
-          <AccountTab owner={owner} />
+          <AccountTab owner={owner} onRefresh={fetchDashboardData} />
         )}
       </main>
 

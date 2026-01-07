@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
@@ -98,6 +98,97 @@ export async function GET() {
     console.error('Error fetching owner dashboard:', error)
     return NextResponse.json(
       { error: 'Failed to fetch dashboard data' },
+      { status: 500 }
+    )
+  }
+}
+
+// PATCH /api/dashboard/owner - Update owner profile
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const { name, phone } = body
+
+    // Validate inputs
+    const updates: { name?: string; phone?: string | null } = {}
+
+    if (name !== undefined) {
+      if (typeof name !== 'string' || name.trim().length < 2) {
+        return NextResponse.json(
+          { error: 'Name must be at least 2 characters' },
+          { status: 400 }
+        )
+      }
+      updates.name = name.trim()
+    }
+
+    if (phone !== undefined) {
+      if (phone === '' || phone === null) {
+        updates.phone = null
+      } else if (typeof phone === 'string') {
+        // Normalize phone: remove spaces, ensure starts with +
+        const normalizedPhone = phone.replace(/\s/g, '')
+        if (!normalizedPhone.match(/^\+\d{10,15}$/)) {
+          return NextResponse.json(
+            { error: 'Invalid phone format. Include country code (e.g., +34612345678)' },
+            { status: 400 }
+          )
+        }
+
+        // Check if phone is already in use by another user
+        const existingUser = await db.user.findFirst({
+          where: {
+            phone: normalizedPhone,
+            id: { not: session.user.id },
+          },
+        })
+
+        if (existingUser) {
+          return NextResponse.json(
+            { error: 'This phone number is already registered to another account' },
+            { status: 400 }
+          )
+        }
+
+        updates.phone = normalizedPhone
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json(
+        { error: 'No valid updates provided' },
+        { status: 400 }
+      )
+    }
+
+    // Update the user record
+    const updatedUser = await db.user.update({
+      where: { id: session.user.id },
+      data: updates,
+      select: {
+        name: true,
+        email: true,
+        phone: true,
+      },
+    })
+
+    return NextResponse.json({
+      success: true,
+      user: updatedUser,
+    })
+  } catch (error) {
+    console.error('Error updating owner profile:', error)
+    return NextResponse.json(
+      { error: 'Failed to update profile' },
       { status: 500 }
     )
   }

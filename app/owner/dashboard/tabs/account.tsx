@@ -7,13 +7,18 @@ import LanguageSelector from '@/components/language-selector'
 
 type Props = {
   owner: Owner
+  onRefresh: () => void
 }
 
-export default function AccountTab({ owner }: Props) {
+export default function AccountTab({ owner, onRefresh }: Props) {
   const [copied, setCopied] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editName, setEditName] = useState(owner.name)
+  const [editPhone, setEditPhone] = useState(owner.phone || '')
+  const [saving, setSaving] = useState(false)
+  const [editError, setEditError] = useState('')
 
   const menuItems = [
-    { icon: '👤', label: 'Edit profile', href: '#' },
     { icon: '💳', label: 'Payment methods', href: '#' },
     { icon: '🔔', label: 'Notifications', href: '#' },
     { icon: '🔒', label: 'Privacy & security', href: '#' },
@@ -25,6 +30,43 @@ export default function AccountTab({ owner }: Props) {
     navigator.clipboard.writeText(referralLink)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleSaveProfile = async () => {
+    setSaving(true)
+    setEditError('')
+
+    try {
+      const response = await fetch('/api/dashboard/owner', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName,
+          phone: editPhone || null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setEditError(data.error || 'Failed to update profile')
+        return
+      }
+
+      setShowEditModal(false)
+      onRefresh()
+    } catch {
+      setEditError('Failed to update profile')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const openEditModal = () => {
+    setEditName(owner.name)
+    setEditPhone(owner.phone || '')
+    setEditError('')
+    setShowEditModal(true)
   }
 
   const completedReferrals = owner.referrals.filter(r => r.hasBooked).length
@@ -40,10 +82,16 @@ export default function AccountTab({ owner }: Props) {
               {owner.name.split(' ').map(n => n[0]).join('')}
             </span>
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="font-semibold text-[#1A1A1A]">{owner.name}</h2>
             <p className="text-sm text-[#6B6B6B]">Villa owner</p>
           </div>
+          <button
+            onClick={openEditModal}
+            className="px-3 py-1.5 text-sm font-medium text-[#C4785A] border border-[#C4785A] rounded-lg active:scale-[0.98] transition-all"
+          >
+            Edit
+          </button>
         </div>
 
         <div className="space-y-3">
@@ -53,7 +101,7 @@ export default function AccountTab({ owner }: Props) {
           </div>
           <div className="flex items-center gap-3 text-sm">
             <span className="text-[#6B6B6B]">📱</span>
-            <span className="text-[#1A1A1A]">{owner.phone}</span>
+            <span className="text-[#1A1A1A]">{owner.phone || 'Not set'}</span>
           </div>
         </div>
       </div>
@@ -180,6 +228,91 @@ export default function AccountTab({ owner }: Props) {
       <p className="text-center text-xs text-[#9B9B9B]">
         VillaCare v1.0 · Made in Alicante
       </p>
+
+      {/* Edit Profile Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">Edit Profile</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-[#9B9B9B] hover:text-[#1A1A1A]"
+              >
+                ✕
+              </button>
+            </div>
+
+            {editError && (
+              <div className="mb-4 p-3 bg-[#FFEBEE] text-[#C75050] rounded-xl text-sm">
+                {editError}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none"
+                  placeholder="Your name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none"
+                  placeholder="+34 612 345 678"
+                />
+                <p className="text-xs text-[#9B9B9B] mt-1">
+                  Include country code. Used for WhatsApp notifications.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={owner.email}
+                  disabled
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] bg-[#F5F5F3] text-[#9B9B9B] cursor-not-allowed"
+                />
+                <p className="text-xs text-[#9B9B9B] mt-1">
+                  Email cannot be changed as it&apos;s used for login.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                disabled={saving || !editName.trim()}
+                className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
