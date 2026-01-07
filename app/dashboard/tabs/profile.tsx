@@ -1,25 +1,41 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Cleaner } from '../page'
 import LanguageSelector from '@/components/language-selector'
+import { useToast } from '@/components/ui/toast'
+
+const SERVICE_AREAS = [
+  'Alicante City',
+  'San Juan',
+  'Playa de San Juan',
+  'El Campello',
+  'Mutxamel',
+  'San Vicente',
+  'Jijona',
+]
 
 type Props = {
   cleaner: Cleaner
+  onUpdate?: (cleaner: Cleaner) => void
 }
 
-export default function ProfileTab({ cleaner }: Props) {
+type EditMode = 'profile' | 'pricing' | 'areas' | null
+
+export default function ProfileTab({ cleaner, onUpdate }: Props) {
+  const { showToast } = useToast()
   const bookingUrl = `alicantecleaners.com/${cleaner.slug}`
 
-  const menuItems = [
-    { icon: '👤', label: 'Edit profile', href: '#' },
-    { icon: '💰', label: 'Update pricing', href: '#' },
-    { icon: '📍', label: 'Service areas', href: '#' },
-    { icon: '📅', label: 'Availability', href: '#' },
-    { icon: '💳', label: 'Payment settings', href: '#' },
-    { icon: '🔔', label: 'Notifications', href: '#' },
-  ]
+  const [editMode, setEditMode] = useState<EditMode>(null)
+  const [saving, setSaving] = useState(false)
+
+  // Edit form state
+  const [name, setName] = useState(cleaner.name)
+  const [bio, setBio] = useState(cleaner.bio || '')
+  const [hourlyRate, setHourlyRate] = useState(cleaner.hourlyRate.toString())
+  const [selectedAreas, setSelectedAreas] = useState<string[]>(cleaner.serviceAreas)
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -34,9 +50,85 @@ export default function ProfileTab({ cleaner }: Props) {
       }
     } else {
       navigator.clipboard.writeText(`https://${bookingUrl}`)
-      alert('Link copied to clipboard!')
+      showToast('Link copied to clipboard!', 'success')
     }
   }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const updates: Record<string, unknown> = {}
+
+      if (editMode === 'profile') {
+        updates.name = name.trim()
+        updates.bio = bio.trim()
+      } else if (editMode === 'pricing') {
+        const rate = parseFloat(hourlyRate)
+        if (isNaN(rate) || rate < 10 || rate > 100) {
+          showToast('Hourly rate must be between €10 and €100', 'error')
+          setSaving(false)
+          return
+        }
+        updates.hourlyRate = rate
+      } else if (editMode === 'areas') {
+        if (selectedAreas.length === 0) {
+          showToast('Please select at least one service area', 'error')
+          setSaving(false)
+          return
+        }
+        updates.serviceAreas = selectedAreas
+      }
+
+      const response = await fetch('/api/dashboard/cleaner/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to update profile')
+      }
+
+      const data = await response.json()
+
+      // Update parent state if callback provided
+      if (onUpdate && data.cleaner) {
+        onUpdate({
+          ...cleaner,
+          name: data.cleaner.name || cleaner.name,
+          bio: data.cleaner.bio,
+          hourlyRate: data.cleaner.hourlyRate || cleaner.hourlyRate,
+          serviceAreas: data.cleaner.serviceAreas || cleaner.serviceAreas,
+          photo: data.cleaner.photo || cleaner.photo,
+        })
+      }
+
+      showToast('Profile updated successfully!', 'success')
+      setEditMode(null)
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to save', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const toggleArea = (area: string) => {
+    setSelectedAreas(prev =>
+      prev.includes(area)
+        ? prev.filter(a => a !== area)
+        : [...prev, area]
+    )
+  }
+
+  const menuItems = [
+    { icon: '👤', label: 'Edit profile', action: () => setEditMode('profile') },
+    { icon: '💰', label: 'Update pricing', action: () => setEditMode('pricing') },
+    { icon: '📍', label: 'Service areas', action: () => setEditMode('areas') },
+    { icon: '📅', label: 'Availability', href: '/dashboard/availability' },
+    { icon: '💳', label: 'Payment settings', href: '#', disabled: true },
+    { icon: '🔔', label: 'Notifications', href: '#', disabled: true },
+  ]
 
   return (
     <div className="space-y-6">
@@ -86,11 +178,11 @@ export default function ProfileTab({ cleaner }: Props) {
           <p className="text-xs text-[#6B6B6B]">/hour</p>
         </div>
         <div className="bg-white rounded-xl p-3 border border-[#EBEBEB] text-center">
-          <p className="text-xl font-semibold text-[#1A1A1A]">5.0</p>
+          <p className="text-xl font-semibold text-[#1A1A1A]">{cleaner.rating?.toFixed(1) || '–'}</p>
           <p className="text-xs text-[#6B6B6B]">rating</p>
         </div>
         <div className="bg-white rounded-xl p-3 border border-[#EBEBEB] text-center">
-          <p className="text-xl font-semibold text-[#1A1A1A]">25</p>
+          <p className="text-xl font-semibold text-[#1A1A1A]">{cleaner.reviewCount || 0}</p>
           <p className="text-xs text-[#6B6B6B]">reviews</p>
         </div>
       </div>
@@ -103,17 +195,34 @@ export default function ProfileTab({ cleaner }: Props) {
 
       {/* Menu items */}
       <div className="bg-white rounded-2xl border border-[#EBEBEB] divide-y divide-[#EBEBEB]">
-        {menuItems.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className="flex items-center gap-3 px-4 py-3.5 active:bg-[#F5F5F3] transition-colors"
-          >
-            <span className="text-lg">{item.icon}</span>
-            <span className="font-medium text-[#1A1A1A]">{item.label}</span>
-            <span className="ml-auto text-[#9B9B9B]">→</span>
-          </Link>
-        ))}
+        {menuItems.map((item) =>
+          item.action ? (
+            <button
+              key={item.label}
+              onClick={item.action}
+              className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-[#F5F5F3] transition-colors text-left"
+            >
+              <span className="text-lg">{item.icon}</span>
+              <span className="font-medium text-[#1A1A1A]">{item.label}</span>
+              <span className="ml-auto text-[#9B9B9B]">→</span>
+            </button>
+          ) : (
+            <Link
+              key={item.label}
+              href={item.href || '#'}
+              className={`flex items-center gap-3 px-4 py-3.5 active:bg-[#F5F5F3] transition-colors ${
+                item.disabled ? 'opacity-50 pointer-events-none' : ''
+              }`}
+            >
+              <span className="text-lg">{item.icon}</span>
+              <span className="font-medium text-[#1A1A1A]">{item.label}</span>
+              {item.disabled && (
+                <span className="ml-auto text-xs text-[#9B9B9B] bg-[#F5F5F3] px-2 py-0.5 rounded">Soon</span>
+              )}
+              {!item.disabled && <span className="ml-auto text-[#9B9B9B]">→</span>}
+            </Link>
+          )
+        )}
       </div>
 
       {/* Support & logout */}
@@ -132,6 +241,200 @@ export default function ProfileTab({ cleaner }: Props) {
       <p className="text-center text-xs text-[#9B9B9B]">
         VillaCare v1.0 · Made in Alicante
       </p>
+
+      {/* Edit Profile Modal */}
+      {editMode === 'profile' && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">Edit Profile</h2>
+              <button
+                onClick={() => setEditMode(null)}
+                className="text-[#9B9B9B] hover:text-[#1A1A1A]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base"
+                  placeholder="Your name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                  Bio
+                </label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base resize-none"
+                  placeholder="Tell owners about yourself and your experience..."
+                />
+                <p className="text-xs text-[#9B9B9B] mt-1">{bio.length}/500 characters</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setEditMode(null)}
+                className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving || !name.trim()}
+                className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Pricing Modal */}
+      {editMode === 'pricing' && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">Update Pricing</h2>
+              <button
+                onClick={() => setEditMode(null)}
+                className="text-[#9B9B9B] hover:text-[#1A1A1A]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                Hourly Rate (€)
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B6B6B]">€</span>
+                <input
+                  type="number"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(e.target.value)}
+                  min="10"
+                  max="100"
+                  step="0.5"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base"
+                  placeholder="18"
+                />
+              </div>
+              <p className="text-xs text-[#9B9B9B] mt-2">
+                Services will be calculated based on this rate:
+              </p>
+              <div className="mt-3 space-y-2 text-sm">
+                <div className="flex justify-between text-[#6B6B6B]">
+                  <span>Regular Clean (3 hrs)</span>
+                  <span>€{(parseFloat(hourlyRate) * 3 || 0).toFixed(0)}</span>
+                </div>
+                <div className="flex justify-between text-[#6B6B6B]">
+                  <span>Deep Clean (5 hrs)</span>
+                  <span>€{(parseFloat(hourlyRate) * 5 || 0).toFixed(0)}</span>
+                </div>
+                <div className="flex justify-between text-[#6B6B6B]">
+                  <span>Arrival Prep (4 hrs)</span>
+                  <span>€{(parseFloat(hourlyRate) * 4 || 0).toFixed(0)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setEditMode(null)}
+                className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Service Areas Modal */}
+      {editMode === 'areas' && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">Service Areas</h2>
+              <button
+                onClick={() => setEditMode(null)}
+                className="text-[#9B9B9B] hover:text-[#1A1A1A]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-sm text-[#6B6B6B] mb-4">
+              Select the areas where you provide cleaning services.
+            </p>
+
+            <div className="space-y-2">
+              {SERVICE_AREAS.map((area) => (
+                <button
+                  key={area}
+                  onClick={() => toggleArea(area)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                    selectedAreas.includes(area)
+                      ? 'border-[#1A1A1A] bg-[#F5F5F3]'
+                      : 'border-[#EBEBEB]'
+                  }`}
+                >
+                  <span className="font-medium text-[#1A1A1A]">{area}</span>
+                  {selectedAreas.includes(area) && (
+                    <span className="text-[#1A1A1A]">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <p className="text-xs text-[#9B9B9B] mt-4">
+              {selectedAreas.length} area{selectedAreas.length !== 1 ? 's' : ''} selected
+            </p>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setSelectedAreas(cleaner.serviceAreas)
+                  setEditMode(null)
+                }}
+                className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving || selectedAreas.length === 0}
+                className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

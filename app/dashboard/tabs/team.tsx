@@ -80,6 +80,8 @@ export default function TeamTab() {
   const [referralName, setReferralName] = useState('')
   const [referralPhone, setReferralPhone] = useState('')
   const [referralNote, setReferralNote] = useState('')
+  const [showEditTeamName, setShowEditTeamName] = useState(false)
+  const [editedTeamName, setEditedTeamName] = useState('')
 
   useEffect(() => {
     fetchTeamData()
@@ -275,6 +277,32 @@ export default function TeamTab() {
     }
   }
 
+  const handleUpdateTeamName = async () => {
+    if (!editedTeamName.trim() || editedTeamName.trim().length < 2) {
+      showToast('Team name must be at least 2 characters', 'error')
+      return
+    }
+    setActionLoading('editName')
+    try {
+      const response = await fetch('/api/dashboard/cleaner/team', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editedTeamName.trim() }),
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to update team name')
+      }
+      setShowEditTeamName(false)
+      await fetchTeamData()
+      showToast('Team name updated!', 'success')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to update team name', 'error')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -301,9 +329,47 @@ export default function TeamTab() {
         {/* Team Header */}
         <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
           <div className="flex items-center justify-between mb-4">
-            <div>
+            <div className="flex-1">
               <p className="text-xs text-[#C4785A] font-medium mb-1">Team Leader</p>
-              <h2 className="text-xl font-semibold text-[#1A1A1A]">{teamData.team.name}</h2>
+              {showEditTeamName ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={editedTeamName}
+                    onChange={(e) => setEditedTeamName(e.target.value)}
+                    className="flex-1 px-3 py-1.5 border border-[#DEDEDE] rounded-lg text-lg font-semibold text-[#1A1A1A] focus:border-[#1A1A1A] focus:outline-none"
+                    placeholder="Team name"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleUpdateTeamName}
+                    disabled={actionLoading === 'editName'}
+                    className="px-3 py-1.5 bg-[#1A1A1A] text-white text-sm font-medium rounded-lg disabled:opacity-50"
+                  >
+                    {actionLoading === 'editName' ? '...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={() => setShowEditTeamName(false)}
+                    className="px-3 py-1.5 text-[#6B6B6B] text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-semibold text-[#1A1A1A]">{teamData.team.name}</h2>
+                  <button
+                    onClick={() => {
+                      setEditedTeamName(teamData.team?.name || '')
+                      setShowEditTeamName(true)
+                    }}
+                    className="text-[#9B9B9B] hover:text-[#6B6B6B] text-sm"
+                    title="Edit team name"
+                  >
+                    ✏️
+                  </button>
+                </div>
+              )}
             </div>
             <span className="text-3xl">👑</span>
           </div>

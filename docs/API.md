@@ -1,0 +1,860 @@
+# API Reference
+
+## Executive Summary
+
+VillaCare exposes **60+ REST API endpoints** via Next.js API Routes. All endpoints are:
+- **JSON-based** - Request/response bodies use `application/json`
+- **Session authenticated** - Uses NextAuth.js JWT sessions
+- **Role-protected** - Middleware enforces OWNER, CLEANER, or ADMIN roles
+
+**Base URL:** `https://alicantecleaners.com/api`
+
+---
+
+## Authentication
+
+### Session Flow
+
+```
+1. User requests magic link / OTP
+   POST /api/auth/signin/email   (magic link)
+   POST /api/auth/otp            (phone OTP)
+
+2. User authenticates
+   - Magic link: Click email link
+   - OTP: Submit code
+
+3. Session created
+   - JWT stored in httpOnly cookie
+   - Session available via getServerSession()
+```
+
+### Auth Headers
+
+All protected endpoints require the session cookie. No explicit `Authorization` header needed - the cookie is sent automatically.
+
+### Role-Based Access
+
+| Role | Can Access |
+|------|------------|
+| OWNER | `/api/dashboard/owner/*`, `/api/messages/*` |
+| CLEANER | `/api/dashboard/cleaner/*`, `/api/messages/*` |
+| ADMIN | `/api/admin/*`, all OWNER/CLEANER endpoints |
+
+---
+
+## Public Endpoints
+
+### GET /api/cleaners
+
+List all active cleaners for homepage directory.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| area | string | Filter by service area (optional) |
+
+**Response:**
+```json
+{
+  "cleaners": [
+    {
+      "id": "clx123...",
+      "slug": "clara-r",
+      "name": "Clara R.",
+      "photo": "https://...",
+      "bio": "Professional cleaner with 5 years experience...",
+      "serviceAreas": ["Alicante City", "San Juan"],
+      "hourlyRate": 18,
+      "rating": 4.8,
+      "reviewCount": 12,
+      "featured": true,
+      "teamLeader": true
+    }
+  ],
+  "areas": ["Alicante City", "El Campello", "San Juan", ...]
+}
+```
+
+---
+
+### GET /api/cleaners/[slug]
+
+Get detailed cleaner profile with reviews.
+
+**Response:**
+```json
+{
+  "cleaner": {
+    "id": "clx123...",
+    "slug": "clara-r",
+    "name": "Clara R.",
+    "photo": "https://...",
+    "bio": "...",
+    "serviceAreas": ["Alicante City", "San Juan"],
+    "languages": ["es", "en"],
+    "hourlyRate": 18,
+    "rating": 4.8,
+    "reviewCount": 12,
+    "totalBookings": 45
+  },
+  "reviews": [
+    {
+      "id": "rev123...",
+      "rating": 5,
+      "text": "Excellent service!",
+      "ownerName": "Sarah M.",
+      "createdAt": "2024-01-15T10:00:00Z"
+    }
+  ],
+  "services": [
+    { "type": "Regular Clean", "hours": 3, "price": 54 },
+    { "type": "Deep Clean", "hours": 5, "price": 90 },
+    { "type": "Arrival Prep", "hours": 4, "price": 72 }
+  ]
+}
+```
+
+---
+
+### GET /api/cleaners/[slug]/availability
+
+Check cleaner's availability for booking calendar.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| month | string | Month to check (YYYY-MM) |
+
+**Response:**
+```json
+{
+  "availability": {
+    "2024-02-15": { "available": true, "slots": ["09:00", "14:00"] },
+    "2024-02-16": { "available": false, "slots": [] }
+  }
+}
+```
+
+---
+
+### GET /api/activity
+
+Get recent platform activity for social proof ticker.
+
+**Response:**
+```json
+{
+  "activities": [
+    {
+      "type": "booking_completed",
+      "area": "San Juan",
+      "timeAgo": "2 hours ago"
+    },
+    {
+      "type": "review_added",
+      "rating": 5,
+      "cleanerName": "Clara R.",
+      "timeAgo": "4 hours ago"
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/calendar/[token]
+
+ICS calendar feed for cleaner's bookings.
+
+**Response:** `text/calendar` (ICS format)
+
+```ics
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//VillaCare//Cleaner Calendar//EN
+BEGIN:VEVENT
+UID:booking-abc123@villacare.app
+DTSTART:20240215T100000
+DTEND:20240215T130000
+SUMMARY:Regular Clean - Villa Rosa
+LOCATION:Calle Example 123, Alicante
+DESCRIPTION:3 hours - €54
+END:VEVENT
+END:VCALENDAR
+```
+
+---
+
+## Booking Endpoints
+
+### POST /api/bookings
+
+Create a new booking. Works for both logged-in users and guests.
+
+**Request Body:**
+```json
+{
+  "cleanerSlug": "clara-r",
+  "propertyAddress": "Calle Example 123, Alicante",
+  "bedrooms": 3,
+  "specialInstructions": "Key under mat",
+  "service": {
+    "type": "Regular Clean",
+    "hours": 3,
+    "price": 54
+  },
+  "date": "2024-02-15",
+  "time": "10:00",
+  "guestName": "John Smith",
+  "guestEmail": "john@example.com",
+  "guestPhone": "+447123456789"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "booking": {
+    "id": "booking123...",
+    "status": "PENDING",
+    "service": "Regular Clean",
+    "price": 54,
+    "date": "2024-02-15",
+    "time": "10:00"
+  },
+  "message": "Booking created successfully. The cleaner will confirm shortly."
+}
+```
+
+**Side Effects:**
+- Creates User/Owner/Property if guest booking
+- Sends WhatsApp notification to cleaner
+- Sends WhatsApp confirmation to owner (if phone provided)
+
+---
+
+## Cleaner Dashboard Endpoints
+
+All require `CLEANER` role.
+
+### GET /api/dashboard/cleaner
+
+Get cleaner profile and stats.
+
+**Response:**
+```json
+{
+  "cleaner": {
+    "id": "...",
+    "slug": "clara-r",
+    "name": "Clara R.",
+    "bio": "...",
+    "serviceAreas": ["Alicante City"],
+    "hourlyRate": 18,
+    "rating": 4.8,
+    "reviewCount": 12,
+    "totalBookings": 45,
+    "calendarToken": "cal-abc123",
+    "calendarUrl": "https://alicantecleaners.com/api/calendar/cal-abc123"
+  },
+  "stats": {
+    "pendingBookings": 2,
+    "confirmedBookings": 5,
+    "completedThisMonth": 12,
+    "revenueThisMonth": 648
+  }
+}
+```
+
+### POST /api/dashboard/cleaner
+
+Update cleaner profile.
+
+**Request Body:**
+```json
+{
+  "bio": "Updated bio...",
+  "hourlyRate": 20,
+  "serviceAreas": ["Alicante City", "San Juan"],
+  "languages": ["es", "en"]
+}
+```
+
+---
+
+### GET /api/dashboard/cleaner/bookings
+
+Get cleaner's bookings.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| status | string | Filter by status (PENDING, CONFIRMED, COMPLETED) |
+| from | string | Start date (YYYY-MM-DD) |
+| to | string | End date (YYYY-MM-DD) |
+
+**Response:**
+```json
+{
+  "bookings": [
+    {
+      "id": "...",
+      "status": "PENDING",
+      "service": "Regular Clean",
+      "price": 54,
+      "date": "2024-02-15",
+      "time": "10:00",
+      "owner": { "name": "Sarah M.", "phone": "+447..." },
+      "property": { "name": "Villa Rosa", "address": "..." }
+    }
+  ]
+}
+```
+
+---
+
+### PATCH /api/dashboard/cleaner/bookings/[id]
+
+Update booking status (accept/decline/complete/assign).
+
+**Request Body:**
+```json
+{
+  "action": "accept"  // "accept", "decline", "complete", "assign"
+}
+```
+
+For team assignment:
+```json
+{
+  "action": "assign",
+  "assignToCleanerId": "cleaner-id-123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "booking": {
+    "id": "...",
+    "status": "confirmed"
+  }
+}
+```
+
+**Side Effects:**
+- WhatsApp notification to owner on accept/decline
+- Updates cleaner/owner stats on completion
+
+---
+
+### GET/POST /api/dashboard/cleaner/team
+
+Manage team (for team leaders).
+
+**GET Response:**
+```json
+{
+  "team": {
+    "id": "team123",
+    "name": "Clara's Team",
+    "referralCode": "TEAM-clara-1234",
+    "members": [
+      { "id": "...", "name": "Maria S.", "rating": 4.5 }
+    ]
+  },
+  "pendingRequests": [
+    { "id": "...", "cleanerName": "Ana L.", "createdAt": "..." }
+  ]
+}
+```
+
+**POST (Create Team):**
+```json
+{
+  "name": "Clara's Team"
+}
+```
+
+---
+
+## Owner Dashboard Endpoints
+
+All require `OWNER` role.
+
+### GET /api/dashboard/owner
+
+Get owner profile and stats.
+
+**Response:**
+```json
+{
+  "owner": {
+    "id": "...",
+    "name": "Sarah M.",
+    "referralCode": "SARA2024123",
+    "referralCredits": 25.00,
+    "totalBookings": 8
+  },
+  "stats": {
+    "activeProperties": 2,
+    "upcomingBookings": 1,
+    "totalSpent": 432
+  }
+}
+```
+
+---
+
+### GET /api/dashboard/owner/bookings
+
+Get owner's bookings.
+
+**Response:** Same structure as cleaner bookings, but from owner perspective.
+
+---
+
+### GET/POST /api/dashboard/owner/properties
+
+Manage properties.
+
+**GET Response:**
+```json
+{
+  "properties": [
+    {
+      "id": "...",
+      "name": "Villa Rosa",
+      "address": "Calle Example 123",
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "notes": "Key under mat..."
+    }
+  ]
+}
+```
+
+**POST (Create Property):**
+```json
+{
+  "name": "Villa Rosa",
+  "address": "Calle Example 123, Alicante",
+  "bedrooms": 3,
+  "bathrooms": 2,
+  "notes": "Key location details..."
+}
+```
+
+---
+
+### POST /api/dashboard/owner/arrival-prep
+
+Create "I'm Coming Home" arrival prep request.
+
+**Request Body:**
+```json
+{
+  "propertyId": "...",
+  "cleanerId": "...",
+  "arrivalDate": "2024-03-01",
+  "arrivalTime": "14:00",
+  "extras": ["fridge", "flowers", "linens"],
+  "notes": "Please stock the fridge with essentials"
+}
+```
+
+---
+
+## Messaging Endpoints
+
+Require `OWNER` or `CLEANER` role.
+
+### GET /api/messages
+
+Get unread message count.
+
+**Response:**
+```json
+{
+  "unreadCount": 3
+}
+```
+
+---
+
+### POST /api/messages
+
+Send a message with auto-translation.
+
+**Request Body:**
+```json
+{
+  "conversationId": "conv123...",
+  "text": "Hello, what time works for you?"
+}
+```
+
+**Response:**
+```json
+{
+  "message": {
+    "id": "msg123...",
+    "text": "Hello, what time works for you?",
+    "originalText": "Hello, what time works for you?",
+    "translatedText": "Hola, ¿a qué hora te viene bien?",
+    "originalLang": "en",
+    "translatedLang": "es",
+    "isMine": true,
+    "createdAt": "2024-02-15T10:00:00Z"
+  }
+}
+```
+
+**Side Effects:**
+- Auto-detects language via OpenAI
+- Translates to recipient's preferred language
+- Triggers AI sales agent response (for owner messages)
+
+---
+
+### GET /api/messages/conversations
+
+List user's conversations.
+
+**Response:**
+```json
+{
+  "conversations": [
+    {
+      "id": "conv123...",
+      "otherParty": { "name": "Clara R.", "image": "..." },
+      "lastMessage": {
+        "text": "See you tomorrow!",
+        "createdAt": "..."
+      },
+      "unreadCount": 2
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/messages/conversations/[id]
+
+Get messages in a conversation.
+
+**Response:**
+```json
+{
+  "conversation": {
+    "id": "...",
+    "otherParty": { "name": "Clara R." }
+  },
+  "messages": [
+    {
+      "id": "...",
+      "text": "Hello!",
+      "originalText": "Hello!",
+      "translatedText": "¡Hola!",
+      "originalLang": "en",
+      "translatedLang": "es",
+      "isMine": true,
+      "isAIGenerated": false,
+      "createdAt": "..."
+    }
+  ]
+}
+```
+
+---
+
+## Admin Endpoints
+
+All require `ADMIN` role.
+
+### GET /api/admin/stats
+
+Platform KPIs for admin dashboard.
+
+**Response:**
+```json
+{
+  "stats": {
+    "totalCleaners": 6,
+    "activeCleaners": 5,
+    "totalOwners": 52,
+    "totalBookings": 187,
+    "bookingsThisMonth": 34,
+    "revenueThisMonth": 1836,
+    "pendingReviews": 3
+  }
+}
+```
+
+---
+
+### GET /api/admin/cleaners
+
+List all cleaners with admin details.
+
+**Response:**
+```json
+{
+  "cleaners": [
+    {
+      "id": "...",
+      "name": "Clara R.",
+      "status": "ACTIVE",
+      "rating": 4.8,
+      "totalBookings": 45,
+      "createdAt": "..."
+    }
+  ]
+}
+```
+
+---
+
+### PATCH /api/admin/cleaners/[id]
+
+Approve/suspend cleaner.
+
+**Request Body:**
+```json
+{
+  "status": "ACTIVE"  // "ACTIVE" or "SUSPENDED"
+}
+```
+
+---
+
+### GET /api/admin/reviews
+
+List all reviews for moderation.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| approved | boolean | Filter by approval status |
+
+---
+
+### PATCH /api/admin/reviews/[id]
+
+Approve/feature a review.
+
+**Request Body:**
+```json
+{
+  "approved": true,
+  "featured": true
+}
+```
+
+---
+
+### POST /api/admin/impersonate
+
+Login as another user (for support).
+
+**Request Body:**
+```json
+{
+  "userId": "user-id-to-impersonate"
+}
+```
+
+---
+
+## AI Endpoints
+
+### POST /api/ai/public-chat
+
+AI chat for visitors (pre-signup).
+
+**Request Body:**
+```json
+{
+  "messages": [
+    { "role": "user", "content": "How does booking work?" }
+  ],
+  "cleanerSlug": "clara-r",
+  "sessionId": "browser-session-id"
+}
+```
+
+---
+
+### POST /api/ai/owner/chat
+
+AI assistant for owners.
+
+**Request Body:**
+```json
+{
+  "messages": [
+    { "role": "user", "content": "When is my next booking?" }
+  ]
+}
+```
+
+---
+
+### POST /api/ai/cleaner/chat
+
+AI assistant for cleaners.
+
+**Request Body:**
+```json
+{
+  "messages": [
+    { "role": "user", "content": "Show me my pending bookings" }
+  ]
+}
+```
+
+---
+
+### POST /api/ai/admin/chat
+
+AI assistant for admins (with database tools).
+
+**Request Body:**
+```json
+{
+  "messages": [
+    { "role": "user", "content": "How many bookings this week?" }
+  ]
+}
+```
+
+---
+
+### POST /api/ai/sales-agent/respond
+
+AI sales agent auto-response (internal).
+
+Called automatically when owner sends message.
+
+**Request Body:**
+```json
+{
+  "conversationId": "conv123...",
+  "messageId": "msg123..."
+}
+```
+
+---
+
+## Webhook Endpoints
+
+### POST /api/webhooks/twilio
+
+Incoming WhatsApp messages from Twilio.
+
+**Expects:** `application/x-www-form-urlencoded`
+
+**Twilio Payload:**
+```
+From=whatsapp:+447123456789
+Body=ACCEPT
+MessageSid=SM123...
+```
+
+**Behavior:**
+- Parses cleaner phone number
+- Handles ACCEPT/DECLINE/HELP commands
+- Updates booking status
+- Sends confirmation WhatsApp messages
+
+---
+
+## Cron Endpoints
+
+### GET /api/cron/booking-reminders
+
+Send booking response reminders (called by Vercel Cron).
+
+**Behavior:**
+1. Find bookings pending > 1 hour → send reminder
+2. Find bookings pending > 2 hours → escalate to team
+3. Find bookings pending > 6 hours → auto-decline
+
+---
+
+## User Preferences
+
+### GET/PATCH /api/user/preferences
+
+Get or update user language preference.
+
+**PATCH Request:**
+```json
+{
+  "preferredLanguage": "es"
+}
+```
+
+**Response:**
+```json
+{
+  "preferredLanguage": "es"
+}
+```
+
+---
+
+## Error Responses
+
+All endpoints return consistent error format:
+
+```json
+{
+  "error": "Error message here"
+}
+```
+
+**Common Status Codes:**
+| Code | Meaning |
+|------|---------|
+| 400 | Bad request (validation failed) |
+| 401 | Unauthorized (not logged in) |
+| 403 | Forbidden (wrong role) |
+| 404 | Not found |
+| 500 | Server error |
+
+---
+
+## Rate Limiting
+
+Currently using Vercel's default limits. Planned additions:
+- API rate limiting per user
+- WhatsApp message throttling
+- AI token usage caps per cleaner
+
+---
+
+## Pagination
+
+Endpoints returning lists support pagination (planned):
+
+```
+GET /api/admin/bookings?page=1&limit=20
+```
+
+Response includes:
+```json
+{
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 187,
+    "pages": 10
+  }
+}
+```

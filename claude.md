@@ -1,6 +1,23 @@
-# VillaCare - Claude Code Reference
+# VillaCare (Alicante Cleaners) - Technical Reference
 
 > Villa cleaning platform for Alicante, Spain. Connects villa owners with trusted cleaners.
+> **Live:** https://alicantecleaners.com
+
+---
+
+## Documentation
+
+For detailed documentation, see the `docs/` folder:
+
+| Document | Description |
+|----------|-------------|
+| [README.md](docs/README.md) | Executive summary - problem, solution, business model |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, tech stack rationale, data flow diagrams |
+| [DATABASE.md](docs/DATABASE.md) | Prisma schema, all models, relationships, queries |
+| [API.md](docs/API.md) | 60+ REST endpoints with request/response examples |
+| [INTEGRATIONS.md](docs/INTEGRATIONS.md) | Twilio, OpenAI, Anthropic, Resend configuration |
+| [FRONTEND.md](docs/FRONTEND.md) | Pages, components, design system, mobile considerations |
+| [DEVELOPER.md](docs/DEVELOPER.md) | Setup guide, deployment, common tasks, handoff checklist |
 
 ---
 
@@ -15,27 +32,46 @@
 | ORM | Prisma |
 | Auth | NextAuth.js (magic links + phone OTP) |
 | Email | Resend |
+| WhatsApp | Twilio WhatsApp Business API |
 | AI/Translation | OpenAI GPT-4o-mini |
 | AI/Admin | Anthropic Claude (Haiku + Sonnet) |
+| AI/Support | Anthropic Claude (contextual chat widgets) |
 | Hosting | Vercel (auto-deploy from GitHub) |
 
 ---
 
 ## Current Live Features
 
-- **Homepage** - Cleaner directory with area filtering, social proof activity feed
-- **About page** - Origin story at `/about`
-- **Cleaner profiles** - Public pages at `/{slug}` with reviews, services, booking
-- **Booking flow** - Date/time selection, property details, payment (stub)
-- **Cleaner onboarding** - Phone OTP flow, profile setup, pricing
-- **Cleaner dashboard** - Bookings, calendar sync (ICS), messaging, profile
-- **Owner dashboard** - Properties, booking history, reviews, messaging
-- **Admin dashboard** - Platform stats, cleaner management, review approval, owners view
-- **Admin AI Agent** - Claude-powered assistant with 18 tools for platform management
-- **Knowledge Base** - Markdown-based documentation for AI context injection
-- **ICS Calendar feeds** - Cleaners can sync bookings to Google/Apple/Outlook
-- **Activity feed** - Social proof showing recent bookings, reviews, completions
-- **Multilingual messaging** - Auto-translation between owners and cleaners
+### Public Pages
+- **Homepage** (`/`) - Owner-focused landing, cleaner directory with area filtering, social proof activity feed
+- **Cleaner Landing** (`/join`) - Conversion page for cleaner recruitment with app screenshots
+- **About page** (`/about`) - Origin story
+- **Cleaner profiles** (`/{slug}`) - Public pages with reviews, services, AI chat assistant, booking
+
+### Booking Flow
+- 4-step booking process: Service → Date/Time → Details → Confirm
+- Guest bookings (no account required) or authenticated
+- WhatsApp notifications to cleaner and owner on booking
+
+### Cleaner Features
+- **Onboarding** - Phone OTP verification, profile setup, area selection, pricing
+- **Dashboard** - Bookings, calendar sync (ICS), messaging, profile management
+- **WhatsApp notifications** - New bookings, can reply ACCEPT/DECLINE directly
+- **AI Sales Assistant** - On profile pages, handles inquiries and bookings
+
+### Owner Features
+- **Dashboard** - Properties, booking history, reviews, messaging
+- **WhatsApp notifications** - Booking confirmations, status updates, completion with review links
+
+### Admin Features
+- **Dashboard** - Platform stats, cleaner management, owner CRM, review approval
+- **AI Agent** - Claude-powered assistant with 18 tools for platform management
+- **Knowledge Base** - Markdown documentation for AI context
+
+### Integrations
+- **WhatsApp via Twilio** - OTP codes, booking notifications, reply handling
+- **ICS Calendar feeds** - Sync to Google/Apple/Outlook
+- **Multilingual messaging** - Auto-translation (7 languages)
 
 ---
 
@@ -49,51 +85,101 @@
 ### Auth
 - `lib/auth.ts` - NextAuth configuration
 - `app/api/auth/[...nextauth]/route.ts` - Auth endpoints
+- `app/api/auth/otp/route.ts` - Phone OTP with WhatsApp delivery
+
+### WhatsApp (Twilio)
+- `lib/whatsapp.ts` - Twilio WhatsApp service (OTP, booking notifications)
+- `app/api/webhooks/twilio/route.ts` - Incoming message handler (ACCEPT/DECLINE)
 
 ### Translation
 - `lib/translate.ts` - OpenAI translation utilities
 
-### API Routes
+### AI
+- `lib/ai/admin-agent.ts` - Admin AI agent with tools
+- `lib/ai/knowledge.ts` - Knowledge base loader
+- `knowledge/*.md` - Documentation for AI context
+
+---
+
+## API Routes
+
+### Public
 ```
-/api/cleaners              GET - List cleaners (with area filter)
-/api/cleaners/[slug]       GET - Single cleaner profile + reviews
-/api/activity              GET - Recent platform activity for social proof
-/api/bookings              POST - Create booking
-/api/calendar/[token]      GET - ICS calendar feed for cleaner
-
-/api/messages              GET - Unread count, POST - Send message
-/api/messages/conversations      GET - List conversations, POST - Start new
-/api/messages/conversations/[id] GET - Get messages in conversation
-
-/api/user/preferences      GET/PATCH - Language preferences
-
-/api/dashboard/cleaner          GET/POST - Cleaner profile + calendar token
-/api/dashboard/cleaner/bookings GET - Cleaner's bookings
-
-/api/dashboard/owner            GET - Owner profile + stats
-/api/dashboard/owner/bookings   GET - Owner's bookings
-/api/dashboard/owner/properties GET/POST - Properties
-
-/api/admin/stats           GET - Platform KPIs
-/api/admin/cleaners        GET - All cleaners
-/api/admin/cleaners/[id]   PATCH - Approve/suspend
-/api/admin/reviews         GET - All reviews
-/api/admin/reviews/[id]    PATCH - Approve/feature
-/api/admin/owners          GET - All owners with properties
-/api/admin/ai/chat         POST - Admin AI Agent conversation
+GET  /api/cleaners              List cleaners (with area filter)
+GET  /api/cleaners/[slug]       Single cleaner profile + reviews
+GET  /api/activity              Recent platform activity for social proof
+POST /api/bookings              Create booking (triggers WhatsApp)
+GET  /api/calendar/[token]      ICS calendar feed for cleaner
 ```
 
-### Pages
+### Messaging
 ```
-/                      Homepage with cleaner directory
+GET  /api/messages              Unread count
+POST /api/messages              Send message (with translation)
+GET  /api/messages/conversations      List conversations
+POST /api/messages/conversations      Start new conversation
+GET  /api/messages/conversations/[id] Get messages in conversation
+```
+
+### User
+```
+GET/PATCH /api/user/preferences      Language preferences
+```
+
+### Cleaner Dashboard
+```
+GET/POST /api/dashboard/cleaner           Profile + calendar token
+GET      /api/dashboard/cleaner/bookings  Cleaner's bookings
+PATCH    /api/dashboard/cleaner/bookings/[id]  Accept/decline/complete
+```
+
+### Owner Dashboard
+```
+GET      /api/dashboard/owner            Profile + stats
+GET      /api/dashboard/owner/bookings   Owner's bookings
+GET/POST /api/dashboard/owner/properties Properties
+```
+
+### Admin
+```
+GET   /api/admin/stats           Platform KPIs
+GET   /api/admin/cleaners        All cleaners
+PATCH /api/admin/cleaners/[id]   Approve/suspend
+GET   /api/admin/reviews         All reviews
+PATCH /api/admin/reviews/[id]    Approve/feature
+GET   /api/admin/owners          All owners with properties
+POST  /api/admin/ai/chat         Admin AI Agent conversation
+```
+
+### Webhooks
+```
+POST /api/webhooks/twilio        Twilio WhatsApp incoming messages
+```
+
+### AI Chat
+```
+POST /api/ai/public-chat         Public cleaner profile chat
+POST /api/ai/onboarding-chat     Cleaner onboarding help
+POST /api/ai/admin-chat          Admin AI agent
+```
+
+---
+
+## Pages
+
+```
+/                      Homepage (owner-focused) with cleaner directory
+/join                  Cleaner recruitment landing page
 /about                 Origin story
-/[slug]                Public cleaner profile with reviews
+/[slug]                Public cleaner profile with AI chat
 /[slug]/booking        Booking flow (4 steps)
 /login                 Auth page (magic link or phone)
-/onboarding/cleaner    Cleaner signup flow
-/dashboard             Cleaner dashboard (5 tabs: Home, Bookings, Messages, Schedule, Profile)
-/owner/dashboard       Owner dashboard (5 tabs: Home, Bookings, Messages, Villas, Account)
-/admin                 Admin dashboard (7 tabs: Overview, Cleaners, Owners, Bookings, Reviews, Feedback, AI)
+/onboarding/cleaner    Cleaner signup flow (5 steps)
+/dashboard             Cleaner dashboard (5 tabs)
+/owner/dashboard       Owner dashboard (5 tabs)
+/admin                 Admin dashboard (7 tabs)
+/privacy               Privacy policy
+/terms                 Terms of service
 ```
 
 ---
@@ -106,11 +192,40 @@
 | Owner | Owner profile (referralCode, trusted status, adminNotes for CRM) |
 | Cleaner | Cleaner profile (slug, bio, areas, rates, stats, calendarToken) |
 | Property | Villa details (address, bedrooms, access notes) |
-| Booking | Cleaning appointments |
+| Booking | Cleaning appointments (status: PENDING/CONFIRMED/COMPLETED/CANCELLED) |
 | Review | Ratings and testimonials (with featured flag) |
 | Conversation | Links owner and cleaner for messaging |
 | Message | Individual messages with translation |
 | Feedback | Internal platform feedback |
+| Team | Cleaner teams (leader + members) |
+
+---
+
+## WhatsApp Integration (Twilio)
+
+### Configuration
+- **Account SID:** Set in `TWILIO_ACCOUNT_SID`
+- **Auth Token:** Set in `TWILIO_AUTH_TOKEN`
+- **WhatsApp Number:** Set in `TWILIO_WHATSAPP_NUMBER` (format: `whatsapp:+447414265007`)
+
+### Message Templates (Content SIDs)
+WhatsApp requires pre-approved templates for business-initiated messages:
+
+| Template | Content SID | Use |
+|----------|-------------|-----|
+| OTP | `HX1bf4d7bc921048c623fa47605c777ce1` | Verification codes |
+| New Booking | `HX471e05200d0c4dfd136550601d4dd703` | Notify cleaner of booking |
+
+### Webhook
+Incoming WhatsApp messages hit `/api/webhooks/twilio`. Cleaners can reply:
+- `ACCEPT` / `YES` / `SI` - Accept pending booking
+- `DECLINE` / `NO` - Decline pending booking
+- `HELP` / `AYUDA` - Show commands
+
+### Message Flow
+1. **New Booking** → Cleaner gets WhatsApp with details
+2. **Cleaner Replies ACCEPT** → Booking confirmed, owner notified
+3. **Booking Completed** → Owner gets WhatsApp with review link
 
 ---
 
@@ -128,34 +243,19 @@
 | pt | Português | 🇵🇹 |
 
 ### How It Works
-1. User sets preferred language in Account/Profile settings
-2. When sending a message, system detects the language
-3. Message is translated to recipient's preferred language
-4. Both original and translated versions are stored
-5. Recipients can toggle "Show original" to see untranslated text
-
-### Key Files
-- `lib/translate.ts` - detectLanguage(), translateText(), detectAndTranslate()
-- `components/language-selector.tsx` - Language preference UI
-- `app/api/messages/route.ts` - Message sending with translation
-- `app/dashboard/tabs/messages.tsx` - Cleaner messaging UI (Spanish)
-- `app/owner/dashboard/tabs/messages.tsx` - Owner messaging UI (English)
+1. User sets preferred language in settings
+2. System detects language when sending
+3. Message translated to recipient's language
+4. Both original and translated versions stored
+5. "Show original" toggle available
 
 ---
 
 ## Admin AI Agent
 
-Claude-powered AI assistant for platform administration with tool-use capabilities.
+Claude-powered AI assistant with 18 tools for platform management.
 
-### Capabilities
-- Query and manage cleaners, owners, bookings, reviews
-- Approve/reject cleaners and reviews
-- Send translated messages to cleaners
-- Generate WhatsApp invite links for onboarding
-- Update cleaner profiles (phone, email, rates, areas)
-- View and update owner CRM notes
-
-### Tools Available (18 total)
+### Tools
 | Tool | Description |
 |------|-------------|
 | get_dashboard_stats | Platform KPIs by period |
@@ -174,55 +274,106 @@ Claude-powered AI assistant for platform administration with tool-use capabiliti
 | send_message_to_cleaner | Auto-translated in-app message |
 | generate_whatsapp_invite | Pre-filled WhatsApp links |
 
-### Optimization
-- Dynamic tool selection based on query keywords
-- Haiku model for simple queries (faster, cheaper)
-- Sonnet model for complex operations
-- Conversation history limited to 6 messages
-- Compact JSON responses
+---
 
-### Key Files
-- `lib/ai/admin-agent.ts` - Agent implementation with all tools
-- `app/api/admin/ai/chat/route.ts` - Chat API endpoint
-- `app/admin/tabs/ai.tsx` - Admin chat UI
+## Environment Variables
+
+```env
+# Database (Neon)
+DATABASE_URL="postgresql://..."
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="..."
+
+# Email (Resend)
+RESEND_API_KEY="..."
+EMAIL_FROM="VillaCare <noreply@alicantecleaners.com>"
+
+# OpenAI (for message translation)
+OPENAI_API_KEY="sk-..."
+
+# Anthropic (for AI agents)
+ANTHROPIC_API_KEY="sk-ant-..."
+
+# Twilio (WhatsApp)
+TWILIO_ACCOUNT_SID="AC..."
+TWILIO_AUTH_TOKEN="..."
+TWILIO_WHATSAPP_NUMBER="whatsapp:+447414265007"
+
+# Google OAuth (Calendar Sync)
+GOOGLE_CLIENT_ID="..."
+GOOGLE_CLIENT_SECRET="..."
+
+# App
+NEXT_PUBLIC_APP_URL="https://alicantecleaners.com"
+```
 
 ---
 
-## Knowledge Base
+## Design System
 
-Markdown-based documentation that AI agents can dynamically load for context.
+### Colors
+```
+Primary Brand (Terracotta):
+- #C4785A - Primary accent, stars, badges
+- #B56A4F - Hover state
 
-### Files
-- `knowledge/cleaner.md` - Cleaner app guide, booking workflow, team features
-- `knowledge/owner.md` - Owner app guide, services, "I'm Coming Home" feature
-- `knowledge/admin.md` - Platform stats, approval process, common issues
+Neutrals:
+- #1A1A1A - Primary text, dark backgrounds, CTAs
+- #6B6B6B - Secondary text
+- #9B9B9B - Muted text, placeholders
+- #DEDEDE - Borders, inputs
+- #EBEBEB - Light borders, dividers
+- #F5F5F3 - Light backgrounds
+- #FAFAF8 - Page background (warm white)
 
-### Features
-- 5-minute cache with auto-refresh
-- Keyword-based section search
-- Role-appropriate knowledge injection
-- Version-controlled documentation
+Status Colors:
+- #2E7D32 / #E8F5E9 - Success (green)
+- #E65100 / #FFF3E0 - Warning (orange)
+- #C75050 / #FFEBEE - Error (red)
+- #1565C0 / #E3F2FD - Info (blue)
+```
 
-### Key Files
-- `lib/ai/knowledge.ts` - loadKnowledge(), searchKnowledge()
+### Component Patterns
+```tsx
+// Primary Button (black)
+className="w-full bg-[#1A1A1A] text-white py-3.5 rounded-xl font-medium active:scale-[0.98] transition-all"
+
+// Terracotta Button
+className="bg-[#C4785A] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#B56A4F]"
+
+// Card
+className="bg-white rounded-2xl p-4 border border-[#EBEBEB]"
+
+// Input
+className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A]"
+```
 
 ---
 
-## Test Accounts
+## Service Areas
 
-After running `npx prisma db seed`:
+Alicante region:
+- Alicante City
+- San Juan
+- Playa de San Juan
+- El Campello
+- Mutxamel
+- San Vicente
+- Jijona
 
-| Role | Login | Notes |
-|------|-------|-------|
-| Admin | admin@villacare.com | Magic link |
-| Admin | mark@leadballoon.co.uk | Magic link |
-| Admin | kerry@leadballoon.co.uk | Magic link |
-| Owner | mark@example.com | Magic link |
-| Cleaner | +34612345678 (Clara) | OTP code: 123456 |
-| Cleaner | +34623456789 (Maria) | OTP code: 123456 |
-| Cleaner | +34634567890 (Ana) | OTP code: 123456 |
-| Cleaner | +34645678901 (Sofia) | OTP code: 123456 |
-| Cleaner | +34656789012 (Carmen) | OTP code: 123456 |
+---
+
+## Services & Pricing
+
+| Service | Hours | Formula |
+|---------|-------|---------|
+| Regular Clean | 3 | hourlyRate × 3 |
+| Deep Clean | 5 | hourlyRate × 5 |
+| Arrival Prep | 4 | hourlyRate × 4 |
+
+Default hourly rates: €15-20/hour
 
 ---
 
@@ -245,217 +396,66 @@ npx prisma db push --force-reset
 npx prisma db seed
 ```
 
-### Add admin user
-```bash
-npx tsx -e "
-const { PrismaClient } = require('@prisma/client')
-const prisma = new PrismaClient()
-prisma.user.upsert({
-  where: { email: 'new@admin.com' },
-  update: { role: 'ADMIN' },
-  create: { email: 'new@admin.com', name: 'New Admin', role: 'ADMIN', emailVerified: new Date() }
-}).then(console.log).finally(() => prisma.\$disconnect())
-"
-```
-
 ### Deploy
 Push to `main` branch - Vercel auto-deploys.
 
----
-
-## Environment Variables
-
-```env
-# Database (Neon)
-DATABASE_URL="postgresql://..."
-
-# NextAuth
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="..."
-
-# Email (Resend)
-RESEND_API_KEY="..."
-
-# OpenAI (for message translation)
-OPENAI_API_KEY="sk-..."
-
-# Anthropic (for admin AI agent)
-ANTHROPIC_API_KEY="sk-ant-..."
-
-# App
-NEXT_PUBLIC_APP_URL="https://villacare.app"
+### Test WhatsApp locally
+```bash
+npx tsx -e "
+const Twilio = require('twilio');
+const client = Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+client.messages.create({
+  from: 'whatsapp:+447414265007',
+  to: 'whatsapp:+44YOUR_NUMBER',
+  contentSid: 'HX471e05200d0c4dfd136550601d4dd703',
+  contentVariables: JSON.stringify({'1':'Test','2':'Today','3':'10:00','4':'Deep Clean','5':'Test Address'})
+}).then(m => console.log(m.sid));
+"
 ```
 
 ---
 
-## Design System
+## Test Accounts
 
-### Colors
-```
-Primary Brand (Terracotta):
-- #C4785A - Primary accent, CTAs, stars, badges
-- #B56A4F - Hover state
+After running `npx prisma db seed`:
 
-Neutrals:
-- #1A1A1A - Primary text, dark backgrounds
-- #6B6B6B - Secondary text
-- #9B9B9B - Muted text, placeholders
-- #DEDEDE - Borders, inputs
-- #EBEBEB - Light borders, dividers
-- #F5F5F3 - Light backgrounds
-- #FAFAF8 - Page background (warm white)
-
-Status Colors:
-- #2E7D32 / #E8F5E9 - Success (green)
-- #E65100 / #FFF3E0 - Warning (orange)
-- #C75050 / #FFEBEE - Error (red)
-- #1565C0 / #E3F2FD - Info (blue)
-
-Accent:
-- #FFF8F5 - Warm highlight (terracotta tint)
-```
-
-### Rules
-- Minimum width: 320px (iPhone SE)
-- Touch targets: 44px minimum
-- Font: System sans-serif, minimum 16px
-- Mobile-first, active states not hover
-- Safe area padding for iOS notch/home bar
-
-### Component Patterns
-```tsx
-// Primary Button
-className="w-full bg-[#1A1A1A] text-white py-3.5 rounded-xl font-medium active:scale-[0.98] transition-all"
-
-// Terracotta Button
-className="bg-[#C4785A] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#B56A4F]"
-
-// Card
-className="bg-white rounded-2xl p-4 border border-[#EBEBEB]"
-
-// Input
-className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A]"
-
-// Filter Pill (active)
-className="px-4 py-2 rounded-full text-sm font-medium bg-[#1A1A1A] text-white"
-```
-
----
-
-## Service Areas
-
-Alicante region:
-- Alicante City
-- San Juan
-- Playa de San Juan
-- El Campello
-- Mutxamel
-- San Vicente
-- Jijona
-
----
-
-## Services & Pricing
-
-| Service | Hours | Formula |
-|---------|-------|---------|
-| Regular Clean | 3 | hourlyRate x 3 |
-| Deep Clean | 5 | hourlyRate x 5 |
-| Arrival Prep | 4 | hourlyRate x 4 |
-
-Default hourly rates: €15-20/hour
-
----
-
-## User Avatars
-
-### Sandra (Villa Owner)
-- Age 55-65, UK/EU expat
-- Owns villa in Alicante area
-- Visits 2-4x per year (90-day Schengen limit)
-- Uses iPad, WhatsApp, hates passwords
-- Wants: "Arrive to a home that's ready"
-
-### Clara (Cleaner)
-- Professional cleaner in Alicante
-- Has existing team/business
-- Wants to scale, reduce admin work
-- Quality benchmark for platform
-
----
-
-## Referral Model
-
-Cleaners join by invitation only:
-1. Existing cleaner refers someone they trust
-2. Referee applies with referrer's name
-3. We verify with referrer
-4. If vouched for, approved and invited
-
-This ensures quality through social accountability.
-
----
-
-## Calendar Integration
-
-Cleaners can sync bookings to external calendars:
-
-1. Generate unique calendar token (POST `/api/dashboard/cleaner`)
-2. Subscribe to ICS feed: `/api/calendar/{token}`
-3. Works with Google Calendar, Apple Calendar, Outlook
-
-ICS feed includes:
-- All confirmed/pending bookings
-- Property address in location field
-- Service type and price in description
-
----
-
-## Activity Feed (Social Proof)
-
-Homepage displays rotating activity ticker showing:
-- Completed cleans: "Clean completed in {area}"
-- New reviews: "{rating}-star review for {cleaner}"
-- New bookings: "New booking in {area}"
-
-Updates every 4 seconds with fade animation.
+| Role | Login | Notes |
+|------|-------|-------|
+| Admin | admin@villacare.com | Magic link |
+| Admin | mark@leadballoon.co.uk | Magic link |
+| Admin | kerry@leadballoon.co.uk | Magic link |
+| Owner | mark@example.com | Magic link |
+| Cleaner | +34612345678 (Clara) | OTP code: 123456 (dev) |
+| Cleaner | +34623456789 (Maria) | OTP code: 123456 (dev) |
 
 ---
 
 ## What's Built vs. Planned
 
-### Complete
-- [x] Homepage with cleaner directory
-- [x] Area-based filtering
-- [x] Social proof activity feed
-- [x] Public cleaner profiles with reviews
-- [x] About/origin story page
-- [x] 4-step booking flow
-- [x] Cleaner onboarding (phone OTP)
-- [x] Cleaner dashboard with calendar sync
-- [x] Owner dashboard
-- [x] Admin dashboard (cleaners, reviews, stats, owners, AI)
-- [x] Admin AI Agent with 18 tools
-- [x] Knowledge base system
-- [x] Owner CRM notes
-- [x] Review system with moderation
-- [x] ICS calendar feeds
-- [x] Multilingual messaging with auto-translation
-- [x] Admin-cleaner messaging
-- [x] Language preference settings
+### Complete ✅
+- Homepage with cleaner directory (owner-focused)
+- Cleaner landing page (`/join`)
+- Area-based filtering
+- Social proof activity feed
+- Public cleaner profiles with AI chat
+- About/origin story page
+- 4-step booking flow
+- Cleaner onboarding (phone OTP via WhatsApp)
+- Cleaner dashboard with calendar sync
+- Owner dashboard
+- Admin dashboard with AI agent
+- WhatsApp notifications (Twilio)
+- Review system with moderation
+- ICS calendar feeds
+- Multilingual messaging with auto-translation
+- Smart redirects for logged-in users
 
-### In Progress
-- [ ] Unified support messaging (AI-first with human escalation)
-
-### Planned
-- [ ] Stripe payment integration
-- [ ] WhatsApp notifications
-- [ ] Photo uploads (before/after)
-- [ ] Email notifications (beyond magic links)
-- [ ] SMS verification (production)
-- [ ] Referral rewards system
-- [ ] Voice input for messages
-- [ ] Admin-owner messaging
+### Planned 📋
+- Stripe payment integration
+- Photo uploads (before/after)
+- Email notifications (beyond magic links)
+- Referral rewards system
+- Team assignment for bookings
 
 ---
 
@@ -463,4 +463,4 @@ Updates every 4 seconds with fade animation.
 
 Built for the Alicante expat community.
 - Email: hello@alicantecleaners.com
-- Domain: alicantecleaners.com / villacare.app
+- Domain: alicantecleaners.com

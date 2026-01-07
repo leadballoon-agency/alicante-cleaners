@@ -98,7 +98,7 @@ export async function GET() {
       cleaner: {
         id: cleaner.id,
         slug: cleaner.slug,
-        bio: cleaner.bio,
+        bio: cleaner.bio || null,
         serviceAreas: cleaner.serviceAreas,
         hourlyRate: Number(cleaner.hourlyRate),
         rating: cleaner.rating ? Number(cleaner.rating) : null,

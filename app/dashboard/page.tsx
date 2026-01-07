@@ -56,6 +56,7 @@ export type Cleaner = {
   name: string
   photo: string | null
   slug: string
+  bio?: string | null
   hourlyRate: number
   serviceAreas: string[]
   rating?: number | null
@@ -376,7 +377,7 @@ export default function Dashboard() {
         {activeTab === 'messages' && <MessagesTab />}
         {activeTab === 'team' && <TeamTab />}
         {activeTab === 'profile' && (
-          <ProfileTab cleaner={cleaner} />
+          <ProfileTab cleaner={cleaner} onUpdate={setCleaner} />
         )}
       </main>
 
