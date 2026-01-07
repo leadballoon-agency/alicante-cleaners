@@ -22,6 +22,7 @@ export type OnboardingData = {
   hourlyRate: number
   slug: string
   cleanerId: string
+  referralCode: string | null
 }
 
 function CleanerOnboardingContent() {
@@ -29,6 +30,7 @@ function CleanerOnboardingContent() {
   const initialStep = process.env.NODE_ENV === 'development'
     ? parseInt(searchParams.get('step') || '1', 10)
     : 1
+  const referralCode = searchParams.get('ref') || null
   const [step, setStep] = useState(initialStep)
   const [data, setData] = useState<OnboardingData>({
     phone: '',
@@ -40,6 +42,7 @@ function CleanerOnboardingContent() {
     hourlyRate: 18,
     slug: '',
     cleanerId: '',
+    referralCode,
   })
 
   const updateData = (updates: Partial<OnboardingData>) => {
@@ -116,6 +119,7 @@ function CleanerOnboardingContent() {
           <TeamSelection
             cleanerId={data.cleanerId}
             serviceAreas={data.serviceAreas}
+            referralCode={data.referralCode}
             onBack={prevStep}
             onNext={nextStep}
           />

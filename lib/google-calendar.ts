@@ -330,6 +330,192 @@ export async function isCleanerAvailable(
 }
 
 /**
+ * Sync all team members' Google Calendars and update the team availability cache
+ */
+export async function syncAllTeamCalendars(): Promise<{
+  teamsProcessed: number
+  membersProcessed: number
+  membersSynced: number
+  errors: Array<{ teamId: string; memberId: string; error: string }>
+}> {
+  const errors: Array<{ teamId: string; memberId: string; error: string }> = []
+  let teamsProcessed = 0
+  let membersProcessed = 0
+  let membersSynced = 0
+
+  try {
+    // Get all teams that require calendar sync
+    const teams = await db.team.findMany({
+      where: {
+        requireCalendarSync: true,
+      },
+      select: {
+        id: true,
+        members: {
+          where: {
+            status: 'ACTIVE',
+            googleCalendarConnected: true,
+          },
+          select: {
+            id: true,
+            userId: true,
+            calendarSyncStatus: true,
+          },
+        },
+      },
+    })
+
+    for (const team of teams) {
+      teamsProcessed++
+
+      for (const member of team.members) {
+        membersProcessed++
+
+        try {
+          // Update status to syncing
+          await db.cleaner.update({
+            where: { id: member.id },
+            data: { calendarSyncStatus: 'SYNCING' },
+          })
+
+          // Sync the member's calendar
+          const result = await syncCleanerCalendar(member.id)
+
+          if (result.error) {
+            errors.push({ teamId: team.id, memberId: member.id, error: result.error })
+            await db.cleaner.update({
+              where: { id: member.id },
+              data: { calendarSyncStatus: 'ERROR' },
+            })
+          } else {
+            membersSynced++
+            await db.cleaner.update({
+              where: { id: member.id },
+              data: { calendarSyncStatus: 'SYNCED' },
+            })
+          }
+
+          // Update team availability cache
+          await updateTeamAvailabilityCache(team.id, member.id)
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          errors.push({ teamId: team.id, memberId: member.id, error: errorMessage })
+          await db.cleaner.update({
+            where: { id: member.id },
+            data: { calendarSyncStatus: 'ERROR' },
+          })
+        }
+      }
+    }
+
+    return { teamsProcessed, membersProcessed, membersSynced, errors }
+  } catch (error) {
+    console.error('Error syncing team calendars:', error)
+    throw error
+  }
+}
+
+/**
+ * Update the TeamAvailabilityCache for a specific team member
+ */
+async function updateTeamAvailabilityCache(teamId: string, memberId: string): Promise<void> {
+  const startDate = new Date()
+  const endDate = new Date()
+  endDate.setDate(endDate.getDate() + 14) // Cache 14 days
+
+  // Get cleaner's bookings
+  const bookings = await db.booking.findMany({
+    where: {
+      cleanerId: memberId,
+      date: { gte: startDate, lte: endDate },
+      status: { in: ['PENDING', 'CONFIRMED'] },
+    },
+    include: {
+      property: { select: { name: true, address: true } },
+      owner: { include: { user: { select: { name: true } } } },
+    },
+    orderBy: { date: 'asc' },
+  })
+
+  // Get Google Calendar busy slots
+  const googleBusy = await db.cleanerAvailability.findMany({
+    where: {
+      cleanerId: memberId,
+      date: { gte: startDate, lte: endDate },
+      source: 'GOOGLE_CALENDAR',
+      isAvailable: false,
+    },
+    orderBy: { date: 'asc' },
+  })
+
+  // Group by date
+  const dateAvailability: Record<string, Array<{
+    startTime: string
+    endTime: string
+    isAvailable: boolean
+    source: string
+    bookingId?: string
+    title?: string
+  }>> = {}
+
+  // Add booking slots
+  for (const booking of bookings) {
+    const dateStr = booking.date.toISOString().split('T')[0]
+    if (!dateAvailability[dateStr]) dateAvailability[dateStr] = []
+
+    const [hours, minutes] = booking.time.split(':').map(Number)
+    const endHours = hours + booking.hours
+    const endTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+    const locationName = booking.property?.name || booking.property?.address || 'Property'
+
+    dateAvailability[dateStr].push({
+      startTime: booking.time,
+      endTime,
+      isAvailable: false,
+      source: 'BOOKING',
+      bookingId: booking.id,
+      title: `${booking.service} - ${locationName}`,
+    })
+  }
+
+  // Add Google Calendar busy slots
+  for (const slot of googleBusy) {
+    const dateStr = slot.date.toISOString().split('T')[0]
+    if (!dateAvailability[dateStr]) dateAvailability[dateStr] = []
+
+    dateAvailability[dateStr].push({
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      isAvailable: false,
+      source: 'GOOGLE_CALENDAR',
+    })
+  }
+
+  // Upsert cache entries for each date
+  for (const [dateStr, slots] of Object.entries(dateAvailability)) {
+    await db.teamAvailabilityCache.upsert({
+      where: {
+        teamId_date_memberId: {
+          teamId,
+          date: new Date(dateStr),
+          memberId,
+        },
+      },
+      create: {
+        teamId,
+        date: new Date(dateStr),
+        memberId,
+        availability: slots,
+      },
+      update: {
+        availability: slots,
+        lastUpdated: new Date(),
+      },
+    })
+  }
+}
+
+/**
  * Get all unavailable slots for a cleaner on a specific date
  */
 export async function getUnavailableSlots(

@@ -75,7 +75,7 @@ export async function PATCH(
     }
 
     if (action === 'approve') {
-      // Approve: Update request status and add cleaner to team
+      // Approve: Update request status, add cleaner to team, and ACTIVATE them
       await db.$transaction([
         db.teamJoinRequest.update({
           where: { id: requestId },
@@ -86,13 +86,18 @@ export async function PATCH(
         }),
         db.cleaner.update({
           where: { id: joinRequest.cleanerId },
-          data: { teamId: cleaner.ledTeam.id },
+          data: {
+            teamId: cleaner.ledTeam.id,
+            status: 'ACTIVE',
+            verifiedByTeamLeaderId: cleaner.id,
+            verifiedAt: new Date(),
+          },
         }),
       ])
 
       return NextResponse.json({
         success: true,
-        message: 'Request approved. Cleaner added to team.',
+        message: 'Request approved. Cleaner activated and added to team.',
       })
     } else {
       // Reject: Just update request status

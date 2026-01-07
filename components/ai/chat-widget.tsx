@@ -74,8 +74,8 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-40 ${
-          agentType === 'owner' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'
+        className={`fixed bottom-24 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-40 ${
+          agentType === 'owner' ? 'bg-[#C4785A] hover:bg-[#B56A4F]' : 'bg-emerald-600 hover:bg-emerald-700'
         }`}
         style={{ display: isOpen ? 'none' : 'flex' }}
       >
@@ -97,11 +97,17 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
 
       {/* Chat Modal */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200">
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="fixed inset-x-3 bottom-20 h-[70vh] max-h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 sm:inset-x-auto sm:right-6 sm:w-96">
           {/* Header */}
           <div
             className={`p-4 rounded-t-2xl flex items-center justify-between ${
-              agentType === 'owner' ? 'bg-blue-600' : 'bg-emerald-600'
+              agentType === 'owner' ? 'bg-[#C4785A]' : 'bg-emerald-600'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -149,7 +155,7 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
               <div className="text-center py-8">
                 <div
                   className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center ${
-                    agentType === 'owner' ? 'bg-blue-100' : 'bg-emerald-100'
+                    agentType === 'owner' ? 'bg-[#FFF8F5]' : 'bg-emerald-100'
                   }`}
                 >
                   <svg
@@ -159,7 +165,7 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
                     strokeWidth={1.5}
                     stroke="currentColor"
                     className={`w-8 h-8 ${
-                      agentType === 'owner' ? 'text-blue-600' : 'text-emerald-600'
+                      agentType === 'owner' ? 'text-[#C4785A]' : 'text-emerald-600'
                     }`}
                   >
                     <path
@@ -183,7 +189,7 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
                   className={`max-w-[80%] rounded-2xl px-4 py-2 ${
                     message.role === 'user'
                       ? agentType === 'owner'
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-[#C4785A] text-white'
                         : 'bg-emerald-600 text-white'
                       : 'bg-white text-gray-800 shadow-sm border border-gray-100'
                   }`}
@@ -217,7 +223,7 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type your message..."
-                className="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C4785A] focus:border-transparent"
                 disabled={isLoading}
               />
               <button
@@ -225,7 +231,7 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
                 disabled={!input.trim() || isLoading}
                 className={`px-4 py-2 rounded-xl text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   agentType === 'owner'
-                    ? 'bg-blue-600 hover:bg-blue-700'
+                    ? 'bg-[#C4785A] hover:bg-[#B56A4F]'
                     : 'bg-emerald-600 hover:bg-emerald-700'
                 }`}
               >
@@ -247,6 +253,7 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
             </div>
           </div>
         </div>
+        </>
       )}
     </>
   )

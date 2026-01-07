@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { signOut } from 'next-auth/react'
 import { Owner } from '../page'
 import LanguageSelector from '@/components/language-selector'
 
@@ -220,7 +221,10 @@ export default function AccountTab({ owner, onRefresh }: Props) {
         >
           Help & Support
         </Link>
-        <button className="w-full text-[#C75050] py-3 font-medium text-sm active:opacity-70">
+        <button
+          onClick={() => signOut({ callbackUrl: '/' })}
+          className="w-full text-[#C75050] py-3 font-medium text-sm active:opacity-70"
+        >
           Log out
         </button>
       </div>

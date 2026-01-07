@@ -259,6 +259,51 @@ async function main() {
   const clara = await prisma.cleaner.findUnique({ where: { slug: 'clara' } })
   const maria = await prisma.cleaner.findUnique({ where: { slug: 'maria' } })
 
+  // Create Clara's team "Limpieza Alicante Express" with Maria as a member
+  if (clara && maria) {
+    const team = await prisma.team.upsert({
+      where: { id: 'team_clara' },
+      update: {
+        name: 'Limpieza Alicante Express',
+      },
+      create: {
+        id: 'team_clara',
+        name: 'Limpieza Alicante Express',
+        leaderId: clara.id,
+        referralCode: 'TEAM-CLARA-LAX',
+      },
+    })
+
+    // Add Maria as a team member
+    await prisma.cleaner.update({
+      where: { id: maria.id },
+      data: { teamId: team.id },
+    })
+
+    // Create upcoming bookings for Maria (so Clara can see team jobs)
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + 3) // 3 days from now
+
+    await prisma.booking.upsert({
+      where: { id: 'booking_maria_upcoming' },
+      update: {},
+      create: {
+        id: 'booking_maria_upcoming',
+        cleanerId: maria.id,
+        ownerId: ownerRecords[1].owner.id,
+        propertyId: property.id,
+        status: 'CONFIRMED',
+        service: 'Deep Clean',
+        price: 90,
+        hours: 5,
+        date: futureDate,
+        time: '09:00',
+      },
+    })
+
+    console.log('Created team: Limpieza Alicante Express with Maria as member')
+  }
+
   // Sample reviews data with different owners
   const reviewsData = [
     // Carmen's reviews (from different owners)

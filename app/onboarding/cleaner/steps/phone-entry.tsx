@@ -71,7 +71,7 @@ export default function PhoneEntry({ phone, onUpdate, onNext }: Props) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-            WhatsApp number
+            Phone number
           </label>
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B6B6B]">

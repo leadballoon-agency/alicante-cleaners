@@ -8,9 +8,10 @@ import MessagesTab from './tabs/messages'
 import TeamTab from './tabs/team'
 import ProfileTab from './tabs/profile'
 import OwnerReviewModal from './components/owner-review-modal'
-import { ChatWidget } from '@/components/ai/chat-widget'
+import { SmartWidget, Screen } from '@/components/smart-widget'
+import { JobsTimeline } from './components/team-calendar'
 
-type Tab = 'home' | 'bookings' | 'messages' | 'team' | 'profile'
+type Tab = 'home' | 'bookings' | 'messages' | 'team' | 'profile' | 'calendar'
 
 export type Owner = {
   id: string
@@ -231,14 +232,6 @@ export default function Dashboard() {
     }
   }
 
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'home', label: 'Inicio', icon: '🏠' },
-    { id: 'bookings', label: 'Reservas', icon: '📋' },
-    { id: 'messages', label: 'Mensajes', icon: '💬' },
-    { id: 'team', label: 'Equipo', icon: '👥' },
-    { id: 'profile', label: 'Perfil', icon: '👤' },
-  ]
-
   if (loading) {
     return (
       <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] flex items-center justify-center">
@@ -287,7 +280,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-20">
+    <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans">
       {/* Header */}
       <header className="px-6 py-4 pt-safe bg-white border-b border-[#EBEBEB]">
         <div className="max-w-lg mx-auto flex items-center justify-between">
@@ -327,27 +320,14 @@ export default function Dashboard() {
         {activeTab === 'profile' && (
           <ProfileTab cleaner={cleaner} onUpdate={setCleaner} />
         )}
+        {activeTab === 'calendar' && (
+          <JobsTimeline
+            currentCleanerId={cleaner.id}
+            currentCleanerName={cleaner.name}
+            currentCleanerPhoto={cleaner.photo}
+          />
+        )}
       </main>
-
-      {/* Bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#EBEBEB] pb-safe">
-        <div className="max-w-lg mx-auto flex">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all rounded-lg mx-0.5 ${
-                activeTab === tab.id
-                  ? 'text-[#C4785A] bg-[#FFF8F5]'
-                  : 'text-[#9B9B9B]'
-              }`}
-            >
-              <span className="text-xl">{tab.icon}</span>
-              <span className="text-xs font-medium">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
 
       {/* Owner Review Modal */}
       {ownerReviewModal && (
@@ -360,11 +340,25 @@ export default function Dashboard() {
         />
       )}
 
-      {/* AI Chat Widget */}
-      <ChatWidget
-        agentType="cleaner"
-        agentName="Pro Assistant"
-        agentDescription="Tu asistente profesional de limpieza"
+      {/* Smart Navigation Widget */}
+      <SmartWidget
+        currentScreen={activeTab as Screen}
+        onNavigate={(screen) => setActiveTab(screen as Tab)}
+        onQuickAction={(action) => {
+          // Handle quick actions from context menus
+          if (action === 'support') {
+            // Open support - could be a modal or external link
+            window.open('mailto:hello@alicantecleaners.com', '_blank')
+          } else if (action === 'feedback') {
+            // Feedback handled via support
+            window.open('mailto:hello@alicantecleaners.com?subject=Feedback', '_blank')
+          } else if (action.startsWith('calendar:')) {
+            // Calendar view toggle - handled by TeamCalendar component
+            setActiveTab('calendar')
+          } else if (action.startsWith('profile:')) {
+            setActiveTab('profile')
+          }
+        }}
       />
     </div>
   )

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useToast } from '@/components/ui/toast'
+import { TeamCalendar, CalendarSetupModal } from '../components/team-calendar'
 
 type TeamRole = 'leader' | 'member' | 'independent'
 
@@ -103,7 +104,8 @@ export default function TeamTab() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
   const [conversationMessages, setConversationMessages] = useState<{role: string, content: string, createdAt: Date}[]>([])
   const [loadingMessages, setLoadingMessages] = useState(false)
-
+  const [showCalendarSetupModal, setShowCalendarSetupModal] = useState(false)
+  const [calendarSetupMember, setCalendarSetupMember] = useState<{id: string, name: string, phone: string | null} | null>(null)
   useEffect(() => {
     fetchTeamData()
   }, [])
@@ -176,7 +178,16 @@ export default function TeamTab() {
         body: JSON.stringify({ action: 'accept' }),
       })
       if (!response.ok) throw new Error('Failed to accept applicant')
+
+      const result = await response.json()
       showToast('Applicant accepted and activated!', 'success')
+
+      // Check if calendar setup is required
+      if (result.requiresCalendarSetup && result.member) {
+        setCalendarSetupMember(result.member)
+        setShowCalendarSetupModal(true)
+      }
+
       await fetchApplicantConversations()
       await fetchTeamData()
       setSelectedConversation(null)
@@ -777,6 +788,28 @@ export default function TeamTab() {
             </div>
           )}
         </div>
+
+        {/* Team Calendar */}
+        <div>
+          <h3 className="text-sm font-medium text-[#1A1A1A] mb-3 flex items-center gap-2">
+            <span>📅</span>
+            <span>Team Calendar</span>
+          </h3>
+          <TeamCalendar teamId={teamData.team.id} />
+        </div>
+
+        {/* Calendar Setup Modal */}
+        {calendarSetupMember && (
+          <CalendarSetupModal
+            isOpen={showCalendarSetupModal}
+            onClose={() => {
+              setShowCalendarSetupModal(false)
+              setCalendarSetupMember(null)
+            }}
+            member={calendarSetupMember}
+            teamName={teamData.team.name}
+          />
+        )}
       </div>
     )
   }

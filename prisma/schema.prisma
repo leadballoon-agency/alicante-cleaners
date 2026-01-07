@@ -170,6 +170,7 @@ model Cleaner {
   // Google Calendar Integration
   googleCalendarConnected Boolean   @default(false)
   googleCalendarSyncedAt  DateTime?
+  calendarSyncStatus      String?   @default("NOT_CONNECTED") // NOT_CONNECTED, PENDING_SETUP, SYNCING, SYNCED, ERROR
 
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -354,16 +355,18 @@ model Message {
 // ============================================
 
 model Team {
-  id           String   @id @default(cuid())
-  name         String
-  leaderId     String   @unique
-  referralCode String   @unique // TEAM-{slug}-{4digits}
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  name                String
+  leaderId            String   @unique
+  referralCode        String   @unique // TEAM-{slug}-{4digits}
+  requireCalendarSync Boolean  @default(true) // New members must sync Google Calendar
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  leader       Cleaner           @relation("TeamLeader", fields: [leaderId], references: [id])
-  members      Cleaner[]         @relation("TeamMembers")
-  joinRequests TeamJoinRequest[]
+  leader            Cleaner                @relation("TeamLeader", fields: [leaderId], references: [id])
+  members           Cleaner[]              @relation("TeamMembers")
+  joinRequests      TeamJoinRequest[]
+  availabilityCache TeamAvailabilityCache[]
 }
 
 model TeamJoinRequest {
@@ -379,6 +382,21 @@ model TeamJoinRequest {
   cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, cleanerId])
+}
+
+// Team Calendar - aggregated availability cache for team views
+model TeamAvailabilityCache {
+  id           String   @id @default(cuid())
+  teamId       String
+  date         DateTime @db.Date
+  memberId     String   // Cleaner ID
+  availability Json     // [{startTime, endTime, isAvailable, source, bookingId?, title?}]
+  lastUpdated  DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, date, memberId])
+  @@index([teamId, date])
 }
 
 // ============================================

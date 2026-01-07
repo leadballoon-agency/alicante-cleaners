@@ -59,14 +59,13 @@ function LoginContent() {
     setFormError(null)
 
     try {
-      // Send OTP via Twilio Verify
+      // Send OTP via Twilio Verify (defaults to SMS)
       const response = await fetch('/api/auth/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone,
           action: 'send',
-          channel: 'whatsapp',
         }),
       })
 

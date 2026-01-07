@@ -19,6 +19,7 @@ export async function GET() {
         ledTeam: {
           select: {
             name: true,
+            referralCode: true,
             _count: {
               select: { members: true },
             },
@@ -41,6 +42,7 @@ export async function GET() {
       serviceAreas: leader.serviceAreas,
       teamName: leader.ledTeam?.name || null,
       memberCount: leader.ledTeam?._count.members || 0,
+      referralCode: leader.ledTeam?.referralCode || null,
     }))
 
     return NextResponse.json({ leaders })

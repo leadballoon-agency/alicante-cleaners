@@ -161,9 +161,11 @@ export default function FeedbackWidget() {
   }
   const t = greetings[userLang] || greetings.en
 
-  // Hide on admin, onboarding, and cleaner profile pages (they have their own chat widgets)
+  // Hide on admin, onboarding, dashboard, and cleaner profile pages (they have their own chat/nav widgets)
   const isAdminPage = pathname?.startsWith('/admin') ?? false
   const isOnboardingPage = pathname?.startsWith('/onboarding') ?? false
+  const isDashboardPage = pathname?.startsWith('/dashboard') ?? false
+  const isOwnerDashboardPage = pathname?.startsWith('/owner/dashboard') ?? false
 
   // Cleaner profiles are single-segment paths like /clara, /maria that aren't known routes
   const isCleanerProfilePage = (() => {
@@ -411,8 +413,8 @@ ${t.askServices}`
     }
   }
 
-  // Don't render on admin/onboarding/cleaner profile pages or until mounted
-  if (!mounted || isAdminPage || isOnboardingPage || isCleanerProfilePage) return null
+  // Don't render on admin/onboarding/dashboard/owner dashboard/cleaner profile pages or until mounted
+  if (!mounted || isAdminPage || isOnboardingPage || isDashboardPage || isOwnerDashboardPage || isCleanerProfilePage) return null
 
   return (
     <>

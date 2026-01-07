@@ -57,6 +57,9 @@ export async function PATCH(
     }
 
     if (action === 'accept') {
+      // Check if team requires calendar sync
+      const requiresCalendarSync = cleaner.ledTeam?.requireCalendarSync ?? true
+
       // Accept the applicant - activate and add to team
       await db.$transaction(async (tx) => {
         // Update applicant status to ACTIVE and set verification
@@ -67,6 +70,8 @@ export async function PATCH(
             verifiedByTeamLeaderId: cleaner.id,
             verifiedAt: new Date(),
             teamId: cleaner.ledTeam?.id || null,
+            // Set calendar sync status to PENDING_SETUP if team requires it
+            calendarSyncStatus: requiresCalendarSync ? 'PENDING_SETUP' : 'NOT_CONNECTED',
           },
         })
 
@@ -77,9 +82,21 @@ export async function PATCH(
         })
       })
 
+      // Get applicant user info for response
+      const applicantUser = await db.user.findUnique({
+        where: { id: applicant.userId },
+        select: { name: true, phone: true },
+      })
+
       return NextResponse.json({
         success: true,
         message: 'Applicant accepted and activated',
+        requiresCalendarSetup: requiresCalendarSync,
+        member: requiresCalendarSync ? {
+          id: applicant.id,
+          name: applicantUser?.name || 'New Member',
+          phone: applicantUser?.phone || null,
+        } : undefined,
       })
     } else {
       // Reject the applicant

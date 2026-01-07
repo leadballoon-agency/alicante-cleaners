@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { processBookingReminders } from '@/lib/notifications/booking-notifications'
+import { syncAllTeamCalendars } from '@/lib/google-calendar'
 
 /**
  * Combined Daily Cron Job
@@ -9,6 +10,7 @@ import { processBookingReminders } from '@/lib/notifications/booking-notificatio
  * Tasks:
  * 1. Process booking reminders
  * 2. Clean up old rate limit entries
+ * 3. Sync team members' Google Calendars
  */
 
 export async function GET(request: NextRequest) {
@@ -52,6 +54,25 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       console.error('[Cron] Rate limit cleanup failed:', error)
       results.rateLimitCleanup = { success: false, error: String(error) }
+    }
+
+    // Task 3: Sync team members' Google Calendars
+    try {
+      const syncResult = await syncAllTeamCalendars()
+      results.teamCalendarSync = {
+        success: true,
+        teamsProcessed: syncResult.teamsProcessed,
+        membersProcessed: syncResult.membersProcessed,
+        membersSynced: syncResult.membersSynced,
+        errors: syncResult.errors.length,
+      }
+      console.log(`[Cron] Team calendar sync: ${syncResult.membersSynced}/${syncResult.membersProcessed} members synced across ${syncResult.teamsProcessed} teams`)
+      if (syncResult.errors.length > 0) {
+        console.warn('[Cron] Team calendar sync errors:', syncResult.errors)
+      }
+    } catch (error) {
+      console.error('[Cron] Team calendar sync failed:', error)
+      results.teamCalendarSync = { success: false, error: String(error) }
     }
 
     return NextResponse.json({
