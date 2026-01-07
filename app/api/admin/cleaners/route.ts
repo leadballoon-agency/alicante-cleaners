@@ -35,7 +35,7 @@ export async function GET() {
       slug: c.slug,
       phone: c.user.phone || '',
       email: c.user.email || '',
-      photo: c.user.image || c.photo || null,
+      photo: c.user.image || null,
       status: c.status.toLowerCase() as 'pending' | 'active' | 'suspended',
       joinedAt: c.createdAt,
       areas: c.serviceAreas,
