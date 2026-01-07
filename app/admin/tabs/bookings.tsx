@@ -5,13 +5,35 @@ import { Booking } from '../page'
 
 type Props = {
   bookings: Booking[]
+  onBookingUpdate?: (bookingId: string, newStatus: Booking['status']) => void
 }
 
 type Filter = 'all' | 'pending' | 'confirmed' | 'completed' | 'cancelled'
 
-export default function BookingsTab({ bookings }: Props) {
+export default function BookingsTab({ bookings, onBookingUpdate }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
+  const [loadingAction, setLoadingAction] = useState<string | null>(null)
+
+  const handleAction = async (bookingId: string, action: 'accept' | 'decline') => {
+    setLoadingAction(bookingId)
+    try {
+      const response = await fetch('/api/admin/bookings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId, action }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        onBookingUpdate?.(bookingId, result.booking.status)
+      }
+    } catch (error) {
+      console.error('Failed to update booking:', error)
+    } finally {
+      setLoadingAction(null)
+    }
+  }
 
   const filteredBookings = bookings
     .filter(b => filter === 'all' || b.status === filter)
@@ -151,6 +173,48 @@ export default function BookingsTab({ bookings }: Props) {
                 </span>
                 <span className="font-semibold text-[#1A1A1A]">€{booking.price}</span>
               </div>
+
+              {/* Action buttons for pending bookings */}
+              {booking.status === 'pending' && (
+                <div className="mt-3 pt-3 border-t border-[#EBEBEB]">
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={() => handleAction(booking.id, 'accept')}
+                      disabled={loadingAction === booking.id}
+                      className="flex-1 bg-[#2E7D32] text-white py-2.5 rounded-xl text-sm font-medium hover:bg-[#256B28] disabled:opacity-50 transition-colors"
+                    >
+                      {loadingAction === booking.id ? 'Processing...' : '✓ Accept'}
+                    </button>
+                    <button
+                      onClick={() => handleAction(booking.id, 'decline')}
+                      disabled={loadingAction === booking.id}
+                      className="flex-1 bg-[#C62828] text-white py-2.5 rounded-xl text-sm font-medium hover:bg-[#B71C1C] disabled:opacity-50 transition-colors"
+                    >
+                      ✗ Decline
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    {booking.cleaner.phone && (
+                      <a
+                        href={`https://wa.me/${booking.cleaner.phone.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 bg-[#25D366] text-white py-2 rounded-lg text-xs font-medium text-center hover:bg-[#20BD5A] transition-colors"
+                      >
+                        💬 WhatsApp Cleaner
+                      </a>
+                    )}
+                    {booking.owner.phone && (
+                      <a
+                        href={`tel:${booking.owner.phone}`}
+                        className="flex-1 bg-[#1A1A1A] text-white py-2 rounded-lg text-xs font-medium text-center hover:bg-[#333] transition-colors"
+                      >
+                        📞 Call Owner
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}

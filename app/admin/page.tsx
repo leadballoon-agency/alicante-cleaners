@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
+import { useSearchParams } from 'next/navigation'
 import OverviewTab from './tabs/overview'
 import CleanersTab from './tabs/cleaners'
 import OwnersTab from './tabs/owners'
@@ -81,8 +82,8 @@ export type Booking = {
   service: string
   price: number
   date: Date
-  cleaner: { id: string; name: string }
-  owner: { name: string; email: string }
+  cleaner: { id: string; name: string; phone: string | null }
+  owner: { name: string; email: string; phone: string | null }
   property: string
   createdAt: Date
 }
@@ -158,7 +159,11 @@ const DEFAULT_STATS: Stats = {
 
 export default function AdminDashboard() {
   const { data: session } = useSession()
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const searchParams = useSearchParams()
+  const tabFromUrl = searchParams.get('tab') as Tab | null
+  const validTabs: Tab[] = ['overview', 'cleaners', 'owners', 'bookings', 'reviews', 'feedback', 'support', 'ai', 'settings']
+  const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'overview'
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS)
   const [cleaners, setCleaners] = useState<Cleaner[]>([])
   const [owners, setOwners] = useState<Owner[]>([])
@@ -554,7 +559,14 @@ export default function AdminDashboard() {
           <OwnersTab owners={owners} />
         )}
         {activeTab === 'bookings' && (
-          <BookingsTab bookings={bookings} />
+          <BookingsTab
+            bookings={bookings}
+            onBookingUpdate={(bookingId, newStatus) => {
+              setBookings(prev => prev.map(b =>
+                b.id === bookingId ? { ...b, status: newStatus } : b
+              ))
+            }}
+          />
         )}
         {activeTab === 'reviews' && (
           <ReviewsTab

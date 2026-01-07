@@ -85,8 +85,8 @@ export async function notifyAdminNewBooking(details: {
                 </table>
               </div>
 
-              <a href="https://alicantecleaners.com/admin" style="display: block; background: #1A1A1A; color: white; text-decoration: none; padding: 14px 24px; border-radius: 12px; text-align: center; font-weight: 500; font-size: 14px;">
-                View in Admin Dashboard
+              <a href="https://alicantecleaners.com/admin?tab=bookings" style="display: block; background: #1A1A1A; color: white; text-decoration: none; padding: 14px 24px; border-radius: 12px; text-align: center; font-weight: 500; font-size: 14px;">
+                View Booking
               </a>
 
               <p style="color: #9B9B9B; font-size: 12px; text-align: center; margin-top: 24px;">
