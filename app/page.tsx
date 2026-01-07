@@ -759,6 +759,12 @@ export default function HomePage() {
               >
                 Learn more
               </Link>
+              <Link
+                href="/join/guide"
+                className="block text-white/60 hover:text-white text-sm mt-3 transition-colors"
+              >
+                See how it works →
+              </Link>
             </div>
           </div>
         </div>
