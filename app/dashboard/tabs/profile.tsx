@@ -22,7 +22,8 @@ type Props = {
   onUpdate?: (cleaner: Cleaner) => void
 }
 
-type EditMode = 'profile' | 'pricing' | 'areas' | null
+type EditMode = 'profile' | 'pricing' | 'areas' | 'phone' | null
+type PhoneStep = 'initial' | 'verify'
 
 export default function ProfileTab({ cleaner, onUpdate }: Props) {
   const { showToast } = useToast()
@@ -36,6 +37,14 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
   const [bio, setBio] = useState(cleaner.bio || '')
   const [hourlyRate, setHourlyRate] = useState(cleaner.hourlyRate.toString())
   const [selectedAreas, setSelectedAreas] = useState<string[]>(cleaner.serviceAreas)
+
+  // Phone change state
+  const [phoneStep, setPhoneStep] = useState<PhoneStep>('initial')
+  const [maskedPhone, setMaskedPhone] = useState('')
+  const [otpCode, setOtpCode] = useState('')
+  const [newPhone, setNewPhone] = useState('')
+  const [phoneLoading, setPhoneLoading] = useState(false)
+  const [phoneError, setPhoneError] = useState('')
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -123,12 +132,71 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
   const menuItems = [
     { icon: '👤', label: 'Edit profile', action: () => setEditMode('profile') },
+    { icon: '📱', label: 'Update phone', action: () => {
+      setPhoneStep('initial')
+      setOtpCode('')
+      setNewPhone('')
+      setPhoneError('')
+      setEditMode('phone')
+    }},
     { icon: '💰', label: 'Update pricing', action: () => setEditMode('pricing') },
     { icon: '📍', label: 'Service areas', action: () => setEditMode('areas') },
     { icon: '📅', label: 'Availability', href: '/dashboard/availability' },
     { icon: '💳', label: 'Payment settings', href: '#', disabled: true },
     { icon: '🔔', label: 'Notifications', href: '#', disabled: true },
   ]
+
+  const handleSendPhoneCode = async () => {
+    setPhoneLoading(true)
+    setPhoneError('')
+    try {
+      const response = await fetch('/api/dashboard/cleaner/phone', {
+        method: 'POST',
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send code')
+      }
+      setMaskedPhone(data.maskedPhone)
+      setPhoneStep('verify')
+      showToast('Verification code sent!', 'success')
+    } catch (err) {
+      setPhoneError(err instanceof Error ? err.message : 'Failed to send code')
+    } finally {
+      setPhoneLoading(false)
+    }
+  }
+
+  const handleVerifyAndUpdatePhone = async () => {
+    if (!otpCode || otpCode.length !== 6) {
+      setPhoneError('Please enter the 6-digit code')
+      return
+    }
+    if (!newPhone) {
+      setPhoneError('Please enter your new phone number')
+      return
+    }
+
+    setPhoneLoading(true)
+    setPhoneError('')
+    try {
+      const response = await fetch('/api/dashboard/cleaner/phone', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: otpCode, newPhone }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update phone')
+      }
+      showToast('Phone number updated!', 'success')
+      setEditMode(null)
+    } catch (err) {
+      setPhoneError(err instanceof Error ? err.message : 'Failed to update phone')
+    } finally {
+      setPhoneLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -432,6 +500,126 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Phone Modal */}
+      {editMode === 'phone' && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">Update Phone Number</h2>
+              <button
+                onClick={() => setEditMode(null)}
+                className="text-[#9B9B9B] hover:text-[#1A1A1A]"
+              >
+                ✕
+              </button>
+            </div>
+
+            {phoneStep === 'initial' && (
+              <div className="space-y-4">
+                <p className="text-sm text-[#6B6B6B]">
+                  To change your phone number, we need to verify your identity.
+                  We&apos;ll send a verification code to your current phone.
+                </p>
+
+                {phoneError && (
+                  <div className="p-3 bg-[#FFEBEE] text-[#C75050] rounded-xl text-sm">
+                    {phoneError}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleSendPhoneCode}
+                  disabled={phoneLoading}
+                  className="w-full py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
+                >
+                  {phoneLoading ? 'Sending...' : 'Send Verification Code'}
+                </button>
+
+                <div className="pt-4 border-t border-[#EBEBEB]">
+                  <p className="text-xs text-[#9B9B9B] text-center">
+                    Lost your phone?{' '}
+                    <a
+                      href="mailto:support@alicantecleaners.com?subject=Phone%20Change%20Request"
+                      className="text-[#C4785A] font-medium"
+                    >
+                      Contact support
+                    </a>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {phoneStep === 'verify' && (
+              <div className="space-y-4">
+                <p className="text-sm text-[#6B6B6B]">
+                  Enter the 6-digit code sent to {maskedPhone}
+                </p>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                    Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-center text-2xl tracking-widest"
+                    placeholder="000000"
+                    maxLength={6}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                    New Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none"
+                    placeholder="+34 612 345 678"
+                  />
+                  <p className="text-xs text-[#9B9B9B] mt-1">
+                    Include country code (e.g., +34 for Spain)
+                  </p>
+                </div>
+
+                {phoneError && (
+                  <div className="p-3 bg-[#FFEBEE] text-[#C75050] rounded-xl text-sm">
+                    {phoneError}
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setPhoneStep('initial')}
+                    className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleVerifyAndUpdatePhone}
+                    disabled={phoneLoading || otpCode.length !== 6 || !newPhone}
+                    className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
+                  >
+                    {phoneLoading ? 'Updating...' : 'Update Phone'}
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleSendPhoneCode}
+                  disabled={phoneLoading}
+                  className="w-full text-sm text-[#C4785A] font-medium"
+                >
+                  Resend code
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

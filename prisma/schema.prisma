@@ -163,6 +163,10 @@ model Cleaner {
   teamId         String?       // Team this cleaner belongs to (null = independent)
   referredByCode String?       // Team referral code used during signup
 
+  // Team Verification (new cleaners must be verified by a Team Leader)
+  verifiedByTeamLeaderId String?   // The Team Leader who verified this cleaner
+  verifiedAt             DateTime? // When the cleaner was verified
+
   // Google Calendar Integration
   googleCalendarConnected Boolean   @default(false)
   googleCalendarSyncedAt  DateTime?
@@ -179,6 +183,10 @@ model Cleaner {
   teamJoinRequests TeamJoinRequest[]
   arrivalPreps     ArrivalPrep[]
   availability     CleanerAvailability[]
+
+  // Team verification relations
+  verifiedBy       Cleaner?  @relation("VerifiedBy", fields: [verifiedByTeamLeaderId], references: [id])
+  verifiedCleaners Cleaner[] @relation("VerifiedBy")
 
   // AI Sales Agent
   aiSettings           CleanerAISettings?
@@ -654,4 +662,63 @@ model RateLimitEntry {
   createdAt DateTime @default(now())
 
   @@index([key, createdAt])
+}
+
+// ============================================
+// Platform Settings (Admin Configurable)
+// ============================================
+
+model PlatformSettings {
+  id                       String   @id @default("default")
+  teamLeaderHoursRequired  Int      @default(50)    // Hours needed to become Team Leader
+  teamLeaderRatingRequired Float    @default(5.0)   // Rating needed to become Team Leader
+  updatedAt                DateTime @updatedAt
+}
+
+// ============================================
+// Applicant Conversations (PENDING cleaners chatting with Team Leaders)
+// ============================================
+
+enum ApplicantConversationStatus {
+  ACTIVE      // Ongoing conversation
+  ACCEPTED    // Team Leader accepted the applicant
+  REJECTED    // Team Leader rejected the applicant
+}
+
+model ApplicantConversation {
+  id               String                      @id @default(cuid())
+  applicantId      String                      // PENDING cleaner
+  teamLeaderId     String                      // Team Leader they're chatting with (via their profile)
+
+  status           ApplicantConversationStatus @default(ACTIVE)
+
+  // AI-generated summary for Team Leader dashboard
+  summary          String?                     @db.Text
+  lastSummarizedAt DateTime?
+
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+
+  messages         ApplicantMessage[]
+
+  @@unique([applicantId, teamLeaderId]) // One conversation per applicant-teamLeader pair
+  @@index([teamLeaderId, status])
+  @@index([applicantId])
+}
+
+model ApplicantMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+
+  role           String   // 'user' (applicant) or 'assistant' (AI acting as team leader)
+  content        String   @db.Text
+
+  // For tracking original language if translation needed
+  originalLang   String?  @db.VarChar(10)
+
+  createdAt      DateTime @default(now())
+
+  conversation   ApplicantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
 }

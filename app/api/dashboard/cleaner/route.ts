@@ -108,6 +108,7 @@ export async function GET() {
         photo: cleaner.user.image,
         phone: cleaner.user.phone,
         calendarToken: cleaner.calendarToken,
+        status: cleaner.status,
       },
       stats: {
         thisWeekEarnings,

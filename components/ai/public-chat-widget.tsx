@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 type Message = {
   id: string
@@ -15,6 +16,7 @@ type CleanerInfo = {
   name: string
   hourlyRate: number
   serviceAreas: string[]
+  teamLeader?: boolean
 }
 
 interface PublicChatWidgetProps {
@@ -22,6 +24,10 @@ interface PublicChatWidgetProps {
 }
 
 export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
+  const searchParams = useSearchParams()
+  const applicantId = searchParams.get('applicant')
+  const isApplicant = Boolean(applicantId)
+
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -34,18 +40,29 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Auto-open chat for applicants
+  useEffect(() => {
+    if (isApplicant && !isOpen) {
+      setIsOpen(true)
+    }
+  }, [isApplicant, isOpen])
+
   // Show welcome message when opened for first time
   useEffect(() => {
     if (isOpen && messages.length === 0) {
+      const welcomeContent = isApplicant
+        ? `Hi! I'm Clara, ${cleaner.name}'s assistant. ${cleaner.name} asked me to chat with you about joining the team!\n\nI'd love to learn a bit about your cleaning experience. What brings you to VillaCare?`
+        : `Hi! I'm ${cleaner.name}'s assistant. I can help you with:\n\n• Pricing and availability\n• Booking a cleaning\n• Questions about services\n\nHow can I help you today?`
+
       const welcomeMessage: Message = {
         id: 'welcome',
         role: 'assistant',
-        content: `Hi! I'm ${cleaner.name}'s assistant. I can help you with:\n\n• Pricing and availability\n• Booking a cleaning\n• Questions about services\n\nHow can I help you today?`,
+        content: welcomeContent,
         timestamp: new Date(),
       }
       setMessages([welcomeMessage])
     }
-  }, [isOpen, cleaner.name, messages.length])
+  }, [isOpen, cleaner.name, messages.length, isApplicant])
 
   const handleSend = async () => {
     if (!input.trim() || sending) return
@@ -63,14 +80,25 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
     setHasInteracted(true)
 
     try {
-      const response = await fetch('/api/ai/public-chat', {
+      // Use different API endpoint for applicants vs regular visitors
+      const apiEndpoint = isApplicant ? '/api/ai/applicant-chat' : '/api/ai/public-chat'
+      const requestBody = isApplicant
+        ? {
+            teamLeaderSlug: cleaner.slug,
+            applicantId,
+            message: userMessage.content,
+            history: messages.map(m => ({ role: m.role, content: m.content })),
+          }
+        : {
+            cleanerSlug: cleaner.slug,
+            message: userMessage.content,
+            history: messages.map(m => ({ role: m.role, content: m.content })),
+          }
+
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cleanerSlug: cleaner.slug,
-          message: userMessage.content,
-          history: messages.map(m => ({ role: m.role, content: m.content })),
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const data = await response.json()
@@ -97,19 +125,33 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
     }
   }
 
+  const buttonText = isApplicant
+    ? `Chat with ${cleaner.name.split(' ')[0]}'s Team`
+    : `Chat with ${cleaner.name.split(' ')[0]}`
+
+  const headerTitle = isApplicant
+    ? 'Team Application Chat'
+    : `${cleaner.name}'s Assistant`
+
+  const headerSubtitle = isApplicant
+    ? `Chatting about joining ${cleaner.name.split(' ')[0]}'s team`
+    : 'Usually responds instantly'
+
   return (
     <>
       {/* Chat Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 ${
+        className={`fixed bottom-6 right-6 z-50 bg-gradient-to-r ${
+          isApplicant ? 'from-emerald-500 to-teal-500' : 'from-purple-500 to-blue-500'
+        } text-white rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 ${
           isOpen ? 'hidden' : 'flex'
         } items-center gap-2 px-5 py-3`}
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
-        <span className="font-medium text-sm">Chat with {cleaner.name.split(' ')[0]}</span>
+        <span className="font-medium text-sm">{buttonText}</span>
         {hasInteracted && (
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
         )}
@@ -120,14 +162,16 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/30">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-3 flex items-center justify-between">
+            <div className={`bg-gradient-to-r ${
+              isApplicant ? 'from-emerald-500 to-teal-500' : 'from-purple-500 to-blue-500'
+            } text-white px-4 py-3 flex items-center justify-between`}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <span className="text-lg">AI</span>
+                  <span className="text-lg">{isApplicant ? '👋' : 'AI'}</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold">{cleaner.name}&apos;s Assistant</h3>
-                  <p className="text-xs text-white/80">Usually responds instantly</p>
+                  <h3 className="font-semibold">{headerTitle}</h3>
+                  <p className="text-xs text-white/80">{headerSubtitle}</p>
                 </div>
               </div>
               <button

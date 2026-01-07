@@ -11,13 +11,23 @@ type Props = {
   onReject: (id: string) => void
   onToggleTeamLeader: (id: string) => void
   onLoginAs: (id: string) => void
+  onEdit: (id: string, data: { name?: string; phone?: string; email?: string }) => Promise<void>
 }
 
 type Filter = 'all' | 'active' | 'pending'
 
-export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTeamLeader, onLoginAs }: Props) {
+type EditingCleaner = {
+  id: string
+  name: string
+  phone: string
+  email: string
+} | null
+
+export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTeamLeader, onLoginAs, onEdit }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
+  const [editing, setEditing] = useState<EditingCleaner>(null)
+  const [saving, setSaving] = useState(false)
 
   const filteredCleaners = cleaners
     .filter(c => filter === 'all' || c.status === filter)
@@ -174,11 +184,23 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
                     >
                       Login As
                     </button>
+                    <button
+                      onClick={() => setEditing({
+                        id: cleaner.id,
+                        name: cleaner.name,
+                        phone: cleaner.phone || '',
+                        email: cleaner.email || '',
+                      })}
+                      className="px-4 py-2.5 bg-white border border-[#DEDEDE] text-[#1A1A1A] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                      title="Edit cleaner details"
+                    >
+                      Edit
+                    </button>
                     <Link
                       href={`/${cleaner.slug}`}
-                      className="flex-1 py-2.5 bg-white border border-[#DEDEDE] text-[#1A1A1A] rounded-xl text-sm font-medium text-center active:scale-[0.98] transition-transform"
+                      className="px-4 py-2.5 bg-white border border-[#DEDEDE] text-[#1A1A1A] rounded-xl text-sm font-medium text-center active:scale-[0.98] transition-transform"
                     >
-                      View Profile
+                      View
                     </Link>
                     <button
                       onClick={() => onToggleTeamLeader(cleaner.id)}
@@ -198,6 +220,97 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
           ))
         )}
       </div>
+
+      {/* Edit Modal */}
+      {editing && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">Edit Cleaner</h2>
+              <button
+                onClick={() => setEditing(null)}
+                className="text-[#9B9B9B] hover:text-[#1A1A1A]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={editing.name}
+                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none"
+                  placeholder="Full name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={editing.phone}
+                  onChange={(e) => setEditing({ ...editing, phone: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none"
+                  placeholder="+34 612 345 678"
+                />
+                <p className="text-xs text-[#9B9B9B] mt-1">
+                  Used for login and contact. Include country code.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editing.email}
+                  onChange={(e) => setEditing({ ...editing, email: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none"
+                  placeholder="cleaner@email.com"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setEditing(null)}
+                className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setSaving(true)
+                  try {
+                    await onEdit(editing.id, {
+                      name: editing.name,
+                      phone: editing.phone,
+                      email: editing.email,
+                    })
+                    setEditing(null)
+                  } catch (err) {
+                    console.error('Error saving:', err)
+                  } finally {
+                    setSaving(false)
+                  }
+                }}
+                disabled={saving || !editing.name.trim()}
+                className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

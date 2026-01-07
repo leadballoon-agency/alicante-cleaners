@@ -62,6 +62,13 @@ export async function GET() {
       return NextResponse.json({ error: 'Cleaner not found' }, { status: 404 })
     }
 
+    // Get platform settings for team leader thresholds
+    const settings = await db.platformSettings.findUnique({
+      where: { id: 'default' },
+    })
+    const TEAM_LEADER_THRESHOLD_HOURS = settings?.teamLeaderHoursRequired ?? 50
+    const TEAM_LEADER_MIN_RATING = settings?.teamLeaderRatingRequired ?? 5.0
+
     // Calculate total hours from completed bookings
     const completedBookings = await db.booking.aggregate({
       where: {
@@ -73,8 +80,6 @@ export async function GET() {
       },
     })
     const totalHoursWorked = completedBookings._sum.hours || 0
-    const TEAM_LEADER_THRESHOLD_HOURS = 50
-    const TEAM_LEADER_MIN_RATING = 5.0
 
     // Get cleaner's current rating
     const cleanerRating = cleaner.rating ? Number(cleaner.rating) : 0
@@ -177,6 +182,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cleaner not found' }, { status: 404 })
     }
 
+    // Get platform settings for team leader thresholds
+    const settings = await db.platformSettings.findUnique({
+      where: { id: 'default' },
+    })
+    const TEAM_LEADER_THRESHOLD_HOURS = settings?.teamLeaderHoursRequired ?? 50
+    const TEAM_LEADER_MIN_RATING = settings?.teamLeaderRatingRequired ?? 5.0
+
     // Calculate total hours from completed bookings
     const completedBookings = await db.booking.aggregate({
       where: {
@@ -188,14 +200,12 @@ export async function POST(request: NextRequest) {
       },
     })
     const totalHoursWorked = completedBookings._sum.hours || 0
-    const TEAM_LEADER_THRESHOLD_HOURS = 50
-    const TEAM_LEADER_MIN_RATING = 5.0
 
     const cleanerRating = cleaner.rating ? Number(cleaner.rating) : 0
     const hasMinRating = cleanerRating >= TEAM_LEADER_MIN_RATING
     const hasMinHours = totalHoursWorked >= TEAM_LEADER_THRESHOLD_HOURS
 
-    // Must be a team leader OR (50+ hours AND 5-star rating) to create a team
+    // Must be a team leader OR meet thresholds to create a team
     const canCreateTeam = cleaner.teamLeader || (hasMinHours && hasMinRating)
     if (!canCreateTeam) {
       const issues = []

@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // Create cleaner profile
+      // Create cleaner profile (PENDING until verified by Team Leader)
       const cleaner = await tx.cleaner.create({
         data: {
           userId: user.id,
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
           reviewsLink: reviewsLink || null,
           serviceAreas,
           hourlyRate,
-          status: 'ACTIVE',
+          status: 'PENDING', // Must be verified by Team Leader to become ACTIVE
           rating: 5.0,
           reviewCount: 0,
           totalBookings: 0,
@@ -90,7 +90,9 @@ export async function POST(request: NextRequest) {
         id: result.cleaner.id,
         slug: result.cleaner.slug,
         profileUrl: `/${result.cleaner.slug}`,
+        status: result.cleaner.status, // PENDING - needs team verification
       },
+      userId: result.user.id,
     })
   } catch (error) {
     console.error('Error creating cleaner:', error)

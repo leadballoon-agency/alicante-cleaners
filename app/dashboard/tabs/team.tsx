@@ -58,6 +58,23 @@ type TeamLeaderProgress = {
   hasMinRating: boolean
 }
 
+type ApplicantConversation = {
+  id: string
+  applicantId: string
+  applicantName: string
+  applicantPhoto: string | null
+  applicantPhone: string | null
+  applicantServiceAreas: string[]
+  applicantHourlyRate: number | null
+  applicantBio: string | null
+  applicantStatus: string
+  status: 'ACTIVE' | 'ACCEPTED' | 'REJECTED'
+  summary: string | null
+  messageCount: number
+  createdAt: Date
+  updatedAt: Date
+}
+
 type TeamData = {
   role: TeamRole
   team: Team | null
@@ -82,10 +99,20 @@ export default function TeamTab() {
   const [referralNote, setReferralNote] = useState('')
   const [showEditTeamName, setShowEditTeamName] = useState(false)
   const [editedTeamName, setEditedTeamName] = useState('')
+  const [applicantConversations, setApplicantConversations] = useState<ApplicantConversation[]>([])
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
+  const [conversationMessages, setConversationMessages] = useState<{role: string, content: string, createdAt: Date}[]>([])
+  const [loadingMessages, setLoadingMessages] = useState(false)
 
   useEffect(() => {
     fetchTeamData()
   }, [])
+
+  useEffect(() => {
+    if (teamData?.role === 'leader') {
+      fetchApplicantConversations()
+    }
+  }, [teamData?.role])
 
   const fetchTeamData = async () => {
     try {
@@ -110,6 +137,72 @@ export default function TeamTab() {
       setBrowseTeams(data.teams || [])
     } catch (err) {
       console.error('Error fetching teams:', err)
+    }
+  }
+
+  const fetchApplicantConversations = async () => {
+    try {
+      const response = await fetch('/api/dashboard/cleaner/team/applicants')
+      if (response.ok) {
+        const data = await response.json()
+        setApplicantConversations(data.conversations || [])
+      }
+    } catch (err) {
+      console.error('Error fetching applicant conversations:', err)
+    }
+  }
+
+  const fetchConversationMessages = async (conversationId: string) => {
+    setLoadingMessages(true)
+    try {
+      const response = await fetch(`/api/dashboard/cleaner/team/applicants/${conversationId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setConversationMessages(data.messages || [])
+      }
+    } catch (err) {
+      console.error('Error fetching messages:', err)
+    } finally {
+      setLoadingMessages(false)
+    }
+  }
+
+  const handleAcceptApplicant = async (conversationId: string) => {
+    setActionLoading(conversationId)
+    try {
+      const response = await fetch(`/api/dashboard/cleaner/team/applicants/${conversationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept' }),
+      })
+      if (!response.ok) throw new Error('Failed to accept applicant')
+      showToast('Applicant accepted and activated!', 'success')
+      await fetchApplicantConversations()
+      await fetchTeamData()
+      setSelectedConversation(null)
+    } catch {
+      showToast('Failed to accept applicant', 'error')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleRejectApplicant = async (conversationId: string) => {
+    setActionLoading(conversationId)
+    try {
+      const response = await fetch(`/api/dashboard/cleaner/team/applicants/${conversationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject' }),
+      })
+      if (!response.ok) throw new Error('Failed to reject applicant')
+      showToast('Applicant rejected', 'info')
+      await fetchApplicantConversations()
+      setSelectedConversation(null)
+    } catch {
+      showToast('Failed to reject applicant', 'error')
+    } finally {
+      setActionLoading(null)
     }
   }
 
@@ -448,6 +541,134 @@ export default function TeamTab() {
             </button>
           )}
         </div>
+
+        {/* Applicant Conversations */}
+        {applicantConversations.filter(c => c.status === 'ACTIVE').length > 0 && (
+          <div>
+            <h3 className="text-sm font-medium text-[#1A1A1A] mb-3 flex items-center gap-2">
+              <span>New Applicants</span>
+              <span className="bg-[#C4785A] text-white text-xs px-2 py-0.5 rounded-full">
+                {applicantConversations.filter(c => c.status === 'ACTIVE').length}
+              </span>
+            </h3>
+            <div className="space-y-3">
+              {applicantConversations
+                .filter(c => c.status === 'ACTIVE')
+                .map((conv) => (
+                  <div key={conv.id} className="bg-white rounded-2xl border border-[#EBEBEB] overflow-hidden">
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden relative flex-shrink-0">
+                          {conv.applicantPhoto ? (
+                            <Image src={conv.applicantPhoto} alt={conv.applicantName} fill className="object-cover" unoptimized />
+                          ) : (
+                            <span className="text-xl">&#128100;</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-[#1A1A1A]">{conv.applicantName}</h4>
+                          <div className="flex items-center gap-2 text-sm text-[#6B6B6B]">
+                            {conv.applicantHourlyRate && (
+                              <span>&euro;{conv.applicantHourlyRate}/hr</span>
+                            )}
+                            <span>&#8226;</span>
+                            <span>{conv.messageCount} messages</span>
+                          </div>
+                          {conv.applicantServiceAreas.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {conv.applicantServiceAreas.slice(0, 2).map(area => (
+                                <span key={area} className="text-xs px-1.5 py-0.5 bg-[#F5F5F3] text-[#6B6B6B] rounded">
+                                  {area}
+                                </span>
+                              ))}
+                              {conv.applicantServiceAreas.length > 2 && (
+                                <span className="text-xs text-[#9B9B9B]">+{conv.applicantServiceAreas.length - 2}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Summary */}
+                      {conv.summary && (
+                        <div className="mt-3 p-3 bg-[#F5F5F3] rounded-lg">
+                          <p className="text-xs text-[#6B6B6B] font-medium mb-1">&#128302; AI Summary</p>
+                          <p className="text-sm text-[#1A1A1A]">{conv.summary}</p>
+                        </div>
+                      )}
+
+                      {/* View Messages Toggle */}
+                      <button
+                        onClick={() => {
+                          if (selectedConversation === conv.id) {
+                            setSelectedConversation(null)
+                            setConversationMessages([])
+                          } else {
+                            setSelectedConversation(conv.id)
+                            fetchConversationMessages(conv.id)
+                          }
+                        }}
+                        className="mt-3 text-sm text-[#C4785A] font-medium"
+                      >
+                        {selectedConversation === conv.id ? 'Hide Conversation' : 'View Conversation'}
+                      </button>
+                    </div>
+
+                    {/* Expanded Messages */}
+                    {selectedConversation === conv.id && (
+                      <div className="border-t border-[#EBEBEB] bg-[#FAFAF8] p-4">
+                        {loadingMessages ? (
+                          <div className="flex justify-center py-4">
+                            <div className="w-6 h-6 border-2 border-[#1A1A1A]/20 border-t-[#1A1A1A] rounded-full animate-spin" />
+                          </div>
+                        ) : (
+                          <div className="space-y-3 max-h-60 overflow-y-auto">
+                            {conversationMessages.map((msg, idx) => (
+                              <div
+                                key={idx}
+                                className={`flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}
+                              >
+                                <div
+                                  className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
+                                    msg.role === 'user'
+                                      ? 'bg-white border border-[#EBEBEB] text-[#1A1A1A]'
+                                      : 'bg-[#E3F2FD] text-[#1A1A1A]'
+                                  }`}
+                                >
+                                  <p className="text-xs text-[#9B9B9B] mb-1">
+                                    {msg.role === 'user' ? conv.applicantName : 'AI (Clara)'}
+                                  </p>
+                                  <p>{msg.content}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="border-t border-[#EBEBEB] p-3 flex gap-2">
+                      <button
+                        onClick={() => handleAcceptApplicant(conv.id)}
+                        disabled={actionLoading === conv.id}
+                        className="flex-1 bg-[#1A1A1A] text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+                      >
+                        {actionLoading === conv.id ? '...' : '&#10003; Accept & Activate'}
+                      </button>
+                      <button
+                        onClick={() => handleRejectApplicant(conv.id)}
+                        disabled={actionLoading === conv.id}
+                        className="flex-1 border border-[#EBEBEB] text-[#6B6B6B] py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
 
         {/* Pending Requests */}
         {teamData.team.pendingRequests && teamData.team.pendingRequests.length > 0 && (

@@ -53,7 +53,7 @@ export default function Pricing({ data, onUpdate, onBack, onNext }: Props) {
         return
       }
 
-      onUpdate({ hourlyRate: rate, slug: result.cleaner.slug })
+      onUpdate({ hourlyRate: rate, slug: result.cleaner.slug, cleanerId: result.cleaner.id })
       onNext()
     } catch {
       setError('Something went wrong. Please try again.')

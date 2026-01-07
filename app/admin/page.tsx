@@ -10,10 +10,11 @@ import ReviewsTab from './tabs/reviews'
 import FeedbackTab from './tabs/feedback'
 import SupportTab from './tabs/support'
 import AITab from './tabs/ai'
+import SettingsTab, { PlatformSettings } from './tabs/settings'
 import Image from 'next/image'
 import Link from 'next/link'
 
-type Tab = 'overview' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'support' | 'ai'
+type Tab = 'overview' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'support' | 'ai' | 'settings'
 
 type SupportConversation = {
   id: string
@@ -166,6 +167,7 @@ export default function AdminDashboard() {
   const [feedback, setFeedback] = useState<Feedback[]>([])
   const [supportConversations, setSupportConversations] = useState<SupportConversation[]>([])
   const [supportStats, setSupportStats] = useState<SupportStats>({ total: 0, active: 0, escalated: 0, resolved: 0 })
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -196,13 +198,14 @@ export default function AdminDashboard() {
   // Fetch all admin data
   const fetchAdminData = useCallback(async () => {
     try {
-      const [statsRes, cleanersRes, ownersRes, bookingsRes, reviewsRes, feedbackRes] = await Promise.all([
+      const [statsRes, cleanersRes, ownersRes, bookingsRes, reviewsRes, feedbackRes, settingsRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/admin/cleaners'),
         fetch('/api/admin/owners'),
         fetch('/api/admin/bookings'),
         fetch('/api/admin/reviews'),
         fetch('/api/admin/feedback'),
+        fetch('/api/admin/settings'),
       ])
 
       // Also fetch support data
@@ -218,6 +221,7 @@ export default function AdminDashboard() {
       const bookingsData = await bookingsRes.json()
       const reviewsData = await reviewsRes.json()
       const feedbackData = await feedbackRes.json()
+      const settingsData = await settingsRes.json()
 
       setStats(statsData.stats || DEFAULT_STATS)
       setCleaners(cleanersData.cleaners || [])
@@ -225,6 +229,7 @@ export default function AdminDashboard() {
       setBookings(bookingsData.bookings || [])
       setReviews(reviewsData.reviews || [])
       setFeedback(feedbackData.feedback || [])
+      setPlatformSettings(settingsData.settings || null)
     } catch (err) {
       console.error('Admin dashboard error:', err)
       setError('Failed to load admin dashboard. Please ensure you have admin access.')
@@ -297,6 +302,34 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error('Error toggling team leader:', err)
+    }
+  }
+
+  const handleEditCleaner = async (id: string, data: { name?: string; phone?: string; email?: string }) => {
+    try {
+      const response = await fetch(`/api/admin/cleaners/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'edit', ...data }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update cleaner')
+      }
+
+      const result = await response.json()
+      setCleaners(prev => prev.map(c =>
+        c.id === id ? {
+          ...c,
+          name: result.cleaner.name || c.name,
+          phone: result.cleaner.phone || c.phone,
+          email: result.cleaner.email || c.email,
+        } : c
+      ))
+    } catch (err) {
+      console.error('Error editing cleaner:', err)
+      throw err
     }
   }
 
@@ -471,8 +504,18 @@ export default function AdminDashboard() {
               className="object-contain"
             />
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[#6B6B6B] hidden sm:block">Admin</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                activeTab === 'settings'
+                  ? 'bg-[#1A1A1A] text-white'
+                  : 'bg-[#F5F5F3] text-[#6B6B6B] hover:bg-[#EBEBEB]'
+              }`}
+              title="Settings"
+            >
+              <span className="text-sm">⚙️</span>
+            </button>
             <div className="w-8 h-8 bg-[#1A1A1A] rounded-full flex items-center justify-center">
               <span className="text-white text-xs font-medium">
                 {session?.user?.name?.charAt(0) || 'A'}
@@ -504,6 +547,7 @@ export default function AdminDashboard() {
             onReject={handleRejectCleaner}
             onToggleTeamLeader={handleToggleTeamLeader}
             onLoginAs={handleLoginAs}
+            onEdit={handleEditCleaner}
           />
         )}
         {activeTab === 'owners' && (
@@ -532,6 +576,12 @@ export default function AdminDashboard() {
             stats={supportStats}
             onResolve={handleResolveSupportConversation}
             onRefresh={fetchSupportData}
+          />
+        )}
+        {activeTab === 'settings' && (
+          <SettingsTab
+            settings={platformSettings}
+            onUpdate={setPlatformSettings}
           />
         )}
       </main>

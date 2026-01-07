@@ -7,6 +7,7 @@ import VerifyCode from './steps/verify-code'
 import NamePhoto from './steps/name-photo'
 import ServiceAreas from './steps/service-areas'
 import Pricing from './steps/pricing'
+import TeamSelection from './steps/team-selection'
 import CalendarSync from './steps/calendar-sync'
 import Success from './steps/success'
 import { OnboardingChatWidget } from '@/components/ai/onboarding-chat-widget'
@@ -20,6 +21,7 @@ export type OnboardingData = {
   serviceAreas: string[]
   hourlyRate: number
   slug: string
+  cleanerId: string
 }
 
 function CleanerOnboardingContent() {
@@ -37,6 +39,7 @@ function CleanerOnboardingContent() {
     serviceAreas: [],
     hourlyRate: 18,
     slug: '',
+    cleanerId: '',
   })
 
   const updateData = (updates: Partial<OnboardingData>) => {
@@ -49,11 +52,11 @@ function CleanerOnboardingContent() {
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-safe">
       {/* Progress bar */}
-      {step < 7 && (
+      {step < 8 && (
         <div className="px-6 pt-safe">
           <div className="max-w-md mx-auto pt-4">
             <div className="flex gap-1.5">
-              {[1, 2, 3, 4, 5, 6].map(i => (
+              {[1, 2, 3, 4, 5, 6, 7].map(i => (
                 <div
                   key={i}
                   className={`h-1 flex-1 rounded-full transition-colors ${
@@ -110,18 +113,26 @@ function CleanerOnboardingContent() {
           />
         )}
         {step === 6 && (
-          <CalendarSync
+          <TeamSelection
+            cleanerId={data.cleanerId}
+            serviceAreas={data.serviceAreas}
             onBack={prevStep}
             onNext={nextStep}
           />
         )}
         {step === 7 && (
+          <CalendarSync
+            onBack={prevStep}
+            onNext={nextStep}
+          />
+        )}
+        {step === 8 && (
           <Success data={data} />
         )}
       </div>
 
       {/* AI Help Widget - shows on all steps except success */}
-      {step < 7 && <OnboardingChatWidget currentStep={step} />}
+      {step < 8 && <OnboardingChatWidget currentStep={step} />}
     </div>
   )
 }

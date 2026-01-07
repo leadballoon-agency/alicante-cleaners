@@ -9,6 +9,11 @@ type Props = {
 }
 
 export default function HomeTab({ cleaner, bookings }: Props) {
+  // Show pending state for unverified cleaners
+  if (cleaner.status === 'PENDING') {
+    return <PendingState cleaner={cleaner} />
+  }
+
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -133,6 +138,104 @@ export default function HomeTab({ cleaner, bookings }: Props) {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function PendingState({ cleaner }: { cleaner: Cleaner }) {
+  return (
+    <div className="space-y-6">
+      {/* Status Banner */}
+      <div className="bg-[#FFF8F5] rounded-2xl p-5 border border-[#F5E6E0]">
+        <div className="flex items-start gap-3">
+          <span className="text-3xl">&#9203;</span>
+          <div>
+            <h2 className="text-lg font-semibold text-[#1A1A1A] mb-1">Application Pending</h2>
+            <p className="text-sm text-[#6B6B6B]">
+              Your profile is awaiting verification by a team leader. Once verified, you&apos;ll be able to accept bookings.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* What to do next */}
+      <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
+        <h3 className="font-medium text-[#1A1A1A] mb-4">What to do next</h3>
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-[#E8F5E9] rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-sm">&#128172;</span>
+            </div>
+            <div>
+              <p className="font-medium text-[#1A1A1A] text-sm">Chat with a Team Leader</p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">
+                Visit a team leader&apos;s profile and introduce yourself via the chat widget
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-[#E3F2FD] rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-sm">&#128100;</span>
+            </div>
+            <div>
+              <p className="font-medium text-[#1A1A1A] text-sm">Complete your profile</p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">
+                Add a photo and bio to make a good impression
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-[#F5F5F3] rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-sm">&#9200;</span>
+            </div>
+            <div>
+              <p className="font-medium text-[#1A1A1A] text-sm">Wait for verification</p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">
+                Team leaders review applications and will accept you when ready
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile preview */}
+      <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
+        <h3 className="font-medium text-[#1A1A1A] mb-4">Your Profile</h3>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#6B6B6B]">Hourly Rate</span>
+            <span className="text-sm font-medium text-[#1A1A1A]">&euro;{cleaner.hourlyRate}/hr</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#6B6B6B]">Service Areas</span>
+            <span className="text-sm font-medium text-[#1A1A1A]">
+              {cleaner.serviceAreas.length} area{cleaner.serviceAreas.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          {cleaner.bio ? (
+            <div className="pt-3 border-t border-[#EBEBEB]">
+              <p className="text-sm text-[#6B6B6B]">{cleaner.bio}</p>
+            </div>
+          ) : (
+            <div className="pt-3 border-t border-[#EBEBEB]">
+              <p className="text-sm text-[#9B9B9B] italic">No bio added yet - add one to stand out!</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Help */}
+      <div className="text-center">
+        <p className="text-sm text-[#6B6B6B]">
+          Questions? Contact{' '}
+          <a href="mailto:support@alicantecleaners.com" className="text-[#C4785A] font-medium">
+            support@alicantecleaners.com
+          </a>
+        </p>
       </div>
     </div>
   )

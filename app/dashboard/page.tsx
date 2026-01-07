@@ -53,6 +53,7 @@ export type Cleaner = {
   rating?: number | null
   reviewCount?: number
   calendarToken?: string | null
+  status: 'PENDING' | 'ACTIVE' | 'SUSPENDED'
 }
 
 export type InternalComment = {
