@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import OverviewTab from './tabs/overview'
@@ -157,7 +157,7 @@ const DEFAULT_STATS: Stats = {
   averageRating: 0,
 }
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
   const tabFromUrl = searchParams.get('tab') as Tab | null
@@ -625,5 +625,21 @@ export default function AdminDashboard() {
         </div>
       </nav>
     </div>
+  )
+}
+
+// Wrapper with Suspense for useSearchParams
+export default function AdminDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-[#C4785A] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-[#6B6B6B] text-sm">Loading dashboard...</p>
+        </div>
+      </div>
+    }>
+      <AdminDashboardContent />
+    </Suspense>
   )
 }
