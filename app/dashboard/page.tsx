@@ -10,15 +10,6 @@ import ProfileTab from './tabs/profile'
 import OwnerReviewModal from './components/owner-review-modal'
 import { ChatWidget } from '@/components/ai/chat-widget'
 
-// Helper to read cookie on client
-function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null
-  const value = `; ${document.cookie}`
-  const parts = value.split(`; ${name}=`)
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || null
-  return null
-}
-
 type Tab = 'home' | 'bookings' | 'messages' | 'team' | 'profile'
 
 export type Owner = {
@@ -99,32 +90,6 @@ export default function Dashboard() {
     ownerId: string
     ownerName: string
   } | null>(null)
-  const [impersonating, setImpersonating] = useState<string | null>(null)
-
-  // Check for impersonation on mount
-  useEffect(() => {
-    const impersonatedName = getCookie('impersonating_user_name')
-    if (impersonatedName) {
-      setImpersonating(decodeURIComponent(impersonatedName))
-    }
-  }, [])
-
-  // Exit impersonation
-  const handleExitImpersonation = async () => {
-    try {
-      const response = await fetch('/api/admin/impersonate', {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        window.location.href = data.redirectTo || '/admin'
-      }
-    } catch (err) {
-      console.error('Error exiting impersonation:', err)
-    }
-  }
-
   // Fetch cleaner profile and bookings
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -322,24 +287,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-20">
-      {/* Impersonation Banner */}
-      {impersonating && (
-        <div className="bg-[#1A1A1A] text-white px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">👁</span>
-            <span className="text-sm">
-              Viewing as <span className="font-medium">{impersonating}</span>
-            </span>
-          </div>
-          <button
-            onClick={handleExitImpersonation}
-            className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full font-medium transition-colors"
-          >
-            Exit
-          </button>
-        </div>
-      )}
-
       {/* Header */}
       <header className="px-6 py-4 pt-safe bg-white border-b border-[#EBEBEB]">
         <div className="max-w-lg mx-auto flex items-center justify-between">

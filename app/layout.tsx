@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 import FeedbackWidget from "@/components/feedback-widget";
+import ImpersonationBanner from "@/components/impersonation-banner";
 import { SchemaScript } from "@/components/seo/schema-script";
 import { generateOrganizationSchema, generateWebSiteSchema } from "@/lib/seo/schema";
 
@@ -59,6 +60,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <Providers>
+          <ImpersonationBanner />
           {children}
           <FeedbackWidget />
         </Providers>
