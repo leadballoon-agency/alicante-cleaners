@@ -562,7 +562,7 @@ export default function TeamTab() {
                           {conv.applicantPhoto ? (
                             <Image src={conv.applicantPhoto} alt={conv.applicantName} fill className="object-cover" unoptimized />
                           ) : (
-                            <span className="text-xl">&#128100;</span>
+                            <span className="text-xl">👤</span>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -571,7 +571,7 @@ export default function TeamTab() {
                             {conv.applicantHourlyRate && (
                               <span>&euro;{conv.applicantHourlyRate}/hr</span>
                             )}
-                            <span>&#8226;</span>
+                            <span>•</span>
                             <span>{conv.messageCount} messages</span>
                           </div>
                           {conv.applicantServiceAreas.length > 0 && (
@@ -586,13 +586,25 @@ export default function TeamTab() {
                               )}
                             </div>
                           )}
+                          {/* Contact applicant via WhatsApp */}
+                          {conv.applicantPhone && (
+                            <a
+                              href={`https://wa.me/${conv.applicantPhone.replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 mt-2 text-sm text-[#25D366] hover:underline"
+                            >
+                              <span>💬</span>
+                              <span>Message on WhatsApp</span>
+                            </a>
+                          )}
                         </div>
                       </div>
 
                       {/* Summary */}
                       {conv.summary && (
                         <div className="mt-3 p-3 bg-[#F5F5F3] rounded-lg">
-                          <p className="text-xs text-[#6B6B6B] font-medium mb-1">&#128302; AI Summary</p>
+                          <p className="text-xs text-[#6B6B6B] font-medium mb-1">🤖 AI Summary</p>
                           <p className="text-sm text-[#1A1A1A]">{conv.summary}</p>
                         </div>
                       )}
@@ -654,7 +666,7 @@ export default function TeamTab() {
                         disabled={actionLoading === conv.id}
                         className="flex-1 bg-[#1A1A1A] text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
                       >
-                        {actionLoading === conv.id ? '...' : '&#10003; Accept & Activate'}
+                        {actionLoading === conv.id ? '...' : '✓ Accept & Activate'}
                       </button>
                       <button
                         onClick={() => handleRejectApplicant(conv.id)}

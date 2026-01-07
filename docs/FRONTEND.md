@@ -206,8 +206,31 @@ const nextStep = () => {
 1. **Home** - Stats overview, pending bookings
 2. **Bookings** - All bookings with filters
 3. **Messages** - Conversations with owners
-4. **Schedule** - Calendar view, availability
+4. **Team** - Team management (Team Leaders only)
 5. **Profile** - Edit profile, settings
+
+#### Team Tab (Team Leaders)
+
+The Team tab appears for cleaners marked as `teamLeader: true`. Features include:
+
+**Team Management:**
+- View/edit team name
+- Copy team referral code
+- Remove team members
+
+**Applicant Review:**
+- View PENDING cleaners who chatted via profile page
+- See AI-generated conversation summary
+- Read full conversation history
+- Contact applicant via WhatsApp
+- Accept & Activate or Decline applicants
+
+**Applicant Chat Flow:**
+1. PENDING cleaner visits team leader's profile (`/[slug]?applicant={id}`)
+2. AI chat widget appears for team application
+3. AI gathers info: experience, transport, languages, availability, review links
+4. Conversation stored with auto-generated summary (every 4 messages)
+5. Team leader reviews in dashboard and decides
 
 ```tsx
 const [activeTab, setActiveTab] = useState('home')
@@ -272,6 +295,26 @@ return (
 | `ChatWidget` | `components/ai/chat-widget.tsx` | In-dashboard AI assistant |
 | `PublicChatWidget` | `components/ai/public-chat-widget.tsx` | Pre-signup AI chat |
 | `OnboardingChatWidget` | `components/ai/onboarding-chat-widget.tsx` | AI-guided booking |
+| `ApplicantChatWidget` | `components/ai/applicant-chat-widget.tsx` | Team application chat for PENDING cleaners |
+
+#### Applicant Chat Widget
+
+Shown on team leader profile pages when `?applicant={id}` parameter is present:
+
+```tsx
+// Triggers on /[slug]?applicant=xyz
+{applicantId && <ApplicantChatWidget teamLeaderSlug={slug} applicantId={applicantId} />}
+```
+
+**AI Conversation Goals:**
+- Cleaning experience and property types
+- Motivation for joining VillaCare
+- Availability and schedule flexibility
+- Transport availability
+- Languages spoken
+- Existing review links (Google, TripAdvisor, Airbnb)
+
+**Auto-Summary:** Generated every 4 messages for team leader review.
 
 ### UI Components
 

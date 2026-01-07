@@ -112,7 +112,8 @@ THINGS TO LEARN ABOUT THE APPLICANT:
 3. Their availability and schedule flexibility
 4. Whether they have their own transport
 5. Languages they speak (important for villa owners)
-6. Any questions they have about working with the team
+6. Any existing reviews they have (Google, TripAdvisor, Airbnb, etc.) - ask for links if they have them
+7. Any questions they have about working with the team
 
 IMPORTANT RULES:
 - Be conversational and friendly - this should feel like a casual chat
@@ -159,12 +160,14 @@ IMPORTANT RULES:
       data: { updatedAt: new Date() },
     })
 
-    // Generate summary if this is a significant conversation (every 5 messages)
+    // Generate summary after meaningful conversation
+    // Check if we should generate/update summary (after 4+ messages, then every 4 more)
     const messageCount = await db.applicantMessage.count({
       where: { conversationId: conversation.id },
     })
 
-    if (messageCount % 5 === 0) {
+    // Generate first summary at 4 messages, then update every 4 messages
+    if (messageCount >= 4 && messageCount % 4 === 0) {
       // Generate summary in background (don't wait for it)
       generateConversationSummary(conversation.id, teamLeader.user.name || 'Team Leader').catch(console.error)
     }
