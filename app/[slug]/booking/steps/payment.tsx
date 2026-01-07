@@ -154,19 +154,17 @@ export default function Payment({ data, cleaner, cleanerSlug, onUpdate, onNext }
           <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
             Phone number
           </label>
-          <div className="flex gap-2">
-            <div className="w-16 px-3 py-3.5 rounded-xl border border-[#DEDEDE] bg-[#F5F5F3] text-center text-[#6B6B6B]">
-              +34
-            </div>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="612 345 678"
-              className="flex-1 px-4 py-3.5 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
-              required
-            />
-          </div>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+34 612 345 678"
+            className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
+            required
+          />
+          <p className="text-xs text-[#9B9B9B] mt-1.5">
+            Include country code (e.g., +34 for Spain, +44 for UK)
+          </p>
         </div>
 
         <div>
