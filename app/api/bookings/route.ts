@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { notifyCleanerNewBooking, sendBookingConfirmation } from '@/lib/whatsapp'
+import { notifyAdminNewBooking } from '@/lib/email'
 import { checkRateLimit, getClientIdentifier, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
 import { z } from 'zod'
 
@@ -287,6 +288,19 @@ export async function POST(request: NextRequest) {
         price: `€${price}`,
       }).catch((err) => console.error('Failed to confirm to owner:', err))
     }
+
+    // Send email notification to admins
+    notifyAdminNewBooking({
+      ownerName: owner?.user.name || guestName || 'Guest',
+      ownerEmail: guestEmail || session?.user?.email || 'Unknown',
+      cleanerName: cleaner.user.name || 'Cleaner',
+      service: serviceType,
+      date: formattedDate,
+      time,
+      address: propertyAddress,
+      price: `€${price}`,
+      bookingId: booking.id,
+    }).catch((err) => console.error('Failed to notify admins:', err))
 
     return NextResponse.json({
       success: true,

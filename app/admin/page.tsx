@@ -457,7 +457,7 @@ export default function AdminDashboard() {
     { id: 'support', label: 'Support', icon: '💬', badge: supportStats.escalated },
     { id: 'cleaners', label: 'Cleaners', icon: '🧹', badge: cleaners.filter(c => c.status === 'pending').length },
     { id: 'owners', label: 'Owners', icon: '👤' },
-    { id: 'bookings', label: 'Bookings', icon: '📋' },
+    { id: 'bookings', label: 'Bookings', icon: '📋', badge: bookings.filter(b => b.status === 'pending').length },
     { id: 'reviews', label: 'Reviews', icon: '⭐', badge: reviews.filter(r => r.status === 'pending').length },
   ]
 
