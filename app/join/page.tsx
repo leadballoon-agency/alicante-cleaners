@@ -74,16 +74,25 @@ export default function JoinPage() {
             Get your own profile page, AI assistant, and tools to grow - free during beta.
           </p>
 
-          <Link
-            href="/onboarding/cleaner"
-            className="inline-flex items-center gap-2 bg-[#C4785A] text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-[#B56A4F] transition-colors"
-          >
-            Apply to Join
-            <span>→</span>
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <Link
+              href="/onboarding/cleaner"
+              className="inline-flex items-center gap-2 bg-[#C4785A] text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-[#B56A4F] transition-colors"
+            >
+              Apply to Join
+              <span>→</span>
+            </Link>
+            <Link
+              href="/join/guide"
+              className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+            >
+              See how it works
+              <span>→</span>
+            </Link>
+          </div>
 
           <p className="text-sm text-white/50 mt-4">
-            Takes 5 minutes. Phone number only - no email needed.
+            Takes 2 minutes. Phone number only - no email needed.
           </p>
         </div>
       </section>
@@ -523,13 +532,22 @@ export default function JoinPage() {
           <p className="text-[#6B6B6B] mb-8">
             Join the beta for free. Help us build something great together.
           </p>
-          <Link
-            href="/onboarding/cleaner"
-            className="inline-flex items-center gap-2 bg-[#C4785A] text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-[#B56A4F] transition-colors"
-          >
-            Apply to Join
-            <span>→</span>
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/onboarding/cleaner"
+              className="inline-flex items-center gap-2 bg-[#C4785A] text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-[#B56A4F] transition-colors"
+            >
+              Apply to Join
+              <span>→</span>
+            </Link>
+            <Link
+              href="/join/guide"
+              className="inline-flex items-center gap-2 text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
+            >
+              See how it works
+              <span>→</span>
+            </Link>
+          </div>
         </div>
       </section>
 
