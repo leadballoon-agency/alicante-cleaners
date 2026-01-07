@@ -1,132 +1,120 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendOTP } from '@/lib/whatsapp'
+import { sendVerificationCode, sendVerificationCodeWithFallback, verifyCode, normalizePhone } from '@/lib/otp'
+import { checkRateLimitStrict, getClientIdentifier, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
+import { z } from 'zod'
 
-// In-memory store for OTP codes (in production, use Redis or database)
-const otpStore = new Map<string, { code: string; expires: Date }>()
+// Zod schemas for input validation
+const sendOtpSchema = z.object({
+  phone: z.string().min(9).max(20),
+  action: z.literal('send'),
+  channel: z.enum(['sms', 'whatsapp']).optional(), // If not specified, uses SMS (works immediately)
+  forceWhatsapp: z.boolean().optional().default(false), // For "Try WhatsApp" button (optional)
+})
 
-// Normalize phone number to E.164 format
-function normalizePhone(phone: string): string {
-  // Remove all non-digit characters except +
-  let cleaned = phone.replace(/[^\d+]/g, '')
+const verifyOtpSchema = z.object({
+  phone: z.string().min(9).max(20),
+  action: z.literal('verify'),
+  code: z.string().length(6).regex(/^\d{6}$/, 'Code must be 6 digits'),
+})
 
-  // Handle Spanish numbers (starting with 6 or 7, or +34)
-  if (cleaned.startsWith('34')) {
-    cleaned = '+' + cleaned
-  } else if (cleaned.match(/^[67]\d{8}$/)) {
-    cleaned = '+34' + cleaned
-  }
-
-  // Handle UK numbers (starting with 07 or +44)
-  if (cleaned.startsWith('07') && cleaned.length === 11) {
-    cleaned = '+44' + cleaned.slice(1)
-  } else if (cleaned.startsWith('44')) {
-    cleaned = '+' + cleaned
-  }
-
-  // Ensure it starts with +
-  if (!cleaned.startsWith('+')) {
-    cleaned = '+' + cleaned
-  }
-
-  return cleaned
-}
-
-// POST /api/auth/otp - Send OTP
+// POST /api/auth/otp - Send or verify OTP
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { phone, action, code } = body
+    // Rate limit by IP (STRICT: fail-closed to prevent brute-force)
+    const clientId = getClientIdentifier(request)
+    const rateLimit = await checkRateLimitStrict(clientId, 'otp', RATE_LIMITS.otp)
 
-    if (!phone) {
+    if (!rateLimit.success) {
       return NextResponse.json(
-        { error: 'Phone number is required' },
-        { status: 400 }
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
       )
     }
 
-    const normalizedPhone = normalizePhone(phone)
+    const body = await request.json()
+    const { action } = body
 
     if (action === 'send') {
-      // Generate 4-digit code
-      const otpCode = Math.floor(1000 + Math.random() * 9000).toString()
+      // Validate send request
+      const parseResult = sendOtpSchema.safeParse(body)
+      if (!parseResult.success) {
+        return NextResponse.json(
+          { error: 'Invalid request', details: parseResult.error.flatten().fieldErrors },
+          { status: 400 }
+        )
+      }
 
-      // Store code with 10-minute expiry
-      otpStore.set(normalizedPhone, {
-        code: otpCode,
-        expires: new Date(Date.now() + 10 * 60 * 1000),
-      })
+      const { phone, channel, forceWhatsapp } = parseResult.data
+      const normalizedPhone = normalizePhone(phone)
 
-      // Send OTP via WhatsApp
-      const result = await sendOTP(normalizedPhone, otpCode)
+      // Send OTP via Twilio Verify
+      let result
+
+      if (forceWhatsapp) {
+        // User explicitly requested WhatsApp (optional, may fail if not configured)
+        result = await sendVerificationCode(normalizedPhone, 'whatsapp')
+      } else if (channel) {
+        // Explicit channel specified
+        result = await sendVerificationCode(normalizedPhone, channel)
+      } else {
+        // Default: SMS (works immediately, no WhatsApp template approvals needed)
+        result = await sendVerificationCodeWithFallback(normalizedPhone)
+      }
 
       if (!result.success) {
-        console.error('Failed to send WhatsApp OTP:', result.error)
-        // Fall back to console log in development
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`OTP for ${normalizedPhone}: ${otpCode}`)
-        }
+        return NextResponse.json(
+          { error: result.error || 'Failed to send verification code' },
+          { status: 500 }
+        )
       }
 
       return NextResponse.json({
         success: true,
-        message: 'Verification code sent via WhatsApp',
-        // Include code in development for testing (fallback)
-        ...(process.env.NODE_ENV === 'development' && !result.success && { code: otpCode }),
+        message: `Verification code sent via ${result.channel}`,
+        channel: result.channel,
+        phone: normalizedPhone,
       })
     }
 
     if (action === 'verify') {
-      if (!code) {
+      // Validate verify request
+      const parseResult = verifyOtpSchema.safeParse(body)
+      if (!parseResult.success) {
         return NextResponse.json(
-          { error: 'Verification code is required' },
+          { error: 'Invalid request', details: parseResult.error.flatten().fieldErrors },
           { status: 400 }
         )
       }
 
-      // Check for test code (always works in development)
-      if (process.env.NODE_ENV === 'development' && (code === '1234' || code === '123456')) {
-        return NextResponse.json({
-          success: true,
-          verified: true,
-        })
-      }
+      const { phone, code } = parseResult.data
+      const normalizedPhone = normalizePhone(phone)
 
-      // Check stored code
-      const storedOtp = otpStore.get(normalizedPhone)
+      // Verify OTP via Twilio Verify
+      const result = await verifyCode(normalizedPhone, code)
 
-      if (!storedOtp) {
+      if (!result.success) {
         return NextResponse.json(
-          { error: 'No verification code found. Please request a new one.' },
-          { status: 400 }
+          { error: result.error || 'Verification failed' },
+          { status: 500 }
         )
       }
 
-      if (new Date() > storedOtp.expires) {
-        otpStore.delete(normalizedPhone)
+      if (!result.valid) {
         return NextResponse.json(
-          { error: 'Verification code has expired. Please request a new one.' },
+          { error: result.error || 'Invalid verification code' },
           { status: 400 }
         )
       }
-
-      if (storedOtp.code !== code) {
-        return NextResponse.json(
-          { error: 'Invalid verification code' },
-          { status: 400 }
-        )
-      }
-
-      // Code is valid - clean up
-      otpStore.delete(normalizedPhone)
 
       return NextResponse.json({
         success: true,
         verified: true,
+        phone: normalizedPhone,
       })
     }
 
     return NextResponse.json(
-      { error: 'Invalid action' },
+      { error: 'Invalid action. Use "send" or "verify".' },
       { status: 400 }
     )
   } catch (error) {

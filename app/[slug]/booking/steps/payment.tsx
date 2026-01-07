@@ -38,6 +38,7 @@ export default function Payment({ data, cleaner, cleanerSlug, onUpdate, onNext }
 
     try {
       // Submit booking to API
+      // Only send serviceType - server calculates price from cleaner's hourly rate
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,7 +47,7 @@ export default function Payment({ data, cleaner, cleanerSlug, onUpdate, onNext }
           propertyAddress: data.propertyAddress,
           bedrooms: data.bedrooms,
           specialInstructions: data.specialInstructions,
-          service: data.service,
+          serviceType: data.service?.name, // Server calculates price
           date: data.date?.toISOString(),
           time: data.time,
           guestPhone: phone.trim(),
@@ -194,6 +195,19 @@ export default function Payment({ data, cleaner, cleanerSlug, onUpdate, onNext }
           <p className="text-xs text-[#6B6B6B]">
             Pay your cleaner directly after the clean. Online payments coming soon.
           </p>
+        </div>
+
+        {/* SLA Notice */}
+        <div className="bg-[#E3F2FD] rounded-xl p-4 border border-[#90CAF9]">
+          <div className="flex items-start gap-3">
+            <span className="text-lg">&#9201;</span>
+            <div>
+              <p className="text-sm font-medium text-[#1565C0]">Quick response guaranteed</p>
+              <p className="text-xs text-[#1565C0]/80 mt-1">
+                {cleaner.name.split(' ')[0]} typically responds within 2 hours. If they can&apos;t take your booking, we&apos;ll help you find an available cleaner.
+              </p>
+            </div>
+          </div>
         </div>
 
         {error && (

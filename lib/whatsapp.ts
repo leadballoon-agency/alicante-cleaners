@@ -149,6 +149,7 @@ export async function notifyCleanerNewBooking(
     address: string
     service: string
     price: string
+    shortCode?: string // Reference code for WhatsApp commands
   }
 ): Promise<{ success: boolean; error?: string }> {
   if (!client || !whatsappNumber) {
@@ -159,6 +160,11 @@ export async function notifyCleanerNewBooking(
   try {
     const formattedTo = phone.startsWith('whatsapp:') ? phone : `whatsapp:${phone}`
 
+    // Include shortCode in service field for easy reference
+    const serviceWithCode = details.shortCode
+      ? `${details.service} - ${details.price} (#${details.shortCode})`
+      : `${details.service} - ${details.price}`
+
     // Use approved content template for new booking
     const message = await client.messages.create({
       from: whatsappNumber,
@@ -168,7 +174,7 @@ export async function notifyCleanerNewBooking(
         '1': details.ownerName,
         '2': details.date,
         '3': details.time,
-        '4': `${details.service} - ${details.price}`,
+        '4': serviceWithCode,
         '5': details.address,
       }),
     })

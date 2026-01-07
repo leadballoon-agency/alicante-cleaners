@@ -6,6 +6,7 @@ import GoogleProvider from 'next-auth/providers/google'
 import { Resend } from 'resend'
 import { cookies } from 'next/headers'
 import { db } from './db'
+import { verifyCode, normalizePhone } from './otp'
 
 // Lazy initialize Resend only when needed (avoids build-time errors if API key missing)
 let resendClient: Resend | null = null
@@ -77,23 +78,27 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        // TODO: Verify OTP code from SMS service (Twilio, etc.)
-        // For now, accept code "123456" for testing
-        if (credentials.code !== '123456') {
+        // Normalize phone number
+        const phone = normalizePhone(credentials.phone)
+
+        // Verify OTP code via Twilio Verify
+        const verification = await verifyCode(phone, credentials.code)
+        if (!verification.success || !verification.valid) {
+          console.log(`OTP verification failed for owner ${phone}:`, verification.error)
           return null
         }
 
-        // Find or create user
+        // Find or create user (use normalized phone for lookup)
         let user = await db.user.findUnique({
-          where: { phone: credentials.phone },
+          where: { phone },
           include: { owner: true },
         })
 
         if (!user) {
-          // Create new owner user
+          // Create new owner user (use normalized phone)
           user = await db.user.create({
             data: {
-              phone: credentials.phone,
+              phone,
               role: 'OWNER',
               phoneVerified: new Date(),
               owner: {
@@ -134,14 +139,19 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        // TODO: Verify OTP code from SMS service (Twilio, etc.)
-        // For now, accept code "123456" for testing
-        if (credentials.code !== '123456') {
+        // Normalize phone number
+        const phone = normalizePhone(credentials.phone)
+
+        // Verify OTP code via Twilio Verify
+        const verification = await verifyCode(phone, credentials.code)
+        if (!verification.success || !verification.valid) {
+          console.log(`OTP verification failed for cleaner ${phone}:`, verification.error)
           return null
         }
 
+        // Find cleaner user (use normalized phone)
         const user = await db.user.findUnique({
-          where: { phone: credentials.phone },
+          where: { phone },
           include: { cleaner: true },
         })
 

@@ -9,7 +9,7 @@ type Props = {
 }
 
 export default function VerifyCode({ phone, onBack, onNext }: Props) {
-  const [code, setCode] = useState(['', '', '', ''])
+  const [code, setCode] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
@@ -22,7 +22,7 @@ export default function VerifyCode({ phone, onBack, onNext }: Props) {
     setCode(newCode)
 
     // Auto-focus next input
-    if (value && index < 3) {
+    if (value && index < 5) {
       inputRefs.current[index + 1]?.focus()
     }
   }
@@ -37,8 +37,8 @@ export default function VerifyCode({ phone, onBack, onNext }: Props) {
     e.preventDefault()
     const fullCode = code.join('')
 
-    if (fullCode.length !== 4) {
-      setError('Please enter the 4-digit code')
+    if (fullCode.length !== 6) {
+      setError('Please enter the 6-digit code')
       return
     }
 
@@ -84,7 +84,7 @@ export default function VerifyCode({ phone, onBack, onNext }: Props) {
 
       if (response.ok) {
         setError('')
-        setCode(['', '', '', ''])
+        setCode(['', '', '', '', '', ''])
         inputRefs.current[0]?.focus()
       }
     } catch {
@@ -112,7 +112,7 @@ export default function VerifyCode({ phone, onBack, onNext }: Props) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="flex justify-center gap-3">
+        <div className="flex justify-center gap-2">
           {code.map((digit, index) => (
             <input
               key={index}
@@ -123,7 +123,7 @@ export default function VerifyCode({ phone, onBack, onNext }: Props) {
               value={digit}
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
-              className="w-14 h-14 text-center text-2xl font-semibold rounded-xl border border-[#DEDEDE] focus:outline-none focus:border-[#1A1A1A] transition-colors"
+              className="w-11 h-12 text-center text-xl font-semibold rounded-xl border border-[#DEDEDE] focus:outline-none focus:border-[#1A1A1A] transition-colors"
               autoFocus={index === 0}
             />
           ))}

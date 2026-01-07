@@ -296,10 +296,15 @@ OPENAI_API_KEY="sk-..."
 # Anthropic (for AI agents)
 ANTHROPIC_API_KEY="sk-ant-..."
 
-# Twilio (WhatsApp)
+# Twilio (WhatsApp + OTP)
 TWILIO_ACCOUNT_SID="AC..."
 TWILIO_AUTH_TOKEN="..."
 TWILIO_WHATSAPP_NUMBER="whatsapp:+447414265007"
+TWILIO_VERIFY_SERVICE_SID="VA..."  # For phone OTP verification
+
+# Development (optional)
+ALLOW_DEV_OTP_BYPASS="true"  # Only in development - allows test OTP code 000000
+CRON_SECRET="..."  # For manual cron triggers
 
 # Google OAuth (Calendar Sync)
 GOOGLE_CLIENT_ID="..."
@@ -425,8 +430,8 @@ After running `npx prisma db seed`:
 | Admin | mark@leadballoon.co.uk | Magic link |
 | Admin | kerry@leadballoon.co.uk | Magic link |
 | Owner | mark@example.com | Magic link |
-| Cleaner | +34612345678 (Clara) | OTP code: 123456 (dev) |
-| Cleaner | +34623456789 (Maria) | OTP code: 123456 (dev) |
+| Cleaner | +34612345678 (Clara) | OTP code: 000000 (requires ALLOW_DEV_OTP_BYPASS=true) |
+| Cleaner | +34623456789 (Maria) | OTP code: 000000 (requires ALLOW_DEV_OTP_BYPASS=true) |
 
 ---
 

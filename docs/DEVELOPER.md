@@ -161,15 +161,23 @@ After seeding, these accounts are available:
 
 ### Cleaner Accounts (Phone OTP)
 
-| Name | Phone | OTP Code |
-|------|-------|----------|
-| Clara R. | +34612345678 | 123456 |
-| Maria S. | +34623456789 | 123456 |
-| Ana L. | +34634567890 | 123456 |
-| Sofia M. | +34645678901 | 123456 |
-| Carmen G. | +34656789012 | 123456 |
+| Name | Phone |
+|------|-------|
+| Clara R. | +34612345678 |
+| Maria S. | +34623456789 |
+| Ana L. | +34634567890 |
+| Sofia M. | +34645678901 |
+| Carmen G. | +34656789012 |
 
-**Note:** OTP code `123456` works for all test accounts in development.
+**OTP in Development:**
+- Set `ALLOW_DEV_OTP_BYPASS=true` in `.env.local`
+- Use code `000000` for all test accounts
+- Without this flag, you need real Twilio Verify credentials
+
+**OTP in Production:**
+- Uses Twilio Verify service (6-digit codes)
+- WhatsApp delivery by default, SMS fallback on failure
+- Requires `TWILIO_VERIFY_SERVICE_SID` env variable
 
 ---
 

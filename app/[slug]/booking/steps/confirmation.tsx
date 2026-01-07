@@ -52,11 +52,17 @@ export default function Confirmation({ data, cleaner, slug }: Props) {
       <div className="text-6xl mb-6">✅</div>
 
       <h1 className="text-2xl font-semibold text-[#1A1A1A] mb-2">
-        Booking confirmed!
+        Booking request sent!
       </h1>
-      <p className="text-[#6B6B6B] mb-8">
+      <p className="text-[#6B6B6B] mb-4">
         We&apos;ve sent the details to {data.email}
       </p>
+
+      {/* SLA Status Badge */}
+      <div className="inline-flex items-center gap-2 bg-[#FFF3E0] text-[#E65100] px-4 py-2 rounded-full text-sm font-medium mb-8">
+        <span className="w-2 h-2 bg-[#E65100] rounded-full animate-pulse" />
+        Awaiting cleaner confirmation
+      </div>
 
       {/* Booking details card */}
       <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB] mb-6 text-left">
@@ -107,23 +113,45 @@ export default function Confirmation({ data, cleaner, slug }: Props) {
         </div>
       </div>
 
-      {/* What's next */}
+      {/* What's next - SLA Section */}
       <div className="bg-[#F5F5F3] rounded-xl p-4 mb-6 text-left">
-        <p className="text-sm font-medium text-[#1A1A1A] mb-2">What happens next?</p>
-        <ul className="space-y-2 text-sm text-[#6B6B6B]">
-          <li className="flex items-start gap-2">
-            <span className="text-[#C4785A]">1.</span>
-            <span>{cleaner.name.split(' ')[0]} will confirm your booking within 24 hours</span>
+        <p className="text-sm font-medium text-[#1A1A1A] mb-3">What happens next?</p>
+        <ul className="space-y-3 text-sm">
+          <li className="flex items-start gap-3">
+            <span className="flex-shrink-0 w-6 h-6 bg-[#C4785A] text-white rounded-full flex items-center justify-center text-xs font-medium">1</span>
+            <div>
+              <span className="text-[#1A1A1A] font-medium">{cleaner.name.split(' ')[0]} will respond within 2 hours</span>
+              <p className="text-[#9B9B9B] text-xs mt-0.5">
+                We&apos;ll notify you by WhatsApp and email
+              </p>
+            </div>
           </li>
-          <li className="flex items-start gap-2">
-            <span className="text-[#C4785A]">2.</span>
-            <span>You&apos;ll receive a reminder 24 hours before your clean</span>
+          <li className="flex items-start gap-3">
+            <span className="flex-shrink-0 w-6 h-6 bg-[#C4785A] text-white rounded-full flex items-center justify-center text-xs font-medium">2</span>
+            <div>
+              <span className="text-[#1A1A1A] font-medium">24-hour reminder</span>
+              <p className="text-[#9B9B9B] text-xs mt-0.5">
+                You&apos;ll get a reminder the day before your clean
+              </p>
+            </div>
           </li>
-          <li className="flex items-start gap-2">
-            <span className="text-[#C4785A]">3.</span>
-            <span>After the clean, you&apos;ll get photos of the completed work</span>
+          <li className="flex items-start gap-3">
+            <span className="flex-shrink-0 w-6 h-6 bg-[#C4785A] text-white rounded-full flex items-center justify-center text-xs font-medium">3</span>
+            <div>
+              <span className="text-[#1A1A1A] font-medium">Photo confirmation</span>
+              <p className="text-[#9B9B9B] text-xs mt-0.5">
+                After the clean, you&apos;ll receive photos of the work
+              </p>
+            </div>
           </li>
         </ul>
+
+        {/* Fallback guarantee */}
+        <div className="mt-4 pt-3 border-t border-[#DEDEDE]">
+          <p className="text-xs text-[#6B6B6B]">
+            <span className="font-medium text-[#1A1A1A]">No response?</span> If the cleaner doesn&apos;t respond within 4 hours, we&apos;ll automatically find you an available alternative.
+          </p>
+        </div>
       </div>
 
       {/* Actions */}

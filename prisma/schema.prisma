@@ -241,6 +241,7 @@ model Booking {
   date       DateTime
   time       String
   notes       String?       @db.Text
+  shortCode   String?       @unique // 4-digit reference for WhatsApp commands (e.g., "ACCEPT 1234")
   createdByAI Boolean       @default(false) // Booking created by AI sales agent
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -534,6 +535,16 @@ model BookingResponseTracker {
   @@index([cleanerId, createdAt])
 }
 
+// Webhook idempotency tracking - prevents duplicate processing
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  messageSid String   @unique // Twilio MessageSid for deduplication
+  source     String   @default("twilio") // twilio, stripe, etc.
+  processedAt DateTime @default(now())
+
+  @@index([messageSid])
+}
+
 model PendingOnboarding {
   id          String            @id @default(cuid())
   cleanerId   String            // Cleaner being booked
@@ -634,4 +645,13 @@ model SupportMessage {
   conversation   SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
+}
+
+// Rate limiting for API endpoints (serverless-compatible)
+model RateLimitEntry {
+  id        String   @id @default(cuid())
+  key       String   // Format: "endpoint:identifier" (e.g. "otp:192.168.1.1")
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
 }

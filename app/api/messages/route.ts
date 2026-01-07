@@ -7,6 +7,14 @@ import {
   SUPPORTED_LANGUAGES,
   type LanguageCode,
 } from '@/lib/translate'
+import { checkRateLimit, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
+import { z } from 'zod'
+
+// Zod schema for message validation
+const messageSchema = z.object({
+  conversationId: z.string().uuid('Invalid conversation ID'),
+  text: z.string().min(1, 'Message cannot be empty').max(5000, 'Message too long'),
+})
 
 // POST /api/messages - Send a new message
 export async function POST(request: NextRequest) {
@@ -24,11 +32,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
     }
 
-    const { conversationId, text } = await request.json()
-
-    if (!conversationId || !text?.trim()) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    // Rate limit by user ID (authenticated endpoint)
+    const rateLimit = await checkRateLimit(userId, 'message', RATE_LIMITS.message)
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many messages. Please slow down.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
     }
+
+    const body = await request.json()
+
+    // Validate input with Zod
+    const parseResult = messageSchema.safeParse(body)
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: parseResult.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+
+    const { conversationId, text } = parseResult.data
 
     // Verify user has access to this conversation and get language preferences
     const conversation = await db.conversation.findUnique({

@@ -58,12 +58,32 @@ function LoginContent() {
     setIsLoading(true)
     setFormError(null)
 
-    // TODO: Integrate with SMS service (Twilio, etc.)
-    // For now, simulate sending code
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    try {
+      // Send OTP via Twilio Verify
+      const response = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone,
+          action: 'send',
+          channel: 'whatsapp',
+        }),
+      })
 
-    setStep(loginType === 'owner' ? 'owner-verify' : 'cleaner-verify')
-    setIsLoading(false)
+      const result = await response.json()
+
+      if (!response.ok) {
+        setFormError(result.error || 'Failed to send verification code')
+        setIsLoading(false)
+        return
+      }
+
+      setStep(loginType === 'owner' ? 'owner-verify' : 'cleaner-verify')
+    } catch {
+      setFormError('Something went wrong. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handlePhoneLogin = async (e: React.FormEvent) => {
