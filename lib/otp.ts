@@ -19,7 +19,8 @@ export async function sendVerificationCode(
   channel: 'sms' | 'whatsapp' = 'sms'
 ): Promise<{ success: boolean; channel: string; error?: string }> {
   // Development bypass - requires explicit ALLOW_DEV_OTP_BYPASS=true
-  if (allowDevBypass && !client) {
+  // Works even when Twilio is configured, to avoid using real SMS credits in dev
+  if (allowDevBypass) {
     console.log(`[DEV BYPASS] Would send OTP to ${phone} via ${channel} (use code 000000)`)
     return { success: true, channel: 'dev-bypass' }
   }
