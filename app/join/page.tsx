@@ -74,7 +74,7 @@ export default function JoinPage() {
             Get your own profile page, AI assistant, and tools to grow - free during beta.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/onboarding/cleaner"
               className="inline-flex items-center gap-2 bg-[#C4785A] text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-[#B56A4F] transition-colors"
