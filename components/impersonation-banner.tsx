@@ -41,20 +41,25 @@ export default function ImpersonationBanner() {
   if (!impersonating) return null
 
   return (
-    <div className="fixed top-0 left-0 right-0 bg-[#1A1A1A] text-white px-4 py-2 flex items-center justify-between z-[9999]">
-      <div className="flex items-center gap-2">
-        <span className="text-sm">👁</span>
-        <span className="text-sm">
-          Viewing as <span className="font-medium">{impersonating}</span>
-        </span>
+    <>
+      {/* Spacer to push content down (same height as fixed banner) */}
+      <div className="h-10" />
+      {/* Fixed banner */}
+      <div className="fixed top-0 left-0 right-0 bg-[#1A1A1A] text-white px-4 py-2 flex items-center justify-between z-[9999] h-10">
+        <div className="flex items-center gap-2">
+          <span className="text-sm">👁</span>
+          <span className="text-sm">
+            Viewing as <span className="font-medium">{impersonating}</span>
+          </span>
+        </div>
+        <button
+          onClick={handleExit}
+          disabled={exiting}
+          className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full font-medium transition-colors disabled:opacity-50"
+        >
+          {exiting ? 'Exiting...' : 'Exit to Admin'}
+        </button>
       </div>
-      <button
-        onClick={handleExit}
-        disabled={exiting}
-        className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full font-medium transition-colors disabled:opacity-50"
-      >
-        {exiting ? 'Exiting...' : 'Exit to Admin'}
-      </button>
-    </div>
+    </>
   )
 }
