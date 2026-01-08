@@ -80,10 +80,15 @@ For detailed documentation, see the `docs/` folder:
 - **Account Management** - Pause or delete account with 30-day retention
 
 ### Admin Features
-- **Dashboard** - Platform stats, cleaner management, owner CRM, review approval
+- **Dashboard** - Platform stats, cleaner management, owner CRM, review approval (10 tabs)
+- **Live Feed** - Real-time activity stream, pending counts, page view analytics, trending cleaners
+- **Audit Log** - Track all admin actions (login, impersonate, approve, reject, etc.)
+- **Last Login Tracking** - See when cleaners/owners last logged in
 - **Support Center** - AI-powered support conversations with escalation
 - **Feedback Management** - View and track user feedback with voting
-- **Platform Settings** - Configure team leader requirements
+- **Platform Settings** - Configure team leader requirements, scripts & tracking
+- **Script Management** - GTM, Facebook Pixel, GA4, ConvertBox (admin configurable)
+- **GA4 Real-time** - Live visitor counts from Google Analytics (optional)
 - **Impersonation** - Login as user for support
 - **AI Agent** - Claude-powered assistant with 20+ tools for platform management
 - **Knowledge Base** - Markdown documentation for AI context
@@ -120,6 +125,14 @@ For detailed documentation, see the `docs/` folder:
 - `lib/ai/admin-agent.ts` - Admin AI agent with tools
 - `lib/ai/knowledge.ts` - Knowledge base loader
 - `knowledge/*.md` - Documentation for AI context
+
+### Analytics & Audit
+- `lib/audit.ts` - Server-side audit logging functions
+- `lib/audit-utils.ts` - Client-safe audit types and constants
+- `components/analytics/script-loader.tsx` - GTM, FB Pixel, GA4, ConvertBox loader
+- `components/analytics/page-tracker.tsx` - Page view tracking component
+- `app/admin/tabs/live.tsx` - Live Feed with activity and analytics
+- `app/admin/tabs/audit.tsx` - Audit log viewer with filters
 
 ### Security
 - `lib/encryption.ts` - AES-256-GCM encryption for sensitive data (access notes)
@@ -216,19 +229,30 @@ POST      /api/dashboard/owner/arrival-prep "I'm Coming Home" request
 ### Admin
 ```
 GET   /api/admin/stats             Platform KPIs
-GET   /api/admin/cleaners          All cleaners
+GET   /api/admin/cleaners          All cleaners (includes lastLoginAt)
 PATCH /api/admin/cleaners/[id]     Approve/suspend/update
+GET   /api/admin/owners            All owners (includes lastLoginAt)
+GET   /api/admin/bookings          All bookings
 GET   /api/admin/reviews           All reviews
 PATCH /api/admin/reviews/[id]      Approve/feature
-GET   /api/admin/owners            All owners with properties
-GET   /api/admin/bookings          All bookings
 GET   /api/admin/feedback          User feedback
 PATCH /api/admin/feedback/[id]     Update feedback status
 GET   /api/admin/support           Support conversations
 PATCH /api/admin/support/[id]      Resolve/escalate support
-GET/PATCH /api/admin/settings      Platform settings
+GET/PATCH /api/admin/settings      Platform settings (includes scripts config)
 POST  /api/admin/impersonate       Login as user (support)
 POST  /api/admin/ai/chat           Admin AI Agent conversation
+GET   /api/admin/activity          Live activity feed (bookings, reviews, signups)
+GET   /api/admin/analytics         Page view analytics (total, today, trending)
+GET   /api/admin/audit             Audit log with filters
+GET   /api/admin/ga4-realtime      GA4 real-time visitor data (optional)
+```
+
+### Analytics & Tracking
+```
+GET  /api/scripts                  Public scripts config (GTM, pixels)
+POST /api/track                    Record page view
+GET  /api/og/cleaner/[slug]        Dynamic OG image for cleaner
 ```
 
 ### Webhooks
@@ -287,7 +311,7 @@ POST /api/onboarding/cleaner       Complete cleaner onboarding
 /dashboard/availability        Cleaner availability management
 /owner/dashboard               Owner dashboard (5 tabs)
 /owner/dashboard/account       Owner account settings (pause/delete)
-/admin                         Admin dashboard (7 tabs)
+/admin                         Admin dashboard (10 tabs: Overview, Live, AI, Cleaners, Owners, Bookings, Reviews, Audit, Settings)
 /privacy                       Privacy policy
 /terms                         Terms of service
 ```
@@ -319,7 +343,9 @@ POST /api/onboarding/cleaner       Complete cleaner onboarding
 | PendingOnboarding | AI onboarding magic link data |
 | Notification | User notifications (bookings, reviews, AI actions) |
 | BookingResponseTracker | Tracks booking response deadlines |
-| PlatformSettings | Admin-configurable platform settings |
+| PlatformSettings | Admin-configurable platform settings (incl. scripts) |
+| PageView | Page view analytics (path, cleaner, referrer, session) |
+| AuditLog | Admin action audit trail (login, impersonate, approve, etc.) |
 | RateLimitEntry | Serverless-compatible rate limiting |
 | WebhookEvent | Twilio webhook idempotency tracking |
 
@@ -436,6 +462,9 @@ GOOGLE_CLIENT_SECRET="..."
 
 # Encryption (for sensitive data like access notes)
 ENCRYPTION_KEY="..."  # 64-char hex string (32 bytes), generate with: openssl rand -hex 32
+
+# Google Analytics (optional - for real-time data in admin)
+GA4_SERVICE_ACCOUNT_JSON='{"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}'
 
 # App
 NEXT_PUBLIC_APP_URL="https://alicantecleaners.com"
@@ -597,6 +626,13 @@ After running `npx prisma db seed`:
 - Secure access notes (AES-256 encryption at rest)
 - Just-in-time access control (24h visibility window)
 - Sensitive info detection in AI chat
+- Admin Live Feed (activity stream, pending counts)
+- Page view analytics with trending cleaners
+- Audit logging for admin actions
+- Last login tracking for users
+- Configurable scripts (GTM, Facebook Pixel, GA4, ConvertBox)
+- GA4 real-time integration (optional)
+- Dynamic OG images for cleaner profiles
 
 ### Planned 📋
 - Stripe payment integration
