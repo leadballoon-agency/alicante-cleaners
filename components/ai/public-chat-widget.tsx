@@ -142,8 +142,8 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
       {/* Chat Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-50 bg-gradient-to-r ${
-          isApplicant ? 'from-emerald-500 to-teal-500' : 'from-purple-500 to-blue-500'
+        className={`fixed bottom-6 right-6 z-50 ${
+          isApplicant ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-[#C4785A] hover:bg-[#B56A4F]'
         } text-white rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 ${
           isOpen ? 'hidden' : 'flex'
         } items-center gap-2 px-5 py-3`}
@@ -162,12 +162,12 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/30">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className={`bg-gradient-to-r ${
-              isApplicant ? 'from-emerald-500 to-teal-500' : 'from-purple-500 to-blue-500'
+            <div className={`${
+              isApplicant ? 'bg-emerald-500' : 'bg-[#C4785A]'
             } text-white px-4 py-3 flex items-center justify-between`}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <span className="text-lg">{isApplicant ? '👋' : 'AI'}</span>
+                  <span className="text-lg">{isApplicant ? '👋' : '💬'}</span>
                 </div>
                 <div>
                   <h3 className="font-semibold">{headerTitle}</h3>
@@ -200,8 +200,8 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
                   >
                     {msg.role === 'assistant' && (
                       <div className="flex items-center gap-1 mb-1">
-                        <span className="text-[10px] bg-gradient-to-r from-purple-500 to-blue-500 text-white px-1.5 py-0.5 rounded-full font-medium">
-                          AI
+                        <span className="text-[10px] bg-[#C4785A] text-white px-1.5 py-0.5 rounded-full font-medium">
+                          Assistant
                         </span>
                       </div>
                     )}
