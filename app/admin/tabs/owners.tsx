@@ -3,6 +3,16 @@
 import { useState } from 'react'
 import { Owner } from '../page'
 
+// Copy to clipboard helper
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    return false
+  }
+}
+
 // Get relative time string
 function getRelativeTime(date: Date | string | null | undefined): string {
   if (!date) return 'Never'
@@ -32,6 +42,15 @@ export default function OwnersTab({ owners }: Props) {
   const [search, setSearch] = useState('')
   const [expandedOwner, setExpandedOwner] = useState<string | null>(null)
   const [currentView, setCurrentView] = useState<View>('list')
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null)
+
+  const handleCopyEmail = async (email: string) => {
+    const success = await copyToClipboard(email)
+    if (success) {
+      setCopiedEmail(email)
+      setTimeout(() => setCopiedEmail(null), 2000)
+    }
+  }
 
   const filteredOwners = owners.filter(o =>
     o.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -245,8 +264,38 @@ export default function OwnersTab({ owners }: Props) {
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="flex gap-2 pt-3 border-t border-[#EBEBEB]/50">
+              {/* Contact Actions */}
+              <div className="flex gap-2 pt-3 border-t border-[#EBEBEB]/50 mb-2">
+                <button
+                  onClick={() => handleCopyEmail(owner.email)}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium active:scale-[0.98] transition-all ${
+                    copiedEmail === owner.email
+                      ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#2E7D32]'
+                      : 'bg-white border border-[#DEDEDE] text-[#1A1A1A]'
+                  }`}
+                >
+                  {copiedEmail === owner.email ? '✓ Copied!' : '📋 Copy'}
+                </button>
+                <a
+                  href={`mailto:${owner.email}?subject=VillaCare%20-%20Hello%20from%20the%20team`}
+                  className="flex-1 py-2.5 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform text-center"
+                >
+                  ✉️ Email
+                </a>
+                {owner.phone && (
+                  <a
+                    href={`https://wa.me/${owner.phone.replace(/\D/g, '')}?text=${encodeURIComponent('Hi! This is the VillaCare team.')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-2.5 bg-[#25D366] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform text-center"
+                  >
+                    💬 WhatsApp
+                  </a>
+                )}
+              </div>
+
+              {/* View Actions */}
+              <div className="flex gap-2">
                 <button
                   onClick={() => {
                     setExpandedOwner(owner.id)
