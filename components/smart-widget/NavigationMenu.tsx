@@ -14,6 +14,7 @@ interface NavigationMenuProps {
     team?: number
     bookings?: number
   }
+  language?: string
 }
 
 interface MenuItem {
@@ -26,6 +27,31 @@ interface MenuItem {
   divider?: boolean
 }
 
+const translations = {
+  en: {
+    home: 'Home',
+    bookings: 'Bookings',
+    calendar: 'Calendar',
+    messages: 'Messages',
+    team: 'Team',
+    profile: 'Profile',
+    settings: 'Settings',
+    support: 'Support',
+    feedback: 'Feedback',
+  },
+  es: {
+    home: 'Inicio',
+    bookings: 'Reservas',
+    calendar: 'Calendario',
+    messages: 'Mensajes',
+    team: 'Equipo',
+    profile: 'Perfil',
+    settings: 'Ajustes',
+    support: 'Soporte',
+    feedback: 'Comentarios',
+  },
+}
+
 export default function NavigationMenu({
   isOpen,
   onClose,
@@ -33,22 +59,25 @@ export default function NavigationMenu({
   onNavigate,
   onAction,
   badges,
+  language = 'en',
 }: NavigationMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const startY = useRef<number>(0)
   const currentY = useRef<number>(0)
 
+  const t = translations[language as keyof typeof translations] || translations.en
+
   const menuItems: MenuItem[] = [
-    { id: 'home', icon: '🏠', label: 'Inicio', isScreen: true },
-    { id: 'bookings', icon: '📋', label: 'Reservas', badgeCount: badges?.bookings, isScreen: true },
-    { id: 'calendar', icon: '📅', label: 'Calendario', badge: 'NEW', isScreen: true },
-    { id: 'messages', icon: '💬', label: 'Mensajes', badgeCount: badges?.messages, isScreen: true },
-    { id: 'team', icon: '👥', label: 'Equipo', badgeCount: badges?.team, isScreen: true },
-    { id: 'profile', icon: '👤', label: 'Perfil', isScreen: true },
+    { id: 'home', icon: '🏠', label: t.home, isScreen: true },
+    { id: 'bookings', icon: '📋', label: t.bookings, badgeCount: badges?.bookings, isScreen: true },
+    { id: 'calendar', icon: '📅', label: t.calendar, badge: 'NEW', isScreen: true },
+    { id: 'messages', icon: '💬', label: t.messages, badgeCount: badges?.messages, isScreen: true },
+    { id: 'team', icon: '👥', label: t.team, badgeCount: badges?.team, isScreen: true },
+    { id: 'profile', icon: '👤', label: t.profile, isScreen: true },
     { id: 'divider', divider: true, icon: '', label: '' },
-    { id: 'settings', icon: '⚙️', label: 'Ajustes' },
-    { id: 'support', icon: '💬', label: 'Soporte' },
-    { id: 'feedback', icon: '📝', label: 'Comentarios' },
+    { id: 'settings', icon: '⚙️', label: t.settings },
+    { id: 'support', icon: '💬', label: t.support },
+    { id: 'feedback', icon: '📝', label: t.feedback },
   ]
 
   // Handle swipe down to close

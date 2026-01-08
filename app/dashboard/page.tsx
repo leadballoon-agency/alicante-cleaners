@@ -55,6 +55,7 @@ export type Cleaner = {
   reviewCount?: number
   calendarToken?: string | null
   status: 'PENDING' | 'ACTIVE' | 'SUSPENDED'
+  preferredLanguage?: string
 }
 
 export type InternalComment = {
@@ -359,6 +360,7 @@ export default function Dashboard() {
             setActiveTab('profile')
           }
         }}
+        language={cleaner?.preferredLanguage || 'en'}
       />
     </div>
   )

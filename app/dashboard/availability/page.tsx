@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { signIn } from 'next-auth/react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Calendar,
@@ -11,6 +12,7 @@ import {
   Check,
   X,
   Loader2,
+  AlertCircle,
 } from 'lucide-react'
 
 type CalendarStatus = {
@@ -30,11 +32,27 @@ type AvailabilityBlock = {
 
 export default function AvailabilityPage() {
   const { status } = useSession()
+  const searchParams = useSearchParams()
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null)
   const [availability, setAvailability] = useState<AvailabilityBlock[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
+  const [oauthError, setOauthError] = useState<string | null>(null)
+
+  // Check for OAuth errors in URL params
+  useEffect(() => {
+    const error = searchParams.get('error')
+    if (error) {
+      if (error === 'OAuthCallback' || error === 'OAuthSignin') {
+        setOauthError('Google Calendar connection failed. This may be due to a configuration issue. Please contact support.')
+      } else if (error === 'AccessDenied') {
+        setOauthError('You denied access to Google Calendar. Calendar sync requires permission to read your calendar.')
+      } else {
+        setOauthError(`Connection failed: ${error}`)
+      }
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -161,16 +179,35 @@ export default function AvailabilityPage() {
               <ChevronLeft className="w-5 h-5" />
             </Link>
             <h1 className="text-xl font-semibold text-[#1A1A1A]">
-              Availability
+              Calendar Sync
             </h1>
           </div>
           <p className="text-sm text-[#6B6B6B] ml-8">
-            Manage your calendar sync and blocked times
+            Connect your Google Calendar to block busy times automatically
           </p>
         </div>
       </header>
 
       <main className="px-6 py-6 max-w-2xl mx-auto space-y-6">
+        {/* OAuth Error Alert */}
+        {oauthError && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-medium text-red-800 mb-1">Connection Failed</h3>
+                <p className="text-sm text-red-700">{oauthError}</p>
+                <button
+                  onClick={() => setOauthError(null)}
+                  className="mt-3 text-sm text-red-600 font-medium hover:underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Google Calendar Connection */}
         <div className="bg-white rounded-2xl p-6 border border-[#EBEBEB]">
           <div className="flex items-start gap-4">

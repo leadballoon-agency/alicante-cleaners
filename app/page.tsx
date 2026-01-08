@@ -7,7 +7,6 @@ import { useSession } from 'next-auth/react'
 import ActivityFeed from '@/components/activity-feed'
 import LanguageSwitcher from '@/components/language-switcher'
 import { useLanguage } from '@/components/language-context'
-import { PhoneMockup } from '@/components/ui/phone-mockup'
 
 type Cleaner = {
   id: string
@@ -532,12 +531,16 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            {/* Phone Mockup */}
-            <div className="flex-shrink-0 order-1 lg:order-2">
-              <PhoneMockup
-                src="/screenshots/messaging-translation.png"
-                alt="Auto-translation messaging"
-              />
+            {/* Villa Hero Image */}
+            <div className="flex-shrink-0 order-1 lg:order-2 w-full lg:w-auto">
+              <div className="relative w-full lg:w-[420px] h-[280px] lg:h-[320px] rounded-2xl overflow-hidden shadow-2xl">
+                <Image
+                  src="/villa-hero-person.jpg"
+                  alt="Modern Mediterranean villa with pool"
+                  fill
+                  className="object-cover"
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -142,7 +142,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
     }},
     { icon: '💰', label: 'Update pricing', action: () => setEditMode('pricing') },
     { icon: '📍', label: 'Service areas', action: () => setEditMode('areas') },
-    { icon: '📅', label: 'Availability', href: '/dashboard/availability' },
+    { icon: '📅', label: 'Calendar sync', href: '/dashboard/availability' },
     { icon: '💳', label: 'Payment settings', href: '#', disabled: true },
     { icon: '🔔', label: 'Notifications', href: '#', disabled: true },
   ]

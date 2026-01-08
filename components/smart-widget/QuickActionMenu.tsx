@@ -8,41 +8,71 @@ interface QuickActionMenuProps {
   onClose: () => void
   currentScreen: Screen
   onSelect: (action: string) => void
+  language?: string
 }
 
 interface QuickAction {
   id: string
   icon: string
-  label: string
+  labelKey: string
+}
+
+const translations = {
+  en: {
+    myBookings: 'My Bookings',
+    calendar: 'Calendar',
+    viewCalendar: 'View Calendar',
+    home: 'Home',
+    weekView: 'Week View',
+    dayView: 'Day View',
+    sync: 'Sync',
+    newMessage: 'New Message',
+    referCleaner: 'Refer Cleaner',
+    settings: 'Settings',
+    syncCalendar: 'Sync Calendar',
+  },
+  es: {
+    myBookings: 'Mis Reservas',
+    calendar: 'Calendario',
+    viewCalendar: 'Ver Calendario',
+    home: 'Inicio',
+    weekView: 'Vista Semanal',
+    dayView: 'Vista Diaria',
+    sync: 'Sincronizar',
+    newMessage: 'Nuevo Mensaje',
+    referCleaner: 'Referir Limpiador',
+    settings: 'Ajustes',
+    syncCalendar: 'Sincronizar Calendario',
+  },
 }
 
 // Context-aware quick actions based on current screen
 const getQuickActions = (screen: Screen): QuickAction[] => {
   const actions: Record<Screen, QuickAction[]> = {
     home: [
-      { id: 'navigate:bookings', icon: '📋', label: 'Mis Reservas' },
-      { id: 'navigate:calendar', icon: '📅', label: 'Calendario' },
+      { id: 'navigate:bookings', icon: '📋', labelKey: 'myBookings' },
+      { id: 'navigate:calendar', icon: '📅', labelKey: 'calendar' },
     ],
     bookings: [
-      { id: 'navigate:calendar', icon: '📅', label: 'Ver Calendario' },
-      { id: 'navigate:home', icon: '🏠', label: 'Inicio' },
+      { id: 'navigate:calendar', icon: '📅', labelKey: 'viewCalendar' },
+      { id: 'navigate:home', icon: '🏠', labelKey: 'home' },
     ],
     calendar: [
-      { id: 'calendar:week', icon: '📆', label: 'Vista Semanal' },
-      { id: 'calendar:day', icon: '📅', label: 'Vista Diaria' },
-      { id: 'calendar:sync', icon: '🔄', label: 'Sincronizar' },
+      { id: 'calendar:week', icon: '📆', labelKey: 'weekView' },
+      { id: 'calendar:day', icon: '📅', labelKey: 'dayView' },
+      { id: 'calendar:sync', icon: '🔄', labelKey: 'sync' },
     ],
     messages: [
-      { id: 'messages:new', icon: '✉️', label: 'Nuevo Mensaje' },
-      { id: 'navigate:home', icon: '🏠', label: 'Inicio' },
+      { id: 'messages:new', icon: '✉️', labelKey: 'newMessage' },
+      { id: 'navigate:home', icon: '🏠', labelKey: 'home' },
     ],
     team: [
-      { id: 'navigate:calendar', icon: '📅', label: 'Calendario' },
-      { id: 'team:refer', icon: '👋', label: 'Referir Limpiador' },
+      { id: 'navigate:calendar', icon: '📅', labelKey: 'calendar' },
+      { id: 'team:refer', icon: '👋', labelKey: 'referCleaner' },
     ],
     profile: [
-      { id: 'profile:settings', icon: '⚙️', label: 'Ajustes' },
-      { id: 'profile:calendar', icon: '📅', label: 'Sincronizar Calendario' },
+      { id: 'profile:settings', icon: '⚙️', labelKey: 'settings' },
+      { id: 'profile:calendar', icon: '📅', labelKey: 'syncCalendar' },
     ],
   }
   return actions[screen] || []
@@ -53,9 +83,15 @@ export default function QuickActionMenu({
   onClose,
   currentScreen,
   onSelect,
+  language = 'en',
 }: QuickActionMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
-  const actions = getQuickActions(currentScreen)
+  const actionDefs = getQuickActions(currentScreen)
+  const t = translations[language as keyof typeof translations] || translations.en
+  const actions = actionDefs.map(action => ({
+    ...action,
+    label: t[action.labelKey as keyof typeof t] || action.labelKey,
+  }))
 
   // Close on click outside
   useEffect(() => {

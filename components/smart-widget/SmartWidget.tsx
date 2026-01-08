@@ -15,6 +15,7 @@ interface SmartWidgetProps {
     team?: number
     bookings?: number
   }
+  language?: string
 }
 
 const LONG_PRESS_MS = 500
@@ -74,6 +75,7 @@ export default function SmartWidget({
   onNavigate,
   onQuickAction,
   badges,
+  language = 'en',
 }: SmartWidgetProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false)
@@ -194,6 +196,7 @@ export default function SmartWidget({
         onNavigate={handleNavigate}
         onAction={handleMenuAction}
         badges={badges}
+        language={language}
       />
 
       {/* Quick Action Menu (Tap) */}
@@ -202,6 +205,7 @@ export default function SmartWidget({
         onClose={() => setIsQuickActionOpen(false)}
         currentScreen={currentScreen}
         onSelect={handleQuickActionSelect}
+        language={language}
       />
     </>
   )

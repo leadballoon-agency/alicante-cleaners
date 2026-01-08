@@ -24,6 +24,7 @@ export async function GET() {
             name: true,
             image: true,
             phone: true,
+            preferredLanguage: true,
           },
         },
         bookings: {
@@ -109,6 +110,7 @@ export async function GET() {
         phone: cleaner.user.phone,
         calendarToken: cleaner.calendarToken,
         status: cleaner.status,
+        preferredLanguage: cleaner.user.preferredLanguage || 'en',
       },
       stats: {
         thisWeekEarnings,
