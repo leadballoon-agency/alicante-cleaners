@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react'
 import NavigationMenu from './NavigationMenu'
 import QuickActionMenu from './QuickActionMenu'
 
-export type Screen = 'home' | 'bookings' | 'promote' | 'messages' | 'team' | 'profile'
+export type Screen = 'home' | 'bookings' | 'promote' | 'messages' | 'team' | 'profile' | 'success'
 
 interface SmartWidgetProps {
   currentScreen: Screen
@@ -29,6 +29,7 @@ const getScreenIcon = (screen: Screen): string | null => {
     messages: '💬',
     team: '👥',
     profile: '👤',
+    success: '🎯',
   }
   return icons[screen]
 }

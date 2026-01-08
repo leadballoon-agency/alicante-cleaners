@@ -35,6 +35,7 @@ const translations = {
     messages: 'Messages',
     team: 'Team',
     profile: 'Profile',
+    success: 'Success',
     settings: 'Settings',
     support: 'Support',
     feedback: 'Feedback',
@@ -46,6 +47,7 @@ const translations = {
     messages: 'Mensajes',
     team: 'Equipo',
     profile: 'Perfil',
+    success: 'Éxito',
     settings: 'Ajustes',
     support: 'Soporte',
     feedback: 'Comentarios',
@@ -70,6 +72,7 @@ export default function NavigationMenu({
   const menuItems: MenuItem[] = [
     { id: 'home', icon: '🏠', label: t.home, isScreen: true },
     { id: 'bookings', icon: '📋', label: t.bookings, badgeCount: badges?.bookings, isScreen: true },
+    { id: 'success', icon: '🎯', label: t.success, isScreen: true },
     { id: 'promote', icon: '📈', label: t.promote, isScreen: true },
     { id: 'messages', icon: '💬', label: t.messages, badgeCount: badges?.messages, isScreen: true },
     { id: 'team', icon: '👥', label: t.team, badgeCount: badges?.team, isScreen: true },

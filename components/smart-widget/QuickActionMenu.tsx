@@ -77,6 +77,10 @@ const getQuickActions = (screen: Screen): QuickAction[] => {
       { id: 'profile:settings', icon: '⚙️', labelKey: 'settings' },
       { id: 'navigate:promote', icon: '📈', labelKey: 'promote' },
     ],
+    success: [
+      { id: 'navigate:home', icon: '🏠', labelKey: 'home' },
+      { id: 'navigate:profile', icon: '👤', labelKey: 'settings' },
+    ],
   }
   return actions[screen] || []
 }

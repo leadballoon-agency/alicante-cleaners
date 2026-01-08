@@ -7,11 +7,12 @@ import MessagesTab from './tabs/messages'
 import TeamTab from './tabs/team'
 import ProfileTab from './tabs/profile'
 import PromoteTab from './tabs/promote'
+import SuccessTab from './tabs/success'
 import OwnerReviewModal from './components/owner-review-modal'
 import { SmartWidget, Screen } from '@/components/smart-widget'
 import { JobsTimeline } from './components/team-calendar'
 
-type Tab = 'home' | 'bookings' | 'messages' | 'team' | 'profile' | 'promote'
+type Tab = 'home' | 'bookings' | 'messages' | 'team' | 'profile' | 'promote' | 'success'
 
 export type Owner = {
   id: string
@@ -333,6 +334,7 @@ export default function Dashboard() {
             {activeTab === 'promote' && (
               <PromoteTab cleaner={cleaner} bookings={bookings} />
             )}
+            {activeTab === 'success' && <SuccessTab />}
           </>
         )}
       </main>
