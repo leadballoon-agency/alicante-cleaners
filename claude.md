@@ -18,6 +18,7 @@ For detailed documentation, see the `docs/` folder:
 | [INTEGRATIONS.md](docs/INTEGRATIONS.md) | Twilio, OpenAI, Anthropic, Resend configuration |
 | [FRONTEND.md](docs/FRONTEND.md) | Pages, components, design system, mobile considerations |
 | [DEVELOPER.md](docs/DEVELOPER.md) | Setup guide, deployment, common tasks, handoff checklist |
+| [AI-SALES-ASSISTANT.md](docs/AI-SALES-ASSISTANT.md) | AI chat assistant, booking flow, security features |
 
 ---
 
@@ -113,6 +114,10 @@ For detailed documentation, see the `docs/` folder:
 - `lib/ai/admin-agent.ts` - Admin AI agent with tools
 - `lib/ai/knowledge.ts` - Knowledge base loader
 - `knowledge/*.md` - Documentation for AI context
+
+### Security
+- `lib/encryption.ts` - AES-256-GCM encryption for sensitive data (access notes)
+- `lib/access-control.ts` - Just-in-time access control (24h window before booking)
 
 ---
 
@@ -413,6 +418,9 @@ CRON_SECRET="..."  # For manual cron triggers
 GOOGLE_CLIENT_ID="..."
 GOOGLE_CLIENT_SECRET="..."
 
+# Encryption (for sensitive data like access notes)
+ENCRYPTION_KEY="..."  # 64-char hex string (32 bytes), generate with: openssl rand -hex 32
+
 # App
 NEXT_PUBLIC_APP_URL="https://alicantecleaners.com"
 ```
@@ -570,6 +578,9 @@ After running `npx prisma db seed`:
 - Webhook idempotency for Twilio
 - Photo uploads for cleaner profiles
 - Internal property comments
+- Secure access notes (AES-256 encryption at rest)
+- Just-in-time access control (24h visibility window)
+- Sensitive info detection in AI chat
 
 ### Planned 📋
 - Stripe payment integration
