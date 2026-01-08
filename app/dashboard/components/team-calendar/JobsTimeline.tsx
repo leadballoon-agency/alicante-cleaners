@@ -219,10 +219,10 @@ export default function JobsTimeline({
         // Extended data for peek modal
         ownerName: b.owner?.name,
         ownerPhone: b.owner?.phone,
-        accessNotes: b.property.accessNotes,
+        accessNotes: b.property.accessNotes ?? undefined,
         bedrooms: b.property.bedrooms,
-        keyHolderName: b.property.keyHolderName,
-        keyHolderPhone: b.property.keyHolderPhone
+        keyHolderName: b.property.keyHolderName ?? undefined,
+        keyHolderPhone: b.property.keyHolderPhone ?? undefined
       }))
       .filter(b => {
         if (filter === 'upcoming') {

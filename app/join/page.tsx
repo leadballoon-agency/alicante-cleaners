@@ -14,10 +14,10 @@ const translations = {
   en: {
     alreadyMember: 'Already a member? Sign in',
     loading: 'Taking you to your dashboard...',
-    betaBadge: 'Beta - Free to join',
+    betaBadge: 'Invitation Only',
     heroTitle1: 'Grow your cleaning business',
     heroTitle2: 'in Alicante',
-    heroSubtitle: 'Join Clara and 5 other trusted professionals building something different. Get your own profile page, AI assistant, and tools to grow - free during beta.',
+    heroSubtitle: 'Join Clara and 5 other trusted professionals building something different. Get your own profile page, AI assistant, and tools to grow.',
     applyToJoin: 'Apply to Join',
     seeHowItWorks: 'See how it works',
     takes2min: 'Takes 2 minutes. Phone number only - no email needed.',
@@ -36,8 +36,8 @@ const translations = {
     howItWorksLink: 'How it works →',
     featureProfileTitle: 'Your Own Profile',
     featureProfileDesc: 'A professional page at villacare.app/yourname. Share your bio, services, reviews, and areas you cover.',
-    featureFreeTitle: 'Free During Beta',
-    featureFreeDesc: 'No fees, no commission - just help us build the right platform. Your feedback shapes what we create.',
+    featureFreeTitle: 'No Platform Fees',
+    featureFreeDesc: 'Keep what you earn. No commission, no hidden charges. We grow when you grow.',
 
     aiPowered: 'AI-Powered',
     aiSectionTitle: 'Your AI handles sales while you clean',
@@ -80,6 +80,15 @@ const translations = {
     realTimeUpdatesDesc: 'New bookings appear instantly. Changes sync automatically',
     seeHowToSetup: 'See how to set it up',
 
+    dashboardSectionTitle: 'Everything at your fingertips',
+    dashboardSectionDesc: 'Your cleaner dashboard shows all your bookings at a glance. Hold on any job to see full details - address, owner contact, key holder, and access notes.',
+    peekToLock: 'Peek-to-lock',
+    peekToLockDesc: 'Hold to preview, release to close. Lock open for full interaction',
+    oneTouch: 'One-touch calling',
+    oneTouchDesc: 'Call owners or key holders instantly from the booking details',
+    secureAccess: 'Secure access notes',
+    secureAccessDesc: 'Property codes and instructions appear 24h before the job - never earlier',
+
     howToJoinTitle: 'How to join',
     step1Title: 'Apply with your phone',
     step1Desc: 'Enter your mobile number and verify with a code. No email required.',
@@ -97,7 +106,7 @@ const translations = {
     trustNote: "Don't know anyone? No problem - apply anyway and tell us about your experience.",
 
     ctaTitle: 'Ready to grow your business?',
-    ctaDesc: 'Join the beta for free. Help us build something great together.',
+    ctaDesc: 'No fees, no commission. Help us build something great together.',
 
     footerStory: 'Our story',
     footerPrivacy: 'Privacy',
@@ -106,10 +115,10 @@ const translations = {
   es: {
     alreadyMember: '¿Ya eres miembro? Inicia sesión',
     loading: 'Llevándote a tu panel...',
-    betaBadge: 'Beta - Gratis',
+    betaBadge: 'Solo por Invitación',
     heroTitle1: 'Haz crecer tu negocio de limpieza',
     heroTitle2: 'en Alicante',
-    heroSubtitle: 'Únete a Clara y 5 profesionales de confianza construyendo algo diferente. Obtén tu propia página de perfil, asistente IA y herramientas para crecer - gratis durante la beta.',
+    heroSubtitle: 'Únete a Clara y 5 profesionales de confianza construyendo algo diferente. Obtén tu propia página de perfil, asistente IA y herramientas para crecer.',
     applyToJoin: 'Solicitar Unirse',
     seeHowItWorks: 'Ver cómo funciona',
     takes2min: 'Solo 2 minutos. Solo número de teléfono - no necesitas email.',
@@ -128,8 +137,8 @@ const translations = {
     howItWorksLink: 'Cómo funciona →',
     featureProfileTitle: 'Tu Propio Perfil',
     featureProfileDesc: 'Una página profesional en villacare.app/tunombre. Comparte tu biografía, servicios, reseñas y zonas que cubres.',
-    featureFreeTitle: 'Gratis Durante la Beta',
-    featureFreeDesc: 'Sin cuotas, sin comisiones - solo ayúdanos a construir la plataforma correcta. Tu feedback da forma a lo que creamos.',
+    featureFreeTitle: 'Sin Comisiones',
+    featureFreeDesc: 'Quédate con lo que ganas. Sin comisiones, sin cargos ocultos. Crecemos cuando tú creces.',
 
     aiPowered: 'Con IA',
     aiSectionTitle: 'Tu IA vende mientras tú limpias',
@@ -172,6 +181,15 @@ const translations = {
     realTimeUpdatesDesc: 'Las nuevas reservas aparecen al instante. Los cambios se sincronizan automáticamente',
     seeHowToSetup: 'Ver cómo configurarlo',
 
+    dashboardSectionTitle: 'Todo al alcance de tu mano',
+    dashboardSectionDesc: 'Tu panel de control muestra todas tus reservas de un vistazo. Mantén pulsado cualquier trabajo para ver todos los detalles - dirección, contacto del propietario, contacto del vecino con llaves y notas de acceso.',
+    peekToLock: 'Vistazo rápido',
+    peekToLockDesc: 'Mantén pulsado para ver, suelta para cerrar. Bloquea abierto para interactuar',
+    oneTouch: 'Llamada con un toque',
+    oneTouchDesc: 'Llama a propietarios o vecinos con llaves instantáneamente desde los detalles de la reserva',
+    secureAccess: 'Notas de acceso seguras',
+    secureAccessDesc: 'Los códigos e instrucciones de la propiedad aparecen 24h antes del trabajo - nunca antes',
+
     howToJoinTitle: 'Cómo unirse',
     step1Title: 'Solicita con tu teléfono',
     step1Desc: 'Introduce tu número móvil y verifica con un código. No necesitas email.',
@@ -189,7 +207,7 @@ const translations = {
     trustNote: '¿No conoces a nadie? No hay problema - solicita igualmente y cuéntanos tu experiencia.',
 
     ctaTitle: '¿Lista para hacer crecer tu negocio?',
-    ctaDesc: 'Únete a la beta gratis. Ayúdanos a construir algo genial juntos.',
+    ctaDesc: 'Sin comisiones, sin cuotas. Ayúdanos a construir algo genial juntos.',
 
     footerStory: 'Nuestra historia',
     footerPrivacy: 'Privacidad',
@@ -442,7 +460,7 @@ export default function JoinPage() {
             {/* Phone Mockup */}
             <div className="flex-shrink-0 order-1 lg:order-2">
               <PhoneMockup
-                src="/screenshots/ai-sales-assistant.png"
+                src="/screenshots/villa-assistant-screenshot.png"
                 alt="AI Sales Assistant chat"
               />
             </div>
@@ -547,8 +565,8 @@ export default function JoinPage() {
             </div>
             <div className="flex-shrink-0 order-1 lg:order-2">
               <PhoneMockup
-                src="/screenshots/onboarding-step5-pricing.png"
-                alt="Set your rates"
+                src="/screenshots/cleaner-dashboard-home.png"
+                alt="Cleaner dashboard with bookings"
               />
             </div>
           </div>
@@ -596,6 +614,59 @@ export default function JoinPage() {
         </div>
       </section>
 
+      {/* App Showcase - Dashboard with Peek-to-Lock */}
+      <section className="px-6 py-16 bg-[#1A1A1A] overflow-hidden">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+            {/* Content */}
+            <div className="flex-1 order-2 lg:order-1">
+              <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-4">
+                {t.dashboardSectionTitle}
+              </h2>
+              <p className="text-white/70 mb-6">
+                {t.dashboardSectionDesc}
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>👆</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">{t.peekToLock}</h4>
+                    <p className="text-sm text-white/70">{t.peekToLockDesc}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>📞</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">{t.oneTouch}</h4>
+                    <p className="text-sm text-white/70">{t.oneTouchDesc}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span>🔒</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white">{t.secureAccess}</h4>
+                    <p className="text-sm text-white/70">{t.secureAccessDesc}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Phone Mockup */}
+            <div className="flex-shrink-0 order-1 lg:order-2">
+              <PhoneMockup
+                src="/screenshots/cleaner-peek-modal-with-call.png"
+                alt="Booking details with Call buttons"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* App Showcase - Calendar */}
       <section className="px-6 py-16 bg-[#FAFAF8] overflow-hidden">
         <div className="max-w-5xl mx-auto">
@@ -603,8 +674,8 @@ export default function JoinPage() {
             {/* Phone Mockup */}
             <div className="flex-shrink-0 order-1 lg:order-1">
               <PhoneMockup
-                src="/screenshots/calendar-schedule.png"
-                alt="Calendar sync"
+                src="/screenshots/cleaner-dashboard-jobs.png"
+                alt="Jobs timeline synced to your calendar"
               />
             </div>
             {/* Content */}
