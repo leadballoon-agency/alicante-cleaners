@@ -21,6 +21,9 @@ VillaCare's frontend is built with **Next.js 14 App Router** using **React Serve
 |-------|------|-------------|
 | `/` | `app/page.tsx` | Owner landing page with cleaner directory |
 | `/join` | `app/join/page.tsx` | Cleaner recruitment landing page |
+| `/join/guide` | `app/join/guide/page.tsx` | Step-by-step onboarding guide (ES/EN) |
+| `/join/calendar-guide` | `app/join/calendar-guide/page.tsx` | Google Calendar sync guide (ES/EN) |
+| `/guide` | `app/guide/page.tsx` | General platform guide |
 | `/about` | `app/about/page.tsx` | Origin story and team |
 | `/[slug]` | `app/[slug]/page.tsx` | Public cleaner profile |
 | `/[slug]/booking` | `app/[slug]/booking/page.tsx` | 4-step booking flow |
@@ -33,7 +36,9 @@ VillaCare's frontend is built with **Next.js 14 App Router** using **React Serve
 |-------|------|-------------|
 | `/login` | `app/login/page.tsx` | Magic link / phone OTP entry |
 | `/login/verify` | `app/login/verify/page.tsx` | Check your email confirmation |
+| `/signout` | `app/signout/page.tsx` | Sign out page |
 | `/onboarding/cleaner` | `app/onboarding/cleaner/page.tsx` | Cleaner signup flow (phone OTP) |
+| `/onboarding/cleaner/calendar-callback` | `app/onboarding/cleaner/calendar-callback/page.tsx` | Google Calendar OAuth callback |
 | `/onboard/[token]` | `app/onboard/[token]/page.tsx` | Magic link onboarding for new owners |
 
 ### Dashboard Pages
@@ -41,7 +46,10 @@ VillaCare's frontend is built with **Next.js 14 App Router** using **React Serve
 | Route | File | Description | Role |
 |-------|------|-------------|------|
 | `/dashboard` | `app/dashboard/page.tsx` | Cleaner dashboard (tabbed) | CLEANER |
+| `/dashboard/account` | `app/dashboard/account/page.tsx` | Cleaner account settings (pause/delete) | CLEANER |
+| `/dashboard/availability` | `app/dashboard/availability/page.tsx` | Cleaner availability management | CLEANER |
 | `/owner/dashboard` | `app/owner/dashboard/page.tsx` | Owner dashboard (tabbed) | OWNER |
+| `/owner/dashboard/account` | `app/owner/dashboard/account/page.tsx` | Owner account settings (pause/delete) | OWNER |
 | `/admin` | `app/admin/page.tsx` | Admin dashboard (tabbed) | ADMIN |
 
 ---
@@ -203,11 +211,18 @@ const nextStep = () => {
 ### Cleaner Dashboard (`/dashboard`)
 
 **Tabs:**
-1. **Home** - Stats overview, pending bookings
-2. **Bookings** - All bookings with filters
-3. **Messages** - Conversations with owners
-4. **Team** - Team management (Team Leaders only)
-5. **Profile** - Edit profile, settings
+1. **Home** - Stats overview, pending bookings, quick actions
+2. **Bookings** - All bookings with filters, assign to team members
+3. **Messages** - Conversations with owners (auto-translated)
+4. **Team** - Team management (Team Leaders only), applicant review
+5. **Profile** - Edit profile, settings, Google Calendar sync
+
+**Team Tab Features (Team Leaders):**
+- View/edit team name and referral code
+- Manage team members (remove, view calendar)
+- Review PENDING cleaner applicants with AI-generated summaries
+- Accept & activate or decline applicants
+- Team calendar aggregation view
 
 #### Team Tab (Team Leaders)
 
@@ -269,11 +284,12 @@ return (
 
 **Tabs:**
 1. **Overview** - Platform KPIs
-2. **Cleaners** - Approval queue, management
+2. **Cleaners** - Approval queue, management, team verification
 3. **Reviews** - Moderation queue
-4. **Feedback** - User feedback
-5. **Support** - Support conversations
-6. **AI Chat** - Admin AI assistant
+4. **Feedback** - User feedback with mood tracking
+5. **Support** - AI support conversations with escalation
+6. **Settings** - Platform configuration (team leader requirements)
+7. **AI Chat** - Admin AI assistant with 20+ tools
 
 ---
 
@@ -296,6 +312,9 @@ return (
 | `PublicChatWidget` | `components/ai/public-chat-widget.tsx` | Pre-signup AI chat |
 | `OnboardingChatWidget` | `components/ai/onboarding-chat-widget.tsx` | AI-guided booking |
 | `ApplicantChatWidget` | `components/ai/applicant-chat-widget.tsx` | Team application chat for PENDING cleaners |
+| `SupportChatWidget` | `components/support-chat-widget.tsx` | Contextual AI support across platform |
+| `OwnerChatWidget` | `components/ai/owner-chat-widget.tsx` | Owner dashboard AI assistant |
+| `CleanerChatWidget` | `components/ai/cleaner-chat-widget.tsx` | Cleaner dashboard AI assistant |
 
 #### Applicant Chat Widget
 

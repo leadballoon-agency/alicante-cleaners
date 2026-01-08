@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-VillaCare exposes **60+ REST API endpoints** via Next.js API Routes. All endpoints are:
+VillaCare exposes **80+ REST API endpoints** via Next.js API Routes. All endpoints are:
 - **JSON-based** - Request/response bodies use `application/json`
 - **Session authenticated** - Uses NextAuth.js JWT sessions
 - **Role-protected** - Middleware enforces OWNER, CLEANER, or ADMIN roles
@@ -808,6 +808,240 @@ Get or update user language preference.
 
 ---
 
+## Support Endpoints
+
+### POST /api/support/conversations
+
+Create or continue a support chat conversation.
+
+**Request Body:**
+```json
+{
+  "message": "How do I connect my Google Calendar?",
+  "sessionId": "browser-session-id",
+  "page": "/dashboard"
+}
+```
+
+**Response:**
+```json
+{
+  "conversationId": "...",
+  "response": "I can help you connect your Google Calendar! Here's how...",
+  "status": "ACTIVE"
+}
+```
+
+---
+
+## Google Calendar Endpoints
+
+### GET /api/calendar/google/connect
+
+Start Google Calendar OAuth flow.
+
+**Response:** Redirects to Google OAuth consent page.
+
+---
+
+### GET /api/calendar/google/callback
+
+OAuth callback from Google.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| code | string | OAuth authorization code |
+| state | string | CSRF token |
+
+**Response:** Redirects to dashboard with success/error message.
+
+---
+
+### POST /api/calendar/google/sync
+
+Manually trigger calendar sync.
+
+**Response:**
+```json
+{
+  "success": true,
+  "synced": 15,
+  "lastSynced": "2024-02-15T10:00:00Z"
+}
+```
+
+---
+
+### POST /api/calendar/google/disconnect
+
+Disconnect Google Calendar integration.
+
+**Response:**
+```json
+{
+  "success": true
+}
+```
+
+---
+
+## Team Management Endpoints
+
+### GET /api/teams/leaders
+
+List active team leaders for onboarding selection.
+
+**Response:**
+```json
+{
+  "leaders": [
+    {
+      "id": "...",
+      "name": "Clara R.",
+      "teamName": "Clara's Team",
+      "memberCount": 3,
+      "rating": 4.8
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/teams/[id]/join
+
+Request to join a team.
+
+**Request Body:**
+```json
+{
+  "message": "I'd love to join your team!"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "requestId": "..."
+}
+```
+
+---
+
+### GET /api/dashboard/cleaner/team/calendar
+
+Get aggregated team calendar view.
+
+**Response:**
+```json
+{
+  "members": [
+    {
+      "id": "...",
+      "name": "Maria S.",
+      "availability": [
+        { "date": "2024-02-15", "slots": [...] }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/dashboard/cleaner/team/calendar/sync
+
+Sync all team member calendars.
+
+**Response:**
+```json
+{
+  "success": true,
+  "synced": 4
+}
+```
+
+---
+
+## Account Management Endpoints
+
+### GET /api/account
+
+Get account status and settings.
+
+**Response:**
+```json
+{
+  "status": "ACTIVE",
+  "pausedAt": null,
+  "deletionScheduledFor": null
+}
+```
+
+---
+
+### PATCH /api/account
+
+Update account status (pause/delete).
+
+**Pause Account:**
+```json
+{
+  "action": "pause",
+  "reason": "Taking a break"
+}
+```
+
+**Request Deletion:**
+```json
+{
+  "action": "delete",
+  "reason": "not_using",
+  "feedback": "Moved to a different area"
+}
+```
+
+**Reactivate:**
+```json
+{
+  "action": "reactivate"
+}
+```
+
+---
+
+## Admin Settings Endpoints
+
+### GET /api/admin/settings
+
+Get platform settings.
+
+**Response:**
+```json
+{
+  "teamLeaderHoursRequired": 50,
+  "teamLeaderRatingRequired": 5.0
+}
+```
+
+---
+
+### PATCH /api/admin/settings
+
+Update platform settings.
+
+**Request Body:**
+```json
+{
+  "teamLeaderHoursRequired": 40,
+  "teamLeaderRatingRequired": 4.5
+}
+```
+
+---
+
 ## Error Responses
 
 All endpoints return consistent error format:
@@ -831,10 +1065,17 @@ All endpoints return consistent error format:
 
 ## Rate Limiting
 
-Currently using Vercel's default limits. Planned additions:
-- API rate limiting per user
-- WhatsApp message throttling
-- AI token usage caps per cleaner
+**Implemented:**
+- OTP requests: 5 per minute per phone/IP
+- API endpoints: Serverless-compatible rate limiting via `RateLimitEntry` table
+- Cleanup: Expired entries cleaned daily via cron
+
+**Per-endpoint limits:**
+| Endpoint | Limit |
+|----------|-------|
+| `/api/auth/otp` | 5/min per phone |
+| `/api/ai/*` | 20/min per user |
+| `/api/messages` | 30/min per user |
 
 ---
 

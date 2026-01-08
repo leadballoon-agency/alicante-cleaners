@@ -45,6 +45,7 @@ For detailed documentation, see the `docs/` folder:
 ### Public Pages
 - **Homepage** (`/`) - Owner-focused landing, cleaner directory with area filtering, social proof activity feed
 - **Cleaner Landing** (`/join`) - Conversion page for cleaner recruitment with app screenshots
+- **Onboarding Guides** (`/join/guide`, `/join/calendar-guide`) - Step-by-step guides in ES/EN
 - **About page** (`/about`) - Origin story
 - **Cleaner profiles** (`/{slug}`) - Public pages with reviews, services, AI chat assistant, booking
 
@@ -52,26 +53,40 @@ For detailed documentation, see the `docs/` folder:
 - 4-step booking process: Service → Date/Time → Details → Confirm
 - Guest bookings (no account required) or authenticated
 - WhatsApp notifications to cleaner and owner on booking
+- AI-powered onboarding via magic links for new users
 
 ### Cleaner Features
-- **Onboarding** - Phone OTP verification, profile setup, area selection, pricing
-- **Dashboard** - Bookings, calendar sync (ICS), messaging, profile management
+- **Onboarding** - Phone OTP verification, profile setup, area selection, pricing, team selection
+- **Dashboard** - Bookings, calendar sync (ICS + Google Calendar), messaging, profile management
+- **Team Management** - Create team, manage members, review applicants with AI chat summaries
+- **Booking Assignment** - Assign bookings to team members
+- **Google Calendar Sync** - OAuth integration with FreeBusy API for availability
 - **WhatsApp notifications** - New bookings, can reply ACCEPT/DECLINE directly
 - **AI Sales Assistant** - On profile pages, handles inquiries and bookings
+- **Account Management** - Pause or delete account with 30-day retention
 
 ### Owner Features
 - **Dashboard** - Properties, booking history, reviews, messaging
+- **Arrival Prep** - "I'm Coming Home" feature for pre-arrival services
+- **AI Assistant** - Contextual help in dashboard
 - **WhatsApp notifications** - Booking confirmations, status updates, completion with review links
+- **Account Management** - Pause or delete account with 30-day retention
 
 ### Admin Features
 - **Dashboard** - Platform stats, cleaner management, owner CRM, review approval
-- **AI Agent** - Claude-powered assistant with 18 tools for platform management
+- **Support Center** - AI-powered support conversations with escalation
+- **Feedback Management** - View and track user feedback with voting
+- **Platform Settings** - Configure team leader requirements
+- **Impersonation** - Login as user for support
+- **AI Agent** - Claude-powered assistant with 20+ tools for platform management
 - **Knowledge Base** - Markdown documentation for AI context
 
 ### Integrations
 - **WhatsApp via Twilio** - OTP codes, booking notifications, reply handling
+- **Google Calendar OAuth** - Calendar sync with FreeBusy API (privacy-first)
 - **ICS Calendar feeds** - Sync to Google/Apple/Outlook
 - **Multilingual messaging** - Auto-translation (7 languages)
+- **AI Support Widget** - Contextual help throughout the platform
 
 ---
 
@@ -105,62 +120,126 @@ For detailed documentation, see the `docs/` folder:
 
 ### Public
 ```
-GET  /api/cleaners              List cleaners (with area filter)
-GET  /api/cleaners/[slug]       Single cleaner profile + reviews
-GET  /api/activity              Recent platform activity for social proof
-POST /api/bookings              Create booking (triggers WhatsApp)
-GET  /api/calendar/[token]      ICS calendar feed for cleaner
+GET  /api/cleaners                    List cleaners (with area filter)
+GET  /api/cleaners/[slug]             Single cleaner profile + reviews
+GET  /api/cleaners/[slug]/availability Check availability for month
+GET  /api/activity                    Recent platform activity for social proof
+POST /api/bookings                    Create booking (triggers WhatsApp)
+GET  /api/calendar/[token]            ICS calendar feed for cleaner
+GET  /api/teams/leaders               List team leaders for onboarding
+POST /api/teams/[id]/join             Request to join a team
 ```
 
 ### Messaging
 ```
-GET  /api/messages              Unread count
-POST /api/messages              Send message (with translation)
+GET  /api/messages                    Unread count
+POST /api/messages                    Send message (with translation)
 GET  /api/messages/conversations      List conversations
 POST /api/messages/conversations      Start new conversation
 GET  /api/messages/conversations/[id] Get messages in conversation
 ```
 
+### Support
+```
+POST /api/support/conversations       Create/continue support chat
+```
+
 ### User
 ```
-GET/PATCH /api/user/preferences      Language preferences
+GET/PATCH /api/user/preferences       Language preferences
+GET/PATCH /api/account                Account management (pause/delete)
 ```
 
 ### Cleaner Dashboard
 ```
-GET/POST /api/dashboard/cleaner           Profile + calendar token
-GET      /api/dashboard/cleaner/bookings  Cleaner's bookings
-PATCH    /api/dashboard/cleaner/bookings/[id]  Accept/decline/complete
+GET/POST  /api/dashboard/cleaner                Profile + calendar token
+GET/PATCH /api/dashboard/cleaner/profile        Update profile fields
+GET       /api/dashboard/cleaner/bookings       Cleaner's bookings
+PATCH     /api/dashboard/cleaner/bookings/[id]  Accept/decline/complete/assign
+POST      /api/dashboard/cleaner/bookings/[id]/review  Request review
+GET/POST  /api/dashboard/cleaner/availability   Manage availability slots
+GET/POST  /api/dashboard/cleaner/comments       Internal property comments
+GET/PATCH /api/dashboard/cleaner/phone          Update phone number
+GET/POST  /api/dashboard/cleaner/team           Create/manage team
+GET       /api/dashboard/cleaner/team/members/[id]  Manage team member
+POST      /api/dashboard/cleaner/team/leave     Leave team
+GET/POST  /api/dashboard/cleaner/team/requests  Team join requests
+PATCH     /api/dashboard/cleaner/team/requests/[id]  Accept/reject request
+GET/POST  /api/dashboard/cleaner/team/applicants  PENDING cleaner applicants
+PATCH     /api/dashboard/cleaner/team/applicants/[id]  Accept/reject applicant
+POST      /api/dashboard/cleaner/team/refer     Send team referral
+GET       /api/dashboard/cleaner/team/calendar  Team calendar view
+POST      /api/dashboard/cleaner/team/calendar/sync  Sync team calendars
+```
+
+### Google Calendar
+```
+GET  /api/calendar/google/connect     Start OAuth flow
+GET  /api/calendar/google/callback    OAuth callback
+POST /api/calendar/google/sync        Sync calendar now
+POST /api/calendar/google/disconnect  Disconnect calendar
 ```
 
 ### Owner Dashboard
 ```
-GET      /api/dashboard/owner            Profile + stats
-GET      /api/dashboard/owner/bookings   Owner's bookings
-GET/POST /api/dashboard/owner/properties Properties
+GET       /api/dashboard/owner              Profile + stats
+GET       /api/dashboard/owner/bookings     Owner's bookings
+POST      /api/dashboard/owner/bookings/[id]/review  Leave review
+GET/POST  /api/dashboard/owner/properties   Properties
+PATCH/DEL /api/dashboard/owner/properties/[id]  Update/delete property
+GET/PATCH /api/dashboard/owner/preferences  Owner preferences
+GET       /api/dashboard/owner/referrals    Referral stats
+POST      /api/dashboard/owner/arrival-prep "I'm Coming Home" request
 ```
 
 ### Admin
 ```
-GET   /api/admin/stats           Platform KPIs
-GET   /api/admin/cleaners        All cleaners
-PATCH /api/admin/cleaners/[id]   Approve/suspend
-GET   /api/admin/reviews         All reviews
-PATCH /api/admin/reviews/[id]    Approve/feature
-GET   /api/admin/owners          All owners with properties
-POST  /api/admin/ai/chat         Admin AI Agent conversation
+GET   /api/admin/stats             Platform KPIs
+GET   /api/admin/cleaners          All cleaners
+PATCH /api/admin/cleaners/[id]     Approve/suspend/update
+GET   /api/admin/reviews           All reviews
+PATCH /api/admin/reviews/[id]      Approve/feature
+GET   /api/admin/owners            All owners with properties
+GET   /api/admin/bookings          All bookings
+GET   /api/admin/feedback          User feedback
+PATCH /api/admin/feedback/[id]     Update feedback status
+GET   /api/admin/support           Support conversations
+PATCH /api/admin/support/[id]      Resolve/escalate support
+GET/PATCH /api/admin/settings      Platform settings
+POST  /api/admin/impersonate       Login as user (support)
+POST  /api/admin/ai/chat           Admin AI Agent conversation
 ```
 
 ### Webhooks
 ```
-POST /api/webhooks/twilio        Twilio WhatsApp incoming messages
+POST /api/webhooks/twilio          Twilio WhatsApp incoming messages
 ```
 
 ### AI Chat
 ```
-POST /api/ai/public-chat         Public cleaner profile chat
-POST /api/ai/onboarding-chat     Cleaner onboarding help
-POST /api/ai/admin-chat          Admin AI agent
+POST /api/ai/public-chat           Public cleaner profile chat
+POST /api/ai/onboarding-chat       Cleaner onboarding help
+POST /api/ai/owner/chat            Owner AI assistant
+POST /api/ai/cleaner/chat          Cleaner AI assistant
+POST /api/ai/applicant-chat        Team applicant screening chat
+POST /api/ai/sales-agent/respond   Auto-respond to owner messages
+POST /api/ai/onboarding/create     Create magic link onboarding
+GET  /api/ai/onboarding/[token]    Get onboarding data
+POST /api/ai/onboarding/[token]/confirm  Complete onboarding
+```
+
+### Cron Jobs
+```
+GET /api/cron/daily-tasks          Combined daily cron (reminders, cleanup)
+GET /api/cron/booking-reminders    Booking response reminders
+GET /api/cron/cleanup-rate-limits  Clean expired rate limit entries
+```
+
+### Uploads
+```
+POST /api/upload                   General file upload
+POST /api/onboarding/upload        Onboarding photo upload
+POST /api/onboarding/cleaner       Complete cleaner onboarding
 ```
 
 ---
@@ -168,18 +247,28 @@ POST /api/ai/admin-chat          Admin AI agent
 ## Pages
 
 ```
-/                      Homepage (owner-focused) with cleaner directory
-/join                  Cleaner recruitment landing page
-/about                 Origin story
-/[slug]                Public cleaner profile with AI chat
-/[slug]/booking        Booking flow (4 steps)
-/login                 Auth page (magic link or phone)
-/onboarding/cleaner    Cleaner signup flow (5 steps)
-/dashboard             Cleaner dashboard (5 tabs)
-/owner/dashboard       Owner dashboard (5 tabs)
-/admin                 Admin dashboard (7 tabs)
-/privacy               Privacy policy
-/terms                 Terms of service
+/                              Homepage (owner-focused) with cleaner directory
+/join                          Cleaner recruitment landing page
+/join/guide                    Step-by-step onboarding guide (ES/EN)
+/join/calendar-guide           Google Calendar sync guide (ES/EN)
+/guide                         General platform guide
+/about                         Origin story
+/[slug]                        Public cleaner profile with AI chat
+/[slug]/booking                Booking flow (4 steps)
+/login                         Auth page (magic link or phone)
+/login/verify                  Email verification check page
+/signout                       Sign out page
+/onboarding/cleaner            Cleaner signup flow (5 steps)
+/onboarding/cleaner/calendar-callback  Google Calendar OAuth callback
+/onboard/[token]               AI onboarding magic link for new owners
+/dashboard                     Cleaner dashboard (5 tabs)
+/dashboard/account             Cleaner account settings (pause/delete)
+/dashboard/availability        Cleaner availability management
+/owner/dashboard               Owner dashboard (5 tabs)
+/owner/dashboard/account       Owner account settings (pause/delete)
+/admin                         Admin dashboard (7 tabs)
+/privacy                       Privacy policy
+/terms                         Terms of service
 ```
 
 ---
@@ -188,16 +277,30 @@ POST /api/ai/admin-chat          Admin AI agent
 
 | Model | Purpose |
 |-------|---------|
-| User | All users (email/phone, role, preferredLanguage) |
+| User | All users (email/phone, role, preferredLanguage, accountStatus) |
 | Owner | Owner profile (referralCode, trusted status, adminNotes for CRM) |
-| Cleaner | Cleaner profile (slug, bio, areas, rates, stats, calendarToken) |
+| Cleaner | Cleaner profile (slug, bio, areas, rates, stats, calendarToken, teamVerification) |
 | Property | Villa details (address, bedrooms, access notes) |
 | Booking | Cleaning appointments (status: PENDING/CONFIRMED/COMPLETED/CANCELLED) |
 | Review | Ratings and testimonials (with featured flag) |
 | Conversation | Links owner and cleaner for messaging |
 | Message | Individual messages with translation |
-| Feedback | Internal platform feedback |
-| Team | Cleaner teams (leader + members) |
+| Feedback | Internal platform feedback (mood, votes, status) |
+| Team | Cleaner teams (leader + members, requireCalendarSync) |
+| TeamJoinRequest | Team membership applications |
+| CleanerAvailability | Google Calendar synced availability slots |
+| TeamAvailabilityCache | Aggregated team calendar view |
+| ArrivalPrep | "I'm Coming Home" arrival prep requests |
+| SupportConversation | AI-powered support chat sessions |
+| SupportMessage | Individual support chat messages |
+| ApplicantConversation | PENDING cleaner chats with Team Leaders |
+| ApplicantMessage | Messages in applicant conversations |
+| PendingOnboarding | AI onboarding magic link data |
+| Notification | User notifications (bookings, reviews, AI actions) |
+| BookingResponseTracker | Tracks booking response deadlines |
+| PlatformSettings | Admin-configurable platform settings |
+| RateLimitEntry | Serverless-compatible rate limiting |
+| WebhookEvent | Twilio webhook idempotency tracking |
 
 ---
 
@@ -439,7 +542,7 @@ After running `npx prisma db seed`:
 
 ### Complete ✅
 - Homepage with cleaner directory (owner-focused)
-- Cleaner landing page (`/join`)
+- Cleaner landing page (`/join`) with onboarding guides
 - Area-based filtering
 - Social proof activity feed
 - Public cleaner profiles with AI chat
@@ -447,20 +550,33 @@ After running `npx prisma db seed`:
 - 4-step booking flow
 - Cleaner onboarding (phone OTP via WhatsApp)
 - Cleaner dashboard with calendar sync
-- Owner dashboard
+- Owner dashboard with arrival prep feature
 - Admin dashboard with AI agent
 - WhatsApp notifications (Twilio)
 - Review system with moderation
 - ICS calendar feeds
 - Multilingual messaging with auto-translation
 - Smart redirects for logged-in users
+- Google Calendar OAuth integration (FreeBusy API)
+- Team management system (leaders + members)
+- Team verification for new cleaners
+- Team applicant chat (AI screening)
+- Team calendar aggregation view
+- Booking assignment to team members
+- Account pause/delete with 30-day retention
+- AI support chat widget
+- Platform settings (admin configurable)
+- Rate limiting (serverless-compatible)
+- Webhook idempotency for Twilio
+- Photo uploads for cleaner profiles
+- Internal property comments
 
 ### Planned 📋
 - Stripe payment integration
-- Photo uploads (before/after)
 - Email notifications (beyond magic links)
-- Referral rewards system
-- Team assignment for bookings
+- Referral rewards redemption
+- Push notifications
+- Before/after photo uploads for bookings
 
 ---
 

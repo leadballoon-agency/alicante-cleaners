@@ -167,15 +167,29 @@ alicante-cleaners/
 │   │   ├── bookings/       # Booking CRUD
 │   │   ├── cleaners/       # Cleaner endpoints
 │   │   ├── dashboard/      # Protected dashboard APIs
+│   │   │   ├── cleaner/   # Cleaner APIs (team, bookings, etc.)
+│   │   │   └── owner/     # Owner APIs (properties, prefs)
 │   │   ├── messages/       # Messaging system
+│   │   ├── support/        # Support chat API
+│   │   ├── calendar/       # ICS feeds + Google OAuth
+│   │   ├── teams/          # Public team APIs
+│   │   ├── cron/           # Scheduled tasks
 │   │   ├── webhooks/       # Twilio webhooks
-│   │   └── ai/             # AI chat endpoints
+│   │   └── ai/             # AI chat endpoints (6 agents)
 │   ├── dashboard/           # Cleaner dashboard
+│   │   ├── account/        # Account settings (pause/delete)
+│   │   └── availability/   # Availability management
 │   ├── owner/              # Owner dashboard
+│   │   └── dashboard/account/  # Owner account settings
 │   ├── onboarding/         # Cleaner signup flow
+│   ├── onboard/            # AI magic link onboarding
 │   ├── join/               # Cleaner landing page
+│   │   ├── guide/         # Onboarding guide (ES/EN)
+│   │   └── calendar-guide/ # Calendar sync guide (ES/EN)
 │   └── login/              # Auth page
 ├── components/              # Shared React components
+│   ├── ai/                 # AI chat widgets
+│   └── ui/                 # Generic UI components
 ├── lib/                     # Shared utilities
 │   ├── ai/                 # AI agents, knowledge base
 │   ├── auth.ts             # NextAuth config
@@ -183,7 +197,7 @@ alicante-cleaners/
 │   ├── translate.ts        # OpenAI translation
 │   └── whatsapp.ts         # Twilio WhatsApp
 ├── prisma/                  # Database
-│   ├── schema.prisma       # Data models
+│   ├── schema.prisma       # Data models (30+ tables)
 │   └── seed.ts             # Test data
 ├── public/                  # Static assets
 ├── knowledge/              # AI knowledge base (markdown)

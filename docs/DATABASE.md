@@ -5,8 +5,8 @@
 VillaCare uses **Neon PostgreSQL** with **Prisma ORM** for type-safe database operations. The schema supports a two-sided marketplace with villa owners, cleaners, teams, bookings, messaging, and AI integrations.
 
 **Key Stats:**
-- 25+ tables
-- 10 enums
+- 30+ tables
+- 15 enums
 - Full type generation via Prisma Client
 - Serverless-ready with connection pooling
 
@@ -75,16 +75,32 @@ The central identity model. All users have a User record, with role-specific pro
 
 ```prisma
 model User {
-  id                String    @id @default(cuid())
+  id                String        @id @default(cuid())
   name              String?
-  email             String?   @unique
-  phone             String?   @unique
-  role              UserRole  @default(OWNER)  // OWNER, CLEANER, ADMIN
-  preferredLanguage String    @default("en")   // For message translation
+  email             String?       @unique
+  phone             String?       @unique
+  role              UserRole      @default(OWNER)  // OWNER, CLEANER, ADMIN
+  preferredLanguage String        @default("en")   // For message translation
+
+  // Account Management
+  accountStatus        AccountStatus @default(ACTIVE)
+  pausedAt             DateTime?     // When account was paused
+  pausedReason         String?       // Feedback on why they paused
+  deletionRequestedAt  DateTime?     // When deletion was requested
+  deletionScheduledFor DateTime?     // 30 days after request
+  deletionReason       String?       // Category: not_using, found_alternative, etc.
+  deletionFeedback     String?       // Detailed feedback
 
   // Relations
-  cleaner           Cleaner?
-  owner             Owner?
+  cleaner              Cleaner?
+  owner                Owner?
+  supportConversations SupportConversation[]
+}
+
+enum AccountStatus {
+  ACTIVE           // Normal active account
+  PAUSED           // Temporarily deactivated
+  PENDING_DELETION // Requested deletion, in 30-day grace period
 }
 ```
 
@@ -92,6 +108,7 @@ model User {
 - Email OR phone authentication (not both required)
 - `preferredLanguage` used for automatic message translation
 - Role determines which dashboard they access
+- Account can be paused (reactivate anytime) or deleted (30-day retention)
 
 ---
 
@@ -131,6 +148,7 @@ model Cleaner {
   userId         String        @unique
   slug           String        @unique      // URL: /maria-g
   bio            String?
+  reviewsLink    String?                    // External reviews (Google, etc.)
   serviceAreas   String[]                   // ["Alicante City", "San Juan"]
   languages      String[]      @default(["es"])
   hourlyRate     Decimal
@@ -145,17 +163,26 @@ model Cleaner {
   // Team
   teamLeader     Boolean       @default(false)
   teamId         String?
+  referredByCode String?                    // Team referral code used during signup
+
+  // Team Verification
+  verifiedByTeamLeaderId String?            // Team Leader who verified this cleaner
+  verifiedAt             DateTime?          // When verified
 
   // Calendar
-  calendarToken  String?       @unique      // For ICS feed
-  googleCalendarConnected Boolean @default(false)
+  calendarToken           String?  @unique  // For ICS feed
+  googleCalendarConnected Boolean  @default(false)
+  googleCalendarSyncedAt  DateTime?
+  calendarSyncStatus      String?  @default("NOT_CONNECTED")
 
   // Relations
-  bookings       Booking[]
-  reviews        Review[]
-  ledTeam        Team?
-  memberOfTeam   Team?
-  aiSettings     CleanerAISettings?
+  bookings         Booking[]
+  reviews          Review[]
+  ledTeam          Team?
+  memberOfTeam     Team?
+  aiSettings       CleanerAISettings?
+  availability     CleanerAvailability[]
+  verifiedCleaners Cleaner[]  @relation("VerifiedBy")
 }
 ```
 
@@ -163,6 +190,8 @@ model Cleaner {
 - `slug` creates their public profile URL
 - `calendarToken` enables ICS calendar subscription
 - Team system supports leader + member structure
+- Team verification: new cleaners must be verified by Team Leader
+- Google Calendar sync with FreeBusy API
 - AI settings control automated responses
 
 ---
@@ -418,6 +447,169 @@ model Notification {
 
 ---
 
+## Support System
+
+### SupportConversation
+
+AI-powered support chat sessions:
+
+```prisma
+model SupportConversation {
+  id          String                    @id @default(cuid())
+  userId      String?                   // Logged-in user (optional)
+  userType    String                    // 'owner', 'cleaner', 'visitor'
+  userName    String?
+  userEmail   String?                   // For follow-up
+  page        String                    // Page where chat started
+  sessionId   String                    // Browser session for anonymous users
+
+  status      SupportConversationStatus @default(ACTIVE)
+  resolvedBy  String?                   // Admin who resolved
+
+  summary     String?                   // AI-generated summary
+  sentiment   String?                   // 'positive', 'neutral', 'negative'
+  topic       String?                   // AI-detected topic
+
+  messages    SupportMessage[]
+}
+
+enum SupportConversationStatus {
+  ACTIVE      // Ongoing conversation
+  RESOLVED    // Marked as resolved
+  ESCALATED   // Needs human attention
+}
+```
+
+### SupportMessage
+
+```prisma
+model SupportMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String   // 'user' or 'assistant'
+  content        String
+  isAI           Boolean  @default(true)
+  createdAt      DateTime @default(now())
+}
+```
+
+---
+
+## Applicant Conversations
+
+### ApplicantConversation
+
+PENDING cleaners chatting with Team Leaders:
+
+```prisma
+model ApplicantConversation {
+  id               String                      @id @default(cuid())
+  applicantId      String                      // PENDING cleaner
+  teamLeaderId     String                      // Team Leader
+
+  status           ApplicantConversationStatus @default(ACTIVE)
+  summary          String?                     // AI-generated summary
+  lastSummarizedAt DateTime?
+
+  messages         ApplicantMessage[]
+
+  @@unique([applicantId, teamLeaderId])
+}
+
+enum ApplicantConversationStatus {
+  ACTIVE
+  ACCEPTED
+  REJECTED
+}
+```
+
+---
+
+## Availability System
+
+### CleanerAvailability
+
+Google Calendar synced availability:
+
+```prisma
+model CleanerAvailability {
+  id            String             @id @default(cuid())
+  cleanerId     String
+  date          DateTime           @db.Date
+  startTime     String             // "09:00" format
+  endTime       String             // "17:00" format
+  isAvailable   Boolean            @default(true)
+  source        AvailabilitySource @default(MANUAL)
+  googleEventId String?            // For synced events
+  title         String?            // Event title for display
+}
+
+enum AvailabilitySource {
+  MANUAL
+  GOOGLE_CALENDAR
+  BOOKING
+}
+```
+
+### TeamAvailabilityCache
+
+Aggregated team calendar view:
+
+```prisma
+model TeamAvailabilityCache {
+  id           String   @id @default(cuid())
+  teamId       String
+  date         DateTime @db.Date
+  memberId     String
+  availability Json     // [{startTime, endTime, isAvailable, source}]
+  lastUpdated  DateTime @default(now())
+
+  @@unique([teamId, date, memberId])
+}
+```
+
+---
+
+## Platform Settings
+
+```prisma
+model PlatformSettings {
+  id                       String   @id @default("default")
+  teamLeaderHoursRequired  Int      @default(50)
+  teamLeaderRatingRequired Float    @default(5.0)
+  updatedAt                DateTime @updatedAt
+}
+```
+
+---
+
+## Rate Limiting
+
+```prisma
+model RateLimitEntry {
+  id        String   @id @default(cuid())
+  key       String   // "endpoint:identifier"
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}
+```
+
+---
+
+## Webhook Idempotency
+
+```prisma
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  messageSid String   @unique  // Twilio MessageSid
+  source     String   @default("twilio")
+  processedAt DateTime @default(now())
+}
+```
+
+---
+
 ## Enums
 
 ```prisma
@@ -427,8 +619,14 @@ enum UserRole {
   ADMIN
 }
 
+enum AccountStatus {
+  ACTIVE
+  PAUSED
+  PENDING_DELETION
+}
+
 enum CleanerStatus {
-  PENDING      // Awaiting admin approval
+  PENDING      // Awaiting admin/team verification
   ACTIVE       // Can receive bookings
   SUSPENDED    // Temporarily disabled
 }
@@ -447,12 +645,52 @@ enum FeedbackCategory {
   QUESTION
 }
 
+enum FeedbackMood {
+  LOVE
+  LIKE
+  MEH
+  FRUSTRATED
+}
+
+enum FeedbackStatus {
+  NEW
+  REVIEWED
+  PLANNED
+  DONE
+}
+
+enum TeamJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AvailabilitySource {
+  MANUAL
+  GOOGLE_CALENDAR
+  BOOKING
+}
+
+enum SupportConversationStatus {
+  ACTIVE
+  RESOLVED
+  ESCALATED
+}
+
+enum ApplicantConversationStatus {
+  ACTIVE
+  ACCEPTED
+  REJECTED
+}
+
 enum NotificationType {
   BOOKING_REQUEST
   BOOKING_REMINDER
   BOOKING_ESCALATED
+  BOOKING_AUTO_DECLINED
   BOOKING_CONFIRMED
   BOOKING_COMPLETED
+  TEAM_COVERAGE
   NEW_REVIEW
   AI_ACTION
 }

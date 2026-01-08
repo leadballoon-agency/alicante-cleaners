@@ -415,6 +415,8 @@ prisma generate && next build
 - [ ] Phone OTP login for cleaner
 - [ ] Session persists across pages
 - [ ] Logout works correctly
+- [ ] Account pause/reactivate works
+- [ ] Account deletion request works
 
 **Booking Flow:**
 - [ ] Browse cleaners on homepage
@@ -422,12 +424,29 @@ prisma generate && next build
 - [ ] View cleaner profile
 - [ ] Complete 4-step booking
 - [ ] Cleaner receives WhatsApp notification
+- [ ] AI chat on profile works
 
-**Dashboard:**
+**Cleaner Dashboard:**
 - [ ] Cleaner can accept/decline booking
-- [ ] Owner sees booking status update
+- [ ] Assign booking to team member
 - [ ] Messages send with translation
-- [ ] Calendar sync generates ICS
+- [ ] ICS calendar feed works
+- [ ] Google Calendar connect/sync works
+- [ ] Team management (if team leader)
+- [ ] Applicant review (if team leader)
+
+**Owner Dashboard:**
+- [ ] Owner sees booking status update
+- [ ] Can add/edit properties
+- [ ] Arrival prep feature works
+- [ ] AI assistant responds
+
+**Admin Dashboard:**
+- [ ] Stats load correctly
+- [ ] Cleaner approval works
+- [ ] Support conversations visible
+- [ ] Platform settings editable
+- [ ] AI agent responds
 
 ### Browser Testing
 
@@ -475,16 +494,21 @@ Test on:
 
 ### Security
 
+- [x] Implement rate limiting (serverless-compatible via DB)
 - [ ] Add Twilio webhook signature validation
-- [ ] Implement rate limiting
 - [ ] Add input validation with Zod
 
 ### Features
 
+- [x] Photo uploads (cleaner profiles)
+- [x] Google Calendar sync
+- [x] Team management
+- [x] Account pause/delete
+- [x] AI support widget
 - [ ] Stripe payment integration
-- [ ] Email notifications
-- [ ] Photo uploads (before/after)
+- [ ] Email notifications (beyond magic links)
 - [ ] Push notifications
+- [ ] Before/after photo uploads for bookings
 
 ### Technical Debt
 

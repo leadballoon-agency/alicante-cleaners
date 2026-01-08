@@ -75,12 +75,12 @@ Currently in **Beta** (free for all users). Planned monetization:
 
 | Metric | Value |
 |--------|-------|
-| **Codebase** | ~25,000 lines TypeScript |
-| **Pages** | 15 routes |
-| **API Endpoints** | 30+ endpoints |
-| **Database Models** | 10 tables |
+| **Codebase** | ~35,000 lines TypeScript |
+| **Pages** | 22 routes |
+| **API Endpoints** | 80+ endpoints |
+| **Database Models** | 30+ tables |
 | **Languages Supported** | 7 (EN, ES, DE, FR, NL, IT, PT) |
-| **AI Integrations** | 3 (translation, admin agent, chat) |
+| **AI Integrations** | 6 (translation, admin agent, sales agent, support, owner, cleaner) |
 
 ---
 
@@ -115,13 +115,20 @@ Currently in **Beta** (free for all users). Planned monetization:
 ### What's Built
 - Full MVP with real users
 - WhatsApp integration (differentiator)
-- AI-powered features throughout
+- AI-powered features throughout (6 different AI agents)
 - Scalable architecture
+- Google Calendar integration (FreeBusy API)
+- Team management with verification system
+- Account pause/delete with 30-day retention
+- AI support chat widget
+- Internal property comments
+- Arrival prep feature ("I'm Coming Home")
 
 ### What's Needed
 - Payment integration (Stripe)
 - Marketing/user acquisition
 - Additional service areas
+- Push notifications
 - Mobile app (optional - PWA works well)
 
 ### Competitive Advantages

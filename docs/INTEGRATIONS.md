@@ -470,18 +470,28 @@ Vercel provides:
 {
   "crons": [
     {
-      "path": "/api/cron/booking-reminders",
-      "schedule": "0 * * * *"
+      "path": "/api/cron/daily-tasks",
+      "schedule": "0 6 * * *"
     }
   ]
 }
 ```
 
-**Booking Reminders Job:**
-- Runs every hour
-- Sends reminder at 1 hour
-- Escalates to team at 2 hours
-- Auto-declines at 6 hours
+**Daily Tasks Job (runs at 6am UTC):**
+- `booking-reminders`: Send booking response reminders
+  - Reminder at 1 hour → WhatsApp to cleaner
+  - Escalate to team at 2 hours
+  - Auto-decline at 6 hours
+- `cleanup-rate-limits`: Clean expired rate limit entries from database
+
+**Individual Cron Endpoints:**
+```
+GET /api/cron/booking-reminders    Booking response reminders
+GET /api/cron/cleanup-rate-limits  Clean expired rate limit entries
+GET /api/cron/daily-tasks          Combined daily cron
+```
+
+All cron endpoints require `CRON_SECRET` header for manual triggering.
 
 ### Environment Variables (Vercel Dashboard)
 
@@ -539,12 +549,18 @@ try {
 |---------|-----------|-------|-----------|
 | Twilio | $15 credit | ~500 messages | $2.50 |
 | OpenAI | - | ~10K translations | $1.50 |
-| Anthropic | - | ~1K admin queries | $0.50 |
+| Anthropic | - | ~2K AI queries (admin + support + sales) | $1.00 |
 | Resend | 3K emails/mo | ~500 emails | Free |
-| Neon | 10GB storage | ~100MB | Free |
+| Neon | 10GB storage | ~200MB | Free |
 | Vercel | Hobby tier | - | Free |
 
 **Total estimated: ~$5/month at beta scale**
+
+**AI Usage Breakdown:**
+- Admin agent: ~500 queries/month
+- Support chat: ~800 queries/month
+- Sales agent: ~400 queries/month
+- Applicant screening: ~300 queries/month
 
 ---
 
