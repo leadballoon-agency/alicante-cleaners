@@ -336,17 +336,52 @@ This enables:
 
 ## Security Features
 
-### Access Notes Protection
+### Sensitive Access Lifecycle
 
-VillaCare implements multiple layers of security for sensitive property information:
+VillaCare implements **operational trust infrastructure with data minimisation** — a system-enforced architecture that goes beyond policy-based security.
 
-#### 1. No Chat Collection
+```
+┌─────────────────────────────────────────────────────────────┐
+│              SENSITIVE ACCESS LIFECYCLE                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. STORED SECURELY BY OWNER                                │
+│     • Collected via secure form (not chat)                  │
+│     • AES-256 encrypted at rest                             │
+│     • Segregated from booking data                          │
+│                    ↓                                         │
+│  2. RELEASED 24H PRE-ARRIVAL                                │
+│     • Just-in-time access for assigned cleaner only         │
+│     • Time-limited window                                   │
+│     • Role-limited (only assigned cleaner)                  │
+│                    ↓                                         │
+│  3. REVOKED ON JOB COMPLETION                               │
+│     • Auto-revoked after booking time                       │
+│     • No permanent storage of access credentials            │
+│     • Historical bookings don't expose sensitive info       │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Security Principles
+
+| Principle | Implementation |
+|-----------|----------------|
+| **Least-privilege** | Access notes segregated from general booking data |
+| **Just-in-time** | Released only 24h before booking, to assigned cleaner only |
+| **Data minimisation** | Auto-revoked after job completion |
+| **System-enforced** | Architecture-level, not policy-dependent |
+
+### Protection Layers
+
+#### 1. No Chat Collection (Data Segregation)
 - Access notes (key locations, codes) are **NOT** collected in chat
+- Sensitive information is only shared when operationally required
 - If a user tries to share sensitive info, the assistant warns them:
   > "For your security, please don't share access codes in this chat. You'll be able to add these securely when you confirm your booking."
 
 #### 2. Sensitive Pattern Detection
-The system detects patterns like:
+The system actively detects and intercepts patterns like:
 - "key is under...", "key behind..."
 - Gate codes, PIN codes, alarm codes
 - Lockbox/key safe references
@@ -364,17 +399,34 @@ const encryptedNotes = encryptAccessNotes(notes)
 // Format: iv:authTag:ciphertext (base64)
 ```
 
-#### 5. Just-in-Time Access
+#### 5. Time-Limited, Role-Limited Access
 Cleaners can only view access notes **24 hours before** the booking:
 ```typescript
-// Access window calculation
+// Just-in-time access window
 const accessWindowStart = bookingDateTime - 24 hours
 const canView = now >= accessWindowStart && now <= bookingDateTime
 ```
 
-#### 6. Automatic Hiding
+#### 6. Automatic Revocation
 - Access notes hidden after booking completes
 - Past bookings don't expose sensitive information
+- No manual cleanup required — system-enforced
+
+### Why This Matters
+
+**For Owners:**
+> "Who has my keys, codes, and instructions — and for how long?"
+
+VillaCare's answer is better than WhatsApp, email, or property managers:
+- Time-limited access
+- Role-limited access
+- Automatically revoked
+
+**For the Platform:**
+- Reduced legal exposure
+- Improved GDPR posture
+- Lower insurance friction
+- Prevents "historic access leakage"
 
 ### Security Knowledge Base
 
@@ -394,3 +446,4 @@ The AI has access to `/knowledge/security-and-access.md` which contains:
 - [ ] Follow-up reminders (if visitor doesn't complete booking)
 - [ ] Custom FAQs per cleaner (personalized knowledge base)
 - [ ] Key rotation for encryption
+- [ ] Access audit log (track when access notes are viewed/revoked)
