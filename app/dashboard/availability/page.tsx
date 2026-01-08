@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { signIn } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
@@ -30,7 +30,20 @@ type AvailabilityBlock = {
   title?: string
 }
 
+// Wrapper component to handle Suspense boundary for useSearchParams
 export default function AvailabilityPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#6B6B6B] animate-spin" />
+      </div>
+    }>
+      <AvailabilityContent />
+    </Suspense>
+  )
+}
+
+function AvailabilityContent() {
   const { status } = useSession()
   const searchParams = useSearchParams()
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null)
