@@ -54,7 +54,8 @@ export async function GET() {
       return NextResponse.redirect(new URL('/dashboard/availability?error=oauth_not_configured', process.env.NEXTAUTH_URL || 'https://www.alicantecleaners.com'))
     }
 
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://www.alicantecleaners.com'
+    // Always use www version to match Google OAuth redirect URI
+    const baseUrl = 'https://www.alicantecleaners.com'
     const redirectUri = `${baseUrl}/api/calendar/google/callback`
 
     const params = new URLSearchParams({

@@ -17,7 +17,8 @@ interface GoogleTokenResponse {
 }
 
 export async function GET(request: NextRequest) {
-  const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://www.alicantecleaners.com'
+  // Always use www version to match Google OAuth redirect URI
+  const baseUrl = 'https://www.alicantecleaners.com'
 
   try {
     const searchParams = request.nextUrl.searchParams
