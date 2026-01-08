@@ -116,12 +116,20 @@ export default function HomePage() {
             Vetted cleaners. Photo proof. Auto-translation. Whether you&apos;re here year-round or visiting - your villa stays cared for.
           </p>
 
-          <Link
-            href="/guide/booking"
-            className="inline-flex items-center gap-1 text-[#C4785A] text-sm font-medium hover:underline mb-6"
-          >
-            New here? See how booking works →
-          </Link>
+          <div className="flex flex-wrap justify-center gap-4 mb-6">
+            <Link
+              href="/guide/booking"
+              className="inline-flex items-center gap-1 text-[#C4785A] text-sm font-medium hover:underline"
+            >
+              How booking works →
+            </Link>
+            <Link
+              href="/features/ai-assistant"
+              className="inline-flex items-center gap-1 text-[#C4785A] text-sm font-medium hover:underline"
+            >
+              Meet your AI assistant →
+            </Link>
+          </div>
 
           {/* Activity Feed */}
           <div className="flex justify-center mb-8">
