@@ -31,7 +31,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const description = cleaner.bio || `Book ${name} for professional villa cleaning in Alicante, Spain. Rated ${cleaner.rating}/5 with ${cleaner.reviewCount} reviews.`
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alicantecleaners.com'
-  const ogImageUrl = `${baseUrl}/api/og/cleaner/${slug}`
+  // Ensure www prefix for OG images (social crawlers don't follow redirects well)
+  const ogBaseUrl = baseUrl.replace('://alicantecleaners.com', '://www.alicantecleaners.com')
+  const ogImageUrl = `${ogBaseUrl}/api/og/cleaner/${slug}`
 
   return {
     title: `${name} - Villa Cleaner in Alicante | VillaCare`,
