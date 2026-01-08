@@ -258,8 +258,8 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
       {/* Language preference */}
       <LanguageSelector
-        label="Idioma preferido"
-        description="Los mensajes de los propietarios se traducirán a este idioma"
+        label="Preferred Language"
+        description="Messages from owners will be translated to this language"
       />
 
       {/* Menu items */}
