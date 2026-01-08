@@ -19,6 +19,8 @@ export type AuditAction =
   | 'UPDATE_OWNER'
   | 'UPDATE_BOOKING'
   | 'SEND_MESSAGE'
+  | 'SEND_EMAIL'
+  | 'SEND_NURTURING_EMAIL'
   | 'CREATE_PROPERTY'
   | 'UPDATE_PROPERTY'
   | 'DELETE_PROPERTY'
@@ -44,6 +46,8 @@ export function formatAuditAction(action: string): string {
     UPDATE_OWNER: 'Updated owner',
     UPDATE_BOOKING: 'Updated booking',
     SEND_MESSAGE: 'Sent message',
+    SEND_EMAIL: 'Sent email',
+    SEND_NURTURING_EMAIL: 'Sent nurturing email',
     CREATE_PROPERTY: 'Created property',
     UPDATE_PROPERTY: 'Updated property',
     DELETE_PROPERTY: 'Deleted property',

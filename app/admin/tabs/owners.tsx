@@ -13,6 +13,146 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
+// Email compose modal
+function EmailModal({
+  owner,
+  onClose,
+}: {
+  owner: Owner
+  onClose: () => void
+}) {
+  const [subject, setSubject] = useState('Hello from VillaCare')
+  const [message, setMessage] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSend = async () => {
+    if (!subject.trim() || !message.trim()) {
+      setError('Please enter a subject and message')
+      return
+    }
+
+    setSending(true)
+    setError(null)
+
+    try {
+      const res = await fetch('/api/admin/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: owner.email,
+          toName: owner.name.split(' ')[0],
+          subject,
+          message,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to send email')
+      }
+
+      setSent(true)
+      setTimeout(() => {
+        onClose()
+      }, 1500)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send email')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-[#EBEBEB]">
+          <div>
+            <h3 className="font-semibold text-[#1A1A1A]">Send Email</h3>
+            <p className="text-sm text-[#6B6B6B]">To: {owner.email}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-[#F5F5F3] rounded-full"
+          >
+            <svg className="w-5 h-5 text-[#6B6B6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-4 space-y-4">
+          {sent ? (
+            <div className="py-8 text-center">
+              <div className="w-16 h-16 bg-[#E8F5E9] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-[#2E7D32]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p className="text-[#1A1A1A] font-medium">Email sent!</p>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Subject</label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A]"
+                  placeholder="Email subject..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Message</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={6}
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A] resize-none"
+                  placeholder="Write your message..."
+                />
+              </div>
+
+              {error && (
+                <p className="text-sm text-[#C62828] bg-[#FFEBEE] px-3 py-2 rounded-lg">{error}</p>
+              )}
+
+              <div className="text-xs text-[#9B9B9B]">
+                From: support@alicantecleaners.com
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        {!sent && (
+          <div className="p-4 border-t border-[#EBEBEB] flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 bg-white border border-[#DEDEDE] text-[#1A1A1A] rounded-xl text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={sending || !subject.trim() || !message.trim()}
+              className="flex-1 py-3 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {sending ? 'Sending...' : 'Send Email'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // Get relative time string
 function getRelativeTime(date: Date | string | null | undefined): string {
   if (!date) return 'Never'
@@ -43,6 +183,7 @@ export default function OwnersTab({ owners }: Props) {
   const [expandedOwner, setExpandedOwner] = useState<string | null>(null)
   const [currentView, setCurrentView] = useState<View>('list')
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null)
+  const [emailingOwner, setEmailingOwner] = useState<Owner | null>(null)
 
   const handleCopyEmail = async (email: string) => {
     const success = await copyToClipboard(email)
@@ -276,12 +417,12 @@ export default function OwnersTab({ owners }: Props) {
                 >
                   {copiedEmail === owner.email ? '✓ Copied!' : '📋 Copy'}
                 </button>
-                <a
-                  href={`mailto:${owner.email}?subject=VillaCare%20-%20Hello%20from%20the%20team`}
-                  className="flex-1 py-2.5 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform text-center"
+                <button
+                  onClick={() => setEmailingOwner(owner)}
+                  className="flex-1 py-2.5 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
                 >
                   ✉️ Email
-                </a>
+                </button>
                 {owner.phone && (
                   <a
                     href={`https://wa.me/${owner.phone.replace(/\D/g, '')}?text=${encodeURIComponent('Hi! This is the VillaCare team.')}`}
@@ -319,6 +460,14 @@ export default function OwnersTab({ owners }: Props) {
           ))
         )}
       </div>
+
+      {/* Email Modal */}
+      {emailingOwner && (
+        <EmailModal
+          owner={emailingOwner}
+          onClose={() => setEmailingOwner(null)}
+        />
+      )}
     </div>
   )
 }

@@ -87,13 +87,31 @@ const createMagicLinkTool: ChatCompletionTool = {
 
 export async function POST(request: Request) {
   try {
-    const { cleanerSlug, message, history = [] } = await request.json()
+    const { cleanerSlug, message, history = [], sessionId } = await request.json()
 
     if (!cleanerSlug || !message) {
       return NextResponse.json(
         { error: 'Missing cleanerSlug or message' },
         { status: 400 }
       )
+    }
+
+    // Get or create conversation for this session
+    let conversation = null
+    if (sessionId) {
+      conversation = await db.publicChatConversation.findFirst({
+        where: { sessionId, cleanerSlug },
+      })
+
+      if (!conversation) {
+        conversation = await db.publicChatConversation.create({
+          data: {
+            sessionId,
+            cleanerSlug,
+            messageCount: 0,
+          },
+        })
+      }
     }
 
     // Get cleaner info
@@ -269,6 +287,17 @@ IMPORTANT RULES:
             magicLinkCreated = true
             magicLinkUrl = onboardingResult.magicLink
 
+            // Update conversation with visitor info from tool call
+            if (conversation) {
+              await db.publicChatConversation.update({
+                where: { id: conversation.id },
+                data: {
+                  visitorName: args.visitorName,
+                  visitorPhone: args.visitorPhone,
+                },
+              })
+            }
+
             // Get final response from AI
             const toolResultMessages = [
               ...messages,
@@ -299,11 +328,41 @@ IMPORTANT RULES:
     const finalContent = assistantMessage?.content ||
       'Sorry, I had trouble responding. Please try again.'
 
+    // Store messages in conversation (async, don't block response)
+    if (conversation) {
+      Promise.all([
+        // Store user message
+        db.publicChatMessage.create({
+          data: {
+            conversationId: conversation.id,
+            role: 'user',
+            content: message,
+          },
+        }),
+        // Store assistant response
+        db.publicChatMessage.create({
+          data: {
+            conversationId: conversation.id,
+            role: 'assistant',
+            content: finalContent,
+          },
+        }),
+        // Update conversation stats
+        db.publicChatConversation.update({
+          where: { id: conversation.id },
+          data: {
+            messageCount: { increment: 2 },
+            lastMessageAt: new Date(),
+          },
+        }),
+      ]).catch(err => console.error('Failed to store chat messages:', err))
+    }
+
     // Log usage
     await db.aIUsageLog.create({
       data: {
         cleanerId: cleaner.id,
-        conversationId: 'public-chat',
+        conversationId: conversation?.id || 'public-chat',
         action: magicLinkCreated ? 'PUBLIC_CHAT_ONBOARDING' : 'PUBLIC_CHAT',
         tokensUsed,
       },

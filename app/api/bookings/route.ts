@@ -5,6 +5,8 @@ import { db } from '@/lib/db'
 import { notifyCleanerNewBooking, sendBookingConfirmation } from '@/lib/whatsapp'
 import { notifyAdminNewBooking } from '@/lib/email'
 import { checkRateLimit, getClientIdentifier, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
+import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
+import { linkChatConversations } from '@/lib/nurturing/link-conversations'
 import { z } from 'zod'
 
 // Service definitions with hours - server is source of truth
@@ -129,6 +131,7 @@ export async function POST(request: NextRequest) {
 
       let ownerId: string
       let propertyId: string
+      let nurturingInfo: { ownerId: string; userId: string; email: string | null; phone: string | null } | null = null
 
       if (session?.user?.id) {
         // Logged in user - find or create their owner profile
@@ -144,6 +147,8 @@ export async function POST(request: NextRequest) {
               trusted: false,
             },
           })
+          // Track for nurturing
+          nurturingInfo = { ownerId: owner.id, userId: session.user.id, email: session.user.email || null, phone: null }
         }
         ownerId = owner.id
 
@@ -203,6 +208,8 @@ export async function POST(request: NextRequest) {
               trusted: false,
             },
           })
+          // Track for nurturing
+          nurturingInfo = { ownerId: owner.id, userId: user.id, email: guestEmail, phone: guestPhone || null }
         }
         ownerId = owner.id
 
@@ -249,10 +256,10 @@ export async function POST(request: NextRequest) {
         include: { user: { select: { name: true, phone: true } } },
       })
 
-      return { booking, owner, ownerId }
+      return { booking, owner, ownerId, nurturingInfo }
     })
 
-    const { booking, owner } = result
+    const { booking, owner, nurturingInfo } = result
 
     // Format date for notifications
     const formattedDate = new Date(date).toLocaleDateString('en-GB', {
@@ -301,6 +308,12 @@ export async function POST(request: NextRequest) {
       price: `€${price}`,
       bookingId: booking.id,
     }).catch((err) => console.error('Failed to notify admins:', err))
+
+    // Trigger welcome email for new owners
+    if (nurturingInfo) {
+      triggerWelcomeEmail(nurturingInfo.ownerId).catch(console.error)
+      linkChatConversations(nurturingInfo.userId, nurturingInfo.email, nurturingInfo.phone).catch(console.error)
+    }
 
     return NextResponse.json({
       success: true,

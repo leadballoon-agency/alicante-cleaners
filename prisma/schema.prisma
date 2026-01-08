@@ -229,12 +229,18 @@ model Owner {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  properties    Property[]
-  bookings      Booking[]
-  reviews       Review[]
-  conversations Conversation[]
-  arrivalPreps  ArrivalPrep[]
+  // AI Nurturing
+  derivedName        String?              // Name parsed from email if user.name is null
+  welcomeEmailSentAt DateTime?            // Track when welcome email was sent
+
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  properties              Property[]
+  bookings                Booking[]
+  reviews                 Review[]
+  conversations           Conversation[]
+  arrivalPreps            ArrivalPrep[]
+  publicChatConversations PublicChatConversation[]
+  nurturingCampaigns      NurturingCampaign[]
 }
 
 model Property {
@@ -811,4 +817,90 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
   @@index([target, targetType])
+}
+
+// ============================================
+// AI Owner Nurturing System
+// ============================================
+
+// Store public chat conversations for context
+model PublicChatConversation {
+  id            String   @id @default(cuid())
+  sessionId     String   // Browser session ID for anonymous users
+  cleanerSlug   String   // Which cleaner's profile page
+  ownerId       String?  // Linked after signup
+
+  // Visitor identification (before signup)
+  visitorEmail  String?
+  visitorPhone  String?
+  visitorName   String?
+
+  // AI-generated summary for nurturing context
+  summary       String?  @db.Text
+  sentiment     String?  // positive, neutral, negative
+  topic         String?  // booking_inquiry, pricing, availability, general
+
+  // Tracking
+  messageCount  Int      @default(0)
+  lastMessageAt DateTime @default(now())
+  linkedAt      DateTime? // When linked to owner after signup
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  owner    Owner?               @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  messages PublicChatMessage[]
+
+  @@index([sessionId])
+  @@index([visitorEmail])
+  @@index([visitorPhone])
+  @@index([ownerId])
+  @@index([cleanerSlug, createdAt])
+}
+
+model PublicChatMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String   // 'user' or 'assistant'
+  content        String   @db.Text
+  createdAt      DateTime @default(now())
+
+  conversation PublicChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+// Types of nurturing emails
+enum NurturingEmailType {
+  WELCOME              // Sent immediately on signup
+  PROFILE_INCOMPLETE   // 2 days after signup if no name/property
+  FIRST_BOOKING_PROMPT // 3 days after property added, no booking
+  RE_ENGAGEMENT        // 2 weeks no login
+}
+
+// Track nurturing emails sent to each owner
+model NurturingCampaign {
+  id        String             @id @default(cuid())
+  ownerId   String
+  emailType NurturingEmailType
+
+  // Email content (AI-generated)
+  subject   String
+  body      String             @db.Text
+
+  // Personalization context used
+  context   Json?
+
+  // Tracking
+  sentAt    DateTime           @default(now())
+  openedAt  DateTime?
+  clickedAt DateTime?
+
+  // Result
+  messageId String?            // Resend message ID
+  error     String?            // If send failed
+
+  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerId, emailType]) // Only one of each type per owner
+  @@index([sentAt])
 }

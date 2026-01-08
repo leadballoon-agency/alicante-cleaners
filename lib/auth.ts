@@ -7,6 +7,8 @@ import { Resend } from 'resend'
 import { cookies } from 'next/headers'
 import { db } from './db'
 import { verifyCode, normalizePhone } from './otp'
+import { triggerWelcomeEmail } from './nurturing/send-email'
+import { linkChatConversations } from './nurturing/link-conversations'
 
 // Lazy initialize Resend only when needed (avoids build-time errors if API key missing)
 let resendClient: Resend | null = null
@@ -111,6 +113,12 @@ export const authOptions: NextAuthOptions = {
             },
             include: { owner: true },
           })
+
+          // Trigger welcome email and link chat conversations for new owner
+          if (user.owner) {
+            triggerWelcomeEmail(user.owner.id).catch(console.error)
+            linkChatConversations(user.id, user.email, phone).catch(console.error)
+          }
         } else if (user.role !== 'OWNER' && user.role !== 'ADMIN') {
           // Phone belongs to a cleaner, not an owner
           return null
@@ -209,13 +217,17 @@ export const authOptions: NextAuthOptions = {
           // Create Owner profile if doesn't exist
           if (!dbUser.owner && dbUser.role !== 'ADMIN' && dbUser.role !== 'CLEANER') {
             const referralCode = generateReferralCode(dbUser.name || dbUser.email || 'USER')
-            await db.owner.create({
+            const owner = await db.owner.create({
               data: {
                 userId: user.id,
                 referralCode,
                 trusted: false,
               },
             })
+
+            // Trigger welcome email and link chat conversations for new owner
+            triggerWelcomeEmail(owner.id).catch(console.error)
+            linkChatConversations(user.id, dbUser.email, dbUser.phone).catch(console.error)
           }
         }
       }

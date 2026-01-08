@@ -23,6 +23,17 @@ interface PublicChatWidgetProps {
   cleaner: CleanerInfo
 }
 
+// Generate or retrieve session ID for conversation tracking
+function getSessionId(): string {
+  if (typeof window === 'undefined') return ''
+  let sessionId = sessionStorage.getItem('chat_session_id')
+  if (!sessionId) {
+    sessionId = `chat_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+    sessionStorage.setItem('chat_session_id', sessionId)
+  }
+  return sessionId
+}
+
 export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
   const searchParams = useSearchParams()
   const applicantId = searchParams.get('applicant')
@@ -33,7 +44,13 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [hasInteracted, setHasInteracted] = useState(false)
+  const [sessionId, setSessionId] = useState<string>('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Initialize session ID on mount
+  useEffect(() => {
+    setSessionId(getSessionId())
+  }, [])
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -88,11 +105,13 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
             applicantId,
             message: userMessage.content,
             history: messages.map(m => ({ role: m.role, content: m.content })),
+            sessionId,
           }
         : {
             cleanerSlug: cleaner.slug,
             message: userMessage.content,
             history: messages.map(m => ({ role: m.role, content: m.content })),
+            sessionId,
           }
 
       const response = await fetch(apiEndpoint, {

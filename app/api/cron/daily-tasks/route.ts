@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { processBookingReminders } from '@/lib/notifications/booking-notifications'
 import { syncAllTeamCalendars } from '@/lib/google-calendar'
+import { processOwnerNurturing } from '@/lib/nurturing/owner-nurturing'
 
 /**
  * Combined Daily Cron Job
@@ -11,6 +12,7 @@ import { syncAllTeamCalendars } from '@/lib/google-calendar'
  * 1. Process booking reminders
  * 2. Clean up old rate limit entries
  * 3. Sync team members' Google Calendars
+ * 4. Process owner nurturing emails
  */
 
 export async function GET(request: NextRequest) {
@@ -73,6 +75,25 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       console.error('[Cron] Team calendar sync failed:', error)
       results.teamCalendarSync = { success: false, error: String(error) }
+    }
+
+    // Task 4: Process owner nurturing emails
+    try {
+      const nurturingResult = await processOwnerNurturing()
+      results.ownerNurturing = {
+        success: true,
+        profileNudges: nurturingResult.profileNudges,
+        bookingPrompts: nurturingResult.bookingPrompts,
+        reEngagements: nurturingResult.reEngagements,
+        errors: nurturingResult.errors.length,
+      }
+      console.log(`[Cron] Owner nurturing: ${nurturingResult.profileNudges} profile nudges, ${nurturingResult.bookingPrompts} booking prompts, ${nurturingResult.reEngagements} re-engagements`)
+      if (nurturingResult.errors.length > 0) {
+        console.warn('[Cron] Owner nurturing errors:', nurturingResult.errors)
+      }
+    } catch (error) {
+      console.error('[Cron] Owner nurturing failed:', error)
+      results.ownerNurturing = { success: false, error: String(error) }
     }
 
     return NextResponse.json({

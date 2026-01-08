@@ -12,6 +12,8 @@ import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
 import { onBookingCreated } from '@/lib/notifications/booking-notifications'
 import { encryptAccessNotes } from '@/lib/encryption'
+import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
+import { linkChatConversations } from '@/lib/nurturing/link-conversations'
 
 function generateReferralCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -80,10 +82,12 @@ export async function POST(
 
     let owner = user?.owner
     let isNewUser = false
+    let isNewOwner = false
 
     if (!user) {
       // Create new user
       isNewUser = true
+      isNewOwner = true
       user = await db.user.create({
         data: {
           name: onboarding.visitorName,
@@ -105,6 +109,7 @@ export async function POST(
       })
     } else if (!owner) {
       // User exists but no owner profile
+      isNewOwner = true
       owner = await db.owner.create({
         data: {
           userId: user.id,
@@ -196,7 +201,11 @@ export async function POST(
       path: '/',
     })
 
-    // TODO: Send notification to cleaner about new booking request
+    // Trigger welcome email and link chat conversations for new owner
+    if (isNewOwner) {
+      triggerWelcomeEmail(owner.id).catch(console.error)
+      linkChatConversations(user.id, email, onboarding.visitorPhone).catch(console.error)
+    }
 
     return NextResponse.json({
       success: true,

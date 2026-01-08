@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
+import { linkChatConversations } from '@/lib/nurturing/link-conversations'
 
 // GET /api/dashboard/owner - Get owner profile + stats
 export async function GET() {
@@ -69,6 +71,10 @@ export async function GET() {
           },
         },
       })
+
+      // Trigger welcome email and link chat conversations for new owner
+      triggerWelcomeEmail(owner.id).catch(console.error)
+      linkChatConversations(session.user.id, user.email, user.phone).catch(console.error)
     }
 
     // Get referral count by counting users who were referred by this owner
