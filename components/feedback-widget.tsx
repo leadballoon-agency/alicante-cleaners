@@ -172,7 +172,7 @@ export default function FeedbackWidget() {
     if (!pathname) return false
     const segments = pathname.split('/').filter(Boolean)
     if (segments.length !== 1) return false
-    const knownRoots = ['about', 'login', 'join', 'dashboard', 'owner', 'admin', 'onboarding', 'privacy', 'terms']
+    const knownRoots = ['about', 'login', 'join', 'dashboard', 'owner', 'admin', 'onboarding', 'privacy', 'terms', 'guide', 'onboard']
     return !knownRoots.includes(segments[0])
   })()
 
