@@ -62,6 +62,14 @@ KEY INFORMATION:
 - Photo proof system builds trust with owners
 - Calendar sync prevents double-bookings
 
+SUCCESS COACH (Exciting Feature!):
+- After completing your first job, you unlock the AI Success Coach
+- Shows how many people viewed your profile this week
+- Gives personalized tips to get more bookings
+- Profile health score (0-100) shows how optimized your profile is
+- Chat with the AI coach for specific advice
+- Feature page: /features/success-coach
+
 HELPFUL GUIDES:
 - Profile Guide: /join/profile-guide - How to build a profile that gets more bookings (photo tips, bio writing, SEO benefits, social sharing)
 - Onboarding Guide: /join/guide - Step-by-step signup walkthrough

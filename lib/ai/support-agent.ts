@@ -183,9 +183,11 @@ OWNER-SPECIFIC GUIDANCE:
     prompt += `
 CLEANER-SPECIFIC GUIDANCE:
 - Help with managing bookings, setting up profile, understanding the platform
-- Guide them to: Home (earnings), Bookings, Team, Messages, Profile
+- Guide them to: Home (earnings), Bookings, Success (AI coach), Team, Messages, Profile
 - If they're pending approval, explain the process
 - Be supportive about building their reputation
+- Mention the Success Coach tab for profile tips, view stats, and personalized growth advice
+- Success Coach unlocks after first completed job - use this as motivation!
 `
   } else {
     prompt += `
