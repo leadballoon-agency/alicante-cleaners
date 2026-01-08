@@ -70,3 +70,39 @@ Reviews require approval before publishing:
 - Completion rate: Should be 95%+
 - Review score: Platform average should stay above 4.5
 - Pending applications: Clear within 48h
+
+## AI Agents
+
+The platform has 7 AI agents that help different users:
+
+| Agent | Who It Helps | What It Does |
+|-------|--------------|--------------|
+| **Admin Agent** | Admins | Platform management, cleaner approval, stats, messaging |
+| **Success Agent** | Cleaners | Profile coaching, growth tips, view stats |
+| **Cleaner Agent** | Cleaners | Dashboard help, booking guidance |
+| **Owner Agent** | Owners | Booking help, property management |
+| **Onboarding Agent** | New cleaners | Signup assistance |
+| **Public Chat Agent** | Website visitors | Pre-booking inquiries |
+| **Support Agent** | Everyone | Contextual help across platform |
+
+### Success Agent Details
+
+The Success Agent (Success Coach) helps cleaners maximize their opportunity:
+
+**What it analyzes:**
+- Profile completeness score (0-100)
+- Profile views from PageView table
+- Booking history and revenue
+- Response rate and patterns
+- Team opportunities
+
+**Gamification:**
+- **Locked** until first completed job (shows teaser progress bar)
+- **Unlocked** after first job (full AI chat, stats, tips)
+
+**Common recommendations:**
+- Add a profile photo (3x more bookings)
+- Write a longer bio (50+ words)
+- Cover high-demand areas (San Juan, El Campello)
+- Respond quickly to bookings
+- Import external reviews (Google, Facebook)

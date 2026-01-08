@@ -65,6 +65,59 @@ Alicante Cleaners connects professional cleaners with villa owners in the Alican
 
 **See our complete profile guide:** `/join/profile-guide` - includes photo tips, bio examples, SEO benefits, and how to share your profile on social media.
 
+## Success Coach (AI Assistant)
+
+The **Success tab** in your dashboard provides personalized coaching to help you grow on the platform.
+
+### What It Shows
+
+**Stats Overview:**
+- **Profile Score** (0-100) - How complete and optimized your profile is
+- **Profile Views** - How many people viewed your profile this week
+- **Completed Jobs** - Total jobs you've finished
+
+**Profile Checklist:**
+Each item shows if it's done and its priority:
+- Photo (high priority) - Profiles with photos get 3x more bookings
+- Bio length (medium priority) - Aim for 50+ words
+- Service areas (high priority) - Cover high-demand areas
+- Hourly rate (medium priority) - Be competitive
+- Reviews (medium priority) - Ask happy clients to leave one
+- Languages (low priority) - Add all languages you speak
+- Calendar sync (low priority) - Connect Google Calendar
+
+### Unlocking Full Features
+
+**Before your first completed job:**
+- You'll see a progress bar showing profile completion
+- Checklist of items to improve
+- Preview of what's coming (Success Coach locked)
+
+**After your first completed job:**
+- Full AI Success Coach chat unlocked
+- Profile views statistics
+- Revenue insights and trends
+- Personalized growth recommendations
+
+### Talking to the Success Coach
+
+The Success Coach can help with:
+- "How can I get more bookings?"
+- "Help me improve my profile"
+- "What areas are in demand?"
+- "How do I import my Google reviews?"
+- "Should I join a team?"
+
+The coach analyzes your actual data - your profile, views, bookings, and reviews - to give specific advice, not generic tips.
+
+### Quick Wins It Might Suggest
+
+1. **Add a photo** if you don't have one
+2. **Expand your bio** if it's too short
+3. **Add high-demand areas** like San Juan or El Campello
+4. **Check your response rate** - respond to bookings within 24 hours
+5. **Ask for reviews** from clients you've worked with
+
 ## Viewing Booking Details (Peek-to-Lock)
 
 From your Home tab, you can view full booking details by **holding** on any booking card:
