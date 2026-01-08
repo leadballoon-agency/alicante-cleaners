@@ -38,6 +38,9 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
   const [bio, setBio] = useState(cleaner.bio || '')
   const [hourlyRate, setHourlyRate] = useState(cleaner.hourlyRate.toString())
   const [selectedAreas, setSelectedAreas] = useState<string[]>(cleaner.serviceAreas)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
 
   // Phone change state
   const [phoneStep, setPhoneStep] = useState<PhoneStep>('initial')
@@ -64,12 +67,71 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
     }
   }
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type)) {
+      showToast('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.', 'error')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      showToast('File too large. Maximum size is 5MB.', 'error')
+      return
+    }
+
+    setPhotoFile(file)
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file)
+    setPhotoPreview(previewUrl)
+  }
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!photoFile) return null
+
+    setUploadingPhoto(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', photoFile)
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to upload photo')
+      }
+
+      const data = await response.json()
+      return data.url
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to upload photo', 'error')
+      return null
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     try {
       const updates: Record<string, unknown> = {}
 
       if (editMode === 'profile') {
+        // Upload photo first if one was selected
+        if (photoFile) {
+          const photoUrl = await uploadPhoto()
+          if (photoUrl) {
+            updates.photo = photoUrl
+          }
+        }
         updates.name = name.trim()
         updates.bio = bio.trim()
       } else if (editMode === 'pricing') {
@@ -115,6 +177,9 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
       }
 
       showToast('Profile updated successfully!', 'success')
+      // Reset photo state
+      setPhotoPreview(null)
+      setPhotoFile(null)
       setEditMode(null)
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to save', 'error')
@@ -321,7 +386,11 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-[#1A1A1A]">Edit Profile</h2>
               <button
-                onClick={() => setEditMode(null)}
+                onClick={() => {
+                  setPhotoPreview(null)
+                  setPhotoFile(null)
+                  setEditMode(null)
+                }}
                 className="text-[#9B9B9B] hover:text-[#1A1A1A]"
               >
                 ✕
@@ -329,6 +398,39 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
             </div>
 
             <div className="space-y-4">
+              {/* Photo upload */}
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                  Profile Photo
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden relative flex-shrink-0">
+                    {photoPreview ? (
+                      <Image src={photoPreview} alt="Preview" fill className="object-cover" unoptimized />
+                    ) : cleaner.photo ? (
+                      <Image src={cleaner.photo} alt={cleaner.name} fill className="object-cover" unoptimized />
+                    ) : (
+                      <span className="text-3xl">👤</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#F5F5F3] rounded-xl text-sm font-medium text-[#1A1A1A] cursor-pointer hover:bg-[#EBEBEB] transition-colors">
+                      <span>📷</span>
+                      <span>{photoFile ? 'Change Photo' : 'Upload Photo'}</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handlePhotoSelect}
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-xs text-[#9B9B9B] mt-2">
+                      JPEG, PNG, WebP or GIF. Max 5MB.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
                   Display Name
@@ -359,17 +461,21 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => setEditMode(null)}
+                onClick={() => {
+                  setPhotoPreview(null)
+                  setPhotoFile(null)
+                  setEditMode(null)
+                }}
                 className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving || !name.trim()}
+                disabled={saving || uploadingPhoto || !name.trim()}
                 className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
               >
-                {saving ? 'Saving...' : 'Save Changes'}
+                {uploadingPhoto ? 'Uploading...' : saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
