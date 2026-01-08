@@ -84,6 +84,45 @@ You can sync your bookings with Google Calendar, Apple Calendar, or Outlook:
 - Payments are made weekly via bank transfer
 - You can view earnings in the Home tab
 
+## Help Pages & Guides
+
+If you're struggling with any part of the platform, we have step-by-step guides:
+
+| Guide | URL | What It Covers |
+|-------|-----|----------------|
+| **Onboarding Guide** | `/join/guide` | Complete walkthrough of signing up - phone verification, adding photo, selecting areas, setting rates |
+| **Calendar Sync Guide** | `/join/calendar-guide` | How to connect Google Calendar, privacy protection, troubleshooting sync issues |
+
+### Common Issues & Solutions
+
+**Can't receive SMS verification code?**
+- Check you entered the correct phone number with country code
+- Wait 30 seconds and tap "Resend"
+- Make sure your phone can receive international SMS
+- See full guide: `/join/guide`
+
+**Google Calendar not syncing?**
+- Go to Dashboard → Availability → "Connect Google Calendar"
+- Make sure you're signed into the correct Google account
+- Grant permission when prompted
+- We only see busy/free times, not event details (privacy protected)
+- See full guide: `/join/calendar-guide`
+
+**Want to edit your profile?**
+- Go to Dashboard → Profile tab
+- Tap on any field to edit (name, bio, photo, areas, rates)
+- Changes save automatically
+
+**Need to update your phone number?**
+- Go to Dashboard → Account tab
+- Tap "Change Phone Number"
+- You'll need to verify the new number with an SMS code
+
+**Want to pause or delete your account?**
+- Go to Dashboard → Account tab
+- "Pause Account" - temporarily hide your profile (30 days max)
+- "Delete Account" - permanent removal after 30-day grace period
+
 ## Support
 
 For urgent issues, contact admin through the Messages tab or email hello@alicantecleaners.com
