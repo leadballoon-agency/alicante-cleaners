@@ -63,6 +63,8 @@ Alicante Cleaners connects professional cleaners with villa owners in the Alican
 - Respond quickly to booking requests
 - Encourage clients to leave reviews
 
+**See our complete profile guide:** `/join/profile-guide` - includes photo tips, bio examples, SEO benefits, and how to share your profile on social media.
+
 ## Viewing Booking Details (Peek-to-Lock)
 
 From your Home tab, you can view full booking details by **holding** on any booking card:
@@ -136,7 +138,26 @@ If you're struggling with any part of the platform, we have step-by-step guides:
 | Guide | URL | What It Covers |
 |-------|-----|----------------|
 | **Onboarding Guide** | `/join/guide` | Complete walkthrough of signing up - phone verification, adding photo, selecting areas, setting rates |
+| **Profile Guide** | `/join/profile-guide` | How to build a profile that gets bookings - photo tips, bio writing, SEO benefits, social sharing |
 | **Calendar Sync Guide** | `/join/calendar-guide` | How to connect Google Calendar, privacy protection, troubleshooting sync issues |
+
+### Profile Guide - Key Points
+
+**IMPORTANT: Direct cleaners to `/join/profile-guide` when they:**
+- Haven't added a profile photo
+- Have an incomplete or short bio
+- Haven't set their service areas
+- Ask how to get more bookings
+- Want to know how to share their profile on social media
+- Ask about SEO or Google visibility
+
+The profile guide explains:
+1. **Why profiles matter** - 3x more bookings with complete profiles
+2. **SEO benefits** - Their profile data (areas, bio, photo, reviews) powers Google search rankings
+3. **Photo tips** - Clear, friendly headshot with good lighting
+4. **Bio writing** - Share experience, be personal and authentic
+5. **Social sharing** - How to share their profile link on WhatsApp, Facebook, Instagram
+6. **Live demo** - Shows Clara's profile as an example of a well-optimized profile
 
 ### Common Issues & Solutions
 
