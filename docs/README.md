@@ -62,12 +62,14 @@ Currently in **Beta** (free for all users). Planned monetization:
 
 | Document | Description |
 |----------|-------------|
-| [Architecture](./ARCHITECTURE.md) | System design, tech stack, data flow |
+| [Architecture](./ARCHITECTURE.md) | System design, tech stack, data flow, AI agents |
 | [Database](./DATABASE.md) | Prisma schema, models, relationships |
 | [API Reference](./API.md) | All endpoints with request/response examples |
 | [Integrations](./INTEGRATIONS.md) | Twilio, OpenAI, Anthropic, Resend |
 | [Frontend](./FRONTEND.md) | Pages, components, design system |
 | [Developer Guide](./DEVELOPER.md) | Setup, deployment, common tasks |
+| [AI Sales Assistant](./AI-SALES-ASSISTANT.md) | Public-facing AI booking flow |
+| [Revenue Model](./REVENUE.md) | Fee structure, Stripe Connect plans, crypto-ready |
 
 ---
 
@@ -80,7 +82,7 @@ Currently in **Beta** (free for all users). Planned monetization:
 | **API Endpoints** | 80+ endpoints |
 | **Database Models** | 30+ tables |
 | **Languages Supported** | 7 (EN, ES, DE, FR, NL, IT, PT) |
-| **AI Integrations** | 6 (translation, admin agent, sales agent, support, owner, cleaner) |
+| **AI Agents** | 7 (Admin, Success, Sales, Onboarding, Support, Owner, Cleaner) |
 
 ---
 
@@ -145,6 +147,38 @@ Currently in **Beta** (free for all users). Planned monetization:
 - Mark Taylor - Product & Development
 - Kerry Taylor - Operations
 - Clara Rodrigues - Co-founder, Lead Cleaner (domain expertise)
+
+---
+
+## Screenshots
+
+All screenshots are stored in `/public/screenshots/` and available at `https://alicantecleaners.com/screenshots/[filename]`
+
+### Key Screenshots
+
+| Screenshot | Path | Description |
+|------------|------|-------------|
+| Homepage | `homepage.png` | Owner-focused landing with cleaner directory |
+| Cleaner Profile | `cleaner-profile.png` | Public profile with reviews, services, booking |
+| Booking Flow | `booking-flow.png` | 4-step booking wizard |
+| Cleaner Dashboard | `cleaner-dashboard-home.png` | Jobs timeline with calendar view |
+| Success Coach | `success-coach-main.png` | AI coaching tab with stats |
+| Success Chat | `success-coach-chat.png` | AI coach conversation example |
+| Team Tab | `cleaner-team-tab.png` | Team management for leaders |
+| Owner Dashboard | `owner-dashboard.png` | Property owner view |
+| AI Sales Agent | `ai-sales-assistant.png` | AI handling booking inquiries |
+| Auto Translation | `auto-translation.png` | Message translation in action |
+| Smart Widget | `smart-widget-tap-quick-actions.png` | Navigation widget |
+| Onboarding | `onboarding-step1-phone.png` | Phone verification step |
+
+### Screenshot URLs (Live)
+
+```
+https://alicantecleaners.com/screenshots/success-coach-main.png
+https://alicantecleaners.com/screenshots/cleaner-dashboard-home.png
+https://alicantecleaners.com/screenshots/ai-sales-assistant.png
+https://alicantecleaners.com/screenshots/homepage.png
+```
 
 ---
 
