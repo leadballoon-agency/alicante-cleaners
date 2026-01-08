@@ -9,137 +9,137 @@ type Lang = 'en' | 'es'
 const translations = {
   en: {
     backToHome: 'Back to Home',
-    tryCta: 'Try It Now',
+    tryCta: 'Join Now',
     badge: 'AI-Powered',
-    title: 'Meet Your Villa Assistant',
-    subtitle: 'Every cleaner profile has an AI assistant that speaks your language, answers your questions, and helps you book instantly.',
-    readyTitle: 'Ready to try it?',
-    readyText: 'Visit any cleaner profile and click "Chat with [Name]" to start a conversation. The assistant responds instantly in your language.',
-    findCleaner: 'Find a Cleaner',
-    features: 'No app needed · Speaks 7 languages · Books for you',
-    faqTitle: 'How It Works',
+    title: 'Your AI Sales Assistant',
+    subtitle: 'Your profile includes an AI assistant that answers client questions, handles pricing inquiries, and helps them book - while you focus on cleaning.',
+    readyTitle: 'Get more bookings automatically',
+    readyText: 'Join Alicante Cleaners and your profile will have its own AI assistant. It works 24/7, speaks 7 languages, and never misses an inquiry.',
+    joinNow: 'Join as a Cleaner',
+    features: 'Works while you sleep · Speaks 7 languages · Handles bookings',
+    faqTitle: 'How It Works For You',
     contact: 'Questions? Contact us at hello@alicantecleaners.com',
     capabilities: [
       {
-        title: 'Ask about pricing',
-        description: 'Get instant, accurate quotes for any service. The assistant knows exact prices based on the cleaner\'s hourly rate.',
-        tip: 'Ask "How much for a deep clean of my 3-bedroom villa?" and get a precise answer.',
+        title: 'Answers pricing questions',
+        description: 'Clients ask "How much for a 3-bedroom villa?" and your assistant gives them instant, accurate quotes based on your rates.',
+        tip: 'You set your hourly rate once. The AI calculates quotes automatically for regular, deep, and arrival prep cleans.',
       },
       {
-        title: 'Check availability',
-        description: 'Find out which dates and times work. The assistant has real-time access to the cleaner\'s calendar.',
-        tip: 'Try "Are you free this Saturday morning?" - it checks the actual calendar.',
+        title: 'Checks your calendar',
+        description: 'When clients ask about availability, your assistant checks your real calendar and suggests times that work.',
+        tip: 'Sync with Google Calendar and your AI always knows when you\'re free.',
       },
       {
-        title: 'Speak any language',
-        description: 'Ask in English, Spanish, German, French, Dutch, Italian, or Portuguese. The assistant responds in your language automatically.',
-        tip: 'This example shows a Spanish conversation - the assistant detected the language and responded fluently.',
+        title: 'Speaks their language',
+        description: 'British, German, Dutch, French clients - your assistant responds in their language automatically. No translation needed.',
+        tip: 'This example shows a Spanish conversation - but it works just as well in English, German, French, Dutch, Italian, or Portuguese.',
       },
       {
-        title: 'Check service areas',
-        description: 'Verify if your location is covered before booking. The assistant knows exactly which areas each cleaner serves.',
-        tip: 'This German visitor asked about El Campello - the assistant correctly identified it\'s outside Clara\'s service area.',
+        title: 'Knows your service areas',
+        description: 'If someone asks about an area you don\'t cover, your assistant politely lets them know and suggests alternatives.',
+        tip: 'This German visitor asked about El Campello - the assistant correctly identified it\'s outside this cleaner\'s service area.',
       },
       {
-        title: 'Get accurate info',
-        description: 'Ask about what\'s included (or not). The assistant won\'t make things up - it gives honest, accurate answers.',
+        title: 'Gives honest answers',
+        description: 'Your assistant won\'t promise things you don\'t offer. It gives clear, accurate information based on your profile.',
         tip: 'Questions about laundry, supplies, or special requests get clear, truthful responses.',
       },
       {
-        title: 'Book step by step',
-        description: 'When you\'re ready, the assistant guides you through providing all the details needed for a booking.',
-        tip: 'Just say "I\'d like to book" and the assistant walks you through dates, property details, and contact info.',
+        title: 'Guides them to book',
+        description: 'When clients are ready, your assistant collects all the details needed - date, property info, contact details.',
+        tip: 'No back-and-forth messaging needed. The AI gathers everything in one conversation.',
       },
       {
-        title: 'Complete your booking',
-        description: 'Once you provide all details, the assistant creates a magic link and sends it to your phone via SMS.',
-        tip: 'You receive a pre-filled booking page - just add your email and property name to confirm.',
+        title: 'Creates the booking',
+        description: 'Once details are collected, your assistant sends them a magic link. They complete the booking, you get notified via WhatsApp.',
+        tip: 'You receive a WhatsApp with all the booking details. Just reply ACCEPT to confirm.',
       },
     ],
     faqs: [
       {
-        q: 'Is my conversation private?',
-        a: 'Yes. Conversations are only between you and the cleaner\'s profile. We don\'t share your messages or personal information.',
+        q: 'Do I need to monitor the chat?',
+        a: 'No! The AI handles everything. You only get notified when there\'s an actual booking request ready for you to accept.',
       },
       {
-        q: 'How does it know the cleaner\'s info?',
-        a: 'The assistant has access to the cleaner\'s profile: their rates, service areas, availability, and reviews. It gives accurate, personalized answers.',
+        q: 'What if the AI gets something wrong?',
+        a: 'The AI only uses information from your profile - your rates, areas, and availability. It won\'t make things up or promise things you don\'t offer.',
       },
       {
-        q: 'Can I book directly through chat?',
-        a: 'Yes! Provide your details (date, property info, phone) and the assistant sends you a magic link to complete the booking securely.',
+        q: 'How do bookings come through?',
+        a: 'You get a WhatsApp message with all the details. Reply ACCEPT or DECLINE. The owner gets notified automatically.',
       },
       {
-        q: 'What languages are supported?',
-        a: 'English, Spanish, German, French, Dutch, Italian, and Portuguese. The assistant auto-detects your language and responds accordingly.',
+        q: 'Does this cost extra?',
+        a: 'No. The AI assistant is included with your Alicante Cleaners profile at no additional cost.',
       },
     ],
   },
   es: {
     backToHome: 'Volver',
-    tryCta: 'Pruébalo',
+    tryCta: 'Únete',
     badge: 'Con IA',
-    title: 'Tu Asistente de Villa',
-    subtitle: 'Cada perfil de limpiador tiene un asistente IA que habla tu idioma, responde tus preguntas y te ayuda a reservar al instante.',
-    readyTitle: '¿Listo para probarlo?',
-    readyText: 'Visita cualquier perfil de limpiador y haz clic en "Chatear con [Nombre]" para iniciar una conversación. El asistente responde instantáneamente en tu idioma.',
-    findCleaner: 'Buscar limpiador',
-    features: 'Sin app · Habla 7 idiomas · Reserva por ti',
-    faqTitle: 'Cómo Funciona',
+    title: 'Tu Asistente de Ventas IA',
+    subtitle: 'Tu perfil incluye un asistente IA que responde preguntas de clientes, gestiona consultas de precios y les ayuda a reservar - mientras tú te concentras en limpiar.',
+    readyTitle: 'Consigue más reservas automáticamente',
+    readyText: 'Únete a Alicante Cleaners y tu perfil tendrá su propio asistente IA. Funciona 24/7, habla 7 idiomas y nunca pierde una consulta.',
+    joinNow: 'Únete como Limpiador/a',
+    features: 'Funciona mientras duermes · Habla 7 idiomas · Gestiona reservas',
+    faqTitle: 'Cómo Funciona Para Ti',
     contact: '¿Preguntas? Escríbenos a hello@alicantecleaners.com',
     capabilities: [
       {
-        title: 'Pregunta por precios',
-        description: 'Obtén presupuestos instantáneos y precisos para cualquier servicio. El asistente conoce los precios exactos según la tarifa del limpiador.',
-        tip: 'Pregunta "¿Cuánto cuesta una limpieza profunda de mi villa de 3 dormitorios?" y obtén una respuesta precisa.',
+        title: 'Responde preguntas de precios',
+        description: 'Los clientes preguntan "¿Cuánto cuesta una villa de 3 dormitorios?" y tu asistente les da presupuestos instantáneos y precisos basados en tus tarifas.',
+        tip: 'Tú estableces tu tarifa por hora una vez. La IA calcula presupuestos automáticamente para limpiezas regulares, profundas y de llegada.',
       },
       {
-        title: 'Consulta disponibilidad',
-        description: 'Descubre qué fechas y horarios funcionan. El asistente tiene acceso en tiempo real al calendario del limpiador.',
-        tip: 'Prueba "¿Estás libre este sábado por la mañana?" - consulta el calendario real.',
+        title: 'Consulta tu calendario',
+        description: 'Cuando los clientes preguntan por disponibilidad, tu asistente consulta tu calendario real y sugiere horarios que te vienen bien.',
+        tip: 'Sincroniza con Google Calendar y tu IA siempre sabe cuándo estás libre.',
       },
       {
-        title: 'Habla cualquier idioma',
-        description: 'Pregunta en inglés, español, alemán, francés, holandés, italiano o portugués. El asistente responde en tu idioma automáticamente.',
-        tip: 'Este ejemplo muestra una conversación en español - el asistente detectó el idioma y respondió con fluidez.',
+        title: 'Habla su idioma',
+        description: 'Clientes británicos, alemanes, holandeses, franceses - tu asistente responde en su idioma automáticamente. Sin necesidad de traducción.',
+        tip: 'Este ejemplo muestra una conversación en español - pero funciona igual de bien en inglés, alemán, francés, holandés, italiano o portugués.',
       },
       {
-        title: 'Verifica zonas de servicio',
-        description: 'Confirma si tu ubicación está cubierta antes de reservar. El asistente sabe exactamente qué zonas cubre cada limpiador.',
-        tip: 'Este visitante alemán preguntó sobre El Campello - el asistente identificó correctamente que está fuera de la zona de Clara.',
+        title: 'Conoce tus zonas de servicio',
+        description: 'Si alguien pregunta por una zona que no cubres, tu asistente se lo comunica amablemente y sugiere alternativas.',
+        tip: 'Este visitante alemán preguntó sobre El Campello - el asistente identificó correctamente que está fuera de la zona de servicio de esta limpiadora.',
       },
       {
-        title: 'Información precisa',
-        description: 'Pregunta qué está incluido (o no). El asistente no inventa - da respuestas honestas y precisas.',
+        title: 'Da respuestas honestas',
+        description: 'Tu asistente no prometerá cosas que no ofreces. Da información clara y precisa basada en tu perfil.',
         tip: 'Preguntas sobre lavandería, suministros o solicitudes especiales obtienen respuestas claras y veraces.',
       },
       {
-        title: 'Reserva paso a paso',
-        description: 'Cuando estés listo, el asistente te guía para proporcionar todos los detalles necesarios para una reserva.',
-        tip: 'Solo di "Me gustaría reservar" y el asistente te guía con fechas, detalles de la propiedad e información de contacto.',
+        title: 'Les guía para reservar',
+        description: 'Cuando los clientes están listos, tu asistente recoge todos los detalles necesarios - fecha, información de la propiedad, datos de contacto.',
+        tip: 'Sin necesidad de intercambiar mensajes. La IA recopila todo en una conversación.',
       },
       {
-        title: 'Completa tu reserva',
-        description: 'Una vez que proporcionas todos los detalles, el asistente crea un enlace mágico y lo envía a tu teléfono por SMS.',
-        tip: 'Recibes una página de reserva pre-rellenada - solo añade tu email y nombre de propiedad para confirmar.',
+        title: 'Crea la reserva',
+        description: 'Una vez recogidos los detalles, tu asistente les envía un enlace mágico. Ellos completan la reserva, tú recibes notificación por WhatsApp.',
+        tip: 'Recibes un WhatsApp con todos los detalles de la reserva. Solo responde ACEPTAR para confirmar.',
       },
     ],
     faqs: [
       {
-        q: '¿Mi conversación es privada?',
-        a: 'Sí. Las conversaciones son solo entre tú y el perfil del limpiador. No compartimos tus mensajes ni información personal.',
+        q: '¿Tengo que vigilar el chat?',
+        a: '¡No! La IA lo gestiona todo. Solo recibes notificación cuando hay una solicitud de reserva real lista para que la aceptes.',
       },
       {
-        q: '¿Cómo conoce la información del limpiador?',
-        a: 'El asistente tiene acceso al perfil del limpiador: sus tarifas, zonas de servicio, disponibilidad y reseñas. Da respuestas precisas y personalizadas.',
+        q: '¿Y si la IA se equivoca?',
+        a: 'La IA solo usa información de tu perfil - tus tarifas, zonas y disponibilidad. No inventará cosas ni prometerá lo que no ofreces.',
       },
       {
-        q: '¿Puedo reservar directamente por chat?',
-        a: '¡Sí! Proporciona tus detalles (fecha, información de propiedad, teléfono) y el asistente te envía un enlace mágico para completar la reserva de forma segura.',
+        q: '¿Cómo llegan las reservas?',
+        a: 'Recibes un mensaje de WhatsApp con todos los detalles. Responde ACEPTAR o RECHAZAR. El propietario recibe notificación automáticamente.',
       },
       {
-        q: '¿Qué idiomas están soportados?',
-        a: 'Inglés, español, alemán, francés, holandés, italiano y portugués. El asistente auto-detecta tu idioma y responde acordemente.',
+        q: '¿Esto cuesta extra?',
+        a: 'No. El asistente IA está incluido con tu perfil de Alicante Cleaners sin coste adicional.',
       },
     ],
   },
@@ -166,7 +166,7 @@ const languageFlags = [
 ]
 
 export default function AIAssistantFeature() {
-  const [lang, setLang] = useState<Lang>('en')
+  const [lang, setLang] = useState<Lang>('es')
   const t = translations[lang]
 
   return (
@@ -174,7 +174,7 @@ export default function AIAssistantFeature() {
       {/* Header */}
       <header className="bg-white border-b border-[#EBEBEB] sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-[#6B6B6B] hover:text-[#1A1A1A]">
+          <Link href="/join" className="flex items-center gap-2 text-[#6B6B6B] hover:text-[#1A1A1A]">
             <span>←</span>
             <span>{t.backToHome}</span>
           </Link>
@@ -182,24 +182,24 @@ export default function AIAssistantFeature() {
             {/* Language Toggle */}
             <div className="flex items-center bg-[#F5F5F3] rounded-lg p-1">
               <button
-                onClick={() => setLang('en')}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  lang === 'en' ? 'bg-white text-[#1A1A1A] shadow-sm' : 'text-[#6B6B6B]'
-                }`}
-              >
-                EN
-              </button>
-              <button
                 onClick={() => setLang('es')}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   lang === 'es' ? 'bg-white text-[#1A1A1A] shadow-sm' : 'text-[#6B6B6B]'
                 }`}
               >
-                ES
+                🇪🇸 ES
+              </button>
+              <button
+                onClick={() => setLang('en')}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  lang === 'en' ? 'bg-white text-[#1A1A1A] shadow-sm' : 'text-[#6B6B6B]'
+                }`}
+              >
+                🇬🇧 EN
               </button>
             </div>
             <Link
-              href="/#cleaners"
+              href="/join"
               className="bg-[#C4785A] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#B56A4F] transition-colors"
             >
               {t.tryCta}
@@ -301,10 +301,10 @@ export default function AIAssistantFeature() {
             {t.readyText}
           </p>
           <Link
-            href="/#cleaners"
+            href="/join"
             className="inline-block bg-[#C4785A] text-white px-8 py-4 rounded-xl font-medium text-lg hover:bg-[#B56A4F] transition-colors"
           >
-            {t.findCleaner}
+            {t.joinNow}
           </Link>
           <p className="text-sm text-[#9B9B9B] mt-4">
             {t.features}
