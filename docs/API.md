@@ -307,11 +307,21 @@ Get cleaner's bookings.
       "date": "2024-02-15",
       "time": "10:00",
       "owner": { "name": "Sarah M.", "phone": "+447..." },
-      "property": { "name": "Villa Rosa", "address": "..." }
+      "property": {
+        "name": "Villa Rosa",
+        "address": "...",
+        "bedrooms": 3,
+        "accessNotes": "Key code 1234...",
+        "accessNotesAvailable": true,
+        "keyHolderName": "John (Neighbour)",
+        "keyHolderPhone": "+34 612 111 222"
+      }
     }
   ]
 }
 ```
+
+**Note:** `accessNotes`, `keyHolderName`, and `keyHolderPhone` are only returned when the booking is within 24 hours (JIT access control). Outside this window, these fields are null.
 
 ---
 

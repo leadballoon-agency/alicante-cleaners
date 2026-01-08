@@ -31,7 +31,7 @@ const translations = {
   en: {
     home: 'Home',
     bookings: 'Bookings',
-    calendar: 'Calendar',
+    promote: 'Promote',
     messages: 'Messages',
     team: 'Team',
     profile: 'Profile',
@@ -42,7 +42,7 @@ const translations = {
   es: {
     home: 'Inicio',
     bookings: 'Reservas',
-    calendar: 'Calendario',
+    promote: 'Promocionar',
     messages: 'Mensajes',
     team: 'Equipo',
     profile: 'Perfil',
@@ -70,7 +70,7 @@ export default function NavigationMenu({
   const menuItems: MenuItem[] = [
     { id: 'home', icon: '🏠', label: t.home, isScreen: true },
     { id: 'bookings', icon: '📋', label: t.bookings, badgeCount: badges?.bookings, isScreen: true },
-    { id: 'calendar', icon: '📅', label: t.calendar, badge: 'NEW', isScreen: true },
+    { id: 'promote', icon: '📈', label: t.promote, isScreen: true },
     { id: 'messages', icon: '💬', label: t.messages, badgeCount: badges?.messages, isScreen: true },
     { id: 'team', icon: '👥', label: t.team, badgeCount: badges?.team, isScreen: true },
     { id: 'profile', icon: '👤', label: t.profile, isScreen: true },

@@ -28,21 +28,22 @@ async function main() {
 
   // Create test Owners (use magic link to sign in)
   const owners = [
-    { email: 'mark@example.com', name: 'Mark T.', code: 'MARK2024' },
-    { email: 'sarah@example.com', name: 'Sarah W.', code: 'SARA2024' },
-    { email: 'james@example.com', name: 'James M.', code: 'JAME2024' },
-    { email: 'emma@example.com', name: 'Emma B.', code: 'EMMA2024' },
-    { email: 'david@example.com', name: 'David K.', code: 'DAVI2024' },
+    { email: 'mark@example.com', name: 'Mark T.', code: 'MARK2024', phone: '+44 7700 900123' },
+    { email: 'sarah@example.com', name: 'Sarah W.', code: 'SARA2024', phone: '+44 7700 900456' },
+    { email: 'james@example.com', name: 'James M.', code: 'JAME2024', phone: '+44 7700 900789' },
+    { email: 'emma@example.com', name: 'Emma B.', code: 'EMMA2024', phone: '+34 612 987 654' },
+    { email: 'david@example.com', name: 'David K.', code: 'DAVI2024', phone: '+34 623 456 789' },
   ]
 
   const ownerRecords = []
   for (const ownerData of owners) {
     const ownerUser = await prisma.user.upsert({
       where: { email: ownerData.email },
-      update: { name: ownerData.name },
+      update: { name: ownerData.name, phone: ownerData.phone },
       create: {
         email: ownerData.email,
         name: ownerData.name,
+        phone: ownerData.phone,
         role: 'OWNER',
         emailVerified: new Date(),
       },
@@ -241,7 +242,10 @@ async function main() {
 
   const property = await prisma.property.upsert({
     where: { id: 'prop_sanjuan' },
-    update: {},
+    update: {
+      keyHolderName: 'John (Neighbour)',
+      keyHolderPhone: '+34 612 111 222',
+    },
     create: {
       id: 'prop_sanjuan',
       ownerId: primaryOwner.owner.id,
@@ -249,10 +253,71 @@ async function main() {
       address: 'Calle del Mar 42, San Juan, Alicante',
       bedrooms: 3,
       bathrooms: 2,
-      notes: 'Key under the blue pot by the front door. Alarm code is 1234.',
+      notes: 'Call neighbor John (10 mins before) - he is elderly and needs time to let you in. Key code 4521. WiFi VillaGuest password sunshine2024. Please water the orchids on the terrace!',
+      keyHolderName: 'John (Neighbour)',
+      keyHolderPhone: '+34 612 111 222',
     },
   })
   console.log('Created property: San Juan Villa')
+
+  // Create additional properties for different owners
+  const property2 = await prisma.property.upsert({
+    where: { id: 'prop_campello' },
+    update: {},
+    create: {
+      id: 'prop_campello',
+      ownerId: ownerRecords[1].owner.id,
+      name: 'El Campello Apartment',
+      address: 'Av. de la Marina 15, El Campello',
+      bedrooms: 2,
+      bathrooms: 1,
+      notes: 'Keypad entry 5678#. Parking in basement level -1, space 42. Guest arriving at 4pm - please finish by 3.30pm. Extra towels in hallway cupboard.',
+    },
+  })
+  console.log('Created property: El Campello Apartment')
+
+  const property3 = await prisma.property.upsert({
+    where: { id: 'prop_playa' },
+    update: {
+      keyHolderName: 'Rosa (Neighbour #6)',
+      keyHolderPhone: '+34 612 333 444',
+    },
+    create: {
+      id: 'prop_playa',
+      ownerId: ownerRecords[2].owner.id,
+      name: 'Playa San Juan Villa',
+      address: 'Calle Neptuno 8, Playa de San Juan',
+      bedrooms: 4,
+      bathrooms: 3,
+      notes: 'Keys with neighbor Rosa at #6 (ring twice - she is hard of hearing). Pool cover must be removed and stored in shed. Alarm code 1234 ENTER. Check hot tub chemicals and report any issues. WiFi PlayaVilla password beachlife99',
+      keyHolderName: 'Rosa (Neighbour #6)',
+      keyHolderPhone: '+34 612 333 444',
+    },
+  })
+  console.log('Created property: Playa San Juan Villa')
+
+  const property4 = await prisma.property.upsert({
+    where: { id: 'prop_alicante' },
+    update: {
+      keyHolderName: 'Miguel (Concierge)',
+      keyHolderPhone: '+34 612 555 666',
+    },
+    create: {
+      id: 'prop_alicante',
+      ownerId: ownerRecords[3].owner.id,
+      name: 'Alicante City Flat',
+      address: 'Calle Mayor 22, Alicante City',
+      bedrooms: 2,
+      bathrooms: 1,
+      notes: 'Concierge Miguel has spare key (ground floor office, closes 2pm on Saturday). Aircon remotes in kitchen drawer. Please strip beds and start washing machine before leaving. No smoking on balcony as neighbors complain!',
+      keyHolderName: 'Miguel (Concierge)',
+      keyHolderPhone: '+34 612 555 666',
+    },
+  })
+  console.log('Created property: Alicante City Flat')
+
+  // All properties for use in bookings
+  const properties = [property, property2, property3, property4]
 
   // Get cleaners for creating bookings and reviews
   const carmen = await prisma.cleaner.findUnique({ where: { slug: 'carmen' } })
@@ -280,28 +345,88 @@ async function main() {
       data: { teamId: team.id },
     })
 
-    // Create upcoming bookings for Maria (so Clara can see team jobs)
-    const futureDate = new Date()
-    futureDate.setDate(futureDate.getDate() + 3) // 3 days from now
-
-    await prisma.booking.upsert({
-      where: { id: 'booking_maria_upcoming' },
-      update: {},
-      create: {
-        id: 'booking_maria_upcoming',
-        cleanerId: maria.id,
-        ownerId: ownerRecords[1].owner.id,
-        propertyId: property.id,
-        status: 'CONFIRMED',
-        service: 'Deep Clean',
-        price: 90,
-        hours: 5,
-        date: futureDate,
-        time: '09:00',
-      },
-    })
-
     console.log('Created team: Limpieza Alicante Express with Maria as member')
+
+    // Helper function to create a date relative to today
+    const getRelativeDate = (daysFromNow: number): Date => {
+      const date = new Date()
+      date.setDate(date.getDate() + daysFromNow)
+      date.setHours(0, 0, 0, 0) // Reset time to start of day
+      return date
+    }
+
+    // Service configurations
+    const services = {
+      regular: { name: 'Regular Clean', hours: 3, claraPrice: 54, mariaPrice: 48 },
+      deep: { name: 'Deep Clean', hours: 5, claraPrice: 90, mariaPrice: 80 },
+      arrival: { name: 'Arrival Prep', hours: 4, claraPrice: 72, mariaPrice: 64 },
+    }
+
+    // Create many bookings for calendar display
+    const bookingsData = [
+      // TODAY - 2 jobs (good for "today's schedule" view)
+      { id: 'cal_today_1', cleaner: clara, day: 0, time: '18:00', service: services.regular, owner: 0, prop: 0, status: 'CONFIRMED' },
+      { id: 'cal_today_2', cleaner: maria, day: 0, time: '19:00', service: services.deep, owner: 1, prop: 1, status: 'CONFIRMED' },
+
+      // TOMORROW - 1 job
+      { id: 'cal_tom_1', cleaner: clara, day: 1, time: '08:00', service: services.arrival, owner: 2, prop: 2, status: 'PENDING' },
+
+      // DAY 2 - 2 jobs
+      { id: 'cal_d2_1', cleaner: maria, day: 2, time: '10:00', service: services.regular, owner: 3, prop: 3, status: 'CONFIRMED' },
+      { id: 'cal_d2_2', cleaner: clara, day: 2, time: '14:00', service: services.regular, owner: 0, prop: 0, status: 'CONFIRMED' },
+
+      // DAY 3 - BUSY DAY (3 jobs!)
+      { id: 'cal_d3_1', cleaner: clara, day: 3, time: '08:00', service: services.deep, owner: 1, prop: 1, status: 'CONFIRMED' },
+      { id: 'cal_d3_2', cleaner: maria, day: 3, time: '09:00', service: services.regular, owner: 2, prop: 2, status: 'CONFIRMED' },
+      { id: 'cal_d3_3', cleaner: clara, day: 3, time: '15:00', service: services.regular, owner: 3, prop: 3, status: 'PENDING' },
+
+      // DAY 5 - 1 job
+      { id: 'cal_d5_1', cleaner: maria, day: 5, time: '11:00', service: services.arrival, owner: 0, prop: 0, status: 'PENDING' },
+
+      // DAY 7 - BUSY DAY (3 jobs!)
+      { id: 'cal_d7_1', cleaner: clara, day: 7, time: '08:00', service: services.deep, owner: 1, prop: 1, status: 'CONFIRMED' },
+      { id: 'cal_d7_2', cleaner: maria, day: 7, time: '10:00', service: services.regular, owner: 2, prop: 2, status: 'CONFIRMED' },
+      { id: 'cal_d7_3', cleaner: clara, day: 7, time: '16:00', service: services.arrival, owner: 3, prop: 3, status: 'CONFIRMED' },
+
+      // DAY 10 - 1 job
+      { id: 'cal_d10_1', cleaner: maria, day: 10, time: '10:00', service: services.regular, owner: 0, prop: 0, status: 'CONFIRMED' },
+
+      // DAY 12 - 2 jobs
+      { id: 'cal_d12_1', cleaner: clara, day: 12, time: '09:00', service: services.arrival, owner: 1, prop: 1, status: 'CONFIRMED' },
+      { id: 'cal_d12_2', cleaner: maria, day: 12, time: '14:00', service: services.deep, owner: 2, prop: 2, status: 'PENDING' },
+
+      // RECENT COMPLETED (for history)
+      { id: 'cal_past_1', cleaner: clara, day: -1, time: '10:00', service: services.deep, owner: 3, prop: 3, status: 'COMPLETED' },
+      { id: 'cal_past_2', cleaner: maria, day: -2, time: '09:00', service: services.regular, owner: 0, prop: 0, status: 'COMPLETED' },
+      { id: 'cal_past_3', cleaner: clara, day: -3, time: '08:00', service: services.arrival, owner: 1, prop: 1, status: 'COMPLETED' },
+    ]
+
+    // Create all the bookings
+    for (const booking of bookingsData) {
+      const isClara = booking.cleaner.id === clara.id
+      const price = isClara
+        ? (booking.service as typeof services.regular).claraPrice
+        : (booking.service as typeof services.regular).mariaPrice
+
+      await prisma.booking.upsert({
+        where: { id: booking.id },
+        update: {},
+        create: {
+          id: booking.id,
+          cleanerId: booking.cleaner.id,
+          ownerId: ownerRecords[booking.owner].owner.id,
+          propertyId: properties[booking.prop].id,
+          status: booking.status as 'PENDING' | 'CONFIRMED' | 'COMPLETED',
+          service: booking.service.name,
+          price,
+          hours: booking.service.hours,
+          date: getRelativeDate(booking.day),
+          time: booking.time,
+        },
+      })
+    }
+
+    console.log(`Created ${bookingsData.length} calendar bookings for Clara and Maria`)
   }
 
   // Sample reviews data with different owners

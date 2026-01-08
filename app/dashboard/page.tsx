@@ -2,16 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import HomeTab from './tabs/home'
 import BookingsTab from './tabs/bookings'
 import MessagesTab from './tabs/messages'
 import TeamTab from './tabs/team'
 import ProfileTab from './tabs/profile'
+import PromoteTab from './tabs/promote'
 import OwnerReviewModal from './components/owner-review-modal'
 import { SmartWidget, Screen } from '@/components/smart-widget'
 import { JobsTimeline } from './components/team-calendar'
 
-type Tab = 'home' | 'bookings' | 'messages' | 'team' | 'profile' | 'calendar'
+type Tab = 'home' | 'bookings' | 'messages' | 'team' | 'profile' | 'promote'
 
 export type Owner = {
   id: string
@@ -303,30 +303,37 @@ export default function Dashboard() {
 
       {/* Tab content */}
       <main className="px-6 py-6 max-w-lg mx-auto">
-        {activeTab === 'home' && (
-          <HomeTab cleaner={cleaner} bookings={bookings} />
-        )}
-        {activeTab === 'bookings' && (
-          <BookingsTab
-            bookings={bookings}
-            comments={comments}
-            teamInfo={teamInfo}
-            onAddComment={handleAddComment}
-            onReviewOwner={handleReviewOwner}
-            onBookingAction={handleBookingAction}
-          />
-        )}
-        {activeTab === 'messages' && <MessagesTab />}
-        {activeTab === 'team' && <TeamTab />}
-        {activeTab === 'profile' && (
-          <ProfileTab cleaner={cleaner} onUpdate={setCleaner} />
-        )}
-        {activeTab === 'calendar' && (
-          <JobsTimeline
-            currentCleanerId={cleaner.id}
-            currentCleanerName={cleaner.name}
-            currentCleanerPhoto={cleaner.photo}
-          />
+        {/* Show pending state for unverified cleaners */}
+        {cleaner.status === 'PENDING' ? (
+          <PendingState cleaner={cleaner} />
+        ) : (
+          <>
+            {activeTab === 'home' && (
+              <JobsTimeline
+                currentCleanerId={cleaner.id}
+                currentCleanerName={cleaner.name}
+                currentCleanerPhoto={cleaner.photo}
+              />
+            )}
+            {activeTab === 'bookings' && (
+              <BookingsTab
+                bookings={bookings}
+                comments={comments}
+                teamInfo={teamInfo}
+                onAddComment={handleAddComment}
+                onReviewOwner={handleReviewOwner}
+                onBookingAction={handleBookingAction}
+              />
+            )}
+            {activeTab === 'messages' && <MessagesTab />}
+            {activeTab === 'team' && <TeamTab />}
+            {activeTab === 'profile' && (
+              <ProfileTab cleaner={cleaner} onUpdate={setCleaner} />
+            )}
+            {activeTab === 'promote' && (
+              <PromoteTab cleaner={cleaner} bookings={bookings} />
+            )}
+          </>
         )}
       </main>
 
@@ -353,15 +360,114 @@ export default function Dashboard() {
           } else if (action === 'feedback') {
             // Feedback handled via support
             window.open('mailto:hello@alicantecleaners.com?subject=Feedback', '_blank')
-          } else if (action.startsWith('calendar:')) {
-            // Calendar view toggle - handled by TeamCalendar component
-            setActiveTab('calendar')
+          } else if (action.startsWith('promote:')) {
+            // Navigate to promote tab
+            setActiveTab('promote')
           } else if (action.startsWith('profile:')) {
             setActiveTab('profile')
           }
         }}
         language={cleaner?.preferredLanguage || 'en'}
       />
+    </div>
+  )
+}
+
+// Pending state for unverified cleaners
+function PendingState({ cleaner }: { cleaner: Cleaner }) {
+  return (
+    <div className="space-y-6">
+      {/* Status Banner */}
+      <div className="bg-[#FFF8F5] rounded-2xl p-5 border border-[#F5E6E0]">
+        <div className="flex items-start gap-3">
+          <span className="text-3xl">&#9203;</span>
+          <div>
+            <h2 className="text-lg font-semibold text-[#1A1A1A] mb-1">Application Pending</h2>
+            <p className="text-sm text-[#6B6B6B]">
+              Your profile is awaiting verification by a team leader. Once verified, you&apos;ll be able to accept bookings.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* What to do next */}
+      <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
+        <h3 className="font-medium text-[#1A1A1A] mb-4">What to do next</h3>
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-[#E8F5E9] rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-sm">&#128172;</span>
+            </div>
+            <div>
+              <p className="font-medium text-[#1A1A1A] text-sm">Chat with a Team Leader</p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">
+                Visit a team leader&apos;s profile and introduce yourself via the chat widget
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-[#E3F2FD] rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-sm">&#128100;</span>
+            </div>
+            <div>
+              <p className="font-medium text-[#1A1A1A] text-sm">Complete your profile</p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">
+                Add a photo and bio to make a good impression
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-[#F5F5F3] rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-sm">&#9200;</span>
+            </div>
+            <div>
+              <p className="font-medium text-[#1A1A1A] text-sm">Wait for verification</p>
+              <p className="text-xs text-[#6B6B6B] mt-0.5">
+                Team leaders review applications and will accept you when ready
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile preview */}
+      <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
+        <h3 className="font-medium text-[#1A1A1A] mb-4">Your Profile</h3>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#6B6B6B]">Hourly Rate</span>
+            <span className="text-sm font-medium text-[#1A1A1A]">&euro;{cleaner.hourlyRate}/hr</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#6B6B6B]">Service Areas</span>
+            <span className="text-sm font-medium text-[#1A1A1A]">
+              {cleaner.serviceAreas.length} area{cleaner.serviceAreas.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          {cleaner.bio ? (
+            <div className="pt-3 border-t border-[#EBEBEB]">
+              <p className="text-sm text-[#6B6B6B]">{cleaner.bio}</p>
+            </div>
+          ) : (
+            <div className="pt-3 border-t border-[#EBEBEB]">
+              <p className="text-sm text-[#9B9B9B] italic">No bio added yet - add one to stand out!</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Help */}
+      <div className="text-center">
+        <p className="text-sm text-[#6B6B6B]">
+          Questions? Contact{' '}
+          <a href="mailto:support@alicantecleaners.com" className="text-[#C4785A] font-medium">
+            support@alicantecleaners.com
+          </a>
+        </p>
+      </div>
     </div>
   )
 }

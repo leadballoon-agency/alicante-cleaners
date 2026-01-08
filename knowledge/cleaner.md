@@ -63,6 +63,51 @@ Alicante Cleaners connects professional cleaners with villa owners in the Alican
 - Respond quickly to booking requests
 - Encourage clients to leave reviews
 
+## Viewing Booking Details (Peek-to-Lock)
+
+From your Home tab, you can view full booking details by **holding** on any booking card:
+
+**How it works:**
+- **Tap** a booking card → Quick view
+- **Hold for 300ms** → Peek at details (release to close)
+- **Hold for 1.5 seconds** → Lock modal open for full interaction
+
+**What you'll see when locked:**
+- Property address with **Maps** button (opens Google Maps app)
+- Property owner name with **Call** button
+- Key holder contact with **Call** button (if owner has set one up)
+- Access notes (key codes, instructions, WiFi passwords)
+- Quick message buttons to notify the owner
+- Accept/Decline buttons (for pending jobs) or Mark Complete (for today's jobs)
+
+### Access Notes & Key Holders
+
+**Access notes** contain important property information:
+- Key locations ("lock box by gate, code 1234")
+- Alarm codes
+- WiFi passwords
+- Special instructions
+
+**Key holder** is someone who can let you in:
+- A neighbour who has spare keys
+- The building concierge
+- A property manager
+
+**Important - Just-In-Time Security:**
+- Access notes and key holder contacts are only visible **24 hours before** the booking
+- Before that window, you'll see "Access notes will be available 24 hours before your booking"
+- This protects the owner's sensitive information
+- After the job is complete, this information is automatically hidden
+
+### Contacting the Owner or Key Holder
+
+From the booking detail modal:
+1. Tap **Call** next to the owner or key holder
+2. Your phone will dial them directly
+3. Use **quick message** buttons to send a pre-written message via the app
+
+---
+
 ## Calendar Sync
 
 You can sync your bookings with Google Calendar, Apple Calendar, or Outlook:

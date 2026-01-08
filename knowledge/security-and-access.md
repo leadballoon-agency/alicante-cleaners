@@ -55,6 +55,33 @@ Your access information follows a strict lifecycle:
 | **Lock box codes** | Key safe combinations | High |
 | **WiFi passwords** | Network access | Medium |
 | **Parking instructions** | Bay numbers, permits | Low |
+| **Key holder contact** | Neighbour's phone number | Medium |
+
+---
+
+## Key Holder Contacts
+
+Many properties have a **key holder** — someone who can let the cleaner in:
+- A neighbour
+- A property manager
+- A concierge
+- A family member nearby
+
+### How Key Holders Work in VillaCare
+
+**For Owners:**
+- Add key holder name and phone number when setting up your property
+- The cleaner can call them directly from the booking details
+
+**For Cleaners:**
+- Key holder contact appears in the booking peek modal
+- One-tap "Call" button to reach the key holder
+- Only visible when access notes are visible (24 hours before booking)
+
+**Security:**
+- Key holder phone numbers follow the same JIT (just-in-time) access rules
+- Only visible to the assigned cleaner, only within 24 hours of booking
+- Automatically hidden after booking completes
 
 ---
 

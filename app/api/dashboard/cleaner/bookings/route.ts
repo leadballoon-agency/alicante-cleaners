@@ -75,6 +75,8 @@ export async function GET() {
             address: true,
             bedrooms: true,
             notes: true, // Encrypted access notes
+            keyHolderName: true,
+            keyHolderPhone: true,
           },
         },
         owner: {
@@ -123,6 +125,9 @@ export async function GET() {
           accessNotes: accessNotesResult.notes,
           accessNotesAvailable: accessNotesResult.canView,
           accessNotesMessage: accessNotesResult.message,
+          // Key holder contact (only show when access notes are visible)
+          keyHolderName: accessNotesResult.canView ? b.property.keyHolderName : null,
+          keyHolderPhone: accessNotesResult.canView ? b.property.keyHolderPhone : null,
         },
         owner: {
           id: b.owner.id,

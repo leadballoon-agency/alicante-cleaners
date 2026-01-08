@@ -53,6 +53,27 @@ Be specific about:
 - Parking information
 - Any areas to avoid or focus on
 
+**Security note:** Access instructions are protected by our Just-In-Time (JIT) system. Your cleaner can only see these details 24 hours before the booking, and they're automatically hidden after the job completes.
+
+### Key Holder Contact
+
+If someone else has keys to your property (a neighbour, concierge, or property manager), you can add their contact details:
+
+1. Go to Properties tab
+2. Select your property
+3. Add **Key Holder Name** (e.g., "John - Neighbour at #6")
+4. Add **Key Holder Phone** (e.g., "+34 612 111 222")
+
+**How it helps your cleaner:**
+- They see the key holder's name and a **Call** button in their booking details
+- One tap to call and arrange key collection
+- No need to search through access notes for a phone number
+
+**Security:**
+- Key holder contact is only visible 24 hours before the booking (same as access notes)
+- Only the assigned cleaner can see it
+- Automatically hidden after the booking completes
+
 ## Reviews
 
 After each completed booking, you can leave a review:

@@ -53,7 +53,18 @@ interface BookingFromAPI {
   date: string
   time: string
   property: {
+    id: string
     address: string
+    bedrooms?: number
+    accessNotes?: string | null
+    accessNotesAvailable?: boolean
+    accessNotesMessage?: string
+  }
+  owner: {
+    id: string
+    name: string
+    phone?: string
+    email?: string
   }
   cleanerId?: string
   cleanerName?: string
@@ -176,6 +187,70 @@ export default function TeamCalendar({
     setWeekStart(newWeekStart)
   }
 
+  const handleBookingAction = async (bookingId: string, action: 'accept' | 'decline' | 'complete') => {
+    try {
+      const res = await fetch(`/api/dashboard/cleaner/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to update booking')
+      }
+
+      // Refresh bookings
+      await fetchCalendarData()
+    } catch (err) {
+      console.error('Error updating booking:', err)
+      setError(err instanceof Error ? err.message : 'Failed to update booking')
+    }
+  }
+
+  const handleSendMessage = async (bookingId: string, message: string) => {
+    // Find the booking to get the owner info
+    const booking = bookings.find(b => b.id === bookingId)
+    if (!booking?.owner?.id) {
+      console.error('No owner found for booking')
+      return
+    }
+
+    try {
+      // First, get or create a conversation with the owner
+      const convRes = await fetch('/api/messages/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ownerId: booking.owner.id })
+      })
+
+      if (!convRes.ok) {
+        throw new Error('Failed to create conversation')
+      }
+
+      const { conversationId } = await convRes.json()
+
+      // Send the message
+      const msgRes = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId,
+          content: message
+        })
+      })
+
+      if (!msgRes.ok) {
+        throw new Error('Failed to send message')
+      }
+
+      // Could show a toast notification here
+      console.log('Message sent:', message)
+    } catch (err) {
+      console.error('Error sending message:', err)
+      setError(err instanceof Error ? err.message : 'Failed to send message')
+    }
+  }
+
   const handleDateClick = (date: Date) => {
     setSelectedDate(date)
     setViewMode('day')
@@ -233,7 +308,12 @@ export default function TeamCalendar({
       propertyAddress: b.property.address,
       memberName: b.cleanerName || currentCleanerName,
       memberPhoto: b.cleanerPhoto ?? currentCleanerPhoto ?? null,
-      memberId: b.cleanerId || currentCleanerId || ''
+      memberId: b.cleanerId || currentCleanerId || '',
+      // Extended data for peek
+      bedrooms: b.property.bedrooms,
+      accessNotes: b.property.accessNotes || undefined,
+      ownerName: b.owner.name,
+      ownerPhone: b.owner.phone
     })).filter(b => {
       // Filter by selected view
       if (selectedView === 'me') {
@@ -494,10 +574,10 @@ export default function TeamCalendar({
             <BookingCard
               key={booking.id}
               booking={booking}
-              onClick={() => {
-                // Navigate to booking details - could open a modal or navigate
-                console.log('View booking:', booking.id)
-              }}
+              onAccept={booking.status.toLowerCase() === 'pending' ? (id) => handleBookingAction(id, 'accept') : undefined}
+              onDecline={booking.status.toLowerCase() === 'pending' ? (id) => handleBookingAction(id, 'decline') : undefined}
+              onComplete={booking.status.toLowerCase() === 'confirmed' ? (id) => handleBookingAction(id, 'complete') : undefined}
+              onSendMessage={handleSendMessage}
             />
           ))}
         </div>

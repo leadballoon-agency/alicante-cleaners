@@ -17,6 +17,11 @@ Cleaners are service providers who offer villa cleaning services in the Alicante
 - `app/dashboard/tabs/profile.tsx` - Profile editing
 - `app/dashboard/tabs/schedule.tsx` - Calendar/schedule view
 
+### Booking Components (Peek-to-Lock)
+- `app/dashboard/components/team-calendar/JobsTimeline.tsx` - Calendar view grouped by day
+- `app/dashboard/components/team-calendar/BookingCard.tsx` - Booking card with peek-to-lock gesture
+- `app/dashboard/components/team-calendar/BookingPeekModal.tsx` - Modal showing owner call, key holder call, access notes, Maps, quick messages
+
 ### API Routes
 - `app/api/dashboard/cleaner/route.ts` - GET profile + stats, POST generate calendar token
 - `app/api/dashboard/cleaner/profile/route.ts` - PATCH update profile
@@ -88,6 +93,12 @@ model TeamJoinRequest {
 - Phone OTP authentication
 - Public profile with slug URL
 - Booking management (accept/decline/complete)
+- Peek-to-lock booking cards (hold 300ms to peek, 1.5s to lock)
+- JIT access notes (visible 24h before booking, encrypted)
+- Key holder contacts with one-tap Call button
+- Owner contacts with one-tap Call button
+- Maps link to property address
+- Quick message presets to owner
 - Owner reviews with ratings
 - Internal property comments
 - Team creation and management

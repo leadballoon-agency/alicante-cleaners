@@ -13,6 +13,16 @@ interface BookingFromAPI {
   time: string
   property: {
     address: string
+    bedrooms?: number
+    accessNotes?: string | null
+    accessNotesAvailable?: boolean
+    accessNotesMessage?: string
+    keyHolderName?: string | null
+    keyHolderPhone?: string | null
+  }
+  owner?: {
+    name: string
+    phone?: string
   }
   cleanerId?: string
   cleanerName?: string
@@ -123,6 +133,71 @@ export default function JobsTimeline({
     fetchBookings()
   }, [fetchBookings])
 
+  // Action handlers for booking cards
+  const handleAccept = async (bookingId: string) => {
+    try {
+      const res = await fetch(`/api/dashboard/cleaner/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept' })
+      })
+      if (res.ok) {
+        fetchBookings() // Refresh the list
+      }
+    } catch (err) {
+      console.error('Failed to accept booking:', err)
+    }
+  }
+
+  const handleDecline = async (bookingId: string) => {
+    try {
+      const res = await fetch(`/api/dashboard/cleaner/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'decline' })
+      })
+      if (res.ok) {
+        fetchBookings()
+      }
+    } catch (err) {
+      console.error('Failed to decline booking:', err)
+    }
+  }
+
+  const handleComplete = async (bookingId: string) => {
+    try {
+      const res = await fetch(`/api/dashboard/cleaner/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'complete' })
+      })
+      if (res.ok) {
+        fetchBookings()
+      }
+    } catch (err) {
+      console.error('Failed to complete booking:', err)
+    }
+  }
+
+  const handleSendMessage = async (bookingId: string, message: string) => {
+    // Find the booking to get owner info
+    const booking = bookings.find(b => b.id === bookingId)
+    if (!booking) return
+
+    try {
+      // This would send via the messages API - for now just log
+      console.log('Send message for booking:', bookingId, message)
+      // TODO: Implement actual message sending
+      // await fetch('/api/messages', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ bookingId, message })
+      // })
+    } catch (err) {
+      console.error('Failed to send message:', err)
+    }
+  }
+
   // Convert to card data and filter
   const getDisplayBookings = (): BookingCardData[] => {
     const today = new Date()
@@ -140,7 +215,14 @@ export default function JobsTimeline({
         propertyAddress: b.property.address,
         memberName: b.cleanerName || currentCleanerName,
         memberPhoto: b.cleanerPhoto ?? currentCleanerPhoto ?? null,
-        memberId: b.cleanerId || currentCleanerId || ''
+        memberId: b.cleanerId || currentCleanerId || '',
+        // Extended data for peek modal
+        ownerName: b.owner?.name,
+        ownerPhone: b.owner?.phone,
+        accessNotes: b.property.accessNotes,
+        bedrooms: b.property.bedrooms,
+        keyHolderName: b.property.keyHolderName,
+        keyHolderPhone: b.property.keyHolderPhone
       }))
       .filter(b => {
         if (filter === 'upcoming') {
@@ -272,6 +354,10 @@ export default function JobsTimeline({
                       onClick={() => {
                         console.log('View booking:', booking.id)
                       }}
+                      onAccept={handleAccept}
+                      onDecline={handleDecline}
+                      onComplete={handleComplete}
+                      onSendMessage={handleSendMessage}
                     />
                   ))}
                 </div>

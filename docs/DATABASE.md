@@ -200,13 +200,15 @@ model Cleaner {
 
 ```prisma
 model Property {
-  id        String   @id @default(cuid())
-  ownerId   String
-  name      String                    // "Villa Rosa"
-  address   String
-  bedrooms  Int
-  bathrooms Int
-  notes     String?                   // Access codes, parking, etc.
+  id             String   @id @default(cuid())
+  ownerId        String
+  name           String                    // "Villa Rosa"
+  address        String
+  bedrooms       Int
+  bathrooms      Int
+  notes          String?                   // Access codes, parking, etc. (encrypted)
+  keyHolderName  String?                   // Neighbour, property manager, etc.
+  keyHolderPhone String?                   // Phone number for key holder
 
   // Relations
   owner     Owner

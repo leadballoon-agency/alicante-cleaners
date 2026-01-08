@@ -20,8 +20,7 @@ interface QuickAction {
 const translations = {
   en: {
     myBookings: 'My Bookings',
-    calendar: 'Calendar',
-    viewCalendar: 'View Calendar',
+    promote: 'Promote Me',
     home: 'Home',
     weekView: 'Week View',
     dayView: 'Day View',
@@ -30,11 +29,12 @@ const translations = {
     referCleaner: 'Refer Cleaner',
     settings: 'Settings',
     syncCalendar: 'Sync Calendar',
+    shareProfile: 'Share Profile',
+    viewStats: 'View Stats',
   },
   es: {
     myBookings: 'Mis Reservas',
-    calendar: 'Calendario',
-    viewCalendar: 'Ver Calendario',
+    promote: 'Promocionarme',
     home: 'Inicio',
     weekView: 'Vista Semanal',
     dayView: 'Vista Diaria',
@@ -43,6 +43,8 @@ const translations = {
     referCleaner: 'Referir Limpiador',
     settings: 'Ajustes',
     syncCalendar: 'Sincronizar Calendario',
+    shareProfile: 'Compartir Perfil',
+    viewStats: 'Ver Estadísticas',
   },
 }
 
@@ -50,29 +52,30 @@ const translations = {
 const getQuickActions = (screen: Screen): QuickAction[] => {
   const actions: Record<Screen, QuickAction[]> = {
     home: [
-      { id: 'navigate:bookings', icon: '📋', labelKey: 'myBookings' },
-      { id: 'navigate:calendar', icon: '📅', labelKey: 'calendar' },
+      // Home is now the calendar, show calendar controls
+      { id: 'home:week', icon: '📆', labelKey: 'weekView' },
+      { id: 'home:day', icon: '📅', labelKey: 'dayView' },
+      { id: 'navigate:promote', icon: '📈', labelKey: 'promote' },
     ],
     bookings: [
-      { id: 'navigate:calendar', icon: '📅', labelKey: 'viewCalendar' },
       { id: 'navigate:home', icon: '🏠', labelKey: 'home' },
+      { id: 'navigate:promote', icon: '📈', labelKey: 'promote' },
     ],
-    calendar: [
-      { id: 'calendar:week', icon: '📆', labelKey: 'weekView' },
-      { id: 'calendar:day', icon: '📅', labelKey: 'dayView' },
-      { id: 'calendar:sync', icon: '🔄', labelKey: 'sync' },
+    promote: [
+      { id: 'promote:share', icon: '🔗', labelKey: 'shareProfile' },
+      { id: 'promote:stats', icon: '📊', labelKey: 'viewStats' },
     ],
     messages: [
       { id: 'messages:new', icon: '✉️', labelKey: 'newMessage' },
       { id: 'navigate:home', icon: '🏠', labelKey: 'home' },
     ],
     team: [
-      { id: 'navigate:calendar', icon: '📅', labelKey: 'calendar' },
+      { id: 'navigate:home', icon: '🏠', labelKey: 'home' },
       { id: 'team:refer', icon: '👋', labelKey: 'referCleaner' },
     ],
     profile: [
       { id: 'profile:settings', icon: '⚙️', labelKey: 'settings' },
-      { id: 'profile:calendar', icon: '📅', labelKey: 'syncCalendar' },
+      { id: 'navigate:promote', icon: '📈', labelKey: 'promote' },
     ],
   }
   return actions[screen] || []

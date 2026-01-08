@@ -58,7 +58,13 @@ For detailed documentation, see the `docs/` folder:
 
 ### Cleaner Features
 - **Onboarding** - Phone OTP verification, profile setup, area selection, pricing, team selection
-- **Dashboard** - Bookings, calendar sync (ICS + Google Calendar), messaging, profile management
+- **Dashboard** - 6-tab layout with SmartWidget navigation:
+  - **Home** - Calendar timeline with all jobs grouped by day, peek-to-lock booking cards
+  - **Bookings** - All bookings with filters, assign to team members
+  - **Promote** - Stats (weekly/monthly/all-time), shareable profile card, WhatsApp share, tips
+  - **Messages** - Conversations with owners (auto-translated)
+  - **Team** - Team management (Team Leaders only), applicant review
+  - **Profile** - Edit profile, settings, Google Calendar sync
 - **Team Management** - Create team, manage members, review applicants with AI chat summaries
 - **Booking Assignment** - Assign bookings to team members
 - **Google Calendar Sync** - OAuth integration with FreeBusy API for availability
@@ -118,6 +124,16 @@ For detailed documentation, see the `docs/` folder:
 ### Security
 - `lib/encryption.ts` - AES-256-GCM encryption for sensitive data (access notes)
 - `lib/access-control.ts` - Just-in-time access control (24h window before booking)
+
+### Dashboard Components
+- `app/dashboard/page.tsx` - Main cleaner dashboard with tab navigation
+- `app/dashboard/tabs/promote.tsx` - Stats and promotional tools tab
+- `app/dashboard/components/team-calendar/JobsTimeline.tsx` - Calendar timeline view
+- `app/dashboard/components/team-calendar/BookingCard.tsx` - Booking card with peek-to-lock
+- `app/dashboard/components/team-calendar/BookingPeekModal.tsx` - Quick actions on hold (owner call, key holder call, access notes)
+- `components/smart-widget/SmartWidget.tsx` - Floating navigation button
+- `components/smart-widget/NavigationMenu.tsx` - Full navigation menu (long-press)
+- `components/smart-widget/QuickActionMenu.tsx` - Context-aware quick actions (tap)
 
 ---
 
@@ -266,7 +282,7 @@ POST /api/onboarding/cleaner       Complete cleaner onboarding
 /onboarding/cleaner            Cleaner signup flow (5 steps)
 /onboarding/cleaner/calendar-callback  Google Calendar OAuth callback
 /onboard/[token]               AI onboarding magic link for new owners
-/dashboard                     Cleaner dashboard (5 tabs)
+/dashboard                     Cleaner dashboard (6 tabs: Home/Calendar, Bookings, Promote, Messages, Team, Profile)
 /dashboard/account             Cleaner account settings (pause/delete)
 /dashboard/availability        Cleaner availability management
 /owner/dashboard               Owner dashboard (5 tabs)
@@ -285,7 +301,7 @@ POST /api/onboarding/cleaner       Complete cleaner onboarding
 | User | All users (email/phone, role, preferredLanguage, accountStatus) |
 | Owner | Owner profile (referralCode, trusted status, adminNotes for CRM) |
 | Cleaner | Cleaner profile (slug, bio, areas, rates, stats, calendarToken, teamVerification) |
-| Property | Villa details (address, bedrooms, access notes) |
+| Property | Villa details (address, bedrooms, access notes, key holder contact) |
 | Booking | Cleaning appointments (status: PENDING/CONFIRMED/COMPLETED/CANCELLED) |
 | Review | Ratings and testimonials (with featured flag) |
 | Conversation | Links owner and cleaner for messaging |

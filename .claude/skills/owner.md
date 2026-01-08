@@ -46,13 +46,15 @@ model Owner {
 }
 
 model Property {
-  id        String   @id @default(cuid())
-  ownerId   String
-  name      String
-  address   String
-  bedrooms  Int
-  bathrooms Int
-  notes     String?
+  id             String   @id @default(cuid())
+  ownerId        String
+  name           String
+  address        String
+  bedrooms       Int
+  bathrooms      Int
+  notes          String?  // Access notes (encrypted, JIT access)
+  keyHolderName  String?  // Neighbour, concierge, property manager
+  keyHolderPhone String?  // Phone number for key holder
 }
 
 model ArrivalPrep {
@@ -78,6 +80,8 @@ enum ArrivalPrepStatus {
 ## Current Features (Done)
 - Magic link email authentication
 - Property management (add/edit/delete)
+- Key holder contacts (neighbour, concierge, etc.)
+- Access notes with JIT (just-in-time) security - encrypted, only visible to cleaner 24h before booking
 - Booking history view
 - Cleaner reviews with ratings
 - "I'm Coming Home" arrival prep requests

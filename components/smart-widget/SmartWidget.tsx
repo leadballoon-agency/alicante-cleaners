@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react'
 import NavigationMenu from './NavigationMenu'
 import QuickActionMenu from './QuickActionMenu'
 
-export type Screen = 'home' | 'bookings' | 'calendar' | 'messages' | 'team' | 'profile'
+export type Screen = 'home' | 'bookings' | 'promote' | 'messages' | 'team' | 'profile'
 
 interface SmartWidgetProps {
   currentScreen: Screen
@@ -23,9 +23,9 @@ const LONG_PRESS_MS = 500
 // Get the icon for current screen context (returns string for emoji, null for custom render)
 const getScreenIcon = (screen: Screen): string | null => {
   const icons: Record<Screen, string | null> = {
-    home: '✨',
+    home: null, // Custom calendar with date (home is now the calendar)
     bookings: '📋',
-    calendar: null, // Custom calendar with date
+    promote: '📈',
     messages: '💬',
     team: '👥',
     profile: '👤',
@@ -184,7 +184,7 @@ export default function SmartWidget({
 
         {/* Context-aware icon */}
         <span className="text-2xl relative z-10">
-          {currentScreen === 'calendar' ? <CalendarDateIcon /> : getScreenIcon(currentScreen)}
+          {currentScreen === 'home' ? <CalendarDateIcon /> : getScreenIcon(currentScreen)}
         </span>
       </button>
 

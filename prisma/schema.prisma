@@ -236,15 +236,17 @@ model Owner {
 }
 
 model Property {
-  id        String   @id @default(cuid())
-  ownerId   String
-  name      String
-  address   String
-  bedrooms  Int
-  bathrooms Int
-  notes     String?  @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  ownerId        String
+  name           String
+  address        String
+  bedrooms       Int
+  bathrooms      Int
+  notes          String?  @db.Text
+  keyHolderName  String?  // Neighbour, property manager, etc.
+  keyHolderPhone String?  // Phone number for key holder
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   owner         Owner             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   bookings      Booking[]

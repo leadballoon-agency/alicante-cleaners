@@ -211,11 +211,29 @@ const nextStep = () => {
 ### Cleaner Dashboard (`/dashboard`)
 
 **Tabs:**
-1. **Home** - Stats overview, pending bookings, quick actions
+1. **Home** - Calendar timeline with all jobs grouped by day, peek-to-lock booking cards
 2. **Bookings** - All bookings with filters, assign to team members
-3. **Messages** - Conversations with owners (auto-translated)
-4. **Team** - Team management (Team Leaders only), applicant review
-5. **Profile** - Edit profile, settings, Google Calendar sync
+3. **Promote** - Stats overview (weekly/monthly/all-time), shareable profile card, WhatsApp share, tips
+4. **Messages** - Conversations with owners (auto-translated)
+5. **Team** - Team management (Team Leaders only), applicant review
+6. **Profile** - Edit profile, settings, Google Calendar sync
+
+**Navigation:**
+- SmartWidget floating button (bottom-right) with context-aware icon
+- Tap for quick actions (based on current screen)
+- Long-press for full navigation menu
+- Swipe-down to dismiss menu
+
+**Peek-to-Lock Booking Cards:**
+- Hold 300ms to peek at booking details (release to close)
+- Hold 1500ms to lock modal open for interaction
+- When locked, shows:
+  - Property owner contact with Call button
+  - Key holder contact with Call button (if configured)
+  - Access notes (JIT - only within 24h of booking)
+  - Maps link to property address
+  - Quick message presets to owner
+  - Accept/Decline (pending) or Mark Complete (confirmed + today)
 
 **Team Tab Features (Team Leaders):**
 - View/edit team name and referral code
@@ -252,21 +270,20 @@ const [activeTab, setActiveTab] = useState('home')
 
 return (
   <div className="min-h-screen bg-[#FAFAF8]">
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t">
-      {tabs.map(tab => (
-        <button
-          onClick={() => setActiveTab(tab.id)}
-          className={activeTab === tab.id ? 'text-[#C4785A]' : 'text-gray-400'}
-        >
-          {tab.icon}
-          <span>{tab.label}</span>
-        </button>
-      ))}
-    </nav>
-
-    {activeTab === 'home' && <HomeTab />}
+    {/* Tab content */}
+    {activeTab === 'home' && <JobsTimeline />}      {/* Calendar view */}
     {activeTab === 'bookings' && <BookingsTab />}
-    {/* ... */}
+    {activeTab === 'promote' && <PromoteTab />}     {/* Stats & promo tools */}
+    {activeTab === 'messages' && <MessagesTab />}
+    {activeTab === 'team' && <TeamTab />}
+    {activeTab === 'profile' && <ProfileTab />}
+
+    {/* SmartWidget navigation (floating button) */}
+    <SmartWidget
+      currentScreen={activeTab}
+      onNavigate={setActiveTab}
+      onQuickAction={handleQuickAction}
+    />
   </div>
 )
 ```
@@ -334,6 +351,27 @@ Shown on team leader profile pages when `?applicant={id}` parameter is present:
 - Existing review links (Google, TripAdvisor, Airbnb)
 
 **Auto-Summary:** Generated every 4 messages for team leader review.
+
+### Navigation Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `SmartWidget` | `components/smart-widget/SmartWidget.tsx` | Floating nav button with tap/long-press menus |
+| `NavigationMenu` | `components/smart-widget/NavigationMenu.tsx` | Full-screen navigation (long-press) |
+| `QuickActionMenu` | `components/smart-widget/QuickActionMenu.tsx` | Context-aware quick actions (tap) |
+
+### Dashboard Tab Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `JobsTimeline` | `app/dashboard/components/team-calendar/JobsTimeline.tsx` | Calendar view grouped by day |
+| `BookingCard` | `app/dashboard/components/team-calendar/BookingCard.tsx` | Booking card with peek-to-lock |
+| `BookingPeekModal` | `app/dashboard/components/team-calendar/BookingPeekModal.tsx` | Quick actions modal (owner call, key holder call, access notes, quick messages) |
+| `PromoteTab` | `app/dashboard/tabs/promote.tsx` | Stats and promotional tools |
+| `BookingsTab` | `app/dashboard/tabs/bookings.tsx` | Booking list with filters |
+| `MessagesTab` | `app/dashboard/tabs/messages.tsx` | Conversation threads |
+| `TeamTab` | `app/dashboard/tabs/team.tsx` | Team management |
+| `ProfileTab` | `app/dashboard/tabs/profile.tsx` | Profile editing |
 
 ### UI Components
 
