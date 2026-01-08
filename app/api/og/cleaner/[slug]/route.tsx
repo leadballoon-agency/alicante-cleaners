@@ -68,7 +68,13 @@ export async function GET(
   }
 
   const name = cleaner.user.name || 'Cleaner'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alicantecleaners.com'
+  // Convert relative image paths to absolute URLs
   const photo = cleaner.user.image
+    ? cleaner.user.image.startsWith('http')
+      ? cleaner.user.image
+      : `${baseUrl}${cleaner.user.image}`
+    : null
   const rating = Number(cleaner.rating) || 0
   const reviewCount = cleaner.reviewCount || 0
   const areas = cleaner.serviceAreas || []
@@ -119,34 +125,16 @@ export async function GET(
             right: 50,
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
           }}
         >
-          <div
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`${baseUrl}/villacare-horizontal-logo.png`}
+            alt="VillaCare"
             style={{
-              width: 48,
-              height: 48,
-              background: 'linear-gradient(135deg, #C4785A, #A66347)',
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: 24,
-              fontWeight: 700,
+              height: 50,
             }}
-          >
-            V
-          </div>
-          <span
-            style={{
-              fontSize: 28,
-              fontWeight: 600,
-              color: '#FFFFFF',
-            }}
-          >
-            VillaCare
-          </span>
+          />
         </div>
 
         {/* Main content area */}
@@ -155,9 +143,54 @@ export async function GET(
             display: 'flex',
             flex: 1,
             padding: '80px 50px 50px 50px',
-            gap: 50,
+            gap: 40,
           }}
         >
+          {/* Profile image - left side */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: 200,
+                height: 200,
+                borderRadius: 24,
+                border: '4px solid #C4785A',
+                backgroundColor: '#2A2A2A',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
+            >
+              {photo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={photo}
+                  alt={name}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    fontSize: 72,
+                    color: '#6B6B6B',
+                  }}
+                >
+                  👤
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Text content - right side */}
           <div
             style={{
@@ -165,7 +198,6 @@ export async function GET(
               flexDirection: 'column',
               justifyContent: 'center',
               flex: 1,
-              paddingLeft: 50,
             }}
           >
             {/* Name */}
@@ -270,53 +302,6 @@ export async function GET(
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* Profile image - bottom left */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 40,
-            left: 50,
-            display: 'flex',
-            alignItems: 'flex-end',
-          }}
-        >
-          <div
-            style={{
-              width: 180,
-              height: 180,
-              borderRadius: 24,
-              border: '4px solid #C4785A',
-              backgroundColor: '#2A2A2A',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-            }}
-          >
-            {photo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={photo}
-                alt={name}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  fontSize: 72,
-                  color: '#6B6B6B',
-                }}
-              >
-                👤
-              </div>
-            )}
           </div>
         </div>
 
