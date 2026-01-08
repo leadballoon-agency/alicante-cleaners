@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
@@ -7,9 +8,200 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { PhoneMockup } from '@/components/ui/phone-mockup'
 
+type Lang = 'en' | 'es'
+
+const translations = {
+  en: {
+    alreadyMember: 'Already a member? Sign in',
+    loading: 'Taking you to your dashboard...',
+    betaBadge: 'Beta - Free to join',
+    heroTitle1: 'Grow your cleaning business',
+    heroTitle2: 'in Alicante',
+    heroSubtitle: 'Join Clara and 5 other trusted professionals building something different. Get your own profile page, AI assistant, and tools to grow - free during beta.',
+    applyToJoin: 'Apply to Join',
+    seeHowItWorks: 'See how it works',
+    takes2min: 'Takes 2 minutes. Phone number only - no email needed.',
+
+    whyJoinTitle: 'Why cleaners join VillaCare',
+    whyJoinSubtitle: 'We built this with Clara, a professional cleaner with 5 years experience. These are the tools she wished existed.',
+
+    featureAiTitle: 'AI Sales Assistant',
+    featureAiDesc: 'Your AI handles inquiries, checks your calendar, and books jobs - while you focus on cleaning. Never miss a lead again.',
+    featureTranslationTitle: 'Auto-translation',
+    featureTranslationDesc: 'Owners write in English, German, French - you read in Spanish. No more Google Translate screenshots. Just clear communication.',
+    featureTeamTitle: 'Build Your Team',
+    featureTeamDesc: 'Invite trusted colleagues to your team. Cover for each other when life happens. Never let a client down.',
+    featureCalendarTitle: 'Calendar Sync',
+    featureCalendarDesc: 'Bookings automatically sync to Google Calendar, Apple Calendar, or Outlook. Your schedule, always up to date.',
+    howItWorksLink: 'How it works →',
+    featureProfileTitle: 'Your Own Profile',
+    featureProfileDesc: 'A professional page at villacare.app/yourname. Share your bio, services, reviews, and areas you cover.',
+    featureFreeTitle: 'Free During Beta',
+    featureFreeDesc: 'No fees, no commission - just help us build the right platform. Your feedback shapes what we create.',
+
+    aiPowered: 'AI-Powered',
+    aiSectionTitle: 'Your AI handles sales while you clean',
+    aiSectionDesc: "Never miss an inquiry again. Your personal AI assistant responds to potential clients instantly, answers questions about your services, checks your availability, and books jobs - all while you're focused on what you do best.",
+    instantResponses: 'Instant responses',
+    instantResponsesDesc: "Replies to inquiries 24/7, even when you're busy",
+    knowsSchedule: 'Knows your schedule',
+    knowsScheduleDesc: 'Checks your calendar and only offers available slots',
+    growsBusiness: 'Grows your business',
+    growsBusinessDesc: 'Converts more leads into bookings while you focus on cleaning',
+
+    profileSectionTitle: 'Your own professional profile',
+    profileSectionDesc: 'Get a beautiful booking page at',
+    profileSectionDesc2: '. Share it with clients and let them book directly.',
+    showcaseReviews: 'Showcase your reviews',
+    showcaseReviewsDesc: 'Build trust with verified reviews from happy clients',
+    setOwnPrices: 'Set your own prices',
+    setOwnPricesDesc: 'Display your services with clear pricing - no surprises',
+    personalAi: 'Personal AI assistant',
+    personalAiDesc: 'Visitors chat with your AI, get answers, and book instantly',
+
+    ratesSectionTitle: 'Set your rates, grow your business',
+    ratesSectionDesc: "You're in control. Set your hourly rate and service prices. Accept the jobs that work for you.",
+    setPrices: 'Set your own prices',
+    setPricesDesc: 'Choose your hourly rate - we calculate service prices automatically',
+    acceptBookings: 'Accept bookings your way',
+    acceptBookingsDesc: "One tap to confirm. Decline if you're busy. You decide",
+    trackEarnings: 'Track your earnings',
+    trackEarningsDesc: "See this week, this month, and what's coming up",
+
+    translationSectionTitle: 'No more language barriers',
+    translationSectionDesc: 'Owners message in English, German, French - you read everything in Spanish. Reply in Spanish, they read it in their language.',
+    autoTranslation: 'Auto-translation happens instantly. No more Google Translate screenshots.',
+
+    calendarSectionTitle: 'Your schedule, always synced',
+    calendarSectionDesc: 'Bookings automatically sync to your phone calendar. No more double-bookings or missed appointments.',
+    worksWithEverything: 'Works with everything',
+    worksWithEverythingDesc: 'Google Calendar, Apple Calendar, Outlook - all supported',
+    realTimeUpdates: 'Real-time updates',
+    realTimeUpdatesDesc: 'New bookings appear instantly. Changes sync automatically',
+    seeHowToSetup: 'See how to set it up',
+
+    howToJoinTitle: 'How to join',
+    step1Title: 'Apply with your phone',
+    step1Desc: 'Enter your mobile number and verify with a code. No email required.',
+    step2Title: 'Complete your profile',
+    step2Desc: 'Add your photo, bio, service areas, and set your rates.',
+    step3Title: 'Start receiving bookings',
+    step3Desc: 'Your AI assistant handles inquiries. You accept jobs that work for you.',
+
+    claraQuote: '"I spent years juggling WhatsApp messages, Google Translate, and paper calendars. Now I have one place for everything, and my AI handles bookings while I\'m at a villa. It\'s what I always wished existed."',
+    claraName: 'Clara Rodrigues, Co-founder & Team Leader',
+    claraExp: '5 years experience · 25 five-star reviews',
+
+    trustTitle: 'We grow through trust',
+    trustDesc: 'VillaCare is invitation-only. We ask for a referral from an existing member, or we verify your professional reputation. This keeps quality high and protects everyone in the network.',
+    trustNote: "Don't know anyone? No problem - apply anyway and tell us about your experience.",
+
+    ctaTitle: 'Ready to grow your business?',
+    ctaDesc: 'Join the beta for free. Help us build something great together.',
+
+    footerStory: 'Our story',
+    footerPrivacy: 'Privacy',
+    footerTerms: 'Terms',
+  },
+  es: {
+    alreadyMember: '¿Ya eres miembro? Inicia sesión',
+    loading: 'Llevándote a tu panel...',
+    betaBadge: 'Beta - Gratis',
+    heroTitle1: 'Haz crecer tu negocio de limpieza',
+    heroTitle2: 'en Alicante',
+    heroSubtitle: 'Únete a Clara y 5 profesionales de confianza construyendo algo diferente. Obtén tu propia página de perfil, asistente IA y herramientas para crecer - gratis durante la beta.',
+    applyToJoin: 'Solicitar Unirse',
+    seeHowItWorks: 'Ver cómo funciona',
+    takes2min: 'Solo 2 minutos. Solo número de teléfono - no necesitas email.',
+
+    whyJoinTitle: 'Por qué los limpiadores eligen VillaCare',
+    whyJoinSubtitle: 'Construimos esto con Clara, una profesional de limpieza con 5 años de experiencia. Estas son las herramientas que ella siempre deseó.',
+
+    featureAiTitle: 'Asistente IA de Ventas',
+    featureAiDesc: 'Tu IA gestiona consultas, revisa tu calendario y reserva trabajos - mientras tú te concentras en limpiar. Nunca pierdas un cliente.',
+    featureTranslationTitle: 'Traducción automática',
+    featureTranslationDesc: 'Los propietarios escriben en inglés, alemán, francés - tú lees en español. Sin más capturas de Google Translate. Comunicación clara.',
+    featureTeamTitle: 'Crea Tu Equipo',
+    featureTeamDesc: 'Invita a colegas de confianza a tu equipo. Cubríos cuando surjan imprevistos. Nunca dejes a un cliente tirado.',
+    featureCalendarTitle: 'Sincronización de Calendario',
+    featureCalendarDesc: 'Las reservas se sincronizan automáticamente con Google Calendar, Apple Calendar u Outlook. Tu agenda, siempre actualizada.',
+    howItWorksLink: 'Cómo funciona →',
+    featureProfileTitle: 'Tu Propio Perfil',
+    featureProfileDesc: 'Una página profesional en villacare.app/tunombre. Comparte tu biografía, servicios, reseñas y zonas que cubres.',
+    featureFreeTitle: 'Gratis Durante la Beta',
+    featureFreeDesc: 'Sin cuotas, sin comisiones - solo ayúdanos a construir la plataforma correcta. Tu feedback da forma a lo que creamos.',
+
+    aiPowered: 'Con IA',
+    aiSectionTitle: 'Tu IA vende mientras tú limpias',
+    aiSectionDesc: 'Nunca pierdas una consulta. Tu asistente IA personal responde a clientes potenciales al instante, responde preguntas sobre tus servicios, verifica tu disponibilidad y reserva trabajos - todo mientras te concentras en lo que mejor haces.',
+    instantResponses: 'Respuestas instantáneas',
+    instantResponsesDesc: 'Responde consultas 24/7, incluso cuando estás ocupada',
+    knowsSchedule: 'Conoce tu agenda',
+    knowsScheduleDesc: 'Revisa tu calendario y solo ofrece horas disponibles',
+    growsBusiness: 'Hace crecer tu negocio',
+    growsBusinessDesc: 'Convierte más consultas en reservas mientras tú limpias',
+
+    profileSectionTitle: 'Tu propio perfil profesional',
+    profileSectionDesc: 'Obtén una página de reservas bonita en',
+    profileSectionDesc2: '. Compártela con clientes y deja que reserven directamente.',
+    showcaseReviews: 'Muestra tus reseñas',
+    showcaseReviewsDesc: 'Genera confianza con reseñas verificadas de clientes satisfechos',
+    setOwnPrices: 'Establece tus propios precios',
+    setOwnPricesDesc: 'Muestra tus servicios con precios claros - sin sorpresas',
+    personalAi: 'Asistente IA personal',
+    personalAiDesc: 'Los visitantes chatean con tu IA, obtienen respuestas y reservan al instante',
+
+    ratesSectionTitle: 'Establece tus tarifas, haz crecer tu negocio',
+    ratesSectionDesc: 'Tú tienes el control. Establece tu tarifa por hora y precios de servicios. Acepta los trabajos que te convengan.',
+    setPrices: 'Establece tus propios precios',
+    setPricesDesc: 'Elige tu tarifa por hora - calculamos los precios automáticamente',
+    acceptBookings: 'Acepta reservas a tu manera',
+    acceptBookingsDesc: 'Un toque para confirmar. Rechaza si estás ocupada. Tú decides',
+    trackEarnings: 'Controla tus ganancias',
+    trackEarningsDesc: 'Ve esta semana, este mes y lo que viene',
+
+    translationSectionTitle: 'Sin barreras de idioma',
+    translationSectionDesc: 'Los propietarios escriben en inglés, alemán, francés - tú lees todo en español. Responde en español, ellos lo leen en su idioma.',
+    autoTranslation: 'La traducción automática es instantánea. Sin más capturas de Google Translate.',
+
+    calendarSectionTitle: 'Tu agenda, siempre sincronizada',
+    calendarSectionDesc: 'Las reservas se sincronizan automáticamente con el calendario de tu móvil. Sin más reservas dobles ni citas perdidas.',
+    worksWithEverything: 'Funciona con todo',
+    worksWithEverythingDesc: 'Google Calendar, Apple Calendar, Outlook - todos soportados',
+    realTimeUpdates: 'Actualizaciones en tiempo real',
+    realTimeUpdatesDesc: 'Las nuevas reservas aparecen al instante. Los cambios se sincronizan automáticamente',
+    seeHowToSetup: 'Ver cómo configurarlo',
+
+    howToJoinTitle: 'Cómo unirse',
+    step1Title: 'Solicita con tu teléfono',
+    step1Desc: 'Introduce tu número móvil y verifica con un código. No necesitas email.',
+    step2Title: 'Completa tu perfil',
+    step2Desc: 'Añade tu foto, biografía, zonas de servicio y establece tus tarifas.',
+    step3Title: 'Empieza a recibir reservas',
+    step3Desc: 'Tu asistente IA gestiona consultas. Tú aceptas los trabajos que te convengan.',
+
+    claraQuote: '"Pasé años haciendo malabares con mensajes de WhatsApp, Google Translate y calendarios de papel. Ahora tengo un solo lugar para todo, y mi IA gestiona reservas mientras estoy en una villa. Es lo que siempre deseé que existiera."',
+    claraName: 'Clara Rodrigues, Cofundadora y Líder de Equipo',
+    claraExp: '5 años de experiencia · 25 reseñas de 5 estrellas',
+
+    trustTitle: 'Crecemos con confianza',
+    trustDesc: 'VillaCare es solo por invitación. Pedimos una referencia de un miembro existente, o verificamos tu reputación profesional. Esto mantiene la calidad alta y protege a todos en la red.',
+    trustNote: '¿No conoces a nadie? No hay problema - solicita igualmente y cuéntanos tu experiencia.',
+
+    ctaTitle: '¿Lista para hacer crecer tu negocio?',
+    ctaDesc: 'Únete a la beta gratis. Ayúdanos a construir algo genial juntos.',
+
+    footerStory: 'Nuestra historia',
+    footerPrivacy: 'Privacidad',
+    footerTerms: 'Términos',
+  },
+}
+
 export default function JoinPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const [lang, setLang] = useState<Lang>('es')
+  const t = translations[lang]
 
   // Redirect cleaners to their dashboard - they're already on the platform
   useEffect(() => {
@@ -24,7 +216,7 @@ export default function JoinPage() {
       <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-[#C4785A] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#6B6B6B]">Taking you to your dashboard...</p>
+          <p className="text-[#6B6B6B]">{t.loading}</p>
         </div>
       </div>
     )
@@ -45,11 +237,30 @@ export default function JoinPage() {
             />
           </Link>
           <div className="flex items-center gap-4">
+            {/* Language Toggle */}
+            <div className="flex items-center bg-[#F5F5F3] rounded-lg p-1">
+              <button
+                onClick={() => setLang('es')}
+                className={`px-2 py-1 rounded-md text-sm font-medium transition-colors ${
+                  lang === 'es' ? 'bg-white text-[#1A1A1A] shadow-sm' : 'text-[#6B6B6B]'
+                }`}
+              >
+                🇪🇸
+              </button>
+              <button
+                onClick={() => setLang('en')}
+                className={`px-2 py-1 rounded-md text-sm font-medium transition-colors ${
+                  lang === 'en' ? 'bg-white text-[#1A1A1A] shadow-sm' : 'text-[#6B6B6B]'
+                }`}
+              >
+                🇬🇧
+              </button>
+            </div>
             <Link
               href="/login"
-              className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A]"
+              className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] hidden sm:block"
             >
-              Already a member? Sign in
+              {t.alreadyMember}
             </Link>
           </div>
         </div>
@@ -61,17 +272,16 @@ export default function JoinPage() {
           {/* Beta Badge */}
           <span className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-sm mb-6">
             <span className="w-2 h-2 bg-[#C4785A] rounded-full animate-pulse" />
-            Beta - Free to join
+            {t.betaBadge}
           </span>
 
           <h1 className="text-3xl sm:text-5xl font-bold mb-4">
-            Grow your cleaning business
-            <span className="block text-[#C4785A]">in Alicante</span>
+            {t.heroTitle1}
+            <span className="block text-[#C4785A]">{t.heroTitle2}</span>
           </h1>
 
           <p className="text-lg text-white/70 mb-8 max-w-2xl mx-auto">
-            Join Clara and 5 other trusted professionals building something different.
-            Get your own profile page, AI assistant, and tools to grow - free during beta.
+            {t.heroSubtitle}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -79,20 +289,20 @@ export default function JoinPage() {
               href="/onboarding/cleaner"
               className="inline-flex items-center gap-2 bg-[#C4785A] text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-[#B56A4F] transition-colors"
             >
-              Apply to Join
+              {t.applyToJoin}
               <span>→</span>
             </Link>
             <Link
               href="/join/guide"
               className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
             >
-              See how it works
+              {t.seeHowItWorks}
               <span>→</span>
             </Link>
           </div>
 
           <p className="text-sm text-white/50 mt-4">
-            Takes 2 minutes. Phone number only - no email needed.
+            {t.takes2min}
           </p>
         </div>
       </section>
@@ -101,11 +311,10 @@ export default function JoinPage() {
       <section className="px-6 py-16">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl font-semibold text-[#1A1A1A] text-center mb-4">
-            Why cleaners join VillaCare
+            {t.whyJoinTitle}
           </h2>
           <p className="text-[#6B6B6B] text-center mb-12 max-w-2xl mx-auto">
-            We built this with Clara, a professional cleaner with 5 years experience.
-            These are the tools she wished existed.
+            {t.whyJoinSubtitle}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -114,10 +323,9 @@ export default function JoinPage() {
               <div className="w-12 h-12 bg-[#FFF8F5] rounded-xl flex items-center justify-center mb-4">
                 <span className="text-2xl">🤖</span>
               </div>
-              <h3 className="font-semibold text-[#1A1A1A] mb-2">AI Sales Assistant</h3>
+              <h3 className="font-semibold text-[#1A1A1A] mb-2">{t.featureAiTitle}</h3>
               <p className="text-sm text-[#6B6B6B]">
-                Your AI handles inquiries, checks your calendar, and books jobs -
-                while you focus on cleaning. Never miss a lead again.
+                {t.featureAiDesc}
               </p>
             </div>
 
@@ -126,10 +334,9 @@ export default function JoinPage() {
               <div className="w-12 h-12 bg-[#FFF8F5] rounded-xl flex items-center justify-center mb-4">
                 <span className="text-2xl">🌍</span>
               </div>
-              <h3 className="font-semibold text-[#1A1A1A] mb-2">Auto-translation</h3>
+              <h3 className="font-semibold text-[#1A1A1A] mb-2">{t.featureTranslationTitle}</h3>
               <p className="text-sm text-[#6B6B6B]">
-                Owners write in English, German, French - you read in Spanish.
-                No more Google Translate screenshots. Just clear communication.
+                {t.featureTranslationDesc}
               </p>
             </div>
 
@@ -138,10 +345,9 @@ export default function JoinPage() {
               <div className="w-12 h-12 bg-[#FFF8F5] rounded-xl flex items-center justify-center mb-4">
                 <span className="text-2xl">👥</span>
               </div>
-              <h3 className="font-semibold text-[#1A1A1A] mb-2">Build Your Team</h3>
+              <h3 className="font-semibold text-[#1A1A1A] mb-2">{t.featureTeamTitle}</h3>
               <p className="text-sm text-[#6B6B6B]">
-                Invite trusted colleagues to your team. Cover for each other when
-                life happens. Never let a client down.
+                {t.featureTeamDesc}
               </p>
             </div>
 
@@ -150,11 +356,16 @@ export default function JoinPage() {
               <div className="w-12 h-12 bg-[#FFF8F5] rounded-xl flex items-center justify-center mb-4">
                 <span className="text-2xl">📅</span>
               </div>
-              <h3 className="font-semibold text-[#1A1A1A] mb-2">Calendar Sync</h3>
-              <p className="text-sm text-[#6B6B6B]">
-                Bookings automatically sync to Google Calendar, Apple Calendar,
-                or Outlook. Your schedule, always up to date.
+              <h3 className="font-semibold text-[#1A1A1A] mb-2">{t.featureCalendarTitle}</h3>
+              <p className="text-sm text-[#6B6B6B] mb-3">
+                {t.featureCalendarDesc}
               </p>
+              <Link
+                href="/join/calendar-guide"
+                className="text-sm text-[#C4785A] hover:text-[#B56A4F] font-medium"
+              >
+                {t.howItWorksLink}
+              </Link>
             </div>
 
             {/* Your Profile */}
@@ -162,10 +373,9 @@ export default function JoinPage() {
               <div className="w-12 h-12 bg-[#FFF8F5] rounded-xl flex items-center justify-center mb-4">
                 <span className="text-2xl">✨</span>
               </div>
-              <h3 className="font-semibold text-[#1A1A1A] mb-2">Your Own Profile</h3>
+              <h3 className="font-semibold text-[#1A1A1A] mb-2">{t.featureProfileTitle}</h3>
               <p className="text-sm text-[#6B6B6B]">
-                A professional page at villacare.app/yourname. Share your bio,
-                services, reviews, and areas you cover.
+                {t.featureProfileDesc}
               </p>
             </div>
 
@@ -174,10 +384,9 @@ export default function JoinPage() {
               <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-4">
                 <span className="text-2xl">🎁</span>
               </div>
-              <h3 className="font-semibold text-[#C4785A] mb-2">Free During Beta</h3>
+              <h3 className="font-semibold text-[#C4785A] mb-2">{t.featureFreeTitle}</h3>
               <p className="text-sm text-[#6B6B6B]">
-                No fees, no commission - just help us build the right platform.
-                Your feedback shapes what we create.
+                {t.featureFreeDesc}
               </p>
             </div>
           </div>
@@ -192,13 +401,13 @@ export default function JoinPage() {
             <div className="flex-1 order-2 lg:order-1">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-sm text-white/80 mb-4">
                 <span className="w-2 h-2 bg-[#C4785A] rounded-full animate-pulse" />
-                AI-Powered
+                {t.aiPowered}
               </div>
               <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-4">
-                Your AI handles sales while you clean
+                {t.aiSectionTitle}
               </h2>
               <p className="text-white/70 mb-6">
-                Never miss an inquiry again. Your personal AI assistant responds to potential clients instantly, answers questions about your services, checks your availability, and books jobs - all while you&apos;re focused on what you do best.
+                {t.aiSectionDesc}
               </p>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -206,8 +415,8 @@ export default function JoinPage() {
                     <span>💬</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-white">Instant responses</h4>
-                    <p className="text-sm text-white/70">Replies to inquiries 24/7, even when you&apos;re busy</p>
+                    <h4 className="font-medium text-white">{t.instantResponses}</h4>
+                    <p className="text-sm text-white/70">{t.instantResponsesDesc}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -215,8 +424,8 @@ export default function JoinPage() {
                     <span>📅</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-white">Knows your schedule</h4>
-                    <p className="text-sm text-white/70">Checks your calendar and only offers available slots</p>
+                    <h4 className="font-medium text-white">{t.knowsSchedule}</h4>
+                    <p className="text-sm text-white/70">{t.knowsScheduleDesc}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -224,8 +433,8 @@ export default function JoinPage() {
                     <span>💰</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-white">Grows your business</h4>
-                    <p className="text-sm text-white/70">Converts more leads into bookings while you focus on cleaning</p>
+                    <h4 className="font-medium text-white">{t.growsBusiness}</h4>
+                    <p className="text-sm text-white/70">{t.growsBusinessDesc}</p>
                   </div>
                 </div>
               </div>
@@ -255,10 +464,10 @@ export default function JoinPage() {
             {/* Content */}
             <div className="flex-1 order-2 lg:order-2">
               <h2 className="text-2xl sm:text-3xl font-semibold text-[#1A1A1A] mb-4">
-                Your own professional profile
+                {t.profileSectionTitle}
               </h2>
               <p className="text-[#6B6B6B] mb-6">
-                Get a beautiful booking page at <span className="font-medium text-[#1A1A1A]">villacare.app/yourname</span>. Share it with clients and let them book directly.
+                {t.profileSectionDesc} <span className="font-medium text-[#1A1A1A]">villacare.app/yourname</span>{t.profileSectionDesc2}
               </p>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -266,8 +475,8 @@ export default function JoinPage() {
                     <span>⭐</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-[#1A1A1A]">Showcase your reviews</h4>
-                    <p className="text-sm text-[#6B6B6B]">Build trust with verified reviews from happy clients</p>
+                    <h4 className="font-medium text-[#1A1A1A]">{t.showcaseReviews}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t.showcaseReviewsDesc}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -275,8 +484,8 @@ export default function JoinPage() {
                     <span>💰</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-[#1A1A1A]">Set your own prices</h4>
-                    <p className="text-sm text-[#6B6B6B]">Display your services with clear pricing - no surprises</p>
+                    <h4 className="font-medium text-[#1A1A1A]">{t.setOwnPrices}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t.setOwnPricesDesc}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -284,8 +493,8 @@ export default function JoinPage() {
                     <span>🤖</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-[#1A1A1A]">Personal AI assistant</h4>
-                    <p className="text-sm text-[#6B6B6B]">Visitors chat with your AI, get answers, and book instantly</p>
+                    <h4 className="font-medium text-[#1A1A1A]">{t.personalAi}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t.personalAiDesc}</p>
                   </div>
                 </div>
               </div>
@@ -298,14 +507,13 @@ export default function JoinPage() {
       <section className="px-6 py-16 bg-[#FAFAF8] overflow-hidden">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
-            {/* Phone Mockup */}
             {/* Content */}
             <div className="flex-1 order-2 lg:order-1">
               <h2 className="text-2xl sm:text-3xl font-semibold text-[#1A1A1A] mb-4">
-                Set your rates, grow your business
+                {t.ratesSectionTitle}
               </h2>
               <p className="text-[#6B6B6B] mb-6">
-                You&apos;re in control. Set your hourly rate and service prices. Accept the jobs that work for you.
+                {t.ratesSectionDesc}
               </p>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -313,8 +521,8 @@ export default function JoinPage() {
                     <span>💰</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-[#1A1A1A]">Set your own prices</h4>
-                    <p className="text-sm text-[#6B6B6B]">Choose your hourly rate - we calculate service prices automatically</p>
+                    <h4 className="font-medium text-[#1A1A1A]">{t.setPrices}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t.setPricesDesc}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -322,8 +530,8 @@ export default function JoinPage() {
                     <span>✅</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-[#1A1A1A]">Accept bookings your way</h4>
-                    <p className="text-sm text-[#6B6B6B]">One tap to confirm. Decline if you&apos;re busy. You decide</p>
+                    <h4 className="font-medium text-[#1A1A1A]">{t.acceptBookings}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t.acceptBookingsDesc}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -331,8 +539,8 @@ export default function JoinPage() {
                     <span>📊</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-[#1A1A1A]">Track your earnings</h4>
-                    <p className="text-sm text-[#6B6B6B]">See this week, this month, and what&apos;s coming up</p>
+                    <h4 className="font-medium text-[#1A1A1A]">{t.trackEarnings}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t.trackEarningsDesc}</p>
                   </div>
                 </div>
               </div>
@@ -354,10 +562,10 @@ export default function JoinPage() {
             {/* Content */}
             <div className="flex-1 order-2 lg:order-1">
               <h2 className="text-2xl sm:text-3xl font-semibold text-[#1A1A1A] mb-4">
-                No more language barriers
+                {t.translationSectionTitle}
               </h2>
               <p className="text-[#6B6B6B] mb-6">
-                Owners message in English, German, French - you read everything in Spanish. Reply in Spanish, they read it in their language.
+                {t.translationSectionDesc}
               </p>
               <div className="flex flex-wrap gap-3 mb-6">
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-[#EBEBEB] text-sm">
@@ -374,7 +582,7 @@ export default function JoinPage() {
                 </span>
               </div>
               <p className="text-sm text-[#9B9B9B]">
-                Auto-translation happens instantly. No more Google Translate screenshots.
+                {t.autoTranslation}
               </p>
             </div>
             {/* Phone Mockup */}
@@ -402,10 +610,10 @@ export default function JoinPage() {
             {/* Content */}
             <div className="flex-1 order-2 lg:order-2">
               <h2 className="text-2xl sm:text-3xl font-semibold text-[#1A1A1A] mb-4">
-                Your schedule, always synced
+                {t.calendarSectionTitle}
               </h2>
               <p className="text-[#6B6B6B] mb-6">
-                Bookings automatically sync to your phone calendar. No more double-bookings or missed appointments.
+                {t.calendarSectionDesc}
               </p>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -413,8 +621,8 @@ export default function JoinPage() {
                     <span>📅</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-[#1A1A1A]">Works with everything</h4>
-                    <p className="text-sm text-[#6B6B6B]">Google Calendar, Apple Calendar, Outlook - all supported</p>
+                    <h4 className="font-medium text-[#1A1A1A]">{t.worksWithEverything}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t.worksWithEverythingDesc}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -422,11 +630,18 @@ export default function JoinPage() {
                     <span>🔄</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-[#1A1A1A]">Real-time updates</h4>
-                    <p className="text-sm text-[#6B6B6B]">New bookings appear instantly. Changes sync automatically</p>
+                    <h4 className="font-medium text-[#1A1A1A]">{t.realTimeUpdates}</h4>
+                    <p className="text-sm text-[#6B6B6B]">{t.realTimeUpdatesDesc}</p>
                   </div>
                 </div>
               </div>
+              <Link
+                href="/join/calendar-guide"
+                className="inline-flex items-center gap-2 text-[#C4785A] hover:text-[#B56A4F] font-medium mt-6"
+              >
+                {t.seeHowToSetup}
+                <span>→</span>
+              </Link>
             </div>
           </div>
         </div>
@@ -436,7 +651,7 @@ export default function JoinPage() {
       <section className="px-6 py-16 bg-[#FAFAF8]">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-semibold text-[#1A1A1A] text-center mb-12">
-            How to join
+            {t.howToJoinTitle}
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -444,9 +659,9 @@ export default function JoinPage() {
               <div className="w-14 h-14 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-[#C4785A] font-bold text-xl">1</span>
               </div>
-              <h3 className="font-semibold text-[#1A1A1A] mb-2">Apply with your phone</h3>
+              <h3 className="font-semibold text-[#1A1A1A] mb-2">{t.step1Title}</h3>
               <p className="text-sm text-[#6B6B6B]">
-                Enter your mobile number and verify with a code. No email required.
+                {t.step1Desc}
               </p>
             </div>
 
@@ -454,9 +669,9 @@ export default function JoinPage() {
               <div className="w-14 h-14 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-[#C4785A] font-bold text-xl">2</span>
               </div>
-              <h3 className="font-semibold text-[#1A1A1A] mb-2">Complete your profile</h3>
+              <h3 className="font-semibold text-[#1A1A1A] mb-2">{t.step2Title}</h3>
               <p className="text-sm text-[#6B6B6B]">
-                Add your photo, bio, service areas, and set your rates.
+                {t.step2Desc}
               </p>
             </div>
 
@@ -464,9 +679,9 @@ export default function JoinPage() {
               <div className="w-14 h-14 bg-[#FFF8F5] rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-[#C4785A] font-bold text-xl">3</span>
               </div>
-              <h3 className="font-semibold text-[#1A1A1A] mb-2">Start receiving bookings</h3>
+              <h3 className="font-semibold text-[#1A1A1A] mb-2">{t.step3Title}</h3>
               <p className="text-sm text-[#6B6B6B]">
-                Your AI assistant handles inquiries. You accept jobs that work for you.
+                {t.step3Desc}
               </p>
             </div>
           </div>
@@ -488,15 +703,13 @@ export default function JoinPage() {
             </div>
             <div>
               <p className="text-white text-lg italic mb-4">
-                &ldquo;I spent years juggling WhatsApp messages, Google Translate, and paper
-                calendars. Now I have one place for everything, and my AI handles
-                bookings while I&apos;m at a villa. It&apos;s what I always wished existed.&rdquo;
+                {t.claraQuote}
               </p>
               <p className="text-[#C4785A] font-medium">
-                Clara Rodrigues, Co-founder & Team Leader
+                {t.claraName}
               </p>
               <p className="text-white/50 text-sm">
-                5 years experience · 25 five-star reviews
+                {t.claraExp}
               </p>
             </div>
           </div>
@@ -510,15 +723,13 @@ export default function JoinPage() {
             <span className="text-3xl">🤝</span>
           </div>
           <h2 className="text-2xl font-semibold text-[#1A1A1A] mb-4">
-            We grow through trust
+            {t.trustTitle}
           </h2>
           <p className="text-[#6B6B6B] mb-8 max-w-xl mx-auto">
-            VillaCare is invitation-only. We ask for a referral from an existing member,
-            or we verify your professional reputation. This keeps quality high and
-            protects everyone in the network.
+            {t.trustDesc}
           </p>
           <p className="text-sm text-[#9B9B9B]">
-            Don&apos;t know anyone? No problem - apply anyway and tell us about your experience.
+            {t.trustNote}
           </p>
         </div>
       </section>
@@ -527,24 +738,24 @@ export default function JoinPage() {
       <section className="px-6 py-16 bg-[#FFF8F5] border-t border-[#EBEBEB]">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-2xl font-semibold text-[#1A1A1A] mb-4">
-            Ready to grow your business?
+            {t.ctaTitle}
           </h2>
           <p className="text-[#6B6B6B] mb-8">
-            Join the beta for free. Help us build something great together.
+            {t.ctaDesc}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/onboarding/cleaner"
               className="inline-flex items-center gap-2 bg-[#C4785A] text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-[#B56A4F] transition-colors"
             >
-              Apply to Join
+              {t.applyToJoin}
               <span>→</span>
             </Link>
             <Link
               href="/join/guide"
               className="inline-flex items-center gap-2 text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
             >
-              See how it works
+              {t.seeHowItWorks}
               <span>→</span>
             </Link>
           </div>
@@ -565,11 +776,11 @@ export default function JoinPage() {
             <span className="text-[#9B9B9B] text-sm">· Alicante, Spain</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-[#9B9B9B]">
-            <Link href="/about" className="hover:text-[#6B6B6B]">Our story</Link>
+            <Link href="/about" className="hover:text-[#6B6B6B]">{t.footerStory}</Link>
             <span>·</span>
-            <Link href="/privacy" className="hover:text-[#6B6B6B]">Privacy</Link>
+            <Link href="/privacy" className="hover:text-[#6B6B6B]">{t.footerPrivacy}</Link>
             <span>·</span>
-            <Link href="/terms" className="hover:text-[#6B6B6B]">Terms</Link>
+            <Link href="/terms" className="hover:text-[#6B6B6B]">{t.footerTerms}</Link>
           </div>
         </div>
       </footer>
