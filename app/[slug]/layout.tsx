@@ -30,14 +30,43 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const name = cleaner.user.name || 'Cleaner'
   const description = cleaner.bio || `Book ${name} for professional villa cleaning in Alicante, Spain. Rated ${cleaner.rating}/5 with ${cleaner.reviewCount} reviews.`
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alicantecleaners.com'
+  const ogImageUrl = `${baseUrl}/api/og/cleaner/${slug}`
+
   return {
     title: `${name} - Villa Cleaner in Alicante | VillaCare`,
     description,
+    keywords: [
+      'villa cleaning',
+      'house cleaner',
+      'Alicante',
+      'professional cleaning',
+      'holiday home cleaning',
+      name,
+    ],
     openGraph: {
       title: `${name} - Villa Cleaner | VillaCare`,
       description,
       type: 'profile',
-      images: cleaner.user.image ? [cleaner.user.image] : undefined,
+      url: `${baseUrl}/${slug}`,
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${name} - VillaCare Cleaner`,
+        },
+      ],
+      siteName: 'VillaCare',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${name} - Villa Cleaner | VillaCare`,
+      description,
+      images: [ogImageUrl],
+    },
+    alternates: {
+      canonical: `${baseUrl}/${slug}`,
     },
   }
 }

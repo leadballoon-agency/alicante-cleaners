@@ -5,6 +5,25 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Cleaner } from '../page'
 
+// Get relative time string
+function getRelativeTime(date: Date | string | null | undefined): string {
+  if (!date) return 'Never'
+  const d = typeof date === 'string' ? new Date(date) : date
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  const diffSecs = Math.floor(diffMs / 1000)
+  const diffMins = Math.floor(diffSecs / 60)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffSecs < 60) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+}
+
 type Props = {
   cleaners: Cleaner[]
   onApprove: (id: string) => void
@@ -133,7 +152,7 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
 
               {/* Stats Row */}
               {cleaner.status === 'active' && (
-                <div className="flex items-center gap-4 text-sm mb-3">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mb-3">
                   <div className="flex items-center gap-1">
                     <span className="text-[#C4785A]">★</span>
                     <span className="text-[#1A1A1A]">{cleaner.rating || '-'}</span>
@@ -144,6 +163,9 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
                   {cleaner.teamLeader && (
                     <span className="text-[#C4785A] font-medium">👑 Leader</span>
                   )}
+                  <span className="text-[#9B9B9B] text-xs">
+                    Last seen: {getRelativeTime(cleaner.lastLoginAt)}
+                  </span>
                 </div>
               )}
 

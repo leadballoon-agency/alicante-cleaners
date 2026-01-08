@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
+import { logAudit } from '@/lib/audit'
 
 // POST /api/admin/impersonate - Start impersonating a user
 export async function POST(request: NextRequest) {
@@ -76,6 +77,15 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 4, // 4 hours
     })
 
+    // Log audit event
+    await logAudit({
+      userId: session.user.id,
+      action: 'IMPERSONATE_START',
+      target: cleaner.id,
+      targetType: 'CLEANER',
+      details: { cleanerName: cleaner.user.name, cleanerUserId: cleaner.user.id },
+    })
+
     return NextResponse.json({
       success: true,
       message: `Now viewing as ${cleaner.user.name}`,
@@ -105,10 +115,21 @@ export async function DELETE() {
       )
     }
 
+    // Get impersonated user ID before clearing
+    const impersonatedUserId = cookieStore.get('impersonating_user_id')?.value
+
     // Clear impersonation cookies
     cookieStore.delete('admin_user_id')
     cookieStore.delete('impersonating_user_id')
     cookieStore.delete('impersonating_user_name')
+
+    // Log audit event
+    await logAudit({
+      userId: adminUserId,
+      action: 'IMPERSONATE_END',
+      target: impersonatedUserId || undefined,
+      targetType: 'USER',
+    })
 
     return NextResponse.json({
       success: true,

@@ -47,6 +47,7 @@ model User {
   image             String?
   role              UserRole  @default(OWNER)
   preferredLanguage String    @default("en") @db.VarChar(10) // en, es, de, fr, nl, it, pt
+  lastLoginAt       DateTime? // Track last login time for admin visibility
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -65,6 +66,7 @@ model User {
   owner                  Owner?
   adminConversations     Conversation[]        @relation("AdminConversations")
   supportConversations   SupportConversation[]
+  auditLogs              AuditLog[]
 }
 
 model Account {
@@ -707,6 +709,16 @@ model PlatformSettings {
   id                       String   @id @default("default")
   teamLeaderHoursRequired  Int      @default(50)    // Hours needed to become Team Leader
   teamLeaderRatingRequired Float    @default(5.0)   // Rating needed to become Team Leader
+
+  // Third-party Scripts (loaded on all public pages)
+  googleTagManagerId       String?  // GTM container ID (e.g., "GTM-XXXXXXX") - RECOMMENDED
+  facebookPixelId          String?  // Facebook Pixel ID (e.g., "123456789012345")
+  googleAnalyticsId        String?  // Google Analytics 4 ID for tracking (e.g., "G-XXXXXXXXXX")
+  ga4PropertyId            String?  // GA4 Property ID for API access (e.g., "123456789")
+  convertBoxScriptId       String?  // ConvertBox script ID
+  customHeadScripts        String?  @db.Text // Custom scripts for <head> (JSON array of script objects)
+  customBodyScripts        String?  @db.Text // Custom scripts for end of <body> (JSON array)
+
   updatedAt                DateTime @updatedAt
 }
 
@@ -756,4 +768,47 @@ model ApplicantMessage {
   conversation   ApplicantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
+}
+
+// ============================================
+// Page View Analytics
+// ============================================
+
+model PageView {
+  id          String   @id @default(cuid())
+  path        String   // e.g., "/clara-martinez", "/join", "/"
+  cleanerSlug String?  // If viewing a cleaner profile
+  referrer    String?  // Where they came from
+  userAgent   String?  // Browser/device
+  country     String?  // From Vercel headers
+  sessionId   String?  // Anonymous session tracking
+  userId      String?  // If logged in
+  createdAt   DateTime @default(now())
+
+  @@index([path, createdAt])
+  @@index([cleanerSlug, createdAt])
+  @@index([createdAt])
+}
+
+// ============================================
+// Audit Log (Admin Activity Tracking)
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String   // User who performed the action
+  action    String   // LOGIN, IMPERSONATE, APPROVE_CLEANER, REJECT_CLEANER, etc.
+  target    String?  // ID of affected resource (cleaner ID, review ID, etc.)
+  targetType String? // Type of target: CLEANER, OWNER, REVIEW, BOOKING
+  details   Json?    // Additional context (old values, new values, etc.)
+  ipAddress String?  // IP address of request
+  userAgent String?  // Browser/device info
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([target, targetType])
 }

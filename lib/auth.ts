@@ -241,6 +241,14 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
+      // Update lastLoginAt for all successful sign-ins
+      if (user.id) {
+        await db.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        })
+      }
+
       return true
     },
     async jwt({ token, user, trigger }) {

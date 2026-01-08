@@ -42,6 +42,13 @@ export async function GET() {
       settings: {
         teamLeaderHoursRequired: settings.teamLeaderHoursRequired,
         teamLeaderRatingRequired: settings.teamLeaderRatingRequired,
+        googleTagManagerId: settings.googleTagManagerId,
+        facebookPixelId: settings.facebookPixelId,
+        googleAnalyticsId: settings.googleAnalyticsId,
+        ga4PropertyId: settings.ga4PropertyId,
+        convertBoxScriptId: settings.convertBoxScriptId,
+        customHeadScripts: settings.customHeadScripts,
+        customBodyScripts: settings.customBodyScripts,
         updatedAt: settings.updatedAt,
       },
     })
@@ -74,7 +81,16 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { teamLeaderHoursRequired, teamLeaderRatingRequired } = body
+    const {
+      teamLeaderHoursRequired,
+      teamLeaderRatingRequired,
+      googleTagManagerId,
+      facebookPixelId,
+      googleAnalyticsId,
+      ga4PropertyId,
+      convertBoxScriptId,
+      customHeadScripts,
+    } = body
 
     // Validate inputs
     if (teamLeaderHoursRequired !== undefined) {
@@ -106,6 +122,12 @@ export async function PATCH(request: Request) {
       update: {
         ...(teamLeaderHoursRequired !== undefined && { teamLeaderHoursRequired }),
         ...(teamLeaderRatingRequired !== undefined && { teamLeaderRatingRequired }),
+        ...(googleTagManagerId !== undefined && { googleTagManagerId }),
+        ...(facebookPixelId !== undefined && { facebookPixelId }),
+        ...(googleAnalyticsId !== undefined && { googleAnalyticsId }),
+        ...(ga4PropertyId !== undefined && { ga4PropertyId }),
+        ...(convertBoxScriptId !== undefined && { convertBoxScriptId }),
+        ...(customHeadScripts !== undefined && { customHeadScripts }),
       },
     })
 
@@ -113,6 +135,12 @@ export async function PATCH(request: Request) {
       settings: {
         teamLeaderHoursRequired: settings.teamLeaderHoursRequired,
         teamLeaderRatingRequired: settings.teamLeaderRatingRequired,
+        googleTagManagerId: settings.googleTagManagerId,
+        facebookPixelId: settings.facebookPixelId,
+        googleAnalyticsId: settings.googleAnalyticsId,
+        ga4PropertyId: settings.ga4PropertyId,
+        convertBoxScriptId: settings.convertBoxScriptId,
+        customHeadScripts: settings.customHeadScripts,
         updatedAt: settings.updatedAt,
       },
     })

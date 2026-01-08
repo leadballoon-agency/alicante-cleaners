@@ -23,6 +23,7 @@ export async function GET() {
             email: true,
             phone: true,
             image: true,
+            lastLoginAt: true,
           },
         },
       },
@@ -44,6 +45,7 @@ export async function GET() {
       rating: c.rating ? Number(c.rating) : 0,
       reviewCount: c.reviewCount,
       teamLeader: c.teamLeader || false,
+      lastLoginAt: c.user.lastLoginAt,
     }))
 
     return NextResponse.json({ cleaners: formattedCleaners })

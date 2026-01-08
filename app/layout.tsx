@@ -5,6 +5,7 @@ import Providers from "@/components/providers";
 import FeedbackWidget from "@/components/feedback-widget";
 import ImpersonationBanner from "@/components/impersonation-banner";
 import { SchemaScript } from "@/components/seo/schema-script";
+import { ScriptLoader } from "@/components/analytics/script-loader";
 import { generateOrganizationSchema, generateWebSiteSchema } from "@/lib/seo/schema";
 
 const inter = Inter({
@@ -60,6 +61,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <Providers>
+          <ScriptLoader />
           <ImpersonationBanner />
           {children}
           <FeedbackWidget />

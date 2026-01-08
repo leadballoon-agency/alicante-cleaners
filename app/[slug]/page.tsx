@@ -8,6 +8,7 @@ import LanguageSwitcher from '@/components/language-switcher'
 import { useLanguage } from '@/components/language-context'
 import { LANGUAGES } from '@/lib/i18n'
 import { PublicChatWidget } from '@/components/ai/public-chat-widget'
+import { PageTracker } from '@/components/analytics/page-tracker'
 
 type Review = {
   id: string
@@ -118,6 +119,7 @@ export default function CleanerProfile() {
 
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-safe">
+      <PageTracker cleanerSlug={slug} />
       {/* Header */}
       <header className="px-6 pt-6 pb-4 bg-white border-b border-[#EBEBEB] sticky top-0 z-10">
         <div className="max-w-lg mx-auto flex items-center justify-between">

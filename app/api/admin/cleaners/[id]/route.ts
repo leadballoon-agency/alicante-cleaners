@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { logAudit } from '@/lib/audit'
 
 // PATCH /api/admin/cleaners/[id] - Approve/suspend cleaner
 export async function PATCH(
@@ -83,6 +84,15 @@ export async function PATCH(
         data: updates,
       })
 
+      // Log audit event
+      await logAudit({
+        userId: session.user.id,
+        action: 'UPDATE_CLEANER',
+        target: cleaner.id,
+        targetType: 'CLEANER',
+        details: { changes: updates, cleanerName: updatedUser.name },
+      })
+
       return NextResponse.json({
         success: true,
         cleaner: {
@@ -140,6 +150,20 @@ export async function PATCH(
     const updatedCleaner = await db.cleaner.update({
       where: { id },
       data: { status: newStatus },
+    })
+
+    // Log audit event
+    const auditAction = action === 'approve' ? 'APPROVE_CLEANER' : action === 'suspend' ? 'SUSPEND_CLEANER' : 'UPDATE_CLEANER'
+    await logAudit({
+      userId: session.user.id,
+      action: auditAction,
+      target: cleaner.id,
+      targetType: 'CLEANER',
+      details: {
+        cleanerName: cleaner.user.name,
+        previousStatus: cleaner.status,
+        newStatus: newStatus,
+      },
     })
 
     return NextResponse.json({
@@ -204,6 +228,15 @@ export async function DELETE(
       db.cleaner.delete({ where: { id } }),
       db.user.delete({ where: { id: cleaner.userId } }),
     ])
+
+    // Log audit event
+    await logAudit({
+      userId: session.user.id,
+      action: 'REJECT_CLEANER',
+      target: id,
+      targetType: 'CLEANER',
+      details: { cleanerUserId: cleaner.userId },
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

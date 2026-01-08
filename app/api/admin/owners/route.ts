@@ -30,6 +30,7 @@ export async function GET() {
             phone: true,
             preferredLanguage: true,
             createdAt: true,
+            lastLoginAt: true,
           },
         },
         properties: {
@@ -88,6 +89,7 @@ export async function GET() {
       rating: owner.cleanerRating ? Number(owner.cleanerRating) : null,
       reviewCount: owner.cleanerReviewCount,
       joinedAt: owner.user.createdAt,
+      lastLoginAt: owner.user.lastLoginAt,
       propertyCount: owner._count.properties,
       bookingCount: owner._count.bookings,
       reviewsGiven: owner._count.reviews,

@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react'
 import ActivityFeed from '@/components/activity-feed'
 import LanguageSwitcher from '@/components/language-switcher'
 import { useLanguage } from '@/components/language-context'
+import { PageTracker } from '@/components/analytics/page-tracker'
 
 type Cleaner = {
   id: string
@@ -52,6 +53,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-safe">
+      <PageTracker />
       {/* Header */}
       <header className="px-6 py-4 bg-white border-b border-[#EBEBEB] sticky top-0 z-10">
         <div className="max-w-5xl mx-auto flex items-center justify-between">

@@ -12,10 +12,12 @@ import FeedbackTab from './tabs/feedback'
 import SupportTab from './tabs/support'
 import AITab from './tabs/ai'
 import SettingsTab, { PlatformSettings } from './tabs/settings'
+import AuditTab from './tabs/audit'
+import LiveTab from './tabs/live'
 import Image from 'next/image'
 import Link from 'next/link'
 
-type Tab = 'overview' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'support' | 'ai' | 'settings'
+type Tab = 'overview' | 'live' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'support' | 'ai' | 'audit' | 'settings'
 
 type SupportConversation = {
   id: string
@@ -68,6 +70,7 @@ export type Cleaner = {
   photo?: string
   status: 'pending' | 'active' | 'suspended'
   joinedAt: Date
+  lastLoginAt?: Date | null
   areas: string[]
   hourlyRate: number
   totalBookings: number
@@ -125,6 +128,7 @@ export type Owner = {
   rating: number | null
   reviewsGiven: number
   joinedAt: Date
+  lastLoginAt?: Date | null
   propertyCount: number
   bookingCount: number
   properties: {
@@ -161,7 +165,7 @@ function AdminDashboardContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
   const tabFromUrl = searchParams.get('tab') as Tab | null
-  const validTabs: Tab[] = ['overview', 'cleaners', 'owners', 'bookings', 'reviews', 'feedback', 'support', 'ai', 'settings']
+  const validTabs: Tab[] = ['overview', 'live', 'cleaners', 'owners', 'bookings', 'reviews', 'feedback', 'support', 'ai', 'audit', 'settings']
   const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'overview'
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS)
@@ -458,12 +462,14 @@ function AdminDashboardContent() {
 
   const tabs: { id: Tab; label: string; icon: string; badge?: number }[] = [
     { id: 'overview', label: 'Home', icon: '🏠' },
+    { id: 'live', label: 'Live', icon: '📡' },
     { id: 'ai', label: 'AI', icon: '🤖' },
-    { id: 'support', label: 'Support', icon: '💬', badge: supportStats.escalated },
     { id: 'cleaners', label: 'Cleaners', icon: '🧹', badge: cleaners.filter(c => c.status === 'pending').length },
     { id: 'owners', label: 'Owners', icon: '👤' },
     { id: 'bookings', label: 'Bookings', icon: '📋', badge: bookings.filter(b => b.status === 'pending').length },
     { id: 'reviews', label: 'Reviews', icon: '⭐', badge: reviews.filter(r => r.status === 'pending').length },
+    { id: 'audit', label: 'Audit', icon: '📝' },
+    { id: 'settings', label: 'Settings', icon: '⚙️' },
   ]
 
   if (loading) {
@@ -542,6 +548,13 @@ function AdminDashboardContent() {
             onTabChange={(tab) => setActiveTab(tab as Tab)}
           />
         )}
+        {activeTab === 'live' && (
+          <LiveTab
+            onTabChange={(tab) => setActiveTab(tab as Tab)}
+            onApproveReview={handleApproveReview}
+            onApproveCleaner={handleApproveCleaner}
+          />
+        )}
         {activeTab === 'ai' && (
           <AITab adminName={session?.user?.name || 'Admin'} />
         )}
@@ -589,6 +602,9 @@ function AdminDashboardContent() {
             onResolve={handleResolveSupportConversation}
             onRefresh={fetchSupportData}
           />
+        )}
+        {activeTab === 'audit' && (
+          <AuditTab />
         )}
         {activeTab === 'settings' && (
           <SettingsTab
