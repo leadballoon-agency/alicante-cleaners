@@ -210,6 +210,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
     { icon: '📅', label: 'Calendar sync', href: '/dashboard/availability' },
     { icon: '💳', label: 'Payment settings', href: '#', disabled: true },
     { icon: '🔔', label: 'Notifications', href: '#', disabled: true },
+    { icon: '⚙️', label: 'Account settings', href: '/dashboard/account' },
   ]
 
   const handleSendPhoneCode = async () => {
@@ -420,6 +421,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp,image/gif"
+                        capture="user"
                         onChange={handlePhotoSelect}
                         className="hidden"
                       />

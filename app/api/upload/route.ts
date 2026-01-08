@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { put } from '@vercel/blob'
+import sharp from 'sharp'
 
-// POST /api/upload - Upload an image file
+// POST /api/upload - Upload an image file (authenticated)
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -34,24 +35,45 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024
+    // Validate file size (max 10MB before compression)
+    const maxSize = 10 * 1024 * 1024
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 5MB.' },
+        { error: 'File too large. Maximum size is 10MB.' },
         { status: 400 }
       )
     }
 
-    // Generate unique filename
-    const ext = file.name.split('.').pop() || 'jpg'
-    const filename = `profiles/${session.user.id}-${Date.now()}.${ext}`
+    // Convert file to buffer
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    // Upload to Vercel Blob
-    const blob = await put(filename, file, {
+    // Compress and resize image
+    // Profile photos: max 800x800, 80% quality JPEG
+    const compressedBuffer = await sharp(buffer)
+      .resize(800, 800, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .jpeg({
+        quality: 80,
+        mozjpeg: true, // Better compression
+      })
+      .toBuffer()
+
+    // Generate unique filename
+    const filename = `profiles/${session.user.id}-${Date.now()}.jpg`
+
+    // Upload compressed image to Vercel Blob
+    const blob = await put(filename, compressedBuffer, {
       access: 'public',
       addRandomSuffix: false,
+      contentType: 'image/jpeg',
     })
+
+    // Log compression savings
+    const savings = Math.round((1 - compressedBuffer.length / buffer.length) * 100)
+    console.log(`Image compressed: ${file.size} → ${compressedBuffer.length} bytes (${savings}% smaller)`)
 
     return NextResponse.json({
       success: true,

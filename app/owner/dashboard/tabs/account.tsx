@@ -23,6 +23,7 @@ export default function AccountTab({ owner, onRefresh }: Props) {
     { icon: '💳', label: 'Payment methods', href: '#' },
     { icon: '🔔', label: 'Notifications', href: '#' },
     { icon: '🔒', label: 'Privacy & security', href: '#' },
+    { icon: '⚙️', label: 'Account settings', href: '/owner/dashboard/account' },
   ]
 
   const referralLink = `https://alicantecleaners.com/join?ref=${owner.referralCode}`

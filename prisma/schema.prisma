@@ -50,6 +50,15 @@ model User {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
+  // Account Management (pause/delete with retention)
+  accountStatus        AccountStatus @default(ACTIVE)
+  pausedAt             DateTime?     // When account was paused
+  pausedReason         String?       @db.Text // Optional feedback on why they paused
+  deletionRequestedAt  DateTime?     // When deletion was requested
+  deletionScheduledFor DateTime?     // 30 days after request (actual deletion date)
+  deletionReason       String?       // Category: not_using, found_alternative, unhappy, other
+  deletionFeedback     String?       @db.Text // Detailed feedback
+
   accounts               Account[]
   sessions               Session[]
   cleaner                Cleaner?
@@ -102,6 +111,12 @@ enum UserRole {
   OWNER
   CLEANER
   ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE           // Normal active account
+  PAUSED           // Temporarily deactivated (can reactivate anytime)
+  PENDING_DELETION // Requested deletion, in 30-day grace period
 }
 
 enum CleanerStatus {
