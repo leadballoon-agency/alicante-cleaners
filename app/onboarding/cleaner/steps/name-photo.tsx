@@ -17,20 +17,60 @@ type Props = {
 export default function NamePhoto({ name, photoUrl, bio, reviewsLink, onUpdate, onBack, onNext }: Props) {
   const [value, setValue] = useState(name)
   const [photo, setPhoto] = useState<string | null>(photoUrl)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [bioValue, setBioValue] = useState(bio)
   const [reviewsLinkValue, setReviewsLinkValue] = useState(reviewsLink)
   const [loading, setLoading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // TODO: Upload to storage, for now use local preview
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+      if (!allowedTypes.includes(file.type)) {
+        setUploadError('Please use JPEG, PNG, WebP, or GIF')
+        return
+      }
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError('Photo must be under 5MB')
+        return
+      }
+      setUploadError(null)
+      setPhotoFile(file)
+      // Create preview
       const reader = new FileReader()
       reader.onload = (e) => {
         setPhoto(e.target?.result as string)
       }
       reader.readAsDataURL(file)
+    }
+  }
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!photoFile) return photo // Return existing photo URL if no new file
+
+    try {
+      const formData = new FormData()
+      formData.append('file', photoFile)
+
+      const response = await fetch('/api/onboarding/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to upload photo')
+      }
+
+      const data = await response.json()
+      return data.url
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Failed to upload photo')
+      return null
     }
   }
 
@@ -40,11 +80,21 @@ export default function NamePhoto({ name, photoUrl, bio, reviewsLink, onUpdate, 
     if (!value.trim()) return
 
     setLoading(true)
+    setUploadError(null)
 
-    // TODO: Upload photo to storage if exists
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // Upload photo to storage if a new file was selected
+    let finalPhotoUrl = photo
+    if (photoFile) {
+      const uploadedUrl = await uploadPhoto()
+      if (uploadedUrl) {
+        finalPhotoUrl = uploadedUrl
+      } else if (uploadError) {
+        setLoading(false)
+        return // Stop if upload failed
+      }
+    }
 
-    onUpdate({ name: value.trim(), photoUrl: photo, bio: bioValue.trim(), reviewsLink: reviewsLinkValue.trim() })
+    onUpdate({ name: value.trim(), photoUrl: finalPhotoUrl, bio: bioValue.trim(), reviewsLink: reviewsLinkValue.trim() })
     setLoading(false)
     onNext()
   }
@@ -92,6 +142,11 @@ export default function NamePhoto({ name, photoUrl, bio, reviewsLink, onUpdate, 
         <p className="text-center text-[#9B9B9B] text-xs">
           Tap to add a photo (optional)
         </p>
+        {uploadError && (
+          <p className="text-center text-[#C75050] text-xs mt-1">
+            {uploadError}
+          </p>
+        )}
 
         {/* Name input */}
         <div>
