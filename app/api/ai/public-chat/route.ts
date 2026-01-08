@@ -18,12 +18,30 @@ interface ChatMessage {
   content: string
 }
 
+// Patterns that indicate sensitive access information (for security warning)
+const SENSITIVE_PATTERNS = [
+  /key\s+(is\s+)?(under|behind|in|at|near)/i,
+  /code\s+(is\s+)?\d{3,}/i,
+  /pin\s+(is\s+)?\d{3,}/i,
+  /alarm\s+(is\s+)?\d{3,}/i,
+  /gate\s+(code|pin)/i,
+  /lockbox/i,
+  /key\s*safe/i,
+  /spare\s+key/i,
+  /hidden\s+key/i,
+]
+
+function containsSensitiveInfo(message: string): boolean {
+  return SENSITIVE_PATTERNS.some(pattern => pattern.test(message))
+}
+
 // Tool definition for creating magic link
+// NOTE: Access notes are NOT collected here for security - they're entered on the secure form
 const createMagicLinkTool: ChatCompletionTool = {
   type: 'function',
   function: {
     name: 'create_magic_link',
-    description: 'Create a magic link to send to the visitor after collecting all their booking details. Call this when you have: service type, bedrooms, bathrooms, outdoor areas, access details, preferred date/time, name, and phone number.',
+    description: 'Create a magic link to send to the visitor after collecting booking details. Call this when you have: service type, bedrooms, bathrooms, outdoor areas (optional), preferred date/time, name, and phone number. Do NOT collect access codes or key locations - these will be entered securely on the booking form.',
     parameters: {
       type: 'object',
       properties: {
@@ -47,10 +65,6 @@ const createMagicLinkTool: ChatCompletionTool = {
           type: 'array',
           items: { type: 'string' },
           description: 'List of outdoor areas (e.g., ["pool", "garden", "terrace"])',
-        },
-        accessNotes: {
-          type: 'string',
-          description: 'Access details like key location, gate codes, parking instructions',
         },
         serviceType: {
           type: 'string',
@@ -162,11 +176,17 @@ When someone wants to book, collect this information step by step:
    - Number of bedrooms
    - Number of bathrooms
    - Outdoor areas (terrace, pool, garden) - optional
-   - Access details (key location, gate code, parking)
 3. Preferred date and time (from available dates above)
 4. Their name and phone number
 
-IMPORTANT: Once you have ALL required details (service, bedrooms, bathrooms, access, date, time, name, phone), you MUST call the create_magic_link function immediately. Do NOT just say you will send a link - actually call the function.
+IMPORTANT: Once you have the required details (service, bedrooms, bathrooms, date, time, name, phone), you MUST call the create_magic_link function immediately. Do NOT just say you will send a link - actually call the function.
+
+SECURITY - VERY IMPORTANT:
+- NEVER ask for or collect access codes, gate codes, key locations, alarm codes, or lockbox codes in this chat
+- If the visitor tries to share sensitive access information, STOP them and explain:
+  "For your security, please don't share access codes or key locations in this chat. You'll be able to add these details securely when you confirm your booking through the link we send you. Your access information will be encrypted and only visible to your assigned cleaner 24 hours before the booking."
+- Access details will be collected securely on the booking confirmation form, NOT in this chat
+- This protects the property owner's security
 
 IMPORTANT RULES:
 - Be warm, helpful, and professional
@@ -175,9 +195,13 @@ IMPORTANT RULES:
 - If asked about things you don't know, suggest they contact ${cleaner.user.name} directly
 - Guide conversations toward booking when appropriate
 - Prices include everything (supplies, travel)
-- Parse dates flexibly (e.g., "January 7th" = next January 7th)`
+- Parse dates flexibly (e.g., "January 7th" = next January 7th)
+- If asked about security, explain that VillaCare encrypts sensitive data and uses just-in-time access (cleaner only sees access notes 24h before booking)`
 
     const openai = getOpenAI()
+
+    // Check if the user is trying to share sensitive information
+    const sensitiveInfoDetected = containsSensitiveInfo(message)
 
     // Build messages array
     const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
@@ -188,6 +212,14 @@ IMPORTANT RULES:
       })),
       { role: 'user', content: message },
     ]
+
+    // If sensitive info detected, add a system reminder to trigger the security response
+    if (sensitiveInfoDetected) {
+      messages.push({
+        role: 'system',
+        content: '[SECURITY ALERT: The user appears to be sharing sensitive access information like key locations or codes. You MUST respond with the security message and guide them to enter this securely on the booking form instead. Do NOT acknowledge or store this information.]',
+      })
+    }
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -212,6 +244,7 @@ IMPORTANT RULES:
           const args = JSON.parse(toolCall.function.arguments)
 
           // Call the onboarding creation API
+          // NOTE: accessNotes are NOT passed here for security - collected on secure form
           const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
           const onboardingResponse = await fetch(`${baseUrl}/api/ai/onboarding/create`, {
             method: 'POST',
@@ -223,7 +256,7 @@ IMPORTANT RULES:
               bedrooms: args.bedrooms,
               bathrooms: args.bathrooms,
               outdoorAreas: args.outdoorAreas || [],
-              accessNotes: args.accessNotes,
+              // accessNotes intentionally omitted - collected securely on magic link form
               serviceType: args.serviceType,
               preferredDate: args.preferredDate,
               preferredTime: args.preferredTime,

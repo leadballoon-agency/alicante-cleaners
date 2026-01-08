@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { getAccessNotesForUI } from '@/lib/access-control'
 
 // GET /api/dashboard/cleaner/bookings - Get cleaner's bookings
 export async function GET() {
@@ -73,6 +74,7 @@ export async function GET() {
             id: true,
             address: true,
             bedrooms: true,
+            notes: true, // Encrypted access notes
           },
         },
         owner: {
@@ -96,6 +98,15 @@ export async function GET() {
     // Transform bookings to match frontend expectations
     const formattedBookings = bookings.map(b => {
       const memberInfo = teamMembersMap[b.cleanerId] || { name: 'Unknown', photo: null }
+
+      // Apply just-in-time access control for property access notes
+      // Only show access notes within 24 hours of the booking
+      const accessNotesResult = getAccessNotesForUI(
+        b.property.notes,
+        b.date,
+        b.time
+      )
+
       return {
         id: b.id,
         status: b.status.toLowerCase() as 'pending' | 'confirmed' | 'completed',
@@ -108,6 +119,10 @@ export async function GET() {
           id: b.property.id,
           address: b.property.address,
           bedrooms: b.property.bedrooms,
+          // Just-in-time access: notes only visible 24h before booking
+          accessNotes: accessNotesResult.notes,
+          accessNotesAvailable: accessNotesResult.canView,
+          accessNotesMessage: accessNotesResult.message,
         },
         owner: {
           id: b.owner.id,

@@ -35,6 +35,8 @@ export default function OnboardingPage() {
   const [confirming, setConfirming] = useState(false)
   const [email, setEmail] = useState('')
   const [propertyName, setPropertyName] = useState('')
+  const [accessNotes, setAccessNotes] = useState('')
+  const [showSecurityInfo, setShowSecurityInfo] = useState(false)
 
   useEffect(() => {
     async function fetchOnboarding() {
@@ -71,7 +73,7 @@ export default function OnboardingPage() {
       const response = await fetch(`/api/ai/onboarding/${token}/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, propertyName }),
+        body: JSON.stringify({ email, propertyName, accessNotes: accessNotes || undefined }),
       })
 
       if (!response.ok) {
@@ -213,10 +215,78 @@ export default function OnboardingPage() {
                 </span>
               </div>
             )}
-            {data.accessNotes && (
-              <div className="border-t border-[#EBEBEB] pt-3">
-                <span className="text-[#6B6B6B] block mb-1">Access Notes</span>
-                <span className="text-[#1A1A1A]">{data.accessNotes}</span>
+          </div>
+        </div>
+
+        {/* Secure Access Notes Section */}
+        <div className="bg-gradient-to-br from-emerald-50 to-white rounded-2xl p-5 border border-emerald-200 mb-6">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="font-semibold text-[#1A1A1A]">Secure Access Details</h2>
+              <p className="text-sm text-[#6B6B6B] mt-0.5">
+                This information is encrypted and only shared with your cleaner
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-[#6B6B6B] mb-1.5">
+                Access Instructions
+                <span className="text-[#9B9B9B] ml-1">(optional)</span>
+              </label>
+              <textarea
+                value={accessNotes}
+                onChange={(e) => setAccessNotes(e.target.value)}
+                placeholder="e.g., Key is in the lockbox by the front door (code: 1234), gate code is 5678, parking in space #3"
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:outline-none focus:border-emerald-500 text-sm resize-none"
+              />
+            </div>
+
+            {/* Security Info Toggle */}
+            <button
+              type="button"
+              onClick={() => setShowSecurityInfo(!showSecurityInfo)}
+              className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700"
+            >
+              <svg className={`w-4 h-4 transition-transform ${showSecurityInfo ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              How we protect your information
+            </button>
+
+            {showSecurityInfo && (
+              <div className="bg-white rounded-xl p-4 text-sm space-y-2 border border-emerald-100">
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-500 mt-0.5">&#10003;</span>
+                  <span className="text-[#6B6B6B]">
+                    <strong className="text-[#1A1A1A]">Encrypted storage</strong> - Your access details are encrypted using industry-standard AES-256 encryption
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-500 mt-0.5">&#10003;</span>
+                  <span className="text-[#6B6B6B]">
+                    <strong className="text-[#1A1A1A]">Just-in-time access</strong> - Your cleaner can only view access details 24 hours before your booking
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-500 mt-0.5">&#10003;</span>
+                  <span className="text-[#6B6B6B]">
+                    <strong className="text-[#1A1A1A]">Limited visibility</strong> - Only your assigned cleaner can see your access information
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-500 mt-0.5">&#10003;</span>
+                  <span className="text-[#6B6B6B]">
+                    <strong className="text-[#1A1A1A]">You&apos;re in control</strong> - Update or remove access details anytime from your dashboard
+                  </span>
+                </div>
               </div>
             )}
           </div>

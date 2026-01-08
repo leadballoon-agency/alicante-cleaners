@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
 import { onBookingCreated } from '@/lib/notifications/booking-notifications'
+import { encryptAccessNotes } from '@/lib/encryption'
 
 function generateReferralCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -27,7 +28,7 @@ export async function POST(
 ) {
   try {
     const { token } = await params
-    const { email, propertyName } = await request.json()
+    const { email, propertyName, accessNotes } = await request.json()
 
     if (!email || !propertyName) {
       return NextResponse.json(
@@ -115,7 +116,10 @@ export async function POST(
     // Build property address from access notes or use placeholder
     const propertyAddress = onboarding.address || 'Address to be provided'
 
-    // Create property
+    // Encrypt access notes if provided (from secure form, not from chat)
+    const encryptedNotes = accessNotes ? encryptAccessNotes(accessNotes) : null
+
+    // Create property with encrypted access notes
     const property = await db.property.create({
       data: {
         ownerId: owner.id,
@@ -123,11 +127,12 @@ export async function POST(
         address: propertyAddress,
         bedrooms: onboarding.bedrooms,
         bathrooms: onboarding.bathrooms,
-        notes: onboarding.accessNotes,
+        notes: encryptedNotes, // Encrypted for security
       },
     })
 
     // Create PENDING booking (cleaner must confirm)
+    // NOTE: Booking notes do NOT contain access details - those are in Property.notes (encrypted)
     const booking = await db.booking.create({
       data: {
         cleanerId: onboarding.cleanerId,
@@ -139,7 +144,7 @@ export async function POST(
         hours: onboarding.serviceHours,
         date: onboarding.preferredDate,
         time: onboarding.preferredTime,
-        notes: `Property: ${onboarding.bedrooms} bed, ${onboarding.bathrooms} bath. Outdoor: ${onboarding.outdoorAreas.join(', ') || 'None'}. ${onboarding.accessNotes || ''}`,
+        notes: `Property: ${onboarding.bedrooms} bed, ${onboarding.bathrooms} bath. Outdoor: ${onboarding.outdoorAreas.join(', ') || 'None'}.`,
         createdByAI: true,
       },
     })
