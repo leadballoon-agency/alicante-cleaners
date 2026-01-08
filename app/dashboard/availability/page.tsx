@@ -2,8 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
-import { signIn } from 'next-auth/react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   Calendar,
@@ -13,6 +12,7 @@ import {
   X,
   Loader2,
   AlertCircle,
+  CheckCircle,
 } from 'lucide-react'
 
 type CalendarStatus = {
@@ -46,26 +46,44 @@ export default function AvailabilityPage() {
 function AvailabilityContent() {
   const { status } = useSession()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null)
   const [availability, setAvailability] = useState<AvailabilityBlock[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
   const [oauthError, setOauthError] = useState<string | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
 
-  // Check for OAuth errors in URL params
+  // Check for OAuth success/errors in URL params
   useEffect(() => {
     const error = searchParams.get('error')
+    const success = searchParams.get('success')
+
+    if (success === 'connected') {
+      setShowSuccess(true)
+      // Clear the URL param
+      router.replace('/dashboard/availability', { scroll: false })
+      // Auto-dismiss after 5 seconds
+      setTimeout(() => setShowSuccess(false), 5000)
+    }
+
     if (error) {
       if (error === 'OAuthCallback' || error === 'OAuthSignin') {
         setOauthError('Google Calendar connection failed. This may be due to a configuration issue. Please contact support.')
-      } else if (error === 'AccessDenied') {
+      } else if (error === 'AccessDenied' || error === 'access_denied') {
         setOauthError('You denied access to Google Calendar. Calendar sync requires permission to read your calendar.')
+      } else if (error === 'state_mismatch') {
+        setOauthError('Security verification failed. Please try again.')
+      } else if (error === 'token_exchange_failed') {
+        setOauthError('Failed to complete connection. Please try again.')
       } else {
         setOauthError(`Connection failed: ${error}`)
       }
+      // Clear the URL param
+      router.replace('/dashboard/availability', { scroll: false })
     }
-  }, [searchParams])
+  }, [searchParams, router])
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -96,11 +114,9 @@ function AvailabilityContent() {
     }
   }
 
-  const handleConnect = async () => {
-    await signIn('google', {
-      callbackUrl: `${window.location.origin}/dashboard/availability`,
-      redirect: true,
-    })
+  const handleConnect = () => {
+    // Use custom OAuth flow that preserves the cleaner session
+    window.location.href = '/api/calendar/google/connect'
   }
 
   const handleSync = async () => {
@@ -202,6 +218,25 @@ function AvailabilityContent() {
       </header>
 
       <main className="px-6 py-6 max-w-2xl mx-auto space-y-6">
+        {/* Success Alert */}
+        {showSuccess && (
+          <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-medium text-green-800 mb-1">Calendar Connected!</h3>
+                <p className="text-sm text-green-700">Your Google Calendar has been successfully connected. We&apos;ll automatically sync your busy times.</p>
+                <button
+                  onClick={() => setShowSuccess(false)}
+                  className="mt-3 text-sm text-green-600 font-medium hover:underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* OAuth Error Alert */}
         {oauthError && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
