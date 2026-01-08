@@ -13,6 +13,8 @@ Alicante Cleaners connects you with trusted, vetted cleaning professionals in th
 3. **Cleaner Confirms** - They accept and show up
 4. **Leave a Review** - Help the community
 
+**Need help?** See our step-by-step booking guide at `/guide/booking` with screenshots of every step.
+
 ## Service Types
 
 | Service | Hours | Best For |
@@ -88,6 +90,23 @@ Trusted owners get priority booking and access to top-rated cleaners.
 - Pay securely through the platform
 - No cash handling with cleaners
 - Receipts available in Bookings tab
+
+## Security & Privacy
+
+Your property access details are protected by our **Sensitive Access Lifecycle**:
+
+| When | What Happens |
+|------|--------------|
+| **You add access notes** | Encrypted with AES-256 and stored securely |
+| **24 hours before booking** | Your assigned cleaner gains access |
+| **After booking completes** | Access automatically revoked |
+
+**Key protections:**
+- Only your assigned cleaner sees access details
+- No permanent storage of codes
+- System-enforced, not policy-dependent
+
+See full details at `/knowledge/security-and-access.md`
 
 ## Support
 
