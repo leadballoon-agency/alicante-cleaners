@@ -112,9 +112,16 @@ export default function HomePage() {
           <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1A1A] mb-4 leading-tight">
             Trusted villa cleaning<br />in Alicante
           </h1>
-          <p className="text-[#6B6B6B] text-lg max-w-lg mx-auto mb-6">
+          <p className="text-[#6B6B6B] text-lg max-w-lg mx-auto mb-4">
             Vetted cleaners. Photo proof. Auto-translation. Whether you&apos;re here year-round or visiting - your villa stays cared for.
           </p>
+
+          <Link
+            href="/guide/booking"
+            className="inline-flex items-center gap-1 text-[#C4785A] text-sm font-medium hover:underline mb-6"
+          >
+            New here? See how booking works →
+          </Link>
 
           {/* Activity Feed */}
           <div className="flex justify-center mb-8">
