@@ -58,9 +58,10 @@ For detailed documentation, see the `docs/` folder:
 
 ### Cleaner Features
 - **Onboarding** - Phone OTP verification, profile setup, area selection, pricing, team selection
-- **Dashboard** - 6-tab layout with SmartWidget navigation:
+- **Dashboard** - 7-tab layout with SmartWidget navigation:
   - **Home** - Calendar timeline with all jobs grouped by day, peek-to-lock booking cards
   - **Bookings** - All bookings with filters, assign to team members
+  - **Success** - AI Success Coach with profile analytics, personalized tips, chat
   - **Promote** - Stats (weekly/monthly/all-time), shareable profile card, WhatsApp share, tips
   - **Messages** - Conversations with owners (auto-translated)
   - **Team** - Team management (Team Leaders only), applicant review
@@ -123,6 +124,8 @@ For detailed documentation, see the `docs/` folder:
 
 ### AI
 - `lib/ai/admin-agent.ts` - Admin AI agent with tools
+- `lib/ai/success-agent.ts` - Cleaner Success Coach agent
+- `lib/ai/success-agent-tools.ts` - Success Coach tool implementations
 - `lib/ai/knowledge.ts` - Knowledge base loader
 - `knowledge/*.md` - Documentation for AI context
 
@@ -266,6 +269,8 @@ POST /api/ai/public-chat           Public cleaner profile chat
 POST /api/ai/onboarding-chat       Cleaner onboarding help
 POST /api/ai/owner/chat            Owner AI assistant
 POST /api/ai/cleaner/chat          Cleaner AI assistant
+GET  /api/ai/success-chat          Get Success Coach greeting + stats
+POST /api/ai/success-chat          Chat with Success Coach
 POST /api/ai/applicant-chat        Team applicant screening chat
 POST /api/ai/sales-agent/respond   Auto-respond to owner messages
 POST /api/ai/onboarding/create     Create magic link onboarding
@@ -423,6 +428,43 @@ Claude-powered AI assistant with 18 tools for platform management.
 | update_owner_notes | Add/update CRM notes |
 | send_message_to_cleaner | Auto-translated in-app message |
 | generate_whatsapp_invite | Pre-filled WhatsApp links |
+
+---
+
+## Cleaner Success Coach
+
+Claude-powered AI coach that helps cleaners maximize their success on the platform.
+
+### Gamification
+- **Teaser Mode**: Before first completed job - shows profile progress bar, checklist, locked preview
+- **Full Mode**: After first completed job - unlocks full AI chat, stats, and personalized coaching
+
+### Tools
+| Tool | Description |
+|------|-------------|
+| get_profile_health | Profile completeness score (0-100) with checklist |
+| get_profile_views | Weekly view stats from PageView table |
+| get_revenue_stats | Earnings breakdown (week/month/all-time) |
+| get_booking_insights | Acceptance rate, completion rate, patterns |
+| get_team_opportunities | Team status and benefits |
+| get_improvement_tips | Personalized recommendations |
+
+### Profile Health Scoring
+| Component | Points | Criteria |
+|-----------|--------|----------|
+| Photo | 20 | Has profile photo |
+| Bio | 20 | 100+ characters |
+| Service Areas | 15 | 3+ areas with high-demand coverage |
+| Hourly Rate | 10 | Rate set (€15-22 is competitive) |
+| Reviews | 15 | 5+ reviews |
+| Languages | 10 | 2+ languages |
+| Calendar | 10 | Google Calendar synced |
+
+### Key Files
+- `lib/ai/success-agent.ts` - Main agent with Claude integration
+- `lib/ai/success-agent-tools.ts` - Tool implementations
+- `app/api/ai/success-chat/route.ts` - API endpoint (GET for greeting, POST for chat)
+- `app/dashboard/tabs/success.tsx` - Success tab UI
 
 ---
 
@@ -633,6 +675,8 @@ After running `npx prisma db seed`:
 - Configurable scripts (GTM, Facebook Pixel, GA4, ConvertBox)
 - GA4 real-time integration (optional)
 - Dynamic OG images for cleaner profiles
+- Cleaner Success Coach (AI-powered growth tips, profile analytics)
+- Profile Guide page (`/join/profile-guide`)
 
 ### Planned 📋
 - Stripe payment integration

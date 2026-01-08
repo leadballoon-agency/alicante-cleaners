@@ -217,6 +217,7 @@ const nextStep = () => {
 4. **Messages** - Conversations with owners (auto-translated)
 5. **Team** - Team management (Team Leaders only), applicant review
 6. **Profile** - Edit profile, settings, Google Calendar sync
+7. **Success** - AI Success Coach with profile health, stats, and personalized growth tips
 
 **Navigation:**
 - SmartWidget floating button (bottom-right) with context-aware icon
@@ -265,6 +266,36 @@ The Team tab appears for cleaners marked as `teamLeader: true`. Features include
 4. Conversation stored with auto-generated summary (every 4 messages)
 5. Team leader reviews in dashboard and decides
 
+#### Success Tab (AI Success Coach)
+
+The Success tab provides personalized coaching to help cleaners grow on the platform.
+
+**Gamification States:**
+- **Locked/Teaser Mode** (before first completed job):
+  - Profile completion progress bar (0-100%)
+  - Checklist showing what's missing (photo, bio, areas, etc.)
+  - Locked preview: "Complete your first job to unlock your Success Coach!"
+  - Each checklist item shows priority (high/medium/low)
+
+- **Unlocked Mode** (after first completed job):
+  - Stats overview: Profile score circle, weekly views, completed jobs
+  - Personalized greeting from AI coach
+  - Full chat interface with quick question buttons
+  - Profile health breakdown with suggestions
+
+**Stats Displayed:**
+- Profile health score (0-100)
+- Profile views this week (from PageView table)
+- Total completed jobs
+- Personalized improvement tips
+
+**Quick Questions:**
+- "How can I get more bookings?"
+- "Help me improve my profile"
+- "What areas are in demand?"
+
+**File:** `app/dashboard/tabs/success.tsx`
+
 ```tsx
 const [activeTab, setActiveTab] = useState('home')
 
@@ -277,6 +308,7 @@ return (
     {activeTab === 'messages' && <MessagesTab />}
     {activeTab === 'team' && <TeamTab />}
     {activeTab === 'profile' && <ProfileTab />}
+    {activeTab === 'success' && <SuccessTab />}     {/* AI Success Coach */}
 
     {/* SmartWidget navigation (floating button) */}
     <SmartWidget
@@ -372,6 +404,7 @@ Shown on team leader profile pages when `?applicant={id}` parameter is present:
 | `MessagesTab` | `app/dashboard/tabs/messages.tsx` | Conversation threads |
 | `TeamTab` | `app/dashboard/tabs/team.tsx` | Team management |
 | `ProfileTab` | `app/dashboard/tabs/profile.tsx` | Profile editing |
+| `SuccessTab` | `app/dashboard/tabs/success.tsx` | AI Success Coach with profile health and growth tips |
 
 ### UI Components
 

@@ -729,6 +729,58 @@ AI assistant for cleaners.
 
 ---
 
+### GET /api/ai/success-chat
+
+Get Success Coach greeting and stats for cleaner dashboard.
+
+**Authentication:** Required (cleaner only)
+
+**Response:**
+```json
+{
+  "greeting": "Hey Clara! 47 people checked out your profile this week.",
+  "stats": {
+    "profileScore": 75,
+    "profileViews": 47,
+    "completedJobs": 12,
+    "unlocked": true
+  }
+}
+```
+
+---
+
+### POST /api/ai/success-chat
+
+Chat with the AI Success Coach.
+
+**Authentication:** Required (cleaner only)
+
+**Request Body:**
+```json
+{
+  "messages": [
+    { "role": "user", "content": "How can I get more bookings?" }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "message": "I've analyzed your profile. Here's what I found...",
+  "toolsUsed": ["get_profile_health", "get_profile_views"],
+  "unlocked": true,
+  "agentName": "Success Coach"
+}
+```
+
+**Gamification:**
+- `unlocked: false` = Teaser mode (before first job) - only profile health tool available
+- `unlocked: true` = Full mode (after first job) - all tools available
+
+---
+
 ### POST /api/ai/admin/chat
 
 AI assistant for admins (with database tools).
