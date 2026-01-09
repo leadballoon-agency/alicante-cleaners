@@ -8,9 +8,11 @@
 
 ### 1. Unify payment & fee messaging (SITE-WIDE)
 
-**Impact:** CRITICAL | **Effort:** Medium | **Status:** ⏳ Awaiting decision
+**Impact:** CRITICAL | **Effort:** Medium | **Status:** ✅ Fixed
 
-**Current problem:**
+**Decision made:** Beta = direct payment to cleaner, Post-beta = Stripe online payments
+
+**Previous problem:**
 | Page | Current Claim |
 |------|---------------|
 | Homepage | "Pay securely online" |
@@ -173,3 +175,5 @@
 | 2026-01-09 | Created priority list | ✅ |
 | 2026-01-09 | Privacy policy fix | ✅ |
 | 2026-01-09 | Brand naming fix | ✅ |
+| 2026-01-09 | Payment messaging alignment | ✅ |
+| 2026-01-09 | Terms & Conditions update | ✅ |
