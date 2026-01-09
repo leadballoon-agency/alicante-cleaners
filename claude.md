@@ -1,7 +1,12 @@
 # VillaCare (Alicante Cleaners) - Technical Reference
 
-> Villa cleaning platform for Alicante, Spain. Connects villa owners with trusted cleaners.
+> **Starting with cleaning. Expanding to all villa services. Ending in real estate.**
+>
+> AI-native platform connecting villa owners with trusted service providers.
+> Building the trusted relationship layer with Europe's villa owners.
+>
 > **Live:** https://alicantecleaners.com
+> **Investor Page:** https://villacare.app
 
 ---
 
@@ -37,7 +42,28 @@ For detailed documentation, see the `docs/` folder:
 | AI/Translation | OpenAI GPT-4o-mini |
 | AI/Admin | Anthropic Claude (Haiku + Sonnet) |
 | AI/Support | Anthropic Claude (contextual chat widgets) |
+| AI/Investor | Anthropic Claude Opus 4.5 (villacare.app) |
 | Hosting | Vercel (auto-deploy from GitHub) |
+
+---
+
+## The Vision: Real Estate Endgame
+
+**Phase 1: Services** (Current) - Weekly cleaning, trust building. €60/clean
+**Phase 2: Management** - Property management, key holder. €200-500/month
+**Phase 3: Real Estate** - Buy, sell, invest. €15-25K/sale
+
+**Why this works:** Cleaners visit properties weekly. They know when owners are selling before anyone else. This is the Zillow play, but with a services moat.
+
+**8 AI Agents:**
+1. Sales Agent - Handles inquiries 24/7
+2. Support Agent - Answers questions
+3. Success Coach - Helps cleaners grow
+4. Onboarding Agent - Guides setup
+5. Admin Agent - 18+ tools
+6. Owner Agent - Property owner assistant
+7. Cleaner Agent - Booking management
+8. Investor Agent - Investment inquiries (villacare.app)
 
 ---
 

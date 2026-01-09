@@ -1,62 +1,86 @@
-# VillaCare (Alicante Cleaners) - Technical Documentation
+# VillaCare - Investor Documentation
+
+## The Vision
+
+**Starting with cleaning. Expanding to all villa services. Ending in real estate.**
+
+VillaCare is building the trusted relationship layer with Europe's villa owners. We're not a cleaning company - we're building the infrastructure for the €180B Spanish real estate market.
+
+---
 
 ## Executive Summary
 
-VillaCare is a two-sided marketplace connecting villa owners in Alicante, Spain with trusted professional cleaners. The platform solves the pain points of managing vacation property cleaning across language barriers, time zones, and trust issues.
+VillaCare is a two-sided marketplace connecting villa owners in Spain with trusted service providers. Starting with cleaning, we're expanding into pool maintenance, gardening, laundry, and property management - with real estate as the endgame.
+
+### The Opportunity
+
+| Metric | Value |
+|--------|-------|
+| Spain Real Estate Market | €180B |
+| Vacation Properties in Spain | 350,000+ |
+| Avg Commission per Villa Sale | €15-25K |
+| Current Service Fee | €60/clean |
 
 ### The Problem
 
-Villa owners (primarily UK/EU expats) struggle to:
-- Find reliable cleaners in a foreign country
+**Villa owners** (primarily UK/EU expats) struggle to:
+- Find reliable service providers in a foreign country
 - Communicate across language barriers (English ↔ Spanish)
-- Coordinate cleaning before arrivals when they're not present
+- Coordinate services when they're 2,000km away
 - Build trust without personal recommendations
+- Manage multiple providers (cleaners, pool, garden, handyman)
 
-Professional cleaners struggle to:
+**Service providers** struggle to:
 - Find consistent, quality clients
 - Manage bookings across WhatsApp, calls, and texts
-- Handle admin work while cleaning
+- Handle admin work while working
 - Scale their business beyond word-of-mouth
+- Compete against established agencies
 
 ### The Solution
 
-VillaCare provides:
+**AI-native platform** with 8 specialized agents handling everything from sales to coaching:
+
+1. **Sales Agent** - Handles inquiries 24/7, books appointments
+2. **Support Agent** - Answers owner & cleaner questions
+3. **Success Coach** - Helps cleaners grow their business
+4. **Onboarding Agent** - Guides new cleaners through setup
+5. **Admin Agent** - 18+ tools for platform management
+6. **Owner Agent** - Personal assistant for property owners
+7. **Cleaner Agent** - Helps manage bookings & schedule
+8. **Investor Agent** - Handles investor inquiries (yes, really)
 
 **For Owners:**
-- Vetted cleaner directory with reviews and ratings
-- Simple booking flow (no account required)
-- Automatic translation of all messages
-- WhatsApp notifications for booking updates
+- One-stop-shop for all villa services
+- Vetted provider directory with reviews
+- Automatic translation (7 languages)
+- WhatsApp notifications
 - "Arrive to a home that's ready" peace of mind
 
-**For Cleaners:**
-- Professional profile page with booking capability
-- AI-powered sales assistant that handles inquiries 24/7
-- WhatsApp notifications with one-tap ACCEPT/DECLINE
-- Calendar sync to Google/Apple/Outlook
-- Team management for coverage
-- **Custom services** - Team leaders can add pool cleaning, laundry, gardening, etc.
-- **Vertical expansion** - Build a full "Villa Services" business, not just cleaning
+**For Service Providers:**
+- Professional profile with booking capability
+- AI sales assistant that works 24/7
+- Team management to build a real business
+- Custom services (pool, garden, laundry, handyman)
+- Path from cleaner → team leader → business owner
 
-**Platform Features:**
-- Multilingual messaging (7 languages, auto-translated)
-- WhatsApp Business integration via Twilio
-- Admin dashboard with AI assistant
-- Mobile-first, password-free authentication
+### Business Model (Fresha-Inspired)
 
-### Business Model
+| Revenue Stream | Rate | Notes |
+|----------------|------|-------|
+| First Booking | 20% | New client acquisition fee |
+| Repeat Bookings | 2.5% | Transaction fee |
+| Premium Features | TBD | Analytics, priority listing |
 
-Currently in **Beta** (free for all users). Planned monetization:
-- Commission per booking (10-15%)
-- Premium cleaner features (priority listing, analytics)
-- Owner subscription for multiple properties
+**Why this works:** Service providers join free. No subscription, no setup fees. We only earn when they earn.
 
 ### Traction
 
-- Live at: https://alicantecleaners.com
-- 6 vetted cleaners onboarded (including co-founder Clara)
-- Real booking flow operational
-- WhatsApp notifications live
+- **Live Platform:** https://alicantecleaners.com
+- **Vetted Cleaners:** 6+ onboarded (including co-founder Clara)
+- **Real Bookings:** Full booking flow operational
+- **WhatsApp Integration:** Live with Twilio
+- **AI Agents:** 8 specialized agents in production
 
 ---
 
@@ -80,12 +104,13 @@ Currently in **Beta** (free for all users). Planned monetization:
 
 | Metric | Value |
 |--------|-------|
-| **Codebase** | ~35,000 lines TypeScript |
-| **Pages** | 22 routes |
-| **API Endpoints** | 90+ endpoints |
-| **Database Models** | 30+ tables |
+| **Codebase** | ~40,000 lines TypeScript |
+| **Pages** | 25+ routes |
+| **API Endpoints** | 100+ endpoints |
+| **Database Models** | 35+ tables |
 | **Languages Supported** | 7 (EN, ES, DE, FR, NL, IT, PT) |
-| **AI Agents** | 7 (Admin, Success, Sales, Onboarding, Support, Owner, Cleaner) |
+| **AI Agents** | 8 (Admin, Success, Sales, Onboarding, Support, Owner, Cleaner, Investor) |
+| **Target Market** | €180B (Spain real estate) |
 
 ---
 
@@ -141,36 +166,107 @@ Currently in **Beta** (free for all users). Planned monetization:
 
 ### Competitive Advantages
 1. **WhatsApp-native** - Meets users where they are (especially in Spain)
-2. **AI throughout** - Not bolted on, designed around AI
+2. **AI throughout** - Not bolted on, designed around AI from day one
 3. **Two-sided trust** - Referral model ensures quality
-4. **Multilingual** - Removes language barrier completely
-5. **Vertical services expansion** - Team leaders can recruit specialists and become full "Villa Services" providers
+4. **Multilingual** - Removes language barrier completely (7 languages)
+5. **Vertical expansion** - Team leaders become full "Villa Services" businesses
+6. **Data moat** - Weekly visits = early intel on property sales
 
-### Vertical Services Expansion (Villa Services)
+---
 
-The platform is architected to expand beyond cleaning into a full **Villa Services marketplace**:
+## The Endgame: Real Estate
 
-**The Vision:**
-Villa owners need more than cleaning - they need pool maintenance, gardening, laundry, window cleaning, handyman services. By enabling team leaders to recruit specialists and add custom services, we become the one-stop-shop for all villa needs.
+### The 3-Phase Roadmap
 
-**How It Works:**
+| Phase | Focus | Revenue per Transaction |
+|-------|-------|------------------------|
+| **Phase 1: Services** | Weekly cleaning visits, trust building | €60/clean |
+| **Phase 2: Management** | Full property management, key holder | €200-500/month |
+| **Phase 3: Real Estate** | Buy, sell, invest. AI-powered transactions | €15-25K/sale |
+
+### Why This Works
+
+**Cleaners visit these properties every week.**
+
+They know:
+- When owners are thinking of selling (before anyone else)
+- Property condition and maintenance history
+- Neighborhood dynamics and comparable properties
+- Owner pain points and motivations
+
+**This is the Zillow play, but with a services moat.**
+
+Zillow tries to get data through listings. We get it through relationships. Our cleaners are in these homes weekly, building trust that real estate agents can't match.
+
+### The Math
+
+| Metric | Cleaning | Real Estate |
+|--------|----------|-------------|
+| Avg Transaction | €60 | €500,000 |
+| Our Commission | €12 (20%) | €15,000 (3%) |
+| Multiplier | 1x | 1,250x |
+
+One villa sale = 1,250 cleans worth of revenue.
+
+### Network Effects
+
+```
+More cleaners → More villa owners → More services → More trust
+                                                      ↓
+                                              Real estate intel
+                                                      ↓
+                                              Property transactions
+                                                      ↓
+                                              New villa owners (cycle repeats)
+```
+
+---
+
+## Vertical Services Expansion
+
+### The Platform Architecture
+
+The platform is built for expansion beyond cleaning into a full **Villa Services marketplace**:
+
+**Current Services:**
+- Regular Clean (3 hrs × hourly rate)
+- Deep Clean (5 hrs × hourly rate)
+- Arrival Prep (4 hrs × hourly rate)
+
+**Expansion Services (via Custom Services):**
+- Pool Cleaning & Maintenance
+- Garden & Landscaping
+- Laundry Service
+- Window Cleaning
+- Handyman Services
+- Property Checks
+- Key Holding
+- Guest Welcome
+
+### How Custom Services Work
+
 1. **Team Leader** recruits a specialist (pool cleaner, gardener, etc.)
 2. Specialist joins VillaCare using the team's referral code
-3. Team Leader creates a **Custom Service** for their specialty (e.g., "Pool Cleaning - €50")
-4. Service requires admin approval, then goes live on the team's profile
-5. Villa owners can book the specialist service alongside cleaning
+3. Team Leader creates a **Custom Service** (e.g., "Pool Cleaning - €50")
+4. Admin approves the service
+5. Service goes live on the team's public profile
+6. Villa owners can book alongside cleaning
 
-**Why This Matters:**
-- **For cleaners**: Transforms a cleaning job into a real business with multiple revenue streams
-- **For owners**: One trusted team handles everything - no hunting for separate providers
-- **For specialists**: Access to villa owner clients they couldn't reach otherwise
-- **For platform**: Higher booking volume, stickier relationships, network effects
+### The Cleaner Journey
 
-**Cleaner Journey:**
-1. Solo Cleaner (25%) → Join or create a team
-2. Team Member (50%) → Learn and build reputation
-3. Team Leader (75%) → Create team, invite members
-4. Business Owner (100%) → Custom services, specialist team, full villa services
+| Stage | Progress | Capability |
+|-------|----------|------------|
+| Solo Cleaner | 25% | Basic cleaning profile |
+| Team Member | 50% | Part of a team, coverage backup |
+| Team Leader | 75% | Create team, invite members, manage bookings |
+| Business Owner | 100% | Custom services, specialist team, full villa services |
+
+### Why This Matters
+
+- **For cleaners**: Transforms a cleaning job into a real business
+- **For owners**: One trusted team handles everything
+- **For specialists**: Access to villa owner clients
+- **For platform**: Higher LTV, stickier relationships, network effects
 
 **Guides:**
 - `/join/expand-guide` - How team leaders expand with specialists
@@ -179,12 +275,41 @@ Villa owners need more than cleaning - they need pool maintenance, gardening, la
 
 ---
 
+## Why Now
+
+### Market Timing
+
+1. **AI enables 24/7 sales without humans** - Our 8 AI agents handle inquiries, bookings, coaching, and support around the clock
+2. **WhatsApp Business API now accessible** - Previously enterprise-only, now available for startups
+3. **Post-COVID vacation rental boom** - Spain saw record tourism in 2023-2024
+4. **Service providers want ownership** - Gig economy workers want to build businesses, not just jobs
+5. **Real estate market fragmentation** - No dominant player for vacation property services or sales
+
+### European Expansion
+
+The model is replicable across Mediterranean vacation property markets:
+
+| Region | Properties | Status |
+|--------|-----------|--------|
+| Alicante (Costa Blanca) | 50,000+ | **Live** |
+| Costa Brava / Barcelona | 40,000+ | Planned |
+| Algarve, Portugal | 35,000+ | Planned |
+| South of France | 60,000+ | Planned |
+| Italian Riviera | 30,000+ | Planned |
+
+**Same problems, same solution.** Villa owners everywhere struggle with the same issues: language barriers, finding reliable service, coordinating remotely.
+
+---
+
 ## Team
 
-**Lead Balloon Ltd** - Digital agency building VillaCare
-- Mark Taylor - Product & Development
-- Kerry Taylor - Operations
-- Clara Rodrigues - Co-founder, Lead Cleaner (domain expertise)
+**Lead Balloon Ltd** - UK digital agency building VillaCare
+
+| Name | Role | Background |
+|------|------|------------|
+| Mark Taylor | Product & Development | 20+ years software, agency founder |
+| Kerry Taylor | Operations | Business operations, customer success |
+| Clara Rodrigues | Co-founder, Lead Cleaner | Domain expertise, on-the-ground operations |
 
 ---
 
