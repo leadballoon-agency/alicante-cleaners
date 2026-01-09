@@ -16,15 +16,15 @@ const translations = {
     guidesLink: 'Help & Guides',
     loading: 'Taking you to your dashboard...',
     betaBadge: 'Invitation Only',
-    heroTitle1: 'Grow your cleaning business',
-    heroTitle2: 'in Alicante',
-    heroSubtitle: 'Join Clara and 5 other trusted professionals building something different. Get your own profile page, AI assistant, and tools to grow.',
+    heroTitle1: 'Business infrastructure',
+    heroTitle2: 'for cleaning professionals',
+    heroSubtitle: 'Your AI handles enquiries. Calendar sync avoids clashes. Teams give you backup. Access notes appear automatically. Focus on cleaning - we handle the rest.',
     applyToJoin: 'Apply to Join',
     seeHowItWorks: 'See how it works',
     takes2min: 'Takes 2 minutes. Phone number only - no email needed.',
 
-    whyJoinTitle: 'Why cleaners join VillaCare',
-    whyJoinSubtitle: 'We built this with Clara, a professional cleaner with 5 years experience. These are the tools she wished existed.',
+    whyJoinTitle: 'The tools professional cleaners need',
+    whyJoinSubtitle: 'Built with Clara, a professional cleaner with 5 years experience. Everything she wished existed to run her business.',
 
     featureAiTitle: 'AI Sales Assistant',
     featureAiDesc: 'Your AI handles inquiries, checks your calendar, and books jobs - while you focus on cleaning. Never miss a lead again.',
@@ -131,15 +131,15 @@ const translations = {
     guidesLink: 'Ayuda y Guías',
     loading: 'Llevándote a tu panel...',
     betaBadge: 'Solo por Invitación',
-    heroTitle1: 'Haz crecer tu negocio de limpieza',
-    heroTitle2: 'en Alicante',
-    heroSubtitle: 'Únete a Clara y 5 profesionales de confianza construyendo algo diferente. Obtén tu propia página de perfil, asistente IA y herramientas para crecer.',
+    heroTitle1: 'Infraestructura de negocio',
+    heroTitle2: 'para profesionales de limpieza',
+    heroSubtitle: 'Tu IA gestiona consultas. El calendario evita conflictos. Los equipos te dan respaldo. Las notas de acceso aparecen automáticamente. Concéntrate en limpiar - nosotros nos encargamos del resto.',
     applyToJoin: 'Solicitar Unirse',
     seeHowItWorks: 'Ver cómo funciona',
     takes2min: 'Solo 2 minutos. Solo número de teléfono - no necesitas email.',
 
-    whyJoinTitle: 'Por qué los limpiadores eligen VillaCare',
-    whyJoinSubtitle: 'Construimos esto con Clara, una profesional de limpieza con 5 años de experiencia. Estas son las herramientas que ella siempre deseó.',
+    whyJoinTitle: 'Las herramientas que los profesionales necesitan',
+    whyJoinSubtitle: 'Construido con Clara, una profesional de limpieza con 5 años de experiencia. Todo lo que deseaba para gestionar su negocio.',
 
     featureAiTitle: 'Asistente IA de Ventas',
     featureAiDesc: 'Tu IA gestiona consultas, revisa tu calendario y reserva trabajos - mientras tú te concentras en limpiar. Nunca pierdas un cliente.',
@@ -931,23 +931,37 @@ export default function JoinPage() {
 
       {/* Footer */}
       <footer className="px-6 py-8 border-t border-[#EBEBEB]">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Image
-              src="/villacare-horizontal-logo.png"
-              alt="VillaCare"
-              width={100}
-              height={24}
-              className="h-6 w-auto opacity-50"
-            />
-            <span className="text-[#9B9B9B] text-sm">· Alicante, Spain</span>
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Image
+                src="/villacare-horizontal-logo.png"
+                alt="VillaCare"
+                width={100}
+                height={24}
+                className="h-6 w-auto opacity-50"
+              />
+              <span className="text-[#9B9B9B] text-sm">· Alicante, Spain</span>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-[#9B9B9B]">
+              <Link href="/about" className="hover:text-[#6B6B6B]">{t.footerStory}</Link>
+              <span>·</span>
+              <Link href="/privacy" className="hover:text-[#6B6B6B]">{t.footerPrivacy}</Link>
+              <span>·</span>
+              <Link href="/terms" className="hover:text-[#6B6B6B]">{t.footerTerms}</Link>
+            </div>
           </div>
-          <div className="flex items-center gap-4 text-sm text-[#9B9B9B]">
-            <Link href="/about" className="hover:text-[#6B6B6B]">{t.footerStory}</Link>
-            <span>·</span>
-            <Link href="/privacy" className="hover:text-[#6B6B6B]">{t.footerPrivacy}</Link>
-            <span>·</span>
-            <Link href="/terms" className="hover:text-[#6B6B6B]">{t.footerTerms}</Link>
+          {/* Powered by badge */}
+          <div className="mt-4 pt-4 border-t border-[#EBEBEB] text-center">
+            <a
+              href="https://villacare.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-[#9B9B9B] hover:text-[#6B6B6B] transition-colors"
+            >
+              <span>Powered by</span>
+              <span className="font-medium">villacare.app</span>
+            </a>
           </div>
         </div>
       </footer>

@@ -883,6 +883,12 @@ model PublicChatConversation {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Conversion tracking
+  source        String?  // e.g., "homepage-translation-cta", "direct", "referral"
+  language      String?  // Detected language of the visitor (e.g., "de", "fr", "en")
+  converted     Boolean  @default(false) // True if magic link was created
+  convertedAt   DateTime? // When conversion happened
+
   owner    Owner?               @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   messages PublicChatMessage[]
 
@@ -891,6 +897,8 @@ model PublicChatConversation {
   @@index([visitorPhone])
   @@index([ownerId])
   @@index([cleanerSlug, createdAt])
+  @@index([source])
+  @@index([converted])
 }
 
 model PublicChatMessage {

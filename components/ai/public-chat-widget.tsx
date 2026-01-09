@@ -37,6 +37,7 @@ function getSessionId(): string {
 export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
   const searchParams = useSearchParams()
   const applicantId = searchParams.get('applicant')
+  const source = searchParams.get('source') // Track where visitor came from (e.g., homepage-translation-cta)
   const isApplicant = Boolean(applicantId)
 
   const [isOpen, setIsOpen] = useState(false)
@@ -112,6 +113,7 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
             message: userMessage.content,
             history: messages.map(m => ({ role: m.role, content: m.content })),
             sessionId,
+            source: source || undefined, // Pass source for conversion tracking
           }
 
       const response = await fetch(apiEndpoint, {

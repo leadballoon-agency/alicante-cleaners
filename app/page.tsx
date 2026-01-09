@@ -455,6 +455,76 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Behind the Scenes */}
+      <section className="px-6 py-12 bg-white border-t border-[#EBEBEB]">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-semibold text-[#1A1A1A] mb-3">
+              {t('behind.title')}
+            </h2>
+            <p className="text-[#6B6B6B] max-w-2xl mx-auto">
+              {t('behind.subtitle')}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Vetting */}
+            <div className="bg-[#FAFAF8] rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center mb-3">
+                <span className="text-lg">🔒</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('behind.vetting.title')}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t('behind.vetting.desc')}</p>
+            </div>
+
+            {/* Team Coverage */}
+            <div className="bg-[#FAFAF8] rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center mb-3">
+                <span className="text-lg">👥</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('behind.team.title')}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t('behind.team.desc')}</p>
+            </div>
+
+            {/* Real-time Updates */}
+            <div className="bg-[#FAFAF8] rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center mb-3">
+                <span className="text-lg">💬</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('behind.whatsapp.title')}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t('behind.whatsapp.desc')}</p>
+            </div>
+
+            {/* Auto Translation */}
+            <div className="bg-[#FAFAF8] rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center mb-3">
+                <span className="text-lg">🌍</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('behind.translate.title')}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t('behind.translate.desc')}</p>
+            </div>
+
+            {/* Secure Access */}
+            <div className="bg-[#FAFAF8] rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center mb-3">
+                <span className="text-lg">🔑</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('behind.access.title')}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t('behind.access.desc')}</p>
+            </div>
+
+            {/* Support */}
+            <div className="bg-[#FAFAF8] rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="w-10 h-10 bg-[#FFF8F5] rounded-lg flex items-center justify-center mb-3">
+                <span className="text-lg">🛟</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t('behind.support.title')}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t('behind.support.desc')}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How it Works */}
       <section className="px-6 py-10 bg-white border-y border-[#EBEBEB]">
         <div className="max-w-4xl mx-auto">
@@ -606,64 +676,50 @@ export default function HomePage() {
       {/* Translation Spotlight */}
       <section className="px-6 py-12 bg-[#FAFAF8]">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
+          <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-semibold text-[#1A1A1A] mb-3">
               Speak your language. They&apos;ll understand.
             </h2>
-            <p className="text-[#6B6B6B] max-w-2xl mx-auto">
-              Write in English, German, French, Dutch, Italian, or Portuguese. Your cleaner reads it in Spanish.
-              They reply in Spanish, you read it in yours. No more Google Translate screenshots.
+            <p className="text-[#6B6B6B] max-w-xl mx-auto">
+              Our AI assistant speaks your language fluently. Try asking a question in German, French, or Dutch.
             </p>
           </div>
 
-          {/* Language Flags */}
-          <div className="flex flex-wrap justify-center gap-4 mb-10">
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
-              <span className="text-xl">🇬🇧</span>
-              <span className="text-sm text-[#6B6B6B]">English</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
-              <span className="text-xl">🇪🇸</span>
-              <span className="text-sm text-[#6B6B6B]">Español</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
-              <span className="text-xl">🇩🇪</span>
-              <span className="text-sm text-[#6B6B6B]">Deutsch</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
-              <span className="text-xl">🇫🇷</span>
-              <span className="text-sm text-[#6B6B6B]">Français</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
-              <span className="text-xl">🇳🇱</span>
-              <span className="text-sm text-[#6B6B6B]">Nederlands</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
-              <span className="text-xl">🇮🇹</span>
-              <span className="text-sm text-[#6B6B6B]">Italiano</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#EBEBEB]">
-              <span className="text-xl">🇵🇹</span>
-              <span className="text-sm text-[#6B6B6B]">Português</span>
-            </div>
+          {/* Language Flags - Compact */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            {['🇬🇧', '🇪🇸', '🇩🇪', '🇫🇷', '🇳🇱', '🇮🇹', '🇵🇹'].map((flag, i) => (
+              <span key={i} className="text-2xl">{flag}</span>
+            ))}
           </div>
 
-          {/* How it works */}
-          <div className="bg-white rounded-2xl p-6 border border-[#EBEBEB]">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🇬🇧</span>
-                <span className="text-sm text-[#6B6B6B]">You write in English</span>
+          {/* Try it CTA with Clara's photo */}
+          <div className="bg-white rounded-2xl p-8 border border-[#EBEBEB]">
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              {/* Clara's photo */}
+              <div className="flex-shrink-0">
+                <Image
+                  src="/cleaners/Clara-Rodrigues.jpeg"
+                  alt="Clara - Professional Cleaner"
+                  width={120}
+                  height={120}
+                  className="rounded-full object-cover border-4 border-[#FAFAF8]"
+                />
               </div>
-              <span className="text-[#C4785A] font-bold">→</span>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🤖</span>
-                <span className="text-sm text-[#6B6B6B]">Auto-translated</span>
-              </div>
-              <span className="text-[#C4785A] font-bold">→</span>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🇪🇸</span>
-                <span className="text-sm text-[#6B6B6B]">Cleaner reads in Spanish</span>
+              {/* CTA content */}
+              <div className="text-center sm:text-left flex-1">
+                <p className="text-[#6B6B6B] mb-4">
+                  Don&apos;t take our word for it — try it yourself.
+                </p>
+                <Link
+                  href="/clara?source=homepage-translation-cta"
+                  className="inline-flex items-center gap-2 bg-[#1A1A1A] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#333] transition-colors"
+                >
+                  <span>💬</span>
+                  <span>Chat with Clara in your language</span>
+                </Link>
+                <p className="text-xs text-[#9B9B9B] mt-3">
+                  Try German, French, Dutch, Italian, or Portuguese — she&apos;ll reply fluently
+                </p>
               </div>
             </div>
           </div>
@@ -846,6 +902,18 @@ export default function HomePage() {
                 Terms
               </Link>
             </div>
+          </div>
+          {/* Powered by badge */}
+          <div className="mt-4 pt-4 border-t border-[#EBEBEB] text-center">
+            <a
+              href="https://villacare.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-[#9B9B9B] hover:text-[#6B6B6B] transition-colors"
+            >
+              <span>Powered by</span>
+              <span className="font-medium">villacare.app</span>
+            </a>
           </div>
         </div>
       </footer>

@@ -61,6 +61,14 @@ const translations = {
         a: 'Yes! You can cancel or reschedule through your dashboard. We ask for at least 24 hours notice as a courtesy to your cleaner.',
       },
       {
+        q: 'What if my cleaner can\'t make it?',
+        a: 'Many cleaners work in teams. If your cleaner is sick or unavailable, a trusted colleague can step in. We\'ll contact you immediately to arrange backup coverage.',
+      },
+      {
+        q: 'What if I need a clean tomorrow?',
+        a: 'Last-minute bookings are possible if a cleaner has availability. Team leaders can often arrange cover at short notice. Book as normal and we\'ll do our best.',
+      },
+      {
         q: 'What services are included?',
         a: 'Regular Clean (3h) covers standard cleaning. Deep Clean (5h) includes thorough cleaning of hard-to-reach areas. Arrival Prep (4h) prepares your villa for guests.',
       },
@@ -122,6 +130,14 @@ const translations = {
       {
         q: '¿Puedo cancelar o reprogramar?',
         a: '¡Sí! Puedes cancelar o reprogramar desde tu panel. Pedimos al menos 24 horas de aviso como cortesía hacia tu limpiador.',
+      },
+      {
+        q: '¿Qué pasa si mi limpiador no puede venir?',
+        a: 'Muchos limpiadores trabajan en equipos. Si tu limpiador está enfermo o no disponible, un colega de confianza puede cubrirlo. Te contactaremos inmediatamente para organizar cobertura.',
+      },
+      {
+        q: '¿Qué pasa si necesito limpieza mañana?',
+        a: 'Las reservas de última hora son posibles si hay disponibilidad. Los líderes de equipo a menudo pueden organizar cobertura con poco aviso. Reserva normalmente y haremos todo lo posible.',
       },
       {
         q: '¿Qué servicios están incluidos?',

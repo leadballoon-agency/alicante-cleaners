@@ -87,7 +87,7 @@ const createMagicLinkTool: ChatCompletionTool = {
 
 export async function POST(request: Request) {
   try {
-    const { cleanerSlug, message, history = [], sessionId } = await request.json()
+    const { cleanerSlug, message, history = [], sessionId, source } = await request.json()
 
     if (!cleanerSlug || !message) {
       return NextResponse.json(
@@ -109,6 +109,7 @@ export async function POST(request: Request) {
             sessionId,
             cleanerSlug,
             messageCount: 0,
+            source: source || 'direct', // Track where they came from
           },
         })
       }
@@ -214,7 +215,14 @@ IMPORTANT RULES:
 - Guide conversations toward booking when appropriate
 - Prices include everything (supplies, travel)
 - Parse dates flexibly (e.g., "January 7th" = next January 7th)
-- If asked about security, explain that VillaCare encrypts sensitive data and uses just-in-time access (cleaner only sees access notes 24h before booking)`
+- If asked about security, explain that VillaCare encrypts sensitive data and uses just-in-time access (cleaner only sees access notes 24h before booking)
+
+TESTER PIVOT STRATEGY:
+If someone says they're "just testing", "trying out the chat", "seeing how this works", or similar:
+- Acknowledge their curiosity warmly
+- Pivot: "That's great! By the way, do you have a villa in Alicante that needs cleaning? Even if you're not ready to book today, I can tell you about our services."
+- If they don't have a property: "No problem! If you know anyone with a holiday home in Alicante, we'd love to help them. Feel free to share this page with them."
+- The goal is to convert testers into leads or referrals, not to let them leave empty-handed`
 
     const openai = getOpenAI()
 
@@ -240,7 +248,7 @@ IMPORTANT RULES:
     }
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       temperature: 0.7,
       max_tokens: 500,
       messages,
@@ -287,13 +295,15 @@ IMPORTANT RULES:
             magicLinkCreated = true
             magicLinkUrl = onboardingResult.magicLink
 
-            // Update conversation with visitor info from tool call
+            // Update conversation with visitor info and mark as converted
             if (conversation) {
               await db.publicChatConversation.update({
                 where: { id: conversation.id },
                 data: {
                   visitorName: args.visitorName,
                   visitorPhone: args.visitorPhone,
+                  converted: true,
+                  convertedAt: new Date(),
                 },
               })
             }
@@ -312,7 +322,7 @@ IMPORTANT RULES:
             ]
 
             const finalResponse = await openai.chat.completions.create({
-              model: 'gpt-4o-mini',
+              model: 'gpt-4o',
               temperature: 0.7,
               max_tokens: 300,
               messages: toolResultMessages,

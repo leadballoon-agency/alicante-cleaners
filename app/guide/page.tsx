@@ -197,6 +197,53 @@ export default function OwnerGuide() {
         </div>
       </section>
 
+      {/* What If Section */}
+      <section className="py-12 px-4 bg-[#FFF8F5]">
+        <div className="max-w-xl mx-auto">
+          <h2 className="text-xl font-bold text-[#1A1A1A] mb-6 text-center">
+            What if something goes wrong?
+          </h2>
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="flex items-start gap-3">
+                <span className="text-xl">😷</span>
+                <div>
+                  <p className="font-medium text-[#1A1A1A] mb-1">What if my cleaner is sick?</p>
+                  <p className="text-sm text-[#6B6B6B]">Many of our cleaners work in teams. If your cleaner can&apos;t make it, a trusted colleague from their team can step in. We&apos;ll contact you immediately to arrange coverage.</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="flex items-start gap-3">
+                <span className="text-xl">🔑</span>
+                <div>
+                  <p className="font-medium text-[#1A1A1A] mb-1">What if there&apos;s a problem with access?</p>
+                  <p className="text-sm text-[#6B6B6B]">Your cleaner can message you directly via WhatsApp. All messages are auto-translated, so language is never a barrier. You can also set up keyholder contacts as backup.</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="flex items-start gap-3">
+                <span className="text-xl">⏰</span>
+                <div>
+                  <p className="font-medium text-[#1A1A1A] mb-1">What if I&apos;m arriving tomorrow and need a clean?</p>
+                  <p className="text-sm text-[#6B6B6B]">Last-minute bookings are possible if a cleaner has availability. Team leaders can often arrange cover at short notice. Just book as normal and we&apos;ll do our best.</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-5 border border-[#EBEBEB]">
+              <div className="flex items-start gap-3">
+                <span className="text-xl">🛟</span>
+                <div>
+                  <p className="font-medium text-[#1A1A1A] mb-1">What if I&apos;m not happy with the clean?</p>
+                  <p className="text-sm text-[#6B6B6B]">Contact us at support@alicantecleaners.com. We take quality seriously and will help resolve any issues. Photo proof helps us understand what happened.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
       <section className="py-12 px-4 bg-white border-t border-[#EBEBEB]">
         <div className="max-w-xl mx-auto">

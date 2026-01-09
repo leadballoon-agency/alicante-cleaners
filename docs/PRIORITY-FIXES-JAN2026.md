@@ -61,7 +61,7 @@
 
 ### 4. Update homepage positioning
 
-**Impact:** HIGH | **Effort:** Medium | **Status:** ⏳ Pending
+**Impact:** HIGH | **Effort:** Medium | **Status:** ✅ Fixed
 
 **Current issue:** Homepage reads like "Find a trusted cleaner" but product is now "A managed, multilingual, WhatsApp-native service platform"
 
@@ -76,7 +76,7 @@
 
 ### 5. Bring owner guides up to v1.5 reality
 
-**Impact:** HIGH | **Effort:** Medium | **Status:** ⏳ Pending
+**Impact:** HIGH | **Effort:** Medium | **Status:** ✅ Fixed
 
 **Action:** Revise `/guide` and `/guide/booking` to explain:
 - Confirmation timelines
@@ -88,7 +88,7 @@
 
 ### 6. Strengthen cleaner join page as a business platform
 
-**Impact:** HIGH | **Effort:** Medium | **Status:** ⏳ Pending
+**Impact:** HIGH | **Effort:** Medium | **Status:** ✅ Fixed
 
 **Current issue:** Good cleaners see "Get bookings" but product offers infrastructure
 
@@ -157,9 +157,9 @@
 - [x] Brand naming cleanup
 
 ### Week 2 (High Leverage)
-- [ ] Homepage repositioning
-- [ ] Owner guide updates
-- [ ] Cleaner join reframing
+- [x] Homepage repositioning
+- [x] Owner guide updates
+- [x] Cleaner join reframing
 
 ### Week 3 (Polish)
 - [ ] Proof & reassurance additions
@@ -177,3 +177,6 @@
 | 2026-01-09 | Brand naming fix | ✅ |
 | 2026-01-09 | Payment messaging alignment | ✅ |
 | 2026-01-09 | Terms & Conditions update | ✅ |
+| 2026-01-09 | Homepage "Behind the scenes" section | ✅ |
+| 2026-01-09 | Owner guides "What if" reassurance blocks | ✅ |
+| 2026-01-09 | Join page reframed as infrastructure platform | ✅ |
