@@ -210,10 +210,11 @@ export async function GET() {
       })
 
       if (cleaner) {
+        // Count messages from both owners AND admins
         unreadCount = await db.message.count({
           where: {
             conversation: { cleanerId: cleaner.id },
-            senderRole: 'OWNER',
+            senderRole: { in: ['OWNER', 'ADMIN'] },
             isRead: false,
           },
         })

@@ -119,14 +119,16 @@ function Dashboard() {
     ownerId: string
     ownerName: string
   } | null>(null)
+  const [unreadMessages, setUnreadMessages] = useState(0)
   // Fetch cleaner profile and bookings
   const fetchDashboardData = useCallback(async () => {
     try {
-      const [cleanerRes, bookingsRes, commentsRes, teamRes] = await Promise.all([
+      const [cleanerRes, bookingsRes, commentsRes, teamRes, messagesRes] = await Promise.all([
         fetch('/api/dashboard/cleaner'),
         fetch('/api/dashboard/cleaner/bookings'),
         fetch('/api/dashboard/cleaner/comments'),
         fetch('/api/dashboard/cleaner/team'),
+        fetch('/api/messages'),
       ])
 
       if (!cleanerRes.ok) {
@@ -145,10 +147,12 @@ function Dashboard() {
       const bookingsData = await bookingsRes.json()
       const commentsData = await commentsRes.json()
       const teamData = await teamRes.json()
+      const messagesData = await messagesRes.json()
 
       setCleaner(cleanerData.cleaner)
       setBookings(bookingsData.bookings || [])
       setComments(commentsData.comments || [])
+      setUnreadMessages(messagesData.unreadCount || 0)
 
       // Sync language context with cleaner's preferred language
       if (cleanerData.cleaner?.preferredLanguage) {
@@ -384,6 +388,7 @@ function Dashboard() {
       <SmartWidget
         currentScreen={activeTab as Screen}
         onNavigate={(screen) => setActiveTab(screen as Tab)}
+        badges={{ messages: unreadMessages }}
         onQuickAction={(action) => {
           // Handle quick actions from context menus
           if (action === 'support') {
