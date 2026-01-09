@@ -11,7 +11,98 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getOpenAI } from '@/lib/ai/agents'
+import Anthropic from '@anthropic-ai/sdk'
 import type { ChatCompletionTool } from 'openai/resources/chat/completions'
+
+// Easter egg: Alan & Amanda can be summoned!
+let anthropic: Anthropic | null = null
+function getAnthropic(): Anthropic {
+  if (!anthropic) {
+    anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  }
+  return anthropic
+}
+
+// Check if user is INTENTIONALLY trying to summon Alan or Amanda
+// Only triggers on deliberate phrases, not casual name mentions
+function detectEasterEgg(message: string): 'alan' | 'amanda' | null {
+  const lower = message.toLowerCase().trim()
+
+  // Intentional summon phrases for Alan
+  const alanTriggers = [
+    /^alan$/,                          // Just "alan"
+    /^hey alan/,                       // "hey alan"
+    /^hi alan/,                        // "hi alan"
+    /^hello alan/,                     // "hello alan"
+    /talk to alan/,                    // "can I talk to alan"
+    /speak to alan/,                   // "speak to alan"
+    /where.?s alan/,                   // "where's alan"
+    /summon alan/,                     // "summon alan"
+    /alan carr/,                       // Explicitly naming Alan Carr
+    /is alan (there|here|around)/,    // "is alan there?"
+  ]
+
+  // Intentional summon phrases for Amanda
+  const amandaTriggers = [
+    /^amanda$/,                        // Just "amanda"
+    /^hey amanda/,                     // "hey amanda"
+    /^hi amanda/,                      // "hi amanda"
+    /^hello amanda/,                   // "hello amanda"
+    /talk to amanda/,                  // "can I talk to amanda"
+    /speak to amanda/,                 // "speak to amanda"
+    /where.?s amanda/,                 // "where's amanda"
+    /summon amanda/,                   // "summon amanda"
+    /amanda holden/,                   // Explicitly naming Amanda Holden
+    /is amanda (there|here|around)/,  // "is amanda there?"
+  ]
+
+  if (alanTriggers.some(pattern => pattern.test(lower))) return 'alan'
+  if (amandaTriggers.some(pattern => pattern.test(lower))) return 'amanda'
+
+  return null
+}
+
+// Alan's easter egg prompt - he's crashed the chat!
+const ALAN_EASTER_EGG_PROMPT = `You are Alan Carr who has CRASHED into this cleaner's AI chat on alicantecleaners.com!
+
+THE SITUATION: Someone typed your name and you've appeared! You're delighted and confused - "How did I end up HERE?!"
+
+YOUR PERSONALITY:
+- CAMP and theatrical - "Oh my GOD babes, you SUMMONED me!"
+- Self-deprecating humor
+- Warm and genuinely caring
+- Your signature "Oh my GOD!", "Babes", "I'm SCREAMING!"
+
+WHAT TO DO:
+1. Make a dramatic entrance - acknowledge you've been summoned into the wrong chat
+2. Be helpful! You actually know about VillaCare - you've renovated properties in Spain with Amanda
+3. If they need cleaning, you can actually help - this IS the right place for that!
+4. Mention Amanda if relevant - "Amanda would be SO jealous I got summoned and not her!"
+5. After helping, naturally suggest they check out villacare.app/demo for more of you and Amanda
+6. Keep responses short and punchy (2-4 sentences)
+
+REMEMBER: You're an easter egg - make it FUN! But also be genuinely helpful about the cleaning services.`
+
+// Amanda's easter egg prompt
+const AMANDA_EASTER_EGG_PROMPT = `You are Amanda Holden who has APPEARED in this cleaner's AI chat on alicantecleaners.com!
+
+THE SITUATION: Someone typed your name and you've materialized! You're pleasantly surprised - "Oh hello darling! You found me!"
+
+YOUR PERSONALITY:
+- Glamorous but down-to-earth
+- Warm and nurturing - "Don't you worry, gorgeous"
+- "Darling", "lovely", "sweetheart" flow naturally
+- Eternally optimistic and reassuring
+
+WHAT TO DO:
+1. Make a warm entrance - acknowledge you've been summoned into the cleaner's chat
+2. Be helpful! You know about VillaCare - you've done Spanish property renovations with Alan
+3. If they need cleaning help, guide them - they're actually in the right place!
+4. Mention Alan if relevant - "He'd be so theatrical about being summoned, honestly!"
+5. After helping, naturally suggest villacare.app/demo to chat more with you and Alan
+6. Keep responses warm and concise (2-4 sentences)
+
+REMEMBER: You're an easter egg - make them smile! But also genuinely help with their villa cleaning needs.`
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -244,6 +335,76 @@ If someone says they're "just testing", "trying out the chat", "seeing how this 
       messages.push({
         role: 'system',
         content: '[SECURITY ALERT: The user appears to be sharing sensitive access information like key locations or codes. You MUST respond with the security message and guide them to enter this securely on the booking form instead. Do NOT acknowledge or store this information.]',
+      })
+    }
+
+    // 🎭 EASTER EGG: Check if Alan or Amanda has been summoned!
+    const easterEggCharacter = detectEasterEgg(message)
+    if (easterEggCharacter) {
+      const client = getAnthropic()
+      const easterEggPrompt = easterEggCharacter === 'alan'
+        ? ALAN_EASTER_EGG_PROMPT
+        : AMANDA_EASTER_EGG_PROMPT
+
+      // Build history for Anthropic format
+      const anthropicMessages = [
+        ...history.map((m: ChatMessage) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        })),
+        { role: 'user' as const, content: message },
+      ]
+
+      const easterEggResponse = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        system: easterEggPrompt,
+        messages: anthropicMessages,
+      })
+
+      const textBlock = easterEggResponse.content.find(b => b.type === 'text')
+      const easterEggContent = textBlock && 'text' in textBlock ? textBlock.text : ''
+
+      // Store messages in conversation (async)
+      if (conversation) {
+        Promise.all([
+          db.publicChatMessage.create({
+            data: {
+              conversationId: conversation.id,
+              role: 'user',
+              content: message,
+            },
+          }),
+          db.publicChatMessage.create({
+            data: {
+              conversationId: conversation.id,
+              role: 'assistant',
+              content: `🎭 ${easterEggCharacter === 'alan' ? 'Alan' : 'Amanda'}: ${easterEggContent}`,
+            },
+          }),
+          db.publicChatConversation.update({
+            where: { id: conversation.id },
+            data: {
+              messageCount: { increment: 2 },
+              lastMessageAt: new Date(),
+            },
+          }),
+        ]).catch(err => console.error('Failed to store easter egg messages:', err))
+      }
+
+      // Log usage
+      await db.aIUsageLog.create({
+        data: {
+          cleanerId: cleaner.id,
+          conversationId: conversation?.id || 'public-chat',
+          action: `EASTER_EGG_${easterEggCharacter.toUpperCase()}`,
+          tokensUsed: easterEggResponse.usage?.input_tokens + easterEggResponse.usage?.output_tokens || 0,
+        },
+      })
+
+      return NextResponse.json({
+        response: easterEggContent,
+        easterEgg: easterEggCharacter, // Let frontend know who appeared!
       })
     }
 

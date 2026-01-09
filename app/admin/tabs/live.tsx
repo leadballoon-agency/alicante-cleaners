@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 
 type ActivityItem = {
   id: string
-  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved' | 'cleaner_message' | 'cleaner_login' | 'service_pending'
+  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved' | 'cleaner_message' | 'cleaner_login' | 'service_pending' | 'easter_egg'
   title: string
   description: string
   timestamp: string
@@ -113,12 +113,19 @@ export default function LiveTab({ onTabChange, onApproveReview, onApproveCleaner
       case 'cleaner_message': return '💬'
       case 'cleaner_login': return '🟢'
       case 'service_pending': return '🛠️'
+      case 'easter_egg': return '🎭'
       default: return '📌'
     }
   }
 
   const getActivityColor = (type: ActivityItem['type'], status?: string) => {
     if (status === 'pending' || status === 'unread') return 'border-l-[#E65100] bg-[#FFF8F5]'
+    // Easter egg: Alan = blue, Amanda = pink
+    if (type === 'easter_egg') {
+      return status === 'alan'
+        ? 'border-l-[#3B82F6] bg-blue-50'
+        : 'border-l-[#EC4899] bg-pink-50'
+    }
     switch (type) {
       case 'booking': return 'border-l-[#1565C0] bg-white'
       case 'booking_completed': return 'border-l-[#2E7D32] bg-white'

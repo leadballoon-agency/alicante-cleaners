@@ -254,8 +254,8 @@ Credits can be:
 
 ### Why This Matters
 
-Large platforms like Fresha have:
-- Legacy payment infrastructure
+Large legacy platforms have:
+- Outdated payment infrastructure
 - Millions of users to migrate
 - Risk-averse decision making
 - Slow adoption cycles

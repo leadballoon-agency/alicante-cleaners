@@ -59,14 +59,18 @@ VillaCare is a two-sided marketplace connecting villa owners in Spain with trust
 - WhatsApp notifications
 - "Arrive to a home that's ready" peace of mind
 
-**For Service Providers:**
+**For Service Providers (Enterprise-Grade Tools, FREE):**
 - Professional profile with booking capability
 - AI sales assistant that works 24/7
 - Team management to build a real business
 - Custom services (pool, garden, laundry, handyman)
+- Calendar sync (Google, Apple, Outlook)
+- Just-in-time security (access codes only visible 24h before booking)
+- Auto-translation (7 languages)
+- Top-flight SEO schema (LocalBusiness, Service, Reviews)
 - Path from cleaner → team leader → business owner
 
-### Business Model (Fresha-Inspired)
+### Business Model (Free-to-Join Marketplace)
 
 | Revenue Stream | Rate | Notes |
 |----------------|------|-------|

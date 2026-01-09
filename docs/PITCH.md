@@ -57,6 +57,15 @@ Alicante Cleaners is the first market. VillaCare is the scalable brand for Europ
 - **Team system** - Cleaners build real businesses with specialists
 - **Custom services** - Pool cleaning, gardening, laundry, handyman
 
+### Enterprise-Grade Tools (FREE for Service Providers)
+
+- **AI Sales Assistant** - 24/7 booking help on every profile
+- **Calendar Sync** - Google, Apple, Outlook integration
+- **Just-in-Time Security** - Access codes only visible 24h before booking
+- **Auto-Translation** - 7 languages, seamless communication
+- **Top-Flight SEO Schema** - LocalBusiness, Service, Review markup
+- **Professional Profiles** - Booking-ready pages that rank
+
 ### AI Personality Demo (villacare.app/demo)
 
 **Alan & Amanda** - AI personalities inspired by the property renovation duo. They:
@@ -137,7 +146,7 @@ Zillow gets data from listings. We get it from relationships. Our cleaners are i
 
 ---
 
-## Business Model (Fresha-Inspired)
+## Business Model (Free-to-Join Marketplace)
 
 | Revenue Stream | Rate | Notes |
 |----------------|------|-------|

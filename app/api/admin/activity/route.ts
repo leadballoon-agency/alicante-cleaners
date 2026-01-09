@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 type ActivityItem = {
   id: string
-  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved' | 'cleaner_message' | 'cleaner_login' | 'service_pending'
+  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved' | 'cleaner_message' | 'cleaner_login' | 'service_pending' | 'easter_egg'
   title: string
   description: string
   timestamp: Date
@@ -34,6 +34,7 @@ export async function GET() {
       recentCleanerMessages,
       recentCleanerLogins,
       pendingServices,
+      easterEggEvents,
     ] = await Promise.all([
       // Recent bookings (last 24 hours)
       db.booking.findMany({
@@ -131,6 +132,21 @@ export async function GET() {
         },
         orderBy: { createdAt: 'desc' },
         take: 10,
+      }),
+
+      // 🎭 Easter egg interactions (Alan & Amanda summoned!)
+      db.aIUsageLog.findMany({
+        where: {
+          action: { in: ['EASTER_EGG_ALAN', 'EASTER_EGG_AMANDA'] },
+          createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        },
+        include: {
+          cleaner: {
+            include: { user: { select: { name: true } } },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
       }),
     ])
 
@@ -281,6 +297,27 @@ export async function GET() {
           priceType: service.priceType,
           price: service.price ? Number(service.price) : null,
           hours: service.hours,
+        },
+      })
+    }
+
+    // 🎭 Add easter egg events (Alan & Amanda summoned!)
+    for (const event of easterEggEvents) {
+      const character = event.action === 'EASTER_EGG_ALAN' ? 'Alan' : 'Amanda'
+      const emoji = event.action === 'EASTER_EGG_ALAN' ? '🎤' : '💕'
+      const cleanerName = event.cleaner?.user?.name || 'Unknown cleaner'
+      activities.push({
+        id: `easter-egg-${event.id}`,
+        type: 'easter_egg',
+        title: `${emoji} ${character} was summoned!`,
+        description: `On ${cleanerName}'s profile chat`,
+        timestamp: event.createdAt,
+        status: character.toLowerCase(),
+        resourceId: event.cleanerId || undefined,
+        meta: {
+          character,
+          cleanerName,
+          tokensUsed: event.tokensUsed,
         },
       })
     }

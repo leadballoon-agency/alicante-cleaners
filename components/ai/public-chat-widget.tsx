@@ -8,6 +8,7 @@ type Message = {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
+  easterEgg?: 'alan' | 'amanda' // 🎭 Easter egg character!
 }
 
 type CleanerInfo = {
@@ -129,6 +130,7 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
         role: 'assistant',
         content: data.response || 'Sorry, I had trouble responding. Please try again.',
         timestamp: new Date(),
+        easterEgg: data.easterEgg, // 🎭 Alan or Amanda appeared!
       }
 
       setMessages(prev => [...prev, assistantMessage])
@@ -216,14 +218,28 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
                     className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
                       msg.role === 'user'
                         ? 'bg-[#1A1A1A] text-white rounded-br-md'
-                        : 'bg-white border border-[#EBEBEB] text-[#1A1A1A] rounded-bl-md'
+                        : msg.easterEgg === 'alan'
+                          ? 'bg-blue-50 border-2 border-blue-300 text-[#1A1A1A] rounded-bl-md'
+                          : msg.easterEgg === 'amanda'
+                            ? 'bg-pink-50 border-2 border-pink-300 text-[#1A1A1A] rounded-bl-md'
+                            : 'bg-white border border-[#EBEBEB] text-[#1A1A1A] rounded-bl-md'
                     }`}
                   >
                     {msg.role === 'assistant' && (
                       <div className="flex items-center gap-1 mb-1">
-                        <span className="text-[10px] bg-[#C4785A] text-white px-1.5 py-0.5 rounded-full font-medium">
-                          Assistant
-                        </span>
+                        {msg.easterEgg === 'alan' ? (
+                          <span className="text-[10px] bg-blue-500 text-white px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1">
+                            🎤 Alan Carr
+                          </span>
+                        ) : msg.easterEgg === 'amanda' ? (
+                          <span className="text-[10px] bg-pink-500 text-white px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1">
+                            💕 Amanda Holden
+                          </span>
+                        ) : (
+                          <span className="text-[10px] bg-[#C4785A] text-white px-1.5 py-0.5 rounded-full font-medium">
+                            Assistant
+                          </span>
+                        )}
                       </div>
                     )}
                     <p className="text-sm whitespace-pre-line">{msg.content}</p>
