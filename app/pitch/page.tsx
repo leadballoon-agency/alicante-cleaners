@@ -107,8 +107,8 @@ export default function PitchPage() {
             <span className="text-[#C4785A]">in Europe</span>
           </h1>
           <p className="text-xl text-white/70 mb-8 max-w-2xl mx-auto leading-relaxed">
-            We&apos;re building the Fresha for villas. A platform where service providers become business owners,
-            and villa owners get everything they need in one place.
+            Starting with cleaning, expanding to all villa services, ending in real estate.
+            We&apos;re building the trusted relationship layer with Europe&apos;s villa owners.
           </p>
         </div>
       </section>
@@ -202,7 +202,7 @@ export default function PitchPage() {
       <section className="py-16 px-4 bg-white/5">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
-            Fresha-Inspired Business Model
+            Free-to-Join Marketplace
           </h2>
 
           <div className="grid md:grid-cols-3 gap-6">
