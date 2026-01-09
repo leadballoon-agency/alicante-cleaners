@@ -35,7 +35,7 @@ Alicante Cleaners is the first market. VillaCare is the scalable brand for Europ
 
 **VillaCare** - An AI-native platform connecting villa owners with trusted service providers.
 
-### 8 AI Agents Power Everything
+### 10 AI Agents Power Everything
 
 | Agent | Function |
 |-------|----------|
@@ -46,7 +46,9 @@ Alicante Cleaners is the first market. VillaCare is the scalable brand for Europ
 | Admin Agent | 18+ tools for platform management |
 | Owner Agent | Personal assistant for property owners |
 | Cleaner Agent | Helps manage bookings & schedule |
-| Investor Agent | Yes, even investor inquiries are AI-handled |
+| Investor Agent | Handles investor inquiries on villacare.app |
+| **Alan Agent** | Personality demo - entertains & engages villa owners |
+| **Amanda Agent** | Personality demo - warm & reassuring villa assistant |
 
 ### Key Features
 
@@ -54,6 +56,22 @@ Alicante Cleaners is the first market. VillaCare is the scalable brand for Europ
 - **Multilingual** - 7 languages, auto-translated
 - **Team system** - Cleaners build real businesses with specialists
 - **Custom services** - Pool cleaning, gardening, laundry, handyman
+
+### AI Personality Demo (villacare.app/demo)
+
+**Alan & Amanda** - AI personalities inspired by the property renovation duo. They:
+1. **Engage** - Ask about the user's villa, location, situation
+2. **Relate** - Share "experiences" from Spanish property chaos
+3. **Convert** - Naturally guide users to chat with Clara (co-founder, real cleaner)
+
+**The Flow:**
+```
+villacare.app/demo → Chat with Alan/Amanda → Engaged & entertained
+                                           → Guided to Clara on alicantecleaners.com
+                                           → Real booking with real cleaner
+```
+
+**Why this works:** AI with personality is memorable. Every other platform has boring corporate chat. We have entertainers who actually help - then hand off to Clara to close.
 
 ---
 
@@ -145,10 +163,12 @@ Zillow gets data from listings. We get it from relationships. Our cleaners are i
 ## Traction
 
 - **Live Platform:** alicantecleaners.com
+- **Investor Site:** villacare.app (with AI demo)
 - **Vetted Cleaners:** 6+ onboarded
 - **Real Bookings:** Full flow operational
 - **WhatsApp:** Live with Twilio
-- **AI Agents:** 8 in production
+- **AI Agents:** 10 in production
+- **AI Demo:** Alan & Amanda personality agents live
 - **Codebase:** 40,000+ lines TypeScript
 
 ---
@@ -170,14 +190,20 @@ Zillow gets data from listings. We get it from relationships. Our cleaners are i
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     8 AI AGENTS                              │
+│                     10 AI AGENTS                             │
 ├──────────────┬──────────────┬──────────────┬────────────────┤
 │ Sales Agent  │ Support Agent│ Success Coach│ Onboarding     │
 │ (public chat)│ (help widget)│ (growth tips)│ (signup flow)  │
 ├──────────────┼──────────────┼──────────────┼────────────────┤
 │ Admin Agent  │ Owner Agent  │ Cleaner Agent│ Investor Agent │
 │ (18+ tools)  │ (dashboard)  │ (dashboard)  │ (pitch chat)   │
-└──────────────┴──────────────┴──────────────┴────────────────┘
+├──────────────┴──────────────┴──────────────┴────────────────┤
+│           PERSONALITY DEMO (villacare.app/demo)              │
+├─────────────────────────────┬───────────────────────────────┤
+│ Alan Agent 🎤               │ Amanda Agent 💕               │
+│ Camp, theatrical, hilarious │ Warm, glamorous, reassuring   │
+│ Engages → Converts to Clara │ Engages → Converts to Clara   │
+└─────────────────────────────┴───────────────────────────────┘
 ```
 
 ---
@@ -213,9 +239,11 @@ Building the trusted relationship layer with Europe's villa owners.
 
 ---
 
-## Screenshots
+## Screenshots & Demos
 
-Live at: https://alicantecleaners.com
+**Live Platform:** https://alicantecleaners.com
+**Investor Site:** https://villacare.app
+**AI Demo:** https://villacare.app/demo
 
 | Feature | URL |
 |---------|-----|
@@ -225,6 +253,7 @@ Live at: https://alicantecleaners.com
 | Auto Translation | `/screenshots/messaging-translation.png` |
 | Homepage | `/screenshots/homepage.png` |
 | Cleaner Profile | `/screenshots/cleaner-profile.png` |
+| **Alan & Amanda Demo** | villacare.app/demo |
 
 ---
 

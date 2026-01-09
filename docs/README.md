@@ -39,7 +39,7 @@ VillaCare is a two-sided marketplace connecting villa owners in Spain with trust
 
 ### The Solution
 
-**AI-native platform** with 8 specialized agents handling everything from sales to coaching:
+**AI-native platform** with 10 specialized agents handling everything from sales to coaching:
 
 1. **Sales Agent** - Handles inquiries 24/7, books appointments
 2. **Support Agent** - Answers owner & cleaner questions
@@ -48,7 +48,9 @@ VillaCare is a two-sided marketplace connecting villa owners in Spain with trust
 5. **Admin Agent** - 18+ tools for platform management
 6. **Owner Agent** - Personal assistant for property owners
 7. **Cleaner Agent** - Helps manage bookings & schedule
-8. **Investor Agent** - Handles investor inquiries (yes, really)
+8. **Investor Agent** - Handles investor inquiries on villacare.app
+9. **Alan Agent** - Personality demo that engages & converts (villacare.app/demo)
+10. **Amanda Agent** - Personality demo that engages & converts (villacare.app/demo)
 
 **For Owners:**
 - One-stop-shop for all villa services
@@ -77,10 +79,12 @@ VillaCare is a two-sided marketplace connecting villa owners in Spain with trust
 ### Traction
 
 - **Live Platform:** https://alicantecleaners.com
+- **Investor Site:** https://villacare.app
+- **AI Personality Demo:** https://villacare.app/demo
 - **Vetted Cleaners:** 6+ onboarded (including co-founder Clara)
 - **Real Bookings:** Full booking flow operational
 - **WhatsApp Integration:** Live with Twilio
-- **AI Agents:** 8 specialized agents in production
+- **AI Agents:** 10 specialized agents in production (including Alan & Amanda)
 
 ---
 
@@ -109,7 +113,7 @@ VillaCare is a two-sided marketplace connecting villa owners in Spain with trust
 | **API Endpoints** | 100+ endpoints |
 | **Database Models** | 35+ tables |
 | **Languages Supported** | 7 (EN, ES, DE, FR, NL, IT, PT) |
-| **AI Agents** | 8 (Admin, Success, Sales, Onboarding, Support, Owner, Cleaner, Investor) |
+| **AI Agents** | 10 (Admin, Success, Sales, Onboarding, Support, Owner, Cleaner, Investor, Alan, Amanda) |
 | **Target Market** | €180B (Spain real estate) |
 
 ---
@@ -145,7 +149,7 @@ VillaCare is a two-sided marketplace connecting villa owners in Spain with trust
 ### What's Built
 - Full MVP with real users
 - WhatsApp integration (differentiator)
-- AI-powered features throughout (7 different AI agents)
+- AI-powered features throughout (10 different AI agents)
 - Scalable architecture
 - Google Calendar integration (FreeBusy API)
 - Team management with verification system
@@ -156,6 +160,8 @@ VillaCare is a two-sided marketplace connecting villa owners in Spain with trust
 - Phone number management (update/verify with OTP)
 - Comprehensive onboarding guides (5 bilingual guide pages with 210+ screenshots)
 - In-app message markdown formatting with auto-links
+- **Investor site** (villacare.app) with AI agent
+- **AI Personality Demo** (villacare.app/demo) - Alan & Amanda agents that engage users and convert to Clara
 
 ### What's Needed
 - Payment integration (Stripe)
@@ -171,6 +177,31 @@ VillaCare is a two-sided marketplace connecting villa owners in Spain with trust
 4. **Multilingual** - Removes language barrier completely (7 languages)
 5. **Vertical expansion** - Team leaders become full "Villa Services" businesses
 6. **Data moat** - Weekly visits = early intel on property sales
+7. **AI with personality** - Alan & Amanda demo shows AI that entertains AND converts
+
+### AI Personality Demo Strategy
+
+**The Problem:** Every platform has boring corporate chat. Users disengage.
+
+**Our Solution:** AI personalities (Alan & Amanda) inspired by property TV that:
+1. **Engage** - Ask questions, build rapport, make users laugh
+2. **Qualify** - Learn about their villa, location, needs
+3. **Convert** - Naturally hand off to Clara (real cleaner, co-founder)
+
+**The Flow:**
+```
+User lands on villacare.app
+        ↓
+Clicks "AI Demo" → Chats with Alan or Amanda
+        ↓
+AI asks about their villa, relates to their problems
+        ↓
+After engagement, AI naturally suggests: "You should chat with Clara - alicantecleaners.com/clara"
+        ↓
+User arrives at real platform, pre-warmed and ready to book
+```
+
+**Why this works:** Entertainment builds trust. Trust converts. Clara closes.
 
 ---
 
