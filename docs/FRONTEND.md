@@ -429,14 +429,23 @@ return (
 
 ### Admin Dashboard (`/admin`)
 
-**Tabs:**
-1. **Overview** - Platform KPIs
-2. **Cleaners** - Approval queue, management, team verification
-3. **Reviews** - Moderation queue
-4. **Feedback** - User feedback with mood tracking
-5. **Support** - AI support conversations with escalation
-6. **Settings** - Platform configuration (team leader requirements)
-7. **AI Chat** - Admin AI assistant with 20+ tools
+**10 Tabs:**
+1. **Overview** - Platform KPIs (bookings, revenue, users)
+2. **Live Feed** - Real-time activity stream, page view analytics, trending cleaners
+3. **Cleaners** - Approval queue, management, team verification, impersonation
+4. **Owners** - Owner CRM with notes, booking history, referral tracking
+5. **Reviews** - Moderation queue, featuring reviews
+6. **Audit** - Track all admin actions (login, approve, reject, impersonate)
+7. **Feedback** - User feedback with mood tracking and voting
+8. **Support** - AI support conversations with escalation
+9. **Settings** - Platform configuration (team leader requirements, scripts, GTM, GA4)
+10. **AI Chat** - Admin AI assistant with 20+ tools
+
+**Admin Features:**
+- **Impersonation** - Login as any user for support
+- **Audit Logging** - All admin actions tracked with timestamps
+- **GA4 Real-time** - Live visitor counts (optional integration)
+- **Script Management** - GTM, Facebook Pixel, GA4, ConvertBox configuration
 
 ---
 

@@ -80,7 +80,7 @@ Currently in **Beta** (free for all users). Planned monetization:
 |--------|-------|
 | **Codebase** | ~35,000 lines TypeScript |
 | **Pages** | 22 routes |
-| **API Endpoints** | 80+ endpoints |
+| **API Endpoints** | 90+ endpoints |
 | **Database Models** | 30+ tables |
 | **Languages Supported** | 7 (EN, ES, DE, FR, NL, IT, PT) |
 | **AI Agents** | 7 (Admin, Success, Sales, Onboarding, Support, Owner, Cleaner) |
@@ -118,7 +118,7 @@ Currently in **Beta** (free for all users). Planned monetization:
 ### What's Built
 - Full MVP with real users
 - WhatsApp integration (differentiator)
-- AI-powered features throughout (6 different AI agents)
+- AI-powered features throughout (7 different AI agents)
 - Scalable architecture
 - Google Calendar integration (FreeBusy API)
 - Team management with verification system
@@ -126,6 +126,9 @@ Currently in **Beta** (free for all users). Planned monetization:
 - AI support chat widget
 - Internal property comments
 - Arrival prep feature ("I'm Coming Home")
+- Phone number management (update/verify with OTP)
+- Comprehensive onboarding guides (5 bilingual guide pages with 210+ screenshots)
+- In-app message markdown formatting with auto-links
 
 ### What's Needed
 - Payment integration (Stripe)

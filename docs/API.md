@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-VillaCare exposes **80+ REST API endpoints** via Next.js API Routes. All endpoints are:
+VillaCare exposes **90+ REST API endpoints** via Next.js API Routes. All endpoints are:
 - **JSON-based** - Request/response bodies use `application/json`
 - **Session authenticated** - Uses NextAuth.js JWT sessions
 - **Role-protected** - Middleware enforces OWNER, CLEANER, or ADMIN roles
@@ -1031,6 +1031,83 @@ Sync all team member calendars.
 
 ---
 
+## Phone Management Endpoints
+
+### POST /api/dashboard/cleaner/phone
+
+Request phone number change. Sends OTP to current phone for verification.
+
+**Request:**
+```json
+{
+  "newPhone": "+34698765432"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Verification code sent to your current phone"
+}
+```
+
+---
+
+### PATCH /api/dashboard/cleaner/phone
+
+Verify OTP and update phone number.
+
+**Request:**
+```json
+{
+  "newPhone": "+34698765432",
+  "code": "123456"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "phone": "+34698765432"
+}
+```
+
+---
+
+## Upload Endpoints
+
+### POST /api/upload
+
+Upload a file (profile photo, etc).
+
+**Request:** `multipart/form-data` with `file` field
+
+**Response:**
+```json
+{
+  "url": "https://res.cloudinary.com/..."
+}
+```
+
+---
+
+### POST /api/onboarding/upload
+
+Upload profile photo during onboarding flow.
+
+**Request:** `multipart/form-data` with `file` field
+
+**Response:**
+```json
+{
+  "url": "https://res.cloudinary.com/..."
+}
+```
+
+---
+
 ## Account Management Endpoints
 
 ### GET /api/account
@@ -1073,6 +1150,131 @@ Update account status (pause/delete).
 ```json
 {
   "action": "reactivate"
+}
+```
+
+---
+
+## Admin Analytics & Audit Endpoints
+
+### GET /api/admin/activity
+
+Get live activity feed for admin dashboard.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| limit | number | Max items (default 50) |
+
+**Response:**
+```json
+{
+  "activities": [
+    {
+      "id": "act_123",
+      "type": "BOOKING_CREATED",
+      "description": "New booking for Clara",
+      "createdAt": "2024-01-09T12:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/admin/analytics
+
+Get page view analytics.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| period | string | "day", "week", "month" |
+
+**Response:**
+```json
+{
+  "pageViews": [
+    { "path": "/clara-r", "views": 156 },
+    { "path": "/maria-g", "views": 89 }
+  ],
+  "totalViews": 1234
+}
+```
+
+---
+
+### GET /api/admin/audit
+
+Get audit log entries.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| action | string | Filter by action type |
+| adminId | string | Filter by admin |
+| limit | number | Max items (default 50) |
+
+**Response:**
+```json
+{
+  "entries": [
+    {
+      "id": "aud_123",
+      "action": "CLEANER_APPROVED",
+      "adminId": "usr_456",
+      "adminEmail": "admin@villacare.com",
+      "targetType": "CLEANER",
+      "targetId": "cln_789",
+      "details": { "cleanerName": "Clara" },
+      "createdAt": "2024-01-09T12:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/admin/email
+
+Send email to user.
+
+**Request:**
+```json
+{
+  "to": "user@example.com",
+  "subject": "Welcome to VillaCare",
+  "body": "Hello..."
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "messageId": "msg_123"
+}
+```
+
+---
+
+### POST /api/admin/test-whatsapp
+
+Send test WhatsApp message (development/testing).
+
+**Request:**
+```json
+{
+  "phone": "+34612345678",
+  "message": "Test message"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "sid": "SM123..."
 }
 ```
 

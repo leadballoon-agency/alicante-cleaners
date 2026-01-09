@@ -67,6 +67,22 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 # Optional: Google Calendar
 GOOGLE_CLIENT_ID="xxx.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="GOCSPX-..."
+
+# Twilio Verify (Phone OTP)
+TWILIO_VERIFY_SERVICE_SID="VA..."
+
+# Encryption (for sensitive data like access notes)
+ENCRYPTION_KEY="32-byte-hex-key-for-aes-256"
+
+# Google Analytics 4 (Admin real-time dashboard)
+GA4_PROPERTY_ID="123456789"
+GA4_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'
+
+# Development Only
+ALLOW_DEV_OTP_BYPASS="true"  # Allows test OTP code 000000
+
+# Cron Jobs
+CRON_SECRET="random-secret-for-cron-triggers"
 ```
 
 ### 4. Setup Database
