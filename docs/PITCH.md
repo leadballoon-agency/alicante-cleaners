@@ -4,6 +4,15 @@
 
 **Starting with cleaning. Expanding to all villa services. Ending in real estate.**
 
+### The Structure
+
+| Brand | URL | Purpose |
+|-------|-----|---------|
+| **Alicante Cleaners** | alicantecleaners.com | Phase 1 - Live services platform |
+| **VillaCare** | villacare.app | Parent brand - Investor relations |
+
+Alicante Cleaners is the first market. VillaCare is the scalable brand for European expansion.
+
 ---
 
 ## The Problem
@@ -98,15 +107,15 @@ Zillow gets data from listings. We get it from relationships. Our cleaners are i
 
 ### European Expansion
 
-| Region | Properties | Status |
-|--------|-----------|--------|
-| Alicante (Costa Blanca) | 50,000+ | **Live** |
-| Costa Brava / Barcelona | 40,000+ | Planned |
-| Algarve, Portugal | 35,000+ | Planned |
-| South of France | 60,000+ | Planned |
-| Italian Riviera | 30,000+ | Planned |
+| Region | Properties | Brand | Status |
+|--------|-----------|-------|--------|
+| Alicante (Costa Blanca) | 50,000+ | alicantecleaners.com | **LIVE** |
+| Costa Brava / Barcelona | 40,000+ | TBD | Planned |
+| Algarve, Portugal | 35,000+ | TBD | Planned |
+| South of France | 60,000+ | TBD | Planned |
+| Italian Riviera | 30,000+ | TBD | Planned |
 
-**Same problems everywhere.** Language barriers, finding reliable service, coordinating remotely.
+**Alicante Cleaners is the proof of concept.** Same problems everywhere - language barriers, finding reliable service, coordinating remotely. Each market gets a localized brand, powered by the VillaCare platform.
 
 ---
 
