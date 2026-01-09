@@ -496,6 +496,78 @@ async function main() {
   }
   console.log('Created sample reviews from different owners')
 
+  // Create a PENDING cleaner (applicant) for testing team leader flow
+  const applicantUser = await prisma.user.upsert({
+    where: { phone: '+34677888999' },
+    update: {},
+    create: {
+      phone: '+34677888999',
+      name: 'Elena Navarro',
+      role: 'CLEANER',
+      phoneVerified: new Date(),
+      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face',
+    },
+  })
+
+  const applicantCleaner = await prisma.cleaner.upsert({
+    where: { userId: applicantUser.id },
+    update: {},
+    create: {
+      userId: applicantUser.id,
+      slug: 'elena',
+      bio: 'Experienced cleaner looking to join a professional team. 3 years experience in hotel and vacation rental cleaning.',
+      serviceAreas: ['Alicante City', 'San Juan'],
+      languages: ['es', 'en'],
+      hourlyRate: 15,
+      status: 'PENDING', // Applicant status
+      rating: 0,
+      reviewCount: 0,
+      totalBookings: 0,
+    },
+  })
+  console.log('Created applicant cleaner:', applicantUser.phone)
+
+  // Create ApplicantConversation between Elena and Clara
+  if (clara) {
+    const applicantConversation = await prisma.applicantConversation.upsert({
+      where: {
+        applicantId_teamLeaderId: {
+          applicantId: applicantCleaner.id,
+          teamLeaderId: clara.id,
+        },
+      },
+      update: {},
+      create: {
+        applicantId: applicantCleaner.id,
+        teamLeaderId: clara.id,
+        status: 'ACTIVE',
+        summary: 'Elena es una limpiadora experimentada con 3 años de experiencia en hoteles. Busca unirse a un equipo profesional. Muestra buena actitud y flexibilidad horaria.',
+      },
+    })
+
+    // Add messages to the conversation
+    const applicantMessages = [
+      { role: 'user', content: '¡Hola! Me interesa mucho unirme a tu equipo. He visto que tienes muy buenas reseñas.' },
+      { role: 'assistant', content: '¡Hola Elena! Gracias por tu interés. Cuéntame un poco sobre tu experiencia en limpieza.' },
+      { role: 'user', content: 'Tengo 3 años de experiencia limpiando en hoteles y apartamentos vacacionales. Soy muy detallista y puntual.' },
+      { role: 'assistant', content: '¡Excelente! ¿En qué zonas de Alicante puedes trabajar?' },
+      { role: 'user', content: 'Vivo en San Juan, así que puedo cubrir Alicante Ciudad, San Juan y Playa de San Juan sin problema.' },
+      { role: 'assistant', content: 'Perfecto, esas son zonas donde tenemos mucha demanda. ¿Tienes disponibilidad para trabajar fines de semana?' },
+      { role: 'user', content: 'Sí, tengo flexibilidad total. Puedo trabajar cualquier día de la semana.' },
+    ]
+
+    for (const msg of applicantMessages) {
+      await prisma.applicantMessage.create({
+        data: {
+          conversationId: applicantConversation.id,
+          role: msg.role,
+          content: msg.content,
+        },
+      })
+    }
+    console.log('Created applicant conversation with messages')
+  }
+
   console.log('')
   console.log('Seed completed!')
   console.log('')

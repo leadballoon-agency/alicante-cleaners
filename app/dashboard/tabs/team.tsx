@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useToast } from '@/components/ui/toast'
-import { TeamCalendar, CalendarSetupModal } from '../components/team-calendar'
+import { useLanguage } from '@/components/language-context'
 
 type TeamRole = 'leader' | 'member' | 'independent'
 
@@ -85,6 +85,7 @@ type TeamData = {
 
 export default function TeamTab() {
   const { showToast } = useToast()
+  const { t } = useLanguage()
   const [teamData, setTeamData] = useState<TeamData | null>(null)
   const [browseTeams, setBrowseTeams] = useState<BrowseTeam[]>([])
   const [loading, setLoading] = useState(true)
@@ -104,8 +105,6 @@ export default function TeamTab() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
   const [conversationMessages, setConversationMessages] = useState<{role: string, content: string, createdAt: Date}[]>([])
   const [loadingMessages, setLoadingMessages] = useState(false)
-  const [showCalendarSetupModal, setShowCalendarSetupModal] = useState(false)
-  const [calendarSetupMember, setCalendarSetupMember] = useState<{id: string, name: string, phone: string | null} | null>(null)
   useEffect(() => {
     fetchTeamData()
   }, [])
@@ -179,20 +178,12 @@ export default function TeamTab() {
       })
       if (!response.ok) throw new Error('Failed to accept applicant')
 
-      const result = await response.json()
-      showToast('Applicant accepted and activated!', 'success')
-
-      // Check if calendar setup is required
-      if (result.requiresCalendarSetup && result.member) {
-        setCalendarSetupMember(result.member)
-        setShowCalendarSetupModal(true)
-      }
-
+      showToast(t('team.applicantAccepted'), 'success')
       await fetchApplicantConversations()
       await fetchTeamData()
       setSelectedConversation(null)
     } catch {
-      showToast('Failed to accept applicant', 'error')
+      showToast(t('team.failedAcceptApplicant'), 'error')
     } finally {
       setActionLoading(null)
     }
@@ -207,11 +198,11 @@ export default function TeamTab() {
         body: JSON.stringify({ action: 'reject' }),
       })
       if (!response.ok) throw new Error('Failed to reject applicant')
-      showToast('Applicant rejected', 'info')
+      showToast(t('team.applicantRejected'), 'info')
       await fetchApplicantConversations()
       setSelectedConversation(null)
     } catch {
-      showToast('Failed to reject applicant', 'error')
+      showToast(t('team.failedRejectApplicant'), 'error')
     } finally {
       setActionLoading(null)
     }
@@ -345,13 +336,13 @@ export default function TeamTab() {
   const copyReferralCode = () => {
     if (teamData?.team?.referralCode) {
       navigator.clipboard.writeText(teamData.team.referralCode)
-      showToast('Referral code copied!', 'info')
+      showToast(t('team.referralCopied'), 'info')
     }
   }
 
   const handleReferCleaner = async () => {
     if (!referralName.trim() || !referralPhone.trim() || !referralNote.trim()) {
-      showToast('Please fill in all fields', 'error')
+      showToast(t('team.fillAllFields'), 'error')
       return
     }
     setActionLoading('refer')
@@ -373,7 +364,7 @@ export default function TeamTab() {
       setReferralName('')
       setReferralPhone('')
       setReferralNote('')
-      showToast('Referral submitted! They will receive an invitation to join.', 'success')
+      showToast(t('team.referralSuccess'), 'success')
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to submit referral', 'error')
     } finally {
@@ -383,7 +374,7 @@ export default function TeamTab() {
 
   const handleUpdateTeamName = async () => {
     if (!editedTeamName.trim() || editedTeamName.trim().length < 2) {
-      showToast('Team name must be at least 2 characters', 'error')
+      showToast(t('team.teamNameTooShort'), 'error')
       return
     }
     setActionLoading('editName')
@@ -399,7 +390,7 @@ export default function TeamTab() {
       }
       setShowEditTeamName(false)
       await fetchTeamData()
-      showToast('Team name updated!', 'success')
+      showToast(t('team.teamNameUpdated'), 'success')
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to update team name', 'error')
     } finally {
@@ -420,7 +411,7 @@ export default function TeamTab() {
       <div className="text-center py-12">
         <p className="text-[#6B6B6B]">{error}</p>
         <button onClick={fetchTeamData} className="mt-4 text-[#C4785A] font-medium">
-          Try again
+          {t('team.tryAgain')}
         </button>
       </div>
     )
@@ -434,7 +425,7 @@ export default function TeamTab() {
         <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1">
-              <p className="text-xs text-[#C4785A] font-medium mb-1">Team Leader</p>
+              <p className="text-xs text-[#C4785A] font-medium mb-1">{t('team.leader')}</p>
               {showEditTeamName ? (
                 <div className="flex items-center gap-2">
                   <input
@@ -478,45 +469,47 @@ export default function TeamTab() {
             <span className="text-3xl">👑</span>
           </div>
 
-          <div className="flex items-center gap-2 bg-[#F5F5F3] rounded-lg p-3">
-            <span className="text-sm text-[#6B6B6B]">Referral Code:</span>
-            <code className="font-mono text-sm text-[#1A1A1A] flex-1">{teamData.team.referralCode}</code>
-            <button
-              onClick={copyReferralCode}
-              className="text-[#C4785A] text-sm font-medium"
-            >
-              Copy
-            </button>
-          </div>
+          <button
+            onClick={copyReferralCode}
+            className="w-full bg-[#F5F5F3] hover:bg-[#EBEBEB] rounded-xl py-3 px-4 flex items-center justify-between gap-3 transition-all active:scale-[0.98] border border-[#DEDEDE]"
+          >
+            <code className="font-mono font-bold text-[#1A1A1A] tracking-wide">{teamData.team.referralCode}</code>
+            <span className="text-[#C4785A] text-sm font-medium flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              {t('team.copy')}
+            </span>
+          </button>
         </div>
 
         {/* Refer a Cleaner */}
         <div className="bg-gradient-to-br from-[#FFF8F5] to-[#FAFAF8] rounded-2xl p-5 border border-[#EBEBEB]">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-2xl">✨</span>
-            <h3 className="font-semibold text-[#1A1A1A]">Refer a Cleaner</h3>
+            <h3 className="font-semibold text-[#1A1A1A]">{t('team.referCleaner')}</h3>
           </div>
           <p className="text-sm text-[#6B6B6B] mb-4">
-            Know someone great? Refer them with a personal recommendation.
+            {t('team.referDescription')}
           </p>
           {showReferCleaner ? (
             <div className="space-y-3">
               <input
                 type="text"
-                placeholder="Cleaner's name"
+                placeholder={t('team.cleanerName')}
                 value={referralName}
                 onChange={(e) => setReferralName(e.target.value)}
                 className="w-full px-4 py-3 border border-[#EBEBEB] rounded-lg text-[#1A1A1A] placeholder:text-[#9B9B9B] bg-white"
               />
               <input
                 type="tel"
-                placeholder="Phone number"
+                placeholder={t('team.phoneNumber')}
                 value={referralPhone}
                 onChange={(e) => setReferralPhone(e.target.value)}
                 className="w-full px-4 py-3 border border-[#EBEBEB] rounded-lg text-[#1A1A1A] placeholder:text-[#9B9B9B] bg-white"
               />
               <textarea
-                placeholder="Why do you recommend this person? (required)"
+                placeholder={t('team.whyRecommend')}
                 value={referralNote}
                 onChange={(e) => setReferralNote(e.target.value)}
                 rows={3}
@@ -528,7 +521,7 @@ export default function TeamTab() {
                   disabled={actionLoading === 'refer' || !referralName.trim() || !referralPhone.trim() || !referralNote.trim()}
                   className="flex-1 bg-[#C4785A] text-white py-2.5 rounded-lg font-medium disabled:opacity-50"
                 >
-                  {actionLoading === 'refer' ? 'Sending...' : 'Send Referral'}
+                  {actionLoading === 'refer' ? t('team.sending') : t('team.sendReferral')}
                 </button>
                 <button
                   onClick={() => {
@@ -539,7 +532,7 @@ export default function TeamTab() {
                   }}
                   className="px-4 py-2.5 border border-[#EBEBEB] rounded-lg text-[#6B6B6B] bg-white"
                 >
-                  Cancel
+                  {t('team.cancel')}
                 </button>
               </div>
             </div>
@@ -548,7 +541,7 @@ export default function TeamTab() {
               onClick={() => setShowReferCleaner(true)}
               className="w-full bg-[#C4785A] text-white py-2.5 rounded-lg font-medium"
             >
-              Refer Someone
+              {t('team.referSomeone')}
             </button>
           )}
         </div>
@@ -557,7 +550,7 @@ export default function TeamTab() {
         {applicantConversations.filter(c => c.status === 'ACTIVE').length > 0 && (
           <div>
             <h3 className="text-sm font-medium text-[#1A1A1A] mb-3 flex items-center gap-2">
-              <span>New Applicants</span>
+              <span>{t('team.newApplicants')}</span>
               <span className="bg-[#C4785A] text-white text-xs px-2 py-0.5 rounded-full">
                 {applicantConversations.filter(c => c.status === 'ACTIVE').length}
               </span>
@@ -583,7 +576,7 @@ export default function TeamTab() {
                               <span>&euro;{conv.applicantHourlyRate}/hr</span>
                             )}
                             <span>•</span>
-                            <span>{conv.messageCount} messages</span>
+                            <span>{conv.messageCount} {t('team.messages')}</span>
                           </div>
                           {conv.applicantServiceAreas.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
@@ -606,7 +599,7 @@ export default function TeamTab() {
                               className="inline-flex items-center gap-1.5 mt-2 text-sm text-[#25D366] hover:underline"
                             >
                               <span>💬</span>
-                              <span>Message on WhatsApp</span>
+                              <span>{t('team.messageWhatsApp')}</span>
                             </a>
                           )}
                         </div>
@@ -615,7 +608,7 @@ export default function TeamTab() {
                       {/* Summary */}
                       {conv.summary && (
                         <div className="mt-3 p-3 bg-[#F5F5F3] rounded-lg">
-                          <p className="text-xs text-[#6B6B6B] font-medium mb-1">🤖 AI Summary</p>
+                          <p className="text-xs text-[#6B6B6B] font-medium mb-1">🤖 {t('team.aiSummary')}</p>
                           <p className="text-sm text-[#1A1A1A]">{conv.summary}</p>
                         </div>
                       )}
@@ -633,7 +626,7 @@ export default function TeamTab() {
                         }}
                         className="mt-3 text-sm text-[#C4785A] font-medium"
                       >
-                        {selectedConversation === conv.id ? 'Hide Conversation' : 'View Conversation'}
+                        {selectedConversation === conv.id ? t('team.hideConversation') : t('team.viewConversation')}
                       </button>
                     </div>
 
@@ -677,14 +670,14 @@ export default function TeamTab() {
                         disabled={actionLoading === conv.id}
                         className="flex-1 bg-[#1A1A1A] text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
                       >
-                        {actionLoading === conv.id ? '...' : '✓ Accept & Activate'}
+                        {actionLoading === conv.id ? '...' : `✓ ${t('team.acceptActivate')}`}
                       </button>
                       <button
                         onClick={() => handleRejectApplicant(conv.id)}
                         disabled={actionLoading === conv.id}
                         className="flex-1 border border-[#EBEBEB] text-[#6B6B6B] py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
                       >
-                        Decline
+                        {t('team.decline')}
                       </button>
                     </div>
                   </div>
@@ -697,7 +690,7 @@ export default function TeamTab() {
         {teamData.team.pendingRequests && teamData.team.pendingRequests.length > 0 && (
           <div>
             <h3 className="text-sm font-medium text-[#1A1A1A] mb-3">
-              Pending Requests ({teamData.team.pendingRequests.length})
+              {t('team.pendingRequests')} ({teamData.team.pendingRequests.length})
             </h3>
             <div className="space-y-3">
               {teamData.team.pendingRequests.map((request) => (
@@ -728,14 +721,14 @@ export default function TeamTab() {
                       disabled={actionLoading === request.id}
                       className="flex-1 bg-[#1A1A1A] text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50"
                     >
-                      {actionLoading === request.id ? '...' : 'Approve'}
+                      {actionLoading === request.id ? '...' : t('team.approve')}
                     </button>
                     <button
                       onClick={() => handleRejectRequest(request.id)}
                       disabled={actionLoading === request.id}
                       className="flex-1 border border-[#EBEBEB] text-[#6B6B6B] py-2 rounded-lg text-sm font-medium disabled:opacity-50"
                     >
-                      Decline
+                      {t('team.decline')}
                     </button>
                   </div>
                 </div>
@@ -747,13 +740,13 @@ export default function TeamTab() {
         {/* Team Members */}
         <div>
           <h3 className="text-sm font-medium text-[#1A1A1A] mb-3">
-            Team Members ({teamData.team.members.length})
+            {t('team.teamMembers')} ({teamData.team.members.length})
           </h3>
           {teamData.team.members.length === 0 ? (
             <div className="bg-[#F5F5F3] rounded-2xl p-6 text-center">
               <p className="text-3xl mb-2">👥</p>
-              <p className="text-[#6B6B6B]">No team members yet</p>
-              <p className="text-sm text-[#9B9B9B] mt-1">Share your referral code to grow your team</p>
+              <p className="text-[#6B6B6B]">{t('team.noMembers')}</p>
+              <p className="text-sm text-[#9B9B9B] mt-1">{t('team.shareReferralCode')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -780,7 +773,7 @@ export default function TeamTab() {
                       disabled={actionLoading === member.id}
                       className="text-[#FF4444] text-sm font-medium disabled:opacity-50"
                     >
-                      Remove
+                      {t('team.remove')}
                     </button>
                   </div>
                 </div>
@@ -789,27 +782,6 @@ export default function TeamTab() {
           )}
         </div>
 
-        {/* Team Calendar */}
-        <div>
-          <h3 className="text-sm font-medium text-[#1A1A1A] mb-3 flex items-center gap-2">
-            <span>📅</span>
-            <span>Team Calendar</span>
-          </h3>
-          <TeamCalendar teamId={teamData.team.id} />
-        </div>
-
-        {/* Calendar Setup Modal */}
-        {calendarSetupMember && (
-          <CalendarSetupModal
-            isOpen={showCalendarSetupModal}
-            onClose={() => {
-              setShowCalendarSetupModal(false)
-              setCalendarSetupMember(null)
-            }}
-            member={calendarSetupMember}
-            teamName={teamData.team.name}
-          />
-        )}
       </div>
     )
   }
@@ -822,7 +794,7 @@ export default function TeamTab() {
         <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-xs text-[#6B6B6B] mb-1">Your Team</p>
+              <p className="text-xs text-[#6B6B6B] mb-1">{t('team.yourTeam')}</p>
               <h2 className="text-xl font-semibold text-[#1A1A1A]">{teamData.team.name}</h2>
             </div>
             <span className="text-3xl">👥</span>
@@ -838,7 +810,7 @@ export default function TeamTab() {
                 )}
               </div>
               <div className="flex-1">
-                <p className="text-xs text-[#6B6B6B]">Team Leader</p>
+                <p className="text-xs text-[#6B6B6B]">{t('team.leader')}</p>
                 <p className="font-medium text-[#1A1A1A]">{teamData.team.leader.name}</p>
               </div>
               {teamData.team.leader.phone && (
@@ -846,7 +818,7 @@ export default function TeamTab() {
                   href={`tel:${teamData.team.leader.phone}`}
                   className="text-[#C4785A] text-sm font-medium"
                 >
-                  Call
+                  {t('team.call')}
                 </a>
               )}
             </div>
@@ -856,7 +828,7 @@ export default function TeamTab() {
         {/* Team Members */}
         <div>
           <h3 className="text-sm font-medium text-[#1A1A1A] mb-3">
-            Team Members ({teamData.team.members.length})
+            {t('team.teamMembers')} ({teamData.team.members.length})
           </h3>
           <div className="space-y-3">
             {teamData.team.members.map((member) => (
@@ -884,7 +856,7 @@ export default function TeamTab() {
           disabled={actionLoading === 'leave'}
           className="w-full py-3 text-[#FF4444] text-sm font-medium disabled:opacity-50"
         >
-          {actionLoading === 'leave' ? 'Leaving...' : 'Leave Team'}
+          {actionLoading === 'leave' ? t('team.leaving') : t('team.leaveTeam')}
         </button>
       </div>
     )
@@ -897,13 +869,13 @@ export default function TeamTab() {
       <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs text-[#6B6B6B] mb-1">Status</p>
-            <h2 className="text-xl font-semibold text-[#1A1A1A]">Independent</h2>
+            <p className="text-xs text-[#6B6B6B] mb-1">{t('team.status')}</p>
+            <h2 className="text-xl font-semibold text-[#1A1A1A]">{t('team.independent')}</h2>
           </div>
           <span className="text-3xl">🦸</span>
         </div>
         <p className="text-sm text-[#6B6B6B]">
-          You&apos;re working independently. Join a team for coverage support and collaboration.
+          {t('team.independentDescription')}
         </p>
       </div>
 
@@ -913,8 +885,8 @@ export default function TeamTab() {
           <div className="flex items-center gap-3 mb-4">
             <span className="text-2xl">🎯</span>
             <div>
-              <h3 className="font-semibold text-[#1A1A1A]">Become a Team Leader</h3>
-              <p className="text-xs text-[#6B6B6B]">Complete these requirements to create your own team</p>
+              <h3 className="font-semibold text-[#1A1A1A]">{t('team.becomeLeader')}</h3>
+              <p className="text-xs text-[#6B6B6B]">{t('team.leaderRequirements')}</p>
             </div>
           </div>
 
@@ -922,7 +894,7 @@ export default function TeamTab() {
             {/* Hours Progress */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-[#6B6B6B]">Hours Worked</span>
+                <span className="text-sm text-[#6B6B6B]">{t('team.hoursWorked')}</span>
                 <span className="text-sm font-medium text-[#1A1A1A]">
                   {teamData.teamLeaderProgress.totalHoursWorked} / {teamData.teamLeaderProgress.requiredHours}h
                 </span>
@@ -939,11 +911,11 @@ export default function TeamTab() {
               </div>
               {teamData.teamLeaderProgress.hasMinHours ? (
                 <p className="text-xs text-[#2E7D32] mt-1 flex items-center gap-1">
-                  <span>✓</span> Requirement met!
+                  <span>✓</span> {t('team.requirementMet')}
                 </p>
               ) : (
                 <p className="text-xs text-[#6B6B6B] mt-1">
-                  {teamData.teamLeaderProgress.hoursRemaining} more hours needed
+                  {teamData.teamLeaderProgress.hoursRemaining} {t('team.moreHoursNeeded')}
                 </p>
               )}
             </div>
@@ -951,7 +923,7 @@ export default function TeamTab() {
             {/* Rating Progress */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-[#6B6B6B]">Average Rating</span>
+                <span className="text-sm text-[#6B6B6B]">{t('team.averageRating')}</span>
                 <span className="text-sm font-medium text-[#1A1A1A] flex items-center gap-1">
                   <span className="text-[#C4785A]">★</span>
                   {teamData.teamLeaderProgress.currentRating.toFixed(1)} / {teamData.teamLeaderProgress.requiredRating.toFixed(1)}
@@ -969,15 +941,15 @@ export default function TeamTab() {
               </div>
               {teamData.teamLeaderProgress.hasMinRating ? (
                 <p className="text-xs text-[#2E7D32] mt-1 flex items-center gap-1">
-                  <span>✓</span> Requirement met!
+                  <span>✓</span> {t('team.requirementMet')}
                 </p>
               ) : teamData.teamLeaderProgress.currentRating === 0 ? (
                 <p className="text-xs text-[#6B6B6B] mt-1">
-                  Complete bookings and get reviewed to build your rating
+                  {t('team.buildRating')}
                 </p>
               ) : (
                 <p className="text-xs text-[#6B6B6B] mt-1">
-                  Need {teamData.teamLeaderProgress.requiredRating}-star rating to qualify
+                  {t('team.needRating').replace('{rating}', teamData.teamLeaderProgress.requiredRating.toString())}
                 </p>
               )}
             </div>
@@ -985,7 +957,7 @@ export default function TeamTab() {
 
           <div className="mt-4 pt-4 border-t border-[#EBEBEB]">
             <p className="text-xs text-[#9B9B9B] text-center">
-              Keep providing excellent service to unlock team leadership!
+              {t('team.keepProviding')}
             </p>
           </div>
         </div>
@@ -996,16 +968,16 @@ export default function TeamTab() {
         <div className="bg-gradient-to-br from-[#FFF8F5] to-[#FAFAF8] rounded-2xl p-5 border border-[#EBEBEB]">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-2xl">👑</span>
-            <h3 className="font-semibold text-[#1A1A1A]">Create Your Team</h3>
+            <h3 className="font-semibold text-[#1A1A1A]">{t('team.createYourTeam')}</h3>
           </div>
           <p className="text-sm text-[#6B6B6B] mb-4">
-            You&apos;ve earned team leader status! Create a team and invite other cleaners to join.
+            {t('team.earnedLeaderStatus')}
           </p>
           {showCreateTeam ? (
             <div className="space-y-3">
               <input
                 type="text"
-                placeholder="Team name"
+                placeholder={t('team.teamName')}
                 value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
                 className="w-full px-4 py-3 border border-[#EBEBEB] rounded-lg text-[#1A1A1A] placeholder:text-[#9B9B9B]"
@@ -1016,13 +988,13 @@ export default function TeamTab() {
                   disabled={actionLoading === 'create' || !newTeamName.trim()}
                   className="flex-1 bg-[#1A1A1A] text-white py-2.5 rounded-lg font-medium disabled:opacity-50"
                 >
-                  {actionLoading === 'create' ? 'Creating...' : 'Create Team'}
+                  {actionLoading === 'create' ? t('team.creating') : t('team.createTeam')}
                 </button>
                 <button
                   onClick={() => setShowCreateTeam(false)}
                   className="px-4 py-2.5 border border-[#EBEBEB] rounded-lg text-[#6B6B6B]"
                 >
-                  Cancel
+                  {t('team.cancel')}
                 </button>
               </div>
             </div>
@@ -1031,7 +1003,7 @@ export default function TeamTab() {
               onClick={() => setShowCreateTeam(true)}
               className="w-full bg-[#C4785A] text-white py-2.5 rounded-lg font-medium"
             >
-              Create Team
+              {t('team.createTeam')}
             </button>
           )}
         </div>
@@ -1040,7 +1012,7 @@ export default function TeamTab() {
       {/* Browse Teams */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-[#1A1A1A]">Join a Team</h3>
+          <h3 className="text-sm font-medium text-[#1A1A1A]">{t('team.joinTeam')}</h3>
           {!showBrowseTeams && (
             <button
               onClick={() => {
@@ -1049,7 +1021,7 @@ export default function TeamTab() {
               }}
               className="text-[#C4785A] text-sm font-medium"
             >
-              Browse Teams
+              {t('team.browseTeams')}
             </button>
           )}
         </div>
@@ -1058,7 +1030,7 @@ export default function TeamTab() {
           browseTeams.length === 0 ? (
             <div className="bg-[#F5F5F3] rounded-2xl p-6 text-center">
               <p className="text-3xl mb-2">🔍</p>
-              <p className="text-[#6B6B6B]">No teams available</p>
+              <p className="text-[#6B6B6B]">{t('team.noTeamsAvailable')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -1075,7 +1047,7 @@ export default function TeamTab() {
                     <div className="flex-1">
                       <h4 className="font-medium text-[#1A1A1A]">{team.name}</h4>
                       <p className="text-sm text-[#6B6B6B]">
-                        Led by {team.leader.name} · {team.memberCount} members
+                        {t('team.ledBy')} {team.leader.name} · {team.memberCount} {t('team.membersCount')}
                       </p>
                     </div>
                   </div>
@@ -1086,7 +1058,7 @@ export default function TeamTab() {
                       disabled={actionLoading === team.id}
                       className="w-full py-2.5 border border-[#EBEBEB] text-[#6B6B6B] rounded-lg text-sm font-medium disabled:opacity-50"
                     >
-                      {actionLoading === team.id ? '...' : 'Cancel Request'}
+                      {actionLoading === team.id ? '...' : t('team.cancelRequest')}
                     </button>
                   ) : (
                     <button
@@ -1094,7 +1066,7 @@ export default function TeamTab() {
                       disabled={actionLoading === team.id}
                       className="w-full py-2.5 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium disabled:opacity-50"
                     >
-                      {actionLoading === team.id ? 'Sending...' : 'Request to Join'}
+                      {actionLoading === team.id ? t('team.sending') : t('team.requestToJoin')}
                     </button>
                   )}
                 </div>
@@ -1104,7 +1076,7 @@ export default function TeamTab() {
         ) : (
           <div className="bg-[#F5F5F3] rounded-2xl p-6 text-center">
             <p className="text-3xl mb-2">👥</p>
-            <p className="text-[#6B6B6B]">Find a team to join for coverage support</p>
+            <p className="text-[#6B6B6B]">{t('team.findTeam')}</p>
           </div>
         )}
       </div>

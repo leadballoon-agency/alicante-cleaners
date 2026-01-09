@@ -289,6 +289,11 @@ export default function HomePage() {
                         <h3 className="font-semibold text-[#1A1A1A] group-hover:text-[#C4785A] transition-colors">
                           {cleaner.name}
                         </h3>
+                        {cleaner.slug === 'clara' && (
+                          <span className="px-2 py-0.5 bg-gradient-to-r from-amber-600 to-amber-500 text-white text-xs font-medium rounded-full shadow-sm">
+                            Co-fundadora
+                          </span>
+                        )}
                         {cleaner.teamLeader && (
                           <span className="px-2 py-0.5 bg-[#C4785A] text-white text-xs font-medium rounded-full">
                             Team Leader

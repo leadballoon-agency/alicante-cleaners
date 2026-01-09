@@ -46,7 +46,12 @@ For detailed documentation, see the `docs/` folder:
 ### Public Pages
 - **Homepage** (`/`) - Owner-focused landing, cleaner directory with area filtering, social proof activity feed
 - **Cleaner Landing** (`/join`) - Conversion page for cleaner recruitment with app screenshots
-- **Onboarding Guides** (`/join/guide`, `/join/calendar-guide`) - Step-by-step guides in ES/EN
+- **Onboarding Guides** - Step-by-step visual guides with phone mockups, ES/EN bilingual:
+  - `/join/guide` - Getting started guide
+  - `/join/booking-guide` - How to manage bookings
+  - `/join/calendar-guide` - Google Calendar sync setup
+  - `/join/team-leader-guide` - How to grow your team (for leaders)
+  - `/join/team-guide` - How to join a team (for members)
 - **About page** (`/about`) - Origin story
 - **Cleaner profiles** (`/{slug}`) - Public pages with reviews, services, AI chat assistant, booking
 
@@ -63,15 +68,18 @@ For detailed documentation, see the `docs/` folder:
   - **Bookings** - All bookings with filters, assign to team members
   - **Success** - AI Success Coach with profile analytics, personalized tips, chat
   - **Promote** - Stats (weekly/monthly/all-time), shareable profile card, WhatsApp share, tips
-  - **Messages** - Conversations with owners (auto-translated)
-  - **Team** - Team management (Team Leaders only), applicant review
+  - **Messages** - Conversations with owners (auto-translated, markdown formatting for bold/links)
+  - **Team** - Team management (Team Leaders only), applicant review, fully localized (ES/EN)
   - **Profile** - Edit profile, settings, Google Calendar sync
 - **Team Management** - Create team, manage members, review applicants with AI chat summaries
+  - Team leader can refer cleaners and manage team members
+  - Fully localized Team tab with Spanish/English translations
 - **Booking Assignment** - Assign bookings to team members
 - **Google Calendar Sync** - OAuth integration with FreeBusy API for availability
 - **WhatsApp notifications** - New bookings, can reply ACCEPT/DECLINE directly
 - **AI Sales Assistant** - On profile pages, handles inquiries and bookings
 - **Account Management** - Pause or delete account with 30-day retention
+- **Language Sync** - Dashboard syncs language preference from database for consistent localization across all tabs
 
 ### Owner Features
 - **Dashboard** - Properties, booking history, reviews, messaging
@@ -403,6 +411,11 @@ Incoming WhatsApp messages hit `/api/webhooks/twilio`. Cleaners can reply:
 3. Message translated to recipient's language
 4. Both original and translated versions stored
 5. "Show original" toggle available
+
+### Translation Keys (i18n)
+The platform uses translation dictionaries for UI localization:
+- `team.*` - Team tab translations (team management, referrals, applicants, member status)
+- Dashboard components sync language preference from database on load for consistent localization
 
 ---
 

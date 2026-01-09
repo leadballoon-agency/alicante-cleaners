@@ -190,9 +190,35 @@ If you're struggling with any part of the platform, we have step-by-step guides:
 
 | Guide | URL | What It Covers |
 |-------|-----|----------------|
-| **Onboarding Guide** | `/join/guide` | Complete walkthrough of signing up - phone verification, adding photo, selecting areas, setting rates |
+| **Getting Started** | `/join/guide` | Complete walkthrough of signing up - phone verification, adding photo, selecting areas, setting rates |
+| **Managing Bookings** | `/join/booking-guide` | How to view booking details, contact owners, use WhatsApp quick messages, accept/decline jobs, mark complete |
+| **Team Leaders** | `/join/team-leader-guide` | How to grow your team - share referral code, manually refer cleaners, review applicants, manage members |
+| **Join a Team** | `/join/team-guide` | How to join an existing team - browse teams, request to join, wait for approval, team benefits |
 | **Profile Guide** | `/join/profile-guide` | How to build a profile that gets bookings - photo tips, bio writing, SEO benefits, social sharing |
-| **Calendar Sync Guide** | `/join/calendar-guide` | How to connect Google Calendar, privacy protection, troubleshooting sync issues |
+| **Calendar Sync** | `/join/calendar-guide` | How to connect Google Calendar, privacy protection, troubleshooting sync issues |
+
+### When to Direct Cleaners to Each Guide
+
+**Direct to `/join/booking-guide` when they:**
+- Don't know how to see booking details
+- Ask about the "hold to peek" feature
+- Want to contact an owner or key holder
+- Need help accepting or declining bookings
+- Ask how to mark a job as complete
+- Ask about WhatsApp quick messages
+
+**Direct to `/join/team-leader-guide` when they:**
+- Want to create or grow their team
+- Ask how to invite other cleaners
+- Need help with their referral code
+- Want to review and accept applicants
+- Ask how to manage team members
+
+**Direct to `/join/team-guide` when they:**
+- Want to join a team but don't know how
+- Ask about the benefits of joining a team
+- Need help finding teams in their area
+- Ask about the team request process
 
 ### Profile Guide - Key Points
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import BookingCard, { BookingCardData } from './BookingCard'
+import { useLanguage } from '@/components/language-context'
 
 interface BookingFromAPI {
   id: string
@@ -36,7 +37,7 @@ interface Props {
 }
 
 // Format date header
-const formatDateHeader = (dateStr: string): { day: string; weekday: string; isToday: boolean; isTomorrow: boolean } => {
+const formatDateHeader = (dateStr: string, t: (key: string) => string, lang: string = 'en'): { day: string; weekday: string; isToday: boolean; isTomorrow: boolean } => {
   const date = new Date(dateStr)
   const today = new Date()
   const tomorrow = new Date(today)
@@ -45,18 +46,30 @@ const formatDateHeader = (dateStr: string): { day: string; weekday: string; isTo
   const isToday = date.toDateString() === today.toDateString()
   const isTomorrow = date.toDateString() === tomorrow.toDateString()
 
+  // Map language code to locale
+  const localeMap: Record<string, string> = {
+    'en': 'en-GB',
+    'es': 'es-ES',
+    'de': 'de-DE',
+    'fr': 'fr-FR',
+    'nl': 'nl-NL',
+    'it': 'it-IT',
+    'pt': 'pt-PT'
+  }
+  const locale = localeMap[lang] || 'en-GB'
+
   let weekday: string
   if (isToday) {
-    weekday = 'Today'
+    weekday = t('dashboard.today')
   } else if (isTomorrow) {
-    weekday = 'Tomorrow'
+    weekday = t('dashboard.tomorrow')
   } else {
     // Show "Friday 9th" style for dates within 7 days, otherwise "Fri 9 Jan"
     const daysAway = Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
     if (daysAway <= 7) {
-      weekday = date.toLocaleDateString('en-GB', { weekday: 'long' })
+      weekday = date.toLocaleDateString(locale, { weekday: 'long' })
     } else {
-      weekday = date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+      weekday = date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })
     }
   }
 
@@ -103,6 +116,7 @@ export default function JobsTimeline({
   currentCleanerName = 'You',
   currentCleanerPhoto
 }: Props) {
+  const { t, lang } = useLanguage()
   const [bookings, setBookings] = useState<BookingFromAPI[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -289,7 +303,7 @@ export default function JobsTimeline({
               : 'bg-white text-[#1A1A1A] border border-[#EBEBEB] hover:border-[#1A1A1A]'
           }`}
         >
-          Upcoming
+          {t('dashboard.upcoming')}
         </button>
         <button
           onClick={() => setFilter('all')}
@@ -299,13 +313,13 @@ export default function JobsTimeline({
               : 'bg-white text-[#1A1A1A] border border-[#EBEBEB] hover:border-[#1A1A1A]'
           }`}
         >
-          All Jobs
+          {t('dashboard.allJobs')}
         </button>
 
         {/* Quick stats */}
         {displayBookings.length > 0 && (
           <span className="ml-auto text-sm text-[#6B6B6B]">
-            {displayBookings.length} job{displayBookings.length !== 1 ? 's' : ''}
+            {displayBookings.length} {displayBookings.length !== 1 ? t('dashboard.jobs') : t('dashboard.job')}
           </span>
         )}
       </div>
@@ -315,7 +329,7 @@ export default function JobsTimeline({
         <div className="space-y-6">
           {sortedDates.map(dateStr => {
             const dayBookings = groupedBookings.get(dateStr)!
-            const { day, weekday, isToday, isTomorrow } = formatDateHeader(dateStr)
+            const { day, weekday, isToday, isTomorrow } = formatDateHeader(dateStr, t, lang)
 
             return (
               <div key={dateStr} className="space-y-3">

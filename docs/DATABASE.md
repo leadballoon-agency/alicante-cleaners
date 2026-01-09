@@ -555,7 +555,7 @@ enum AvailabilitySource {
 
 ### TeamAvailabilityCache
 
-Aggregated team calendar view:
+Aggregated team calendar data structure:
 
 ```prisma
 model TeamAvailabilityCache {
@@ -569,6 +569,8 @@ model TeamAvailabilityCache {
   @@unique([teamId, date, memberId])
 }
 ```
+
+**Note:** The Team Calendar UI was removed from the Team tab (cleaner dashboard). This data model and related API endpoints still exist for potential future use or backend operations, but there is no frontend UI currently displaying this aggregated calendar view.
 
 ---
 

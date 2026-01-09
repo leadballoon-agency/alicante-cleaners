@@ -21,14 +21,90 @@ VillaCare's frontend is built with **Next.js 14 App Router** using **React Serve
 |-------|------|-------------|
 | `/` | `app/page.tsx` | Owner landing page with cleaner directory |
 | `/join` | `app/join/page.tsx` | Cleaner recruitment landing page |
-| `/join/guide` | `app/join/guide/page.tsx` | Step-by-step onboarding guide (ES/EN) |
-| `/join/calendar-guide` | `app/join/calendar-guide/page.tsx` | Google Calendar sync guide (ES/EN) |
-| `/guide` | `app/guide/page.tsx` | General platform guide |
 | `/about` | `app/about/page.tsx` | Origin story and team |
 | `/[slug]` | `app/[slug]/page.tsx` | Public cleaner profile |
 | `/[slug]/booking` | `app/[slug]/booking/page.tsx` | 4-step booking flow |
 | `/privacy` | `app/privacy/page.tsx` | Privacy policy |
 | `/terms` | `app/terms/page.tsx` | Terms of service |
+
+### Owner Guide Pages
+
+| Route | File | Description |
+|-------|------|-------------|
+| `/guide` | `app/guide/page.tsx` | How to book a cleaner (English) |
+| `/guide/booking` | `app/guide/booking/page.tsx` | How to book a cleaner (ES/EN) |
+
+### Cleaner Guide Pages
+
+| Route | File | Description |
+|-------|------|-------------|
+| `/join/guide` | `app/join/guide/page.tsx` | Getting started - onboarding walkthrough (ES/EN) |
+| `/join/booking-guide` | `app/join/booking-guide/page.tsx` | Managing bookings - peek modal, accept/decline, complete (ES/EN) |
+| `/join/team-leader-guide` | `app/join/team-leader-guide/page.tsx` | Team leaders - referral code, applicants, members (ES/EN) |
+| `/join/team-guide` | `app/join/team-guide/page.tsx` | Join a team - browse, request, benefits (ES/EN) |
+| `/join/profile-guide` | `app/join/profile-guide/page.tsx` | Profile optimization - photos, bio, SEO (ES/EN) |
+| `/join/calendar-guide` | `app/join/calendar-guide/page.tsx` | Calendar sync - Google Calendar setup (ES/EN) |
+
+### Guide Screenshot Assets
+
+Screenshots for guide pages are stored in `/public/guides/` organized by flow:
+
+```
+/public/guides/
+├── 01-cleaner-onboarding/    # Onboarding flow screenshots
+│   ├── es/
+│   └── en/
+├── 02-cleaner-dashboard/     # Dashboard screenshots (8+ per language)
+│   ├── es/
+│   └── en/
+├── 03-booking-management/    # Booking accept/complete flow
+│   ├── es/
+│   └── en/
+├── 05-profile-management/    # Profile editing screenshots
+│   ├── es/
+│   └── en/
+├── 08-team-leader/           # Team Leader Guide screenshots (16 ES, 8 EN)
+│   ├── es/
+│   │   ├── 01-team-overview.png
+│   │   ├── 02-copy-code.png
+│   │   ├── 02-referral-code.png
+│   │   ├── 03-refer-form.png
+│   │   ├── 04-refer-filled.png
+│   │   ├── 05-refer-success.png
+│   │   ├── 05-team-members.png
+│   │   ├── 06-team-members.png
+│   │   ├── 07-referral-join-page.png
+│   │   ├── 08-new-applicant.png
+│   │   ├── 09-applicant-actions.png
+│   │   ├── 10-applicant-conversation.png
+│   │   ├── 11-conversation-with-actions.png
+│   │   └── 12-applicant-accepted.png
+│   └── en/
+│       ├── 01-team-overview.png
+│       ├── 02-referral-code.png
+│       ├── 03-refer-form.png
+│       ├── 04-refer-filled.png
+│       ├── 05-team-members.png
+│       └── 07-referral-join-page.png
+├── 09-team-member/           # Team Member Guide screenshots (1 per language)
+│   ├── es/
+│   │   └── 01-team-member-view.png
+│   └── en/
+│       └── 01-team-member-view.png
+└── 12-public-profile/        # Public profile screenshots
+    ├── es/
+    └── en/
+```
+
+Screenshots are captured at iPhone 14 viewport (390×844) for mobile-first presentation.
+
+**Guide Page Components:**
+- Phone mockup frame with notch for displaying screenshots
+- Language toggle (ES/EN) in header
+- Step-by-step sections with alternating layout
+- Tip boxes with 💡 icon
+- FAQ accordion sections
+- CTA button linking to dashboard
 
 ### Authentication Pages
 
@@ -238,10 +314,15 @@ const nextStep = () => {
 
 **Team Tab Features (Team Leaders):**
 - View/edit team name and referral code
-- Manage team members (remove, view calendar)
+- Manage team members (remove)
 - Review PENDING cleaner applicants with AI-generated summaries
 - Accept & activate or decline applicants
-- Team calendar aggregation view
+- Refer new cleaners to join the team
+
+**Localization:**
+- Team tab uses `useLanguage` hook from `language-context` for full i18n support
+- Dashboard syncs `cleaner.preferredLanguage` to `LanguageProvider` on initial load
+- All Team tab UI strings are translation-ready via the `t()` function
 
 #### Team Tab (Team Leaders)
 
@@ -251,6 +332,23 @@ The Team tab appears for cleaners marked as `teamLeader: true`. Features include
 - View/edit team name
 - Copy team referral code
 - Remove team members
+- Refer new cleaners with recommendation notes
+
+**Localization:**
+The Team tab is fully localized using the `useLanguage` hook:
+```tsx
+const { t } = useLanguage()
+// Usage: t('team.referralCopied'), t('team.teamMembers'), etc.
+```
+
+**Dashboard Language Sync:**
+On dashboard load, the cleaner's `preferredLanguage` is synced to the `LanguageProvider`:
+```tsx
+// Sync language context with cleaner's preferred language
+if (cleanerData.cleaner?.preferredLanguage) {
+  setLang(cleanerData.cleaner.preferredLanguage)
+}
+```
 
 **Applicant Review:**
 - View PENDING cleaners who chatted via profile page
@@ -401,7 +499,7 @@ Shown on team leader profile pages when `?applicant={id}` parameter is present:
 | `BookingPeekModal` | `app/dashboard/components/team-calendar/BookingPeekModal.tsx` | Quick actions modal (owner call, key holder call, access notes, quick messages) |
 | `PromoteTab` | `app/dashboard/tabs/promote.tsx` | Stats and promotional tools |
 | `BookingsTab` | `app/dashboard/tabs/bookings.tsx` | Booking list with filters |
-| `MessagesTab` | `app/dashboard/tabs/messages.tsx` | Conversation threads |
+| `MessagesTab` | `app/dashboard/tabs/messages.tsx` | Conversation threads with auto-translation and markdown formatting (bold, clickable links) |
 | `TeamTab` | `app/dashboard/tabs/team.tsx` | Team management |
 | `ProfileTab` | `app/dashboard/tabs/profile.tsx` | Profile editing |
 | `SuccessTab` | `app/dashboard/tabs/success.tsx` | AI Success Coach with profile health and growth tips |

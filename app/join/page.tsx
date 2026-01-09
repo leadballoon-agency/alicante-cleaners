@@ -13,6 +13,7 @@ type Lang = 'en' | 'es'
 const translations = {
   en: {
     alreadyMember: 'Already a member? Sign in',
+    guidesLink: 'Help & Guides',
     loading: 'Taking you to your dashboard...',
     betaBadge: 'Invitation Only',
     heroTitle1: 'Grow your cleaning business',
@@ -111,9 +112,23 @@ const translations = {
     footerStory: 'Our story',
     footerPrivacy: 'Privacy',
     footerTerms: 'Terms',
+
+    guidesTitle: 'Guides & Help',
+    guidesSubtitle: 'Learn how to get the most out of VillaCare',
+    guideOnboarding: 'Getting Started',
+    guideOnboardingDesc: 'How to create your profile',
+    guideBookings: 'Managing Bookings',
+    guideBookingsDesc: 'Accept jobs and contact owners',
+    guideTeamLeader: 'Team Leaders',
+    guideTeamLeaderDesc: 'How to grow your team',
+    guideTeamMember: 'Join a Team',
+    guideTeamMemberDesc: 'How to join an existing team',
+    guideCalendar: 'Calendar Sync',
+    guideCalendarDesc: 'Connect your calendar',
   },
   es: {
     alreadyMember: '¿Ya eres miembro? Inicia sesión',
+    guidesLink: 'Ayuda y Guías',
     loading: 'Llevándote a tu panel...',
     betaBadge: 'Solo por Invitación',
     heroTitle1: 'Haz crecer tu negocio de limpieza',
@@ -212,6 +227,19 @@ const translations = {
     footerStory: 'Nuestra historia',
     footerPrivacy: 'Privacidad',
     footerTerms: 'Términos',
+
+    guidesTitle: 'Guías y Ayuda',
+    guidesSubtitle: 'Aprende a sacar el máximo partido de VillaCare',
+    guideOnboarding: 'Primeros Pasos',
+    guideOnboardingDesc: 'Cómo crear tu perfil',
+    guideBookings: 'Gestión de Reservas',
+    guideBookingsDesc: 'Acepta trabajos y contacta propietarios',
+    guideTeamLeader: 'Líderes de Equipo',
+    guideTeamLeaderDesc: 'Cómo hacer crecer tu equipo',
+    guideTeamMember: 'Unirse a un Equipo',
+    guideTeamMemberDesc: 'Cómo unirte a un equipo existente',
+    guideCalendar: 'Sincronizar Calendario',
+    guideCalendarDesc: 'Conecta tu calendario',
   },
 }
 
@@ -274,6 +302,12 @@ export default function JoinPage() {
                 🇬🇧
               </button>
             </div>
+            <a
+              href="#guides"
+              className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A]"
+            >
+              {t.guidesLink}
+            </a>
             <Link
               href="/login"
               className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] hidden sm:block"
@@ -783,6 +817,68 @@ export default function JoinPage() {
                 {t.claraExp}
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Guides Section */}
+      <section id="guides" className="px-6 py-16 bg-[#F5F5F3] scroll-mt-16">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-semibold text-[#1A1A1A] mb-2">{t.guidesTitle}</h2>
+            <p className="text-[#6B6B6B]">{t.guidesSubtitle}</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <Link
+              href="/join/guide"
+              className="bg-white rounded-xl p-5 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-md transition-all group"
+            >
+              <div className="w-10 h-10 bg-[#E8F5E9] rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-xl">🚀</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t.guideOnboarding}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t.guideOnboardingDesc}</p>
+            </Link>
+            <Link
+              href="/join/booking-guide"
+              className="bg-white rounded-xl p-5 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-md transition-all group"
+            >
+              <div className="w-10 h-10 bg-[#E3F2FD] rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-xl">📋</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t.guideBookings}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t.guideBookingsDesc}</p>
+            </Link>
+            <Link
+              href="/join/team-leader-guide"
+              className="bg-white rounded-xl p-5 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-md transition-all group"
+            >
+              <div className="w-10 h-10 bg-[#FFF3E0] rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-xl">👑</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t.guideTeamLeader}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t.guideTeamLeaderDesc}</p>
+            </Link>
+            <Link
+              href="/join/team-guide"
+              className="bg-white rounded-xl p-5 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-md transition-all group"
+            >
+              <div className="w-10 h-10 bg-[#E8F5E9] rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-xl">👥</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t.guideTeamMember}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t.guideTeamMemberDesc}</p>
+            </Link>
+            <Link
+              href="/join/calendar-guide"
+              className="bg-white rounded-xl p-5 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-md transition-all group"
+            >
+              <div className="w-10 h-10 bg-[#F3E5F5] rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-xl">📅</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t.guideCalendar}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t.guideCalendarDesc}</p>
+            </Link>
           </div>
         </div>
       </section>

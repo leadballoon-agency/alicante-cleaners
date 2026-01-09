@@ -152,6 +152,11 @@ export default function CleanerProfile() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <h1 className="text-2xl font-semibold text-[#1A1A1A]">{cleaner.name}</h1>
+                {cleaner.slug === 'clara' && (
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-amber-600 to-amber-500 text-white text-xs font-medium rounded-full shadow-sm">
+                    Co-fundadora
+                  </span>
+                )}
                 {cleaner.teamLeader && (
                   <span className="px-2 py-0.5 bg-[#C4785A] text-white text-xs font-medium rounded-full">
                     Team Leader

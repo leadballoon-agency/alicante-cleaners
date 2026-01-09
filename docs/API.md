@@ -996,6 +996,8 @@ Request to join a team.
 
 Get aggregated team calendar view.
 
+> **Note:** The Team Calendar UI was removed from the Team tab in the cleaner dashboard. This endpoint still exists for potential future use or backend operations.
+
 **Response:**
 ```json
 {
@@ -1016,6 +1018,8 @@ Get aggregated team calendar view.
 ### POST /api/dashboard/cleaner/team/calendar/sync
 
 Sync all team member calendars.
+
+> **Note:** The Team Calendar UI was removed from the Team tab in the cleaner dashboard. This endpoint still exists for potential future use or backend operations.
 
 **Response:**
 ```json

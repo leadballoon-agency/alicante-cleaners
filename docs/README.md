@@ -70,6 +70,7 @@ Currently in **Beta** (free for all users). Planned monetization:
 | [Developer Guide](./DEVELOPER.md) | Setup, deployment, common tasks |
 | [AI Sales Assistant](./AI-SALES-ASSISTANT.md) | Public-facing AI booking flow |
 | [Revenue Model](./REVENUE.md) | Fee structure, Stripe Connect plans, crypto-ready |
+| [Team Jobs](./TEAM-JOBS.md) | Multi-cleaner job assignment design |
 
 ---
 

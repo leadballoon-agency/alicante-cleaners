@@ -10,6 +10,7 @@ import PromoteTab from './tabs/promote'
 import SuccessTab from './tabs/success'
 import OwnerReviewModal from './components/owner-review-modal'
 import { SmartWidget, Screen } from '@/components/smart-widget'
+import { useLanguage } from '@/components/language-context'
 import { JobsTimeline } from './components/team-calendar'
 
 type Tab = 'home' | 'bookings' | 'messages' | 'team' | 'profile' | 'promote' | 'success'
@@ -82,6 +83,7 @@ export type TeamInfo = {
 }
 
 export default function Dashboard() {
+  const { t, setLang } = useLanguage()
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const [cleaner, setCleaner] = useState<Cleaner | null>(null)
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -125,6 +127,11 @@ export default function Dashboard() {
       setBookings(bookingsData.bookings || [])
       setComments(commentsData.comments || [])
 
+      // Sync language context with cleaner's preferred language
+      if (cleanerData.cleaner?.preferredLanguage) {
+        setLang(cleanerData.cleaner.preferredLanguage)
+      }
+
       // Set team info for team leaders
       if (teamData.role === 'leader' && teamData.team?.members) {
         setTeamInfo({
@@ -140,7 +147,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [setLang])
 
   useEffect(() => {
     fetchDashboardData()
@@ -287,7 +294,7 @@ export default function Dashboard() {
       <header className="px-6 py-4 pt-safe bg-white border-b border-[#EBEBEB]">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div>
-            <p className="text-sm text-[#6B6B6B]">Welcome back,</p>
+            <p className="text-sm text-[#6B6B6B]">{t('dashboard.welcomeBack')}</p>
             <h1 className="text-lg font-semibold text-[#1A1A1A]">
               {cleaner.name?.split(' ')[0]}
             </h1>

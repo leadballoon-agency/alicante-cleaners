@@ -98,8 +98,9 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
     })
   }
 
-  const formatMemberSince = (date: Date) => {
-    const months = Math.floor((Date.now() - date.getTime()) / (30 * 24 * 60 * 60 * 1000))
+  const formatMemberSince = (date: Date | string) => {
+    const d = typeof date === 'string' ? new Date(date) : date
+    const months = Math.floor((Date.now() - d.getTime()) / (30 * 24 * 60 * 60 * 1000))
     if (months < 1) return 'New member'
     if (months === 1) return '1 month'
     return `${months} months`

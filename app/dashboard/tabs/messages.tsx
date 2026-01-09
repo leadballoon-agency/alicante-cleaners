@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 
 type Message = {
@@ -52,6 +52,81 @@ const LANGUAGE_NAMES: Record<string, string> = {
   nl: 'Holandés',
   it: 'Italiano',
   pt: 'Portugués',
+}
+
+// Helper to render message text with basic markdown support
+function renderMessageText(text: string): React.ReactNode {
+  // Split by lines first
+  const lines = text.split('\n')
+
+  return lines.map((line, lineIndex) => {
+    // Process each line for **bold** and URLs
+    const parts: React.ReactNode[] = []
+    let remaining = line
+    let keyIndex = 0
+
+    while (remaining.length > 0) {
+      // Check for **bold** pattern
+      const boldMatch = remaining.match(/\*\*(.+?)\*\*/)
+      // Check for URL pattern
+      const urlMatch = remaining.match(/(https?:\/\/[^\s]+)/)
+
+      // Find which comes first
+      const boldIndex = boldMatch ? remaining.indexOf(boldMatch[0]) : -1
+      const urlIndex = urlMatch ? remaining.indexOf(urlMatch[0]) : -1
+
+      let firstMatch: 'bold' | 'url' | null = null
+      let firstIndex = -1
+
+      if (boldIndex >= 0 && (urlIndex < 0 || boldIndex < urlIndex)) {
+        firstMatch = 'bold'
+        firstIndex = boldIndex
+      } else if (urlIndex >= 0) {
+        firstMatch = 'url'
+        firstIndex = urlIndex
+      }
+
+      if (firstMatch === 'bold' && boldMatch) {
+        // Add text before the bold
+        if (firstIndex > 0) {
+          parts.push(remaining.substring(0, firstIndex))
+        }
+        // Add bold text
+        parts.push(<strong key={`b-${lineIndex}-${keyIndex++}`}>{boldMatch[1]}</strong>)
+        remaining = remaining.substring(firstIndex + boldMatch[0].length)
+      } else if (firstMatch === 'url' && urlMatch) {
+        // Add text before the URL
+        if (firstIndex > 0) {
+          parts.push(remaining.substring(0, firstIndex))
+        }
+        // Add clickable link
+        parts.push(
+          <a
+            key={`u-${lineIndex}-${keyIndex++}`}
+            href={urlMatch[1]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#C4785A] hover:underline break-all"
+          >
+            {urlMatch[1]}
+          </a>
+        )
+        remaining = remaining.substring(firstIndex + urlMatch[0].length)
+      } else {
+        // No more patterns, add the rest
+        parts.push(remaining)
+        remaining = ''
+      }
+    }
+
+    // Return the line with a line break (except for last line)
+    return (
+      <span key={`line-${lineIndex}`}>
+        {parts}
+        {lineIndex < lines.length - 1 && <br />}
+      </span>
+    )
+  })
 }
 
 export default function MessagesTab() {
@@ -383,7 +458,7 @@ export default function MessagesTab() {
                     <span className="text-[10px] text-white/60">Respuesta automática</span>
                   </div>
                 )}
-                <p className="text-sm">{msg.text}</p>
+                <div className="text-sm break-words">{renderMessageText(msg.text)}</div>
 
                 {/* Show translation toggle for received messages */}
                 {!msg.isMine && msg.translatedText && msg.originalText !== msg.translatedText && (
