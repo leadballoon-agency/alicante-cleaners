@@ -57,6 +57,18 @@ export interface TeamOpportunity {
   suggestion: string
 }
 
+export interface TeamProgression {
+  currentLevel: 'solo' | 'team_member' | 'team_leader' | 'services_active'
+  levelNumber: number
+  levelName: string
+  nextLevel: string | null
+  nextAction: string | null
+  hasCustomServices: boolean
+  approvedServicesCount: number
+  pendingServicesCount: number
+  progress: number // 0-100 percentage through the journey
+}
+
 /**
  * Calculate profile health score and recommendations
  */
@@ -441,6 +453,85 @@ export async function getTeamOpportunities(cleanerId: string): Promise<TeamOppor
     teamSize,
     benefits,
     suggestion,
+  }
+}
+
+/**
+ * Get team progression status - tracks journey from solo to team leader
+ */
+export async function getTeamProgression(cleanerId: string): Promise<TeamProgression> {
+  const cleaner = await db.cleaner.findUnique({
+    where: { id: cleanerId },
+    include: {
+      ledTeam: {
+        include: {
+          services: true,
+        },
+      },
+      memberOfTeam: true,
+    },
+  })
+
+  if (!cleaner) {
+    throw new Error('Cleaner not found')
+  }
+
+  const isTeamLeader = !!cleaner.ledTeam
+  const isTeamMember = !!cleaner.memberOfTeam
+
+  // Count custom services
+  const approvedServices = cleaner.ledTeam?.services.filter(s => s.status === 'APPROVED') || []
+  const pendingServices = cleaner.ledTeam?.services.filter(s => s.status === 'PENDING') || []
+  const hasCustomServices = approvedServices.length > 0
+
+  // Determine progression level
+  let currentLevel: TeamProgression['currentLevel']
+  let levelNumber: number
+  let levelName: string
+  let nextLevel: string | null
+  let nextAction: string | null
+  let progress: number
+
+  if (isTeamLeader && hasCustomServices) {
+    currentLevel = 'services_active'
+    levelNumber = 4
+    levelName = 'Business Owner'
+    nextLevel = null
+    nextAction = 'Keep adding services and growing your team!'
+    progress = 100
+  } else if (isTeamLeader) {
+    currentLevel = 'team_leader'
+    levelNumber = 3
+    levelName = 'Team Leader'
+    nextLevel = 'Business Owner'
+    nextAction = 'Add custom services to unlock new revenue streams'
+    progress = 75
+  } else if (isTeamMember) {
+    currentLevel = 'team_member'
+    levelNumber = 2
+    levelName = 'Team Member'
+    nextLevel = 'Team Leader'
+    nextAction = 'Build your reputation, then create your own team'
+    progress = 50
+  } else {
+    currentLevel = 'solo'
+    levelNumber = 1
+    levelName = 'Solo Cleaner'
+    nextLevel = 'Team Member or Team Leader'
+    nextAction = 'Join an existing team or create your own'
+    progress = 25
+  }
+
+  return {
+    currentLevel,
+    levelNumber,
+    levelName,
+    nextLevel,
+    nextAction,
+    hasCustomServices,
+    approvedServicesCount: approvedServices.length,
+    pendingServicesCount: pendingServices.length,
+    progress,
   }
 }
 

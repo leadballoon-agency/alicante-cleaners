@@ -10,6 +10,15 @@ interface SuccessStats {
   unlocked: boolean
 }
 
+interface TeamProgression {
+  currentLevel: 'solo' | 'team_member' | 'team_leader' | 'services_active'
+  levelNumber: number
+  levelName: string
+  nextLevel: string | null
+  nextAction: string | null
+  progress: number
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
@@ -17,6 +26,7 @@ interface ChatMessage {
 
 export default function SuccessTab() {
   const [stats, setStats] = useState<SuccessStats | null>(null)
+  const [teamProgression, setTeamProgression] = useState<TeamProgression | null>(null)
   const [greeting, setGreeting] = useState('')
   const [loading, setLoading] = useState(true)
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -42,6 +52,7 @@ export default function SuccessTab() {
         const data = await response.json()
         setStats(data.stats)
         setGreeting(data.greeting)
+        setTeamProgression(data.teamProgression)
       }
     } catch (error) {
       console.error('Failed to fetch success data:', error)
@@ -152,6 +163,88 @@ export default function SuccessTab() {
         </div>
       </div>
 
+      {/* Path to Team Leader - Business Growth Journey */}
+      {teamProgression && (
+        <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-[#1A1A1A]">Your Business Journey</h3>
+            <span className="text-xs text-[#6B6B6B]">Level {teamProgression.levelNumber}/4</span>
+          </div>
+
+          {/* Progress Steps */}
+          <div className="relative">
+            {/* Progress Line */}
+            <div className="absolute top-4 left-4 right-4 h-1 bg-[#EBEBEB] rounded-full">
+              <div
+                className="h-full bg-gradient-to-r from-[#C4785A] to-[#2E7D32] rounded-full transition-all duration-500"
+                style={{ width: `${teamProgression.progress}%` }}
+              />
+            </div>
+
+            {/* Steps */}
+            <div className="relative flex justify-between">
+              {[
+                { level: 1, label: 'Solo', icon: '👤', key: 'solo' },
+                { level: 2, label: 'Team', icon: '👥', key: 'team_member' },
+                { level: 3, label: 'Leader', icon: '⭐', key: 'team_leader' },
+                { level: 4, label: 'Owner', icon: '🏆', key: 'services_active' },
+              ].map((step) => {
+                const isActive = teamProgression.levelNumber >= step.level
+                const isCurrent = teamProgression.levelNumber === step.level
+                return (
+                  <div key={step.key} className="flex flex-col items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm z-10 transition-all ${
+                        isActive
+                          ? isCurrent
+                            ? 'bg-[#C4785A] text-white ring-4 ring-[#C4785A]/20'
+                            : 'bg-[#2E7D32] text-white'
+                          : 'bg-[#F5F5F3] text-[#9B9B9B]'
+                      }`}
+                    >
+                      {step.icon}
+                    </div>
+                    <span className={`text-[10px] mt-1 ${isActive ? 'text-[#1A1A1A] font-medium' : 'text-[#9B9B9B]'}`}>
+                      {step.label}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Current Status & Next Action */}
+          <div className="mt-5 pt-4 border-t border-[#EBEBEB]">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2 py-0.5 bg-[#E8F5E9] text-[#2E7D32] text-xs font-medium rounded-full">
+                {teamProgression.levelName}
+              </span>
+            </div>
+            {teamProgression.nextAction && (
+              <p className="text-sm text-[#6B6B6B]">{teamProgression.nextAction}</p>
+            )}
+            {teamProgression.currentLevel === 'solo' && (
+              <Link
+                href="/join/team-leader-guide"
+                className="mt-3 flex items-center justify-center gap-2 w-full bg-[#C4785A] text-white py-2.5 rounded-xl text-sm font-medium active:scale-[0.98] transition-all"
+              >
+                <span>🚀</span>
+                <span>Create Your Team</span>
+              </Link>
+            )}
+            {teamProgression.currentLevel === 'team_leader' && (
+              <Link
+                href="/join/services-guide"
+                className="mt-3 flex items-center justify-center gap-2 w-full bg-[#C4785A] text-white py-2.5 rounded-xl text-sm font-medium active:scale-[0.98] transition-all"
+              >
+                <span>➕</span>
+                <span>Add Custom Services</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Greeting Card */}
       <div className="bg-gradient-to-br from-[#FFF8F5] to-[#FFF0EA] rounded-2xl p-5 border border-[#F5E6E0]">
         <div className="flex items-start gap-3">
@@ -234,12 +327,16 @@ export default function SuccessTab() {
             </div>
           </form>
 
-          {/* Quick Questions */}
+          {/* Quick Questions - dynamic based on progression */}
           <div className="px-4 pb-4 flex flex-wrap gap-2">
             {[
               'How can I get more bookings?',
               'Review my profile',
-              'Show my stats',
+              ...(teamProgression?.currentLevel === 'team_leader'
+                ? ['How do I add specialists to my team?']
+                : teamProgression?.currentLevel === 'solo'
+                ? ['How do I create a team?']
+                : ['Show my stats']),
             ].map((q) => (
               <button
                 key={q}

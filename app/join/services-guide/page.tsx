@@ -209,14 +209,14 @@ export default function ServicesGuide() {
               key={index}
               className={`flex flex-col ${index % 2 === 1 ? 'md:flex-row-reverse' : 'md:flex-row'} gap-6 md:gap-10 items-center`}
             >
-              {/* Phone mockup */}
+              {/* Phone mockup - smaller on mobile for better scrolling */}
               <div className="w-full md:w-1/2 flex justify-center">
                 <div className="relative">
-                  {/* Phone frame */}
-                  <div className="w-[280px] h-[560px] bg-[#1A1A1A] rounded-[40px] p-3 shadow-2xl">
-                    <div className="w-full h-full bg-white rounded-[32px] overflow-hidden relative">
+                  {/* Phone frame - 220px on mobile, 280px on tablet+ */}
+                  <div className="w-[220px] h-[440px] sm:w-[280px] sm:h-[560px] bg-[#1A1A1A] rounded-[32px] sm:rounded-[40px] p-2 sm:p-3 shadow-2xl">
+                    <div className="w-full h-full bg-white rounded-[26px] sm:rounded-[32px] overflow-hidden relative">
                       {/* Notch */}
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-[#1A1A1A] rounded-b-2xl z-10" />
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 sm:w-24 h-5 sm:h-6 bg-[#1A1A1A] rounded-b-xl sm:rounded-b-2xl z-10" />
                       {/* Screenshot */}
                       <Image
                         src={stepImages[index]}
@@ -227,7 +227,7 @@ export default function ServicesGuide() {
                     </div>
                   </div>
                   {/* Step number badge */}
-                  <div className="absolute -top-3 -left-3 w-10 h-10 bg-[#C4785A] text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
+                  <div className="absolute -top-2 -left-2 sm:-top-3 sm:-left-3 w-8 h-8 sm:w-10 sm:h-10 bg-[#C4785A] text-white rounded-full flex items-center justify-center font-bold text-base sm:text-lg shadow-lg">
                     {index + 1}
                   </div>
                 </div>

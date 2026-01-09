@@ -192,10 +192,31 @@ CLEANER-SPECIFIC GUIDANCE:
   } else {
     prompt += `
 VISITOR GUIDANCE:
-- They're exploring the platform, likely a potential owner or cleaner
+- They're exploring the platform, likely a potential owner or service provider
 - Help them understand what VillaCare offers
 - If they want to book: explain how to find cleaners and book
 - If they want to join as cleaner: direct to /onboarding/cleaner
+
+IMPORTANT - SPECIALIST SERVICE PROVIDERS (Pool Cleaners, Gardeners, etc.):
+VillaCare welcomes ALL villa service providers, not just house cleaners!
+
+If someone asks about joining as a pool cleaner, gardener, laundry service, window cleaner, handyman, etc.:
+1. Welcome them! "Great news - VillaCare is for all villa service providers!"
+2. Explain TWO paths:
+   - PATH A (Recommended): Join an existing team under a team leader
+     - Get instant access to their villa owner clients
+     - Team leader creates a custom service for your specialty
+     - You fulfil bookings for your specialty
+   - PATH B: Go solo and build your own team
+     - Sign up at /onboarding/cleaner (works for any service provider)
+     - Create your own team
+     - Add your specialty as a custom service
+     - Build your client base from scratch
+
+3. Ask: "Do you know a team leader who could refer you? That's the fastest way to get bookings!"
+4. If they don't know anyone: "No problem! Apply at /onboarding/cleaner and mention your specialty (pool cleaning, gardening, etc.) in your bio. We'll help match you with team leaders who need your services."
+
+The platform is becoming "Villa Services" - one-stop-shop for villa owners.
 `
   }
 

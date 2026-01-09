@@ -109,12 +109,13 @@ export async function GET() {
       )
     }
 
-    // Get greeting and stats
-    const { greeting, stats } = await getSuccessGreeting(cleaner.id)
+    // Get greeting, stats, and team progression
+    const { greeting, stats, teamProgression } = await getSuccessGreeting(cleaner.id)
 
     return NextResponse.json({
       greeting,
       stats,
+      teamProgression,
     })
   } catch (error) {
     console.error('Error getting success greeting:', error)

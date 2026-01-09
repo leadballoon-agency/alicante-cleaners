@@ -13,6 +13,7 @@ import {
   getRevenueStats,
   getBookingInsights,
   getTeamOpportunities,
+  getTeamProgression,
   getImprovementTips,
   hasCompletedFirstJob,
 } from './success-agent-tools'
@@ -91,6 +92,16 @@ export const SUCCESS_TOOLS: Anthropic.Tool[] = [
       required: [],
     },
   },
+  {
+    name: 'get_team_progression',
+    description:
+      'Get the cleaner\'s progress on their journey from solo cleaner to team leader/business owner. Shows current level (solo, team member, team leader, or business owner with custom services), next steps, and progress percentage. Use this when discussing growth, teams, or custom services.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+      required: [],
+    },
+  },
 ]
 
 // Tool handlers
@@ -121,6 +132,9 @@ async function processToolCall(
       case 'get_improvement_tips':
         result = await getImprovementTips(cleanerId)
         break
+      case 'get_team_progression':
+        result = await getTeamProgression(cleanerId)
+        break
       default:
         result = { error: `Unknown tool: ${toolName}` }
     }
@@ -146,19 +160,55 @@ YOUR CAPABILITIES:
 - Analyze their profile completeness and suggest improvements
 - Show them profile view statistics (very motivating or sobering!)
 - Provide revenue and booking insights
-- Suggest team opportunities
+- Suggest team opportunities and track their progression
 - Give personalized tips based on their data
 
 KEY RESOURCES TO RECOMMEND:
 - Profile Guide: /join/profile-guide - For building a great profile and social sharing
 - Calendar Guide: /join/calendar-guide - For syncing their calendar
+- Team Leader Guide: /join/team-leader-guide - For creating and managing teams
+- Services Guide: /join/services-guide - For adding custom services (team leaders only)
 - Support: hello@alicantecleaners.com - For issues you can't help with
+
+THE CLEANER JOURNEY - VERY IMPORTANT:
+The ultimate goal for every cleaner is to become a Team Leader with custom services. This is their path to building a real business:
+
+1. SOLO CLEANER (Level 1) → Join a team for backup and referrals, OR create your own team
+2. TEAM MEMBER (Level 2) → Learn from the leader, build reputation, then create your own team
+3. TEAM LEADER (Level 3) → Now you can add custom services like pool cleaning, laundry, etc.
+4. BUSINESS OWNER (Level 4) → Multiple services, team members, real business income
+
+Always encourage cleaners to think about this progression. Use get_team_progression to check where they are and motivate them toward the next level.
+
+EXPANDING YOUR TEAM WITH SPECIALIST SERVICE PROVIDERS:
+Team Leaders can grow their business by recruiting specialist service providers - not just cleaners!
+
+Examples of specialists to recruit:
+- Pool cleaners/maintenance technicians
+- Gardeners and landscapers
+- Laundry service providers
+- Window cleaners
+- Handymen for minor repairs
+
+HOW IT WORKS:
+1. Team Leader finds a specialist (pool cleaner, gardener, etc.)
+2. Invite them to join VillaCare through the Team tab (send invite code)
+3. They sign up as a new team member under your team
+4. Team Leader creates a custom service for their specialty (e.g., "Pool Cleaning")
+5. Once approved, the specialist can fulfill bookings for that service
+6. Villa owners book through you - the team handles everything!
+
+This turns a cleaning team into a full "Villa Services" business. Encourage team leaders to think about what other services their villa owner clients need and recruit specialists to fill those gaps.
+
+When talking to team leaders, suggest: "Do your clients ever ask about pool cleaning or garden maintenance? You could recruit a specialist and add that service to your team!"
 
 IMPORTANT RULES:
 - Always use tools to get real data - never guess
 - If profile views are high but bookings low, gently suggest profile improvements
 - If views are zero, encourage them to share their profile link
-- Mention the Profile Guide when relevant (photo tips, bio writing, social sharing)
+- For solo cleaners: Mention team benefits and the path to team leadership
+- For team members: Encourage them to build reputation toward leading their own team
+- For team leaders without services: Highlight the services feature!
 - Keep responses under 200 words unless they ask for detail
 - Use emojis sparingly (1-2 max per response) to keep it warm but professional
 - If they ask about something you can't help with (payments, technical issues), direct them to support
@@ -166,7 +216,7 @@ IMPORTANT RULES:
 CONVERSATION FLOW:
 1. First message: Greet them, show key stats, highlight one quick win
 2. Follow-up: Answer their questions, use tools to provide accurate data
-3. End with: A specific action they can take right now`
+3. End with: A specific action they can take right now (often related to team progression!)`
 
 // Chat message type
 export interface SuccessChatMessage {
@@ -292,6 +342,14 @@ export async function getSuccessGreeting(cleanerId: string): Promise<{
     completedJobs: number
     unlocked: boolean
   }
+  teamProgression: {
+    currentLevel: 'solo' | 'team_member' | 'team_leader' | 'services_active'
+    levelNumber: number
+    levelName: string
+    nextLevel: string | null
+    nextAction: string | null
+    progress: number
+  }
 }> {
   const cleaner = await db.cleaner.findUnique({
     where: { id: cleanerId },
@@ -309,14 +367,23 @@ export async function getSuccessGreeting(cleanerId: string): Promise<{
         completedJobs: 0,
         unlocked: false,
       },
+      teamProgression: {
+        currentLevel: 'solo',
+        levelNumber: 1,
+        levelName: 'Solo Cleaner',
+        nextLevel: 'Team Member or Team Leader',
+        nextAction: 'Join an existing team or create your own',
+        progress: 25,
+      },
     }
   }
 
-  const [health, views, insights, unlocked] = await Promise.all([
+  const [health, views, insights, unlocked, progression] = await Promise.all([
     getProfileHealth(cleanerId),
     getProfileViews(cleaner.slug),
     getBookingInsights(cleanerId),
     hasCompletedFirstJob(cleanerId),
+    getTeamProgression(cleanerId),
   ])
 
   const name = cleaner.user.name?.split(' ')[0] || 'there'
@@ -334,8 +401,20 @@ export async function getSuccessGreeting(cleanerId: string): Promise<{
       greeting = `Looking good, ${name}! Your profile is ${health.score}% ready. Now let's get that first booking!`
     }
   } else {
-    // Full mode - show stats
-    if (views.thisWeek > 20) {
+    // Full mode - include team progression hints
+    if (progression.currentLevel === 'solo') {
+      greeting = `Hey ${name}! You're doing great as a solo cleaner. Ready to level up? Create a team to unlock custom services!`
+    } else if (progression.currentLevel === 'team_member') {
+      greeting = `Hey ${name}! You're learning the ropes as a team member. When you're ready, create your own team to become a Team Leader!`
+    } else if (progression.currentLevel === 'team_leader') {
+      greeting = `Hey ${name}! As a Team Leader, you can now add custom services like pool cleaning or laundry. Check the Profile tab to get started!`
+    } else if (progression.currentLevel === 'services_active') {
+      if (views.thisWeek > 20) {
+        greeting = `Amazing work, ${name}! ${views.thisWeek} profile views this week. Your custom services are bringing in business!`
+      } else {
+        greeting = `Hey ${name}! You've built a real business with your team and services. Keep growing!`
+      }
+    } else if (views.thisWeek > 20) {
       greeting = `Great visibility, ${name}! ${views.thisWeek} people checked out your profile this week.`
     } else if (views.thisWeek > 0) {
       greeting = `Hey ${name}! ${views.thisWeek} people viewed your profile this week. Let's boost those numbers!`
@@ -351,6 +430,14 @@ export async function getSuccessGreeting(cleanerId: string): Promise<{
       profileViews: views.thisWeek,
       completedJobs: insights.completedBookings,
       unlocked,
+    },
+    teamProgression: {
+      currentLevel: progression.currentLevel,
+      levelNumber: progression.levelNumber,
+      levelName: progression.levelName,
+      nextLevel: progression.nextLevel,
+      nextAction: progression.nextAction,
+      progress: progression.progress,
     },
   }
 }
