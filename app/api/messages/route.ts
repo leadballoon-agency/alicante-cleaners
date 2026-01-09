@@ -8,6 +8,7 @@ import {
   type LanguageCode,
 } from '@/lib/translate'
 import { checkRateLimit, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
+import { notifyAdminNewMessage } from '@/lib/email'
 import { z } from 'zod'
 
 // Zod schema for message validation
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
         },
         cleaner: {
           include: {
-            user: { select: { id: true, preferredLanguage: true } },
+            user: { select: { id: true, name: true, preferredLanguage: true } },
           },
         },
         admin: {
@@ -150,6 +151,18 @@ export async function POST(request: NextRequest) {
         }),
       }).catch(err => {
         console.error('Failed to trigger AI response:', err)
+      })
+    }
+
+    // Notify admins when cleaner sends a message (async - don't block response)
+    if (role === 'CLEANER') {
+      notifyAdminNewMessage({
+        cleanerName: conversation.cleaner.user.name || 'Cleaner',
+        cleanerSlug: conversation.cleaner.slug,
+        messageText: text,
+        conversationId,
+      }).catch(err => {
+        console.error('Failed to send admin notification:', err)
       })
     }
 

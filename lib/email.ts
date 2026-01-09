@@ -326,3 +326,73 @@ export async function notifyAdminNewBooking(details: {
     }
   }
 }
+
+/**
+ * Notify all admins when a cleaner sends a message
+ */
+export async function notifyAdminNewMessage(details: {
+  cleanerName: string
+  cleanerSlug: string
+  messageText: string
+  conversationId: string
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const conversationUrl = `https://alicantecleaners.com/admin?tab=messages&conversation=${details.conversationId}`
+
+    // Truncate message if too long
+    const previewText = details.messageText.length > 200
+      ? details.messageText.substring(0, 200) + '...'
+      : details.messageText
+
+    await getResend().emails.send({
+      from: EMAIL_FROM,
+      to: ADMIN_EMAILS,
+      subject: `💬 New message from ${details.cleanerName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px 20px; background-color: #FAFAF8;">
+            <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+              <div style="text-align: center; margin-bottom: 24px;">
+                <div style="display: inline-block; width: 48px; height: 48px; background: linear-gradient(135deg, #C4785A, #A66347); border-radius: 50%; line-height: 48px; color: white; font-size: 24px;">💬</div>
+              </div>
+
+              <h1 style="color: #1A1A1A; font-size: 20px; text-align: center; margin-bottom: 8px;">
+                New Message
+              </h1>
+
+              <p style="color: #6B6B6B; font-size: 14px; text-align: center; margin-bottom: 24px;">
+                from <strong style="color: #1A1A1A;">${details.cleanerName}</strong>
+              </p>
+
+              <div style="background: #F5F5F3; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <p style="color: #1A1A1A; font-size: 15px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${previewText}</p>
+              </div>
+
+              <a href="${conversationUrl}" style="display: block; background: #1A1A1A; color: white; text-decoration: none; padding: 14px 24px; border-radius: 12px; text-align: center; font-weight: 500; font-size: 14px;">
+                View & Reply
+              </a>
+
+              <p style="color: #9B9B9B; font-size: 12px; text-align: center; margin-top: 24px;">
+                Reply directly from the admin dashboard.
+              </p>
+            </div>
+          </body>
+        </html>
+      `,
+    })
+
+    console.log('[EMAIL] Admin message notification sent for cleaner:', details.cleanerName)
+    return { success: true }
+  } catch (error) {
+    console.error('[EMAIL] Failed to send admin message notification:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send email'
+    }
+  }
+}
