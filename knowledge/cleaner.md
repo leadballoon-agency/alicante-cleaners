@@ -52,6 +52,28 @@ Alicante Cleaners connects professional cleaners with villa owners in the Alican
 - Accept bookings on behalf of the team
 - Assign jobs to available team members
 - Maintain team quality standards
+- Add custom services and add-ons for the team
+
+### Custom Services (Team Leaders Only)
+
+Team leaders can add custom services and add-ons that become available to all team members:
+
+**Types of services:**
+- **Custom Service** - Standalone services like Pool Cleaning, Window Washing, Laundry
+- **Add-on** - Extras that attach to bookings like +€20 Ironing, +€15 Fridge Cleaning
+
+**Pricing options:**
+- **Hourly** - Based on estimated hours × your hourly rate (e.g., 2 hours = 2 × €18)
+- **Fixed** - Flat fee regardless of time (e.g., €50 Pool Cleaning)
+
+**How it works:**
+1. Go to Profile tab → Services section
+2. Tap "Add Service"
+3. Fill in name, description, type, and pricing
+4. Submit for admin approval
+5. Once approved, service appears on your public profile
+
+**Note:** All services require admin approval before going live. You'll see "Pending" status until approved.
 
 ## Profile Optimization
 

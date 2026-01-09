@@ -30,6 +30,31 @@ Reviews require approval before publishing:
 - Verify it's a genuine booking
 - Featured reviews appear on homepage
 
+## Service Approval
+
+Team leaders can add custom services that require admin approval:
+
+**Service types:**
+- **CUSTOM** - Standalone services (Pool Cleaning, Window Washing)
+- **ADDON** - Extras added to bookings (+€20 Ironing, +€15 Fridge Cleaning)
+
+**Approval process:**
+1. Team leader creates service in their dashboard
+2. Service appears in Live Feed with "Pending" status
+3. Admin reviews: name, description, pricing
+4. Click "Approve" to make it live, or navigate to reject
+
+**What to check:**
+- Reasonable pricing (hourly services should match cleaner's rate)
+- Appropriate service name and description
+- Not duplicate of existing standard services
+- Relevant to cleaning/home services
+
+**After approval:**
+- Service immediately appears on public profiles
+- Available to all team members (not just the leader)
+- Can be selected during booking flow
+
 ## Common Issues
 
 ### Cleaner Not Responding
@@ -70,6 +95,8 @@ Reviews require approval before publishing:
 - Completion rate: Should be 95%+
 - Review score: Platform average should stay above 4.5
 - Pending applications: Clear within 48h
+- Cleaner logins: Track activity in Live Feed (shows last 24h logins)
+- Pending services: Approve team services promptly
 
 ## AI Agents
 

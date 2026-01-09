@@ -45,6 +45,34 @@ export async function DELETE(
       )
     }
 
+    // Check for pending/confirmed bookings with custom team services
+    const teamServices = await db.teamService.findMany({
+      where: { teamId: cleaner.ledTeam.id, status: 'APPROVED' },
+      select: { name: true },
+    })
+
+    if (teamServices.length > 0) {
+      const pendingBookings = await db.booking.findMany({
+        where: {
+          cleanerId: memberId,
+          status: { in: ['PENDING', 'CONFIRMED'] },
+          serviceType: { in: teamServices.map(s => s.name) },
+        },
+        select: { id: true, serviceType: true, date: true },
+      })
+
+      if (pendingBookings.length > 0) {
+        return NextResponse.json(
+          {
+            error: 'Member has pending bookings with team services',
+            bookings: pendingBookings,
+            message: `This member has ${pendingBookings.length} upcoming booking(s) for team services. Please reassign or complete these before removing them.`,
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     // Remove member from team
     await db.cleaner.update({
       where: { id: memberId },

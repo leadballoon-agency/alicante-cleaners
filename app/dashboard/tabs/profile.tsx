@@ -1,12 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { signOut } from 'next-auth/react'
 import { Cleaner } from '../page'
 import LanguageSelector from '@/components/language-selector'
 import { useToast } from '@/components/ui/toast'
+
+type TeamService = {
+  id: string
+  name: string
+  description: string | null
+  type: 'CUSTOM' | 'ADDON'
+  priceType: 'HOURLY' | 'FIXED'
+  price: number | null
+  hours: number | null
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  sortOrder: number
+}
 
 const SERVICE_AREAS = [
   'Alicante City',
@@ -50,6 +62,40 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
   const [phoneLoading, setPhoneLoading] = useState(false)
   const [phoneError, setPhoneError] = useState('')
 
+  // Services state (team leaders only)
+  const [services, setServices] = useState<TeamService[]>([])
+  const [isTeamLeader, setIsTeamLeader] = useState(false)
+  const [teamName, setTeamName] = useState<string | null>(null)
+  const [showServiceModal, setShowServiceModal] = useState(false)
+  const [editingService, setEditingService] = useState<TeamService | null>(null)
+  const [serviceSaving, setServiceSaving] = useState(false)
+  // Service form
+  const [serviceName, setServiceName] = useState('')
+  const [serviceDescription, setServiceDescription] = useState('')
+  const [serviceType, setServiceType] = useState<'CUSTOM' | 'ADDON'>('CUSTOM')
+  const [servicePriceType, setServicePriceType] = useState<'HOURLY' | 'FIXED'>('HOURLY')
+  const [servicePrice, setServicePrice] = useState('')
+  const [serviceHours, setServiceHours] = useState('')
+
+  // Fetch services on mount
+  const fetchServices = useCallback(async () => {
+    try {
+      const res = await fetch('/api/dashboard/cleaner/services')
+      if (res.ok) {
+        const data = await res.json()
+        setServices(data.services || [])
+        setIsTeamLeader(data.isTeamLeader || false)
+        setTeamName(data.teamName || null)
+      }
+    } catch (err) {
+      console.error('Failed to fetch services:', err)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchServices()
+  }, [fetchServices])
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -64,6 +110,102 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
     } else {
       navigator.clipboard.writeText(`https://${bookingUrl}`)
       showToast('Link copied to clipboard!', 'success')
+    }
+  }
+
+  const openServiceModal = (service?: TeamService) => {
+    if (service) {
+      setEditingService(service)
+      setServiceName(service.name)
+      setServiceDescription(service.description || '')
+      setServiceType(service.type)
+      setServicePriceType(service.priceType)
+      setServicePrice(service.price?.toString() || '')
+      setServiceHours(service.hours?.toString() || '')
+    } else {
+      setEditingService(null)
+      setServiceName('')
+      setServiceDescription('')
+      setServiceType('CUSTOM')
+      setServicePriceType('HOURLY')
+      setServicePrice('')
+      setServiceHours('')
+    }
+    setShowServiceModal(true)
+  }
+
+  const handleSaveService = async () => {
+    if (!serviceName.trim()) {
+      showToast('Service name is required', 'error')
+      return
+    }
+
+    if (servicePriceType === 'FIXED' && !servicePrice) {
+      showToast('Price is required for fixed price services', 'error')
+      return
+    }
+
+    if (servicePriceType === 'HOURLY' && !serviceHours) {
+      showToast('Hours are required for hourly services', 'error')
+      return
+    }
+
+    setServiceSaving(true)
+    try {
+      const payload = {
+        name: serviceName.trim(),
+        description: serviceDescription.trim() || undefined,
+        type: serviceType,
+        priceType: servicePriceType,
+        price: servicePriceType === 'FIXED' ? parseFloat(servicePrice) : undefined,
+        hours: servicePriceType === 'HOURLY' ? parseInt(serviceHours) : undefined,
+      }
+
+      const url = editingService
+        ? `/api/dashboard/cleaner/services/${editingService.id}`
+        : '/api/dashboard/cleaner/services'
+      const method = editingService ? 'PATCH' : 'POST'
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to save service')
+      }
+
+      showToast(
+        editingService ? 'Service updated!' : 'Service submitted for approval!',
+        'success'
+      )
+      setShowServiceModal(false)
+      fetchServices()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to save service', 'error')
+    } finally {
+      setServiceSaving(false)
+    }
+  }
+
+  const handleDeleteService = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this service?')) return
+
+    try {
+      const res = await fetch(`/api/dashboard/cleaner/services/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to delete service')
+      }
+
+      showToast('Service deleted', 'success')
+      fetchServices()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete', 'error')
     }
   }
 
@@ -321,6 +463,94 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
           <p className="text-xs text-[#6B6B6B]">reviews</p>
         </div>
       </div>
+
+      {/* Team Services Section (Team Leaders can add, all team members can view) */}
+      {(isTeamLeader || services.length > 0) && (
+        <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-[#1A1A1A]">
+                {teamName ? `${teamName} Services` : 'Team Services'}
+              </h3>
+              <p className="text-xs text-[#6B6B6B]">
+                {isTeamLeader ? 'Custom services for your team' : 'Available to your team'}
+              </p>
+            </div>
+            {isTeamLeader && (
+              <button
+                onClick={() => openServiceModal()}
+                className="w-10 h-10 bg-[#C4785A] text-white rounded-xl text-xl font-medium active:scale-95 transition-transform flex items-center justify-center"
+              >
+                +
+              </button>
+            )}
+          </div>
+
+          {services.length === 0 ? (
+            <div className="text-center py-6 text-[#6B6B6B]">
+              <p className="text-3xl mb-2">🛠️</p>
+              <p className="text-sm">No custom services yet</p>
+              {isTeamLeader && (
+                <p className="text-xs mt-1">Add pool cleaning, laundry, or other services</p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {services.map((service) => (
+                <div
+                  key={service.id}
+                  className="flex items-center justify-between p-3 rounded-xl bg-[#F5F5F3]"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-[#1A1A1A] text-sm truncate">
+                        {service.name}
+                      </span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        service.status === 'APPROVED'
+                          ? 'bg-[#E8F5E9] text-[#2E7D32]'
+                          : service.status === 'PENDING'
+                          ? 'bg-[#FFF3E0] text-[#E65100]'
+                          : 'bg-[#FFEBEE] text-[#C75050]'
+                      }`}>
+                        {service.status === 'APPROVED' ? 'Live' : service.status === 'PENDING' ? 'Pending' : 'Rejected'}
+                      </span>
+                      {service.type === 'ADDON' && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#E3F2FD] text-[#1565C0] font-medium">
+                          Add-on
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#6B6B6B]">
+                      {service.priceType === 'FIXED'
+                        ? `€${service.price}`
+                        : `${service.hours}h × hourly rate`}
+                    </p>
+                  </div>
+                  {isTeamLeader && (
+                    <div className="flex items-center gap-1 ml-2">
+                      <button
+                        onClick={() => openServiceModal(service)}
+                        className="p-1.5 text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
+                        title="Edit"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => handleDeleteService(service.id)}
+                        className="p-1.5 text-[#6B6B6B] hover:text-[#C75050] transition-colors"
+                        title="Delete"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Language preference */}
       <LanguageSelector
@@ -732,6 +962,185 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit Service Modal */}
+      {showServiceModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">
+                {editingService ? 'Edit Service' : 'Add Service'}
+              </h2>
+              <button
+                onClick={() => setShowServiceModal(false)}
+                className="text-[#9B9B9B] hover:text-[#1A1A1A]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Service Name */}
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                  Service Name *
+                </label>
+                <input
+                  type="text"
+                  value={serviceName}
+                  onChange={(e) => setServiceName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base"
+                  placeholder="e.g., Pool Cleaning, Ironing"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                  Description
+                </label>
+                <textarea
+                  value={serviceDescription}
+                  onChange={(e) => setServiceDescription(e.target.value)}
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base resize-none"
+                  placeholder="Brief description of the service..."
+                />
+              </div>
+
+              {/* Service Type */}
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                  Service Type *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setServiceType('CUSTOM')}
+                    className={`p-3 rounded-xl border text-sm font-medium transition-all ${
+                      serviceType === 'CUSTOM'
+                        ? 'border-[#1A1A1A] bg-[#F5F5F3]'
+                        : 'border-[#EBEBEB]'
+                    }`}
+                  >
+                    🛠️ Custom Service
+                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">Standalone service</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setServiceType('ADDON')}
+                    className={`p-3 rounded-xl border text-sm font-medium transition-all ${
+                      serviceType === 'ADDON'
+                        ? 'border-[#1A1A1A] bg-[#F5F5F3]'
+                        : 'border-[#EBEBEB]'
+                    }`}
+                  >
+                    ➕ Add-on
+                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">Extra for bookings</p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Pricing Type */}
+              <div>
+                <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                  Pricing *
+                </label>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setServicePriceType('HOURLY')}
+                    className={`p-3 rounded-xl border text-sm font-medium transition-all ${
+                      servicePriceType === 'HOURLY'
+                        ? 'border-[#1A1A1A] bg-[#F5F5F3]'
+                        : 'border-[#EBEBEB]'
+                    }`}
+                  >
+                    ⏱️ Hourly
+                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">Hours × your rate</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setServicePriceType('FIXED')}
+                    className={`p-3 rounded-xl border text-sm font-medium transition-all ${
+                      servicePriceType === 'FIXED'
+                        ? 'border-[#1A1A1A] bg-[#F5F5F3]'
+                        : 'border-[#EBEBEB]'
+                    }`}
+                  >
+                    💰 Fixed Price
+                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">Set amount</p>
+                  </button>
+                </div>
+
+                {/* Hours or Price input */}
+                {servicePriceType === 'HOURLY' ? (
+                  <div>
+                    <label className="block text-sm text-[#6B6B6B] mb-1.5">
+                      Estimated Hours *
+                    </label>
+                    <input
+                      type="number"
+                      value={serviceHours}
+                      onChange={(e) => setServiceHours(e.target.value)}
+                      min="1"
+                      max="24"
+                      className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base"
+                      placeholder="e.g., 2"
+                    />
+                    {serviceHours && (
+                      <p className="text-xs text-[#6B6B6B] mt-1">
+                        Price: {serviceHours}h × €{cleaner.hourlyRate} = €{parseInt(serviceHours) * cleaner.hourlyRate}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm text-[#6B6B6B] mb-1.5">
+                      Fixed Price (€) *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B6B6B]">€</span>
+                      <input
+                        type="number"
+                        value={servicePrice}
+                        onChange={(e) => setServicePrice(e.target.value)}
+                        min="1"
+                        step="0.01"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base"
+                        placeholder="e.g., 50"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Note about approval */}
+              <div className="bg-[#FFF3E0] rounded-xl p-3">
+                <p className="text-xs text-[#E65100]">
+                  ⚠️ New services require admin approval before appearing on your profile.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowServiceModal(false)}
+                className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveService}
+                disabled={serviceSaving || !serviceName.trim()}
+                className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
+              >
+                {serviceSaving ? 'Saving...' : editingService ? 'Save Changes' : 'Submit for Approval'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -51,6 +51,18 @@ export async function GET(
                 },
               },
             },
+            services: {
+              where: { status: 'APPROVED' },
+              orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+            },
+          },
+        },
+        memberOfTeam: {
+          include: {
+            services: {
+              where: { status: 'APPROVED' },
+              orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+            },
           },
         },
       },
@@ -101,14 +113,37 @@ export async function GET(
       take: 10,
     })
 
-    // Calculate services with pricing based on hourly rate
-    const services = SERVICES.map((service) => ({
+    // Calculate standard services with pricing based on hourly rate
+    const standardServices = SERVICES.map((service) => ({
       type: service.type,
       name: service.name,
       description: service.description,
       hours: service.hoursMultiplier,
       price: Number(cleaner.hourlyRate) * service.hoursMultiplier,
+      isCustom: false,
+      isAddon: false,
     }))
+
+    // Get custom team services (from led team or member team)
+    const teamServices = (cleaner.ledTeam?.services || cleaner.memberOfTeam?.services || [])
+      .map((service) => ({
+        type: `custom-${service.id}`,
+        name: service.name,
+        description: service.description || '',
+        hours: service.hours || null,
+        price: service.priceType === 'FIXED'
+          ? Number(service.price)
+          : service.hours
+            ? Number(cleaner.hourlyRate) * service.hours
+            : 0,
+        isCustom: service.type === 'CUSTOM',
+        isAddon: service.type === 'ADDON',
+      }))
+
+    // Combine services: standard first, then custom, then add-ons
+    const customServices = teamServices.filter(s => s.isCustom && !s.isAddon)
+    const addons = teamServices.filter(s => s.isAddon)
+    const services = [...standardServices, ...customServices]
 
     // Get team members if this cleaner is a team leader
     const teamMembers = cleaner.ledTeam?.members.map(member => ({
@@ -135,6 +170,7 @@ export async function GET(
       teamName: cleaner.ledTeam?.name || null,
       teamMembers,
       services,
+      addons, // Add-on extras like ironing, fridge cleaning
       testimonial: featuredReview
         ? {
             text: featuredReview.text,

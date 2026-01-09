@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 type ActivityItem = {
   id: string
-  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved' | 'cleaner_message'
+  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved' | 'cleaner_message' | 'cleaner_login' | 'service_pending'
   title: string
   description: string
   timestamp: Date
@@ -32,6 +32,8 @@ export async function GET() {
       recentCleaners,
       recentOwners,
       recentCleanerMessages,
+      recentCleanerLogins,
+      pendingServices,
     ] = await Promise.all([
       // Recent bookings (last 24 hours)
       db.booking.findMany({
@@ -97,6 +99,38 @@ export async function GET() {
         },
         orderBy: { createdAt: 'desc' },
         take: 20,
+      }),
+
+      // Recent cleaner logins (last 24 hours)
+      db.cleaner.findMany({
+        where: {
+          user: {
+            lastLoginAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          },
+        },
+        include: {
+          user: { select: { name: true, lastLoginAt: true } },
+        },
+        orderBy: { user: { lastLoginAt: 'desc' } },
+        take: 20,
+      }),
+
+      // Pending team services (awaiting approval)
+      db.teamService.findMany({
+        where: {
+          status: 'PENDING',
+        },
+        include: {
+          team: {
+            include: {
+              leader: {
+                include: { user: { select: { name: true } } },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
       }),
     ])
 
@@ -204,6 +238,53 @@ export async function GET() {
       })
     }
 
+    // Add cleaner logins
+    for (const cleaner of recentCleanerLogins) {
+      if (cleaner.user.lastLoginAt) {
+        activities.push({
+          id: `login-${cleaner.id}-${cleaner.user.lastLoginAt.getTime()}`,
+          type: 'cleaner_login',
+          title: `${cleaner.user.name || 'Cleaner'} logged in`,
+          description: cleaner.serviceAreas?.length
+            ? cleaner.serviceAreas.slice(0, 2).join(', ')
+            : 'Active cleaner',
+          timestamp: cleaner.user.lastLoginAt,
+          resourceId: cleaner.id,
+          meta: {
+            cleanerName: cleaner.user.name,
+            slug: cleaner.slug,
+          },
+        })
+      }
+    }
+
+    // Add pending services
+    for (const service of pendingServices) {
+      const teamLeaderName = service.team.leader.user.name || 'Team Leader'
+      const priceInfo = service.priceType === 'FIXED'
+        ? `€${Number(service.price)}`
+        : `${service.hours}h`
+      activities.push({
+        id: `service-${service.id}`,
+        type: 'service_pending',
+        title: `New ${service.type === 'ADDON' ? 'add-on' : 'service'}: ${service.name}`,
+        description: `${teamLeaderName} • ${priceInfo}`,
+        timestamp: service.createdAt,
+        status: 'pending',
+        actionable: true,
+        resourceId: service.id,
+        meta: {
+          serviceName: service.name,
+          teamLeaderName,
+          teamName: service.team.name,
+          type: service.type,
+          priceType: service.priceType,
+          price: service.price ? Number(service.price) : null,
+          hours: service.hours,
+        },
+      })
+    }
+
     // Sort all activities by timestamp
     activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
@@ -212,6 +293,7 @@ export async function GET() {
       bookings: recentBookings.filter(b => b.status === 'PENDING').length,
       reviews: recentReviews.filter(r => !r.approved).length,
       cleaners: recentCleaners.filter(c => c.status === 'PENDING').length,
+      services: pendingServices.length,
     }
 
     return NextResponse.json({

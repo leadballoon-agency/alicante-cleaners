@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 
 type ActivityItem = {
   id: string
-  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved' | 'cleaner_message'
+  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved' | 'cleaner_message' | 'cleaner_login' | 'service_pending'
   title: string
   description: string
   timestamp: string
@@ -111,6 +111,8 @@ export default function LiveTab({ onTabChange, onApproveReview, onApproveCleaner
       case 'cleaner_approved': return '✓'
       case 'owner_signup': return '🏠'
       case 'cleaner_message': return '💬'
+      case 'cleaner_login': return '🟢'
+      case 'service_pending': return '🛠️'
       default: return '📌'
     }
   }
@@ -125,6 +127,8 @@ export default function LiveTab({ onTabChange, onApproveReview, onApproveCleaner
       case 'cleaner_approved': return 'border-l-[#2E7D32] bg-white'
       case 'owner_signup': return 'border-l-[#0288D1] bg-white'
       case 'cleaner_message': return 'border-l-[#9C27B0] bg-white'
+      case 'cleaner_login': return 'border-l-[#4CAF50] bg-white'
+      case 'service_pending': return 'border-l-[#FF9800] bg-white'
       default: return 'border-l-[#9B9B9B] bg-white'
     }
   }
@@ -144,6 +148,20 @@ export default function LiveTab({ onTabChange, onApproveReview, onApproveCleaner
     } else if (item.type === 'cleaner_message') {
       // Navigate to messages tab
       onTabChange('messages')
+    } else if (item.type === 'service_pending' && item.resourceId) {
+      // Approve service
+      try {
+        const res = await fetch(`/api/admin/services/${item.resourceId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'APPROVED' }),
+        })
+        if (res.ok) {
+          setActivities(prev => prev.filter(a => a.id !== item.id))
+        }
+      } catch (error) {
+        console.error('Failed to approve service:', error)
+      }
     }
   }
 

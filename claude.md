@@ -52,6 +52,7 @@ For detailed documentation, see the `docs/` folder:
   - `/join/calendar-guide` - Google Calendar sync setup
   - `/join/team-leader-guide` - How to grow your team (for leaders)
   - `/join/team-guide` - How to join a team (for members)
+  - `/join/services-guide` - How to add custom services (for team leaders)
 - **About page** (`/about`) - Origin story
 - **Cleaner profiles** (`/{slug}`) - Public pages with reviews, services, AI chat assistant, booking
 
@@ -90,7 +91,7 @@ For detailed documentation, see the `docs/` folder:
 
 ### Admin Features
 - **Dashboard** - Platform stats, cleaner management, owner CRM, review approval (10 tabs)
-- **Live Feed** - Real-time activity stream, pending counts, page view analytics, trending cleaners
+- **Live Feed** - Real-time activity stream (bookings, reviews, signups, cleaner logins, messages, service requests), pending counts, page view analytics
 - **Audit Log** - Track all admin actions (login, impersonate, approve, reject, etc.)
 - **Last Login Tracking** - See when cleaners/owners last logged in
 - **Support Center** - AI-powered support conversations with escalation
@@ -215,6 +216,8 @@ PATCH     /api/dashboard/cleaner/team/applicants/[id]  Accept/reject applicant
 POST      /api/dashboard/cleaner/team/refer     Send team referral
 GET       /api/dashboard/cleaner/team/calendar  Team calendar view
 POST      /api/dashboard/cleaner/team/calendar/sync  Sync team calendars
+GET/POST  /api/dashboard/cleaner/services      List/create team services
+GET/PATCH/DEL /api/dashboard/cleaner/services/[id]  Manage service
 ```
 
 ### Google Calendar
@@ -253,9 +256,11 @@ PATCH /api/admin/support/[id]      Resolve/escalate support
 GET/PATCH /api/admin/settings      Platform settings (includes scripts config)
 POST  /api/admin/impersonate       Login as user (support)
 POST  /api/admin/ai/chat           Admin AI Agent conversation
-GET   /api/admin/activity          Live activity feed (bookings, reviews, signups)
+GET   /api/admin/activity          Live activity feed (bookings, reviews, signups, logins, services)
 GET   /api/admin/analytics         Page view analytics (total, today, trending)
 GET   /api/admin/audit             Audit log with filters
+GET   /api/admin/services          List all team services (filter by status)
+GET/PATCH/DEL /api/admin/services/[id]  Approve/reject/delete service
 GET   /api/admin/ga4-realtime      GA4 real-time visitor data (optional)
 ```
 
@@ -345,6 +350,7 @@ POST /api/onboarding/cleaner       Complete cleaner onboarding
 | Message | Individual messages with translation |
 | Feedback | Internal platform feedback (mood, votes, status) |
 | Team | Cleaner teams (leader + members, requireCalendarSync) |
+| TeamService | Custom services and add-ons (PENDING/APPROVED/REJECTED) |
 | TeamJoinRequest | Team membership applications |
 | CleanerAvailability | Google Calendar synced availability slots |
 | TeamAvailabilityCache | Aggregated team calendar view |

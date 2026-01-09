@@ -428,6 +428,51 @@ model Team {
   members           Cleaner[]              @relation("TeamMembers")
   joinRequests      TeamJoinRequest[]
   availabilityCache TeamAvailabilityCache[]
+  services          TeamService[]
+}
+
+// Custom services created by team leaders (available to all team members)
+model TeamService {
+  id          String   @id @default(cuid())
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  name        String              // "Pool Cleaning"
+  description String?             // "Professional pool maintenance"
+  type        TeamServiceType     // CUSTOM or ADDON
+
+  // Pricing
+  priceType   TeamServicePriceType  // HOURLY or FIXED
+  price       Decimal?  @db.Decimal(10, 2)  // Fixed price (for FIXED type)
+  hours       Int?                // Hours estimate (for HOURLY type)
+
+  // Approval
+  status      TeamServiceStatus @default(PENDING)
+
+  // Ordering
+  sortOrder   Int       @default(0)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([teamId])
+  @@index([status])
+}
+
+enum TeamServiceType {
+  CUSTOM   // Full standalone service
+  ADDON    // Extra that attaches to a booking
+}
+
+enum TeamServicePriceType {
+  HOURLY   // price = hours × hourlyRate
+  FIXED    // flat fee
+}
+
+enum TeamServiceStatus {
+  PENDING   // Awaiting admin approval
+  APPROVED  // Live on profile
+  REJECTED  // Admin rejected
 }
 
 model TeamJoinRequest {
