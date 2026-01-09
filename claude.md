@@ -696,6 +696,12 @@ After running `npx prisma db seed`:
 - Dynamic OG images for cleaner profiles
 - Cleaner Success Coach (AI-powered growth tips, profile analytics)
 - Profile Guide page (`/join/profile-guide`)
+- **Custom Services** - Team leaders can add pool cleaning, laundry, gardening
+- **Specialist Recruitment** - Pool cleaners, gardeners, handymen join via teams
+- **Vertical Services Expansion** - Platform evolving into "Villa Services" marketplace
+- **Team Progression Tracking** - Solo → Team Member → Team Leader → Business Owner
+- Expand Guide page (`/join/expand-guide`)
+- Services Guide page (`/join/services-guide`)
 
 ### Planned 📋
 - Stripe payment integration

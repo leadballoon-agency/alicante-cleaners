@@ -56,9 +56,9 @@ export async function DELETE(
         where: {
           cleanerId: memberId,
           status: { in: ['PENDING', 'CONFIRMED'] },
-          serviceType: { in: teamServices.map(s => s.name) },
+          service: { in: teamServices.map(s => s.name) },
         },
-        select: { id: true, serviceType: true, date: true },
+        select: { id: true, service: true, date: true },
       })
 
       if (pendingBookings.length > 0) {

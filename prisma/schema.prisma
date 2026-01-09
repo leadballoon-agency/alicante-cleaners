@@ -364,6 +364,17 @@ model Feedback {
   updatedAt DateTime         @updatedAt
 }
 
+// Investor leads from pitch page
+model InvestorLead {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 // ============================================
 // Messaging with Translation
 // ============================================

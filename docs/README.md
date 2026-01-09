@@ -35,6 +35,8 @@ VillaCare provides:
 - WhatsApp notifications with one-tap ACCEPT/DECLINE
 - Calendar sync to Google/Apple/Outlook
 - Team management for coverage
+- **Custom services** - Team leaders can add pool cleaning, laundry, gardening, etc.
+- **Vertical expansion** - Build a full "Villa Services" business, not just cleaning
 
 **Platform Features:**
 - Multilingual messaging (7 languages, auto-translated)
@@ -142,6 +144,38 @@ Currently in **Beta** (free for all users). Planned monetization:
 2. **AI throughout** - Not bolted on, designed around AI
 3. **Two-sided trust** - Referral model ensures quality
 4. **Multilingual** - Removes language barrier completely
+5. **Vertical services expansion** - Team leaders can recruit specialists and become full "Villa Services" providers
+
+### Vertical Services Expansion (Villa Services)
+
+The platform is architected to expand beyond cleaning into a full **Villa Services marketplace**:
+
+**The Vision:**
+Villa owners need more than cleaning - they need pool maintenance, gardening, laundry, window cleaning, handyman services. By enabling team leaders to recruit specialists and add custom services, we become the one-stop-shop for all villa needs.
+
+**How It Works:**
+1. **Team Leader** recruits a specialist (pool cleaner, gardener, etc.)
+2. Specialist joins VillaCare using the team's referral code
+3. Team Leader creates a **Custom Service** for their specialty (e.g., "Pool Cleaning - €50")
+4. Service requires admin approval, then goes live on the team's profile
+5. Villa owners can book the specialist service alongside cleaning
+
+**Why This Matters:**
+- **For cleaners**: Transforms a cleaning job into a real business with multiple revenue streams
+- **For owners**: One trusted team handles everything - no hunting for separate providers
+- **For specialists**: Access to villa owner clients they couldn't reach otherwise
+- **For platform**: Higher booking volume, stickier relationships, network effects
+
+**Cleaner Journey:**
+1. Solo Cleaner (25%) → Join or create a team
+2. Team Member (50%) → Learn and build reputation
+3. Team Leader (75%) → Create team, invite members
+4. Business Owner (100%) → Custom services, specialist team, full villa services
+
+**Guides:**
+- `/join/expand-guide` - How team leaders expand with specialists
+- `/join/services-guide` - Adding custom services and pricing
+- `/join/team-leader-guide` - Growing and managing teams
 
 ---
 

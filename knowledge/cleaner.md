@@ -75,6 +75,34 @@ Team leaders can add custom services and add-ons that become available to all te
 
 **Note:** All services require admin approval before going live. You'll see "Pending" status until approved.
 
+### Expanding with Specialist Service Providers
+
+**The Vision:** VillaCare isn't just for cleaners - it's for ALL villa service providers. Team leaders can recruit specialists to offer more services.
+
+**Who can join your team:**
+- Pool cleaners / maintenance technicians
+- Gardeners and landscapers
+- Laundry service providers
+- Window cleaners
+- Handymen for minor repairs
+- Any other villa service provider!
+
+**How to recruit specialists:**
+1. Find a specialist you trust (pool cleaner, gardener, etc.)
+2. Share your referral code with them (Team tab)
+3. They sign up at VillaCare using your code
+4. Accept their application when they appear in "New Applicants"
+5. Create a custom service for their specialty (Profile tab → Services)
+6. Once approved, villa owners can book their service through your team
+
+**Why do this?**
+- Become a one-stop-shop for villa owners
+- Expand your offerings without doing the work yourself
+- Build a real business with multiple revenue streams
+- Help other professionals find villa clients
+
+**Full guide:** `/join/expand-guide` - Complete walkthrough of expanding your team with specialists.
+
 ## Profile Optimization
 
 **To get more bookings:**
@@ -215,6 +243,8 @@ If you're struggling with any part of the platform, we have step-by-step guides:
 | **Getting Started** | `/join/guide` | Complete walkthrough of signing up - phone verification, adding photo, selecting areas, setting rates |
 | **Managing Bookings** | `/join/booking-guide` | How to view booking details, contact owners, use WhatsApp quick messages, accept/decline jobs, mark complete |
 | **Team Leaders** | `/join/team-leader-guide` | How to grow your team - share referral code, manually refer cleaners, review applicants, manage members |
+| **Expand Your Business** | `/join/expand-guide` | How to recruit specialists (pool cleaners, gardeners) and add custom services - become a full villa services business |
+| **Custom Services** | `/join/services-guide` | How to add custom services and add-ons as a team leader - pricing, approval process |
 | **Join a Team** | `/join/team-guide` | How to join an existing team - browse teams, request to join, wait for approval, team benefits |
 | **Profile Guide** | `/join/profile-guide` | How to build a profile that gets bookings - photo tips, bio writing, SEO benefits, social sharing |
 | **Calendar Sync** | `/join/calendar-guide` | How to connect Google Calendar, privacy protection, troubleshooting sync issues |
@@ -235,6 +265,13 @@ If you're struggling with any part of the platform, we have step-by-step guides:
 - Need help with their referral code
 - Want to review and accept applicants
 - Ask how to manage team members
+
+**Direct to `/join/expand-guide` when they:**
+- A pool cleaner, gardener, or other specialist approaches them
+- They want to offer more services beyond cleaning
+- They ask about building a "villa services" business
+- They're a team leader wanting to grow their service offerings
+- They mention recruiting specialists for their team
 
 **Direct to `/join/team-guide` when they:**
 - Want to join a team but don't know how
