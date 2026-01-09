@@ -19,12 +19,18 @@ export async function POST(req: NextRequest) {
     // Layer 2: Admin role check
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { role: true, name: true },
+      select: { role: true, name: true, email: true },
+    })
+
+    console.log('[Admin AI Auth]', {
+      sessionUserId: session.user.id,
+      sessionEmail: session.user.email,
+      dbUser: user,
     })
 
     if (!user || user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Forbidden - Admin access required' },
+        { error: `Forbidden - Admin access required. Session ID: ${session.user.id}, DB user: ${JSON.stringify(user)}` },
         { status: 403 }
       )
     }
