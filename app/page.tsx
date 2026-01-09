@@ -692,35 +692,39 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Try it CTA with Clara's photo */}
-          <div className="bg-white rounded-2xl p-8 border border-[#EBEBEB]">
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              {/* Clara's photo */}
-              <div className="flex-shrink-0">
-                <Image
-                  src="/cleaners/Clara-Rodrigues.jpeg"
-                  alt="Clara - Professional Cleaner"
-                  width={120}
-                  height={120}
-                  className="rounded-full object-cover border-4 border-[#FAFAF8]"
-                />
+          {/* Try it CTA - Card with Clara's photo */}
+          <div className="bg-white rounded-2xl border-2 border-[#C4785A]/30 overflow-hidden max-w-lg mx-auto shadow-sm">
+            {/* Clara's photo - landscape crop */}
+            <div className="relative h-56 w-full">
+              <Image
+                src="/cleaners/Clara-Rodrigues.jpeg"
+                alt="Clara - Professional Cleaner"
+                fill
+                className="object-cover object-[center_35%]"
+              />
+              {/* Gradient overlay for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              {/* Name badge */}
+              <div className="absolute bottom-3 left-4">
+                <p className="text-white font-semibold text-lg">Clara Rodrigues</p>
+                <p className="text-white/80 text-sm">Team Leader · Alicante</p>
               </div>
-              {/* CTA content */}
-              <div className="text-center sm:text-left flex-1">
-                <p className="text-[#6B6B6B] mb-4">
-                  Don&apos;t take our word for it — try it yourself.
-                </p>
-                <Link
-                  href="/clara?source=homepage-translation-cta"
-                  className="inline-flex items-center gap-2 bg-[#1A1A1A] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#333] transition-colors"
-                >
-                  <span>💬</span>
-                  <span>Chat with Clara in your language</span>
-                </Link>
-                <p className="text-xs text-[#9B9B9B] mt-3">
-                  Try German, French, Dutch, Italian, or Portuguese — she&apos;ll reply fluently
-                </p>
-              </div>
+            </div>
+            {/* CTA content */}
+            <div className="p-6 text-center">
+              <p className="text-[#6B6B6B] mb-4">
+                Don&apos;t take our word for it — try it yourself.
+              </p>
+              <Link
+                href="/clara?source=homepage-translation-cta"
+                className="inline-flex items-center gap-2 bg-[#1A1A1A] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#333] transition-colors"
+              >
+                <span>💬</span>
+                <span>Chat with Clara in your language</span>
+              </Link>
+              <p className="text-xs text-[#9B9B9B] mt-3">
+                Try German, French, Dutch, Italian, or Portuguese
+              </p>
             </div>
           </div>
         </div>
