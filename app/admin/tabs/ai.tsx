@@ -61,11 +61,11 @@ export default function AITab({ adminName }: Props) {
         }),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to get response')
-      }
-
       const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to get response')
+      }
       const assistantMessage: Message = {
         role: 'assistant',
         content: data.message,
@@ -74,11 +74,12 @@ export default function AITab({ adminName }: Props) {
       setMessages([...newMessages, assistantMessage])
     } catch (error) {
       console.error('Chat error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       setMessages([
         ...newMessages,
         {
           role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again.',
+          content: `Sorry, I encountered an error: ${errorMessage}`,
         },
       ])
     } finally {
