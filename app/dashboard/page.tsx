@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import BookingsTab from './tabs/bookings'
 import MessagesTab from './tabs/messages'
@@ -84,7 +85,13 @@ export type TeamInfo = {
 
 export default function Dashboard() {
   const { t, setLang } = useLanguage()
-  const [activeTab, setActiveTab] = useState<Tab>('home')
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab') as Tab | null
+  const [activeTab, setActiveTab] = useState<Tab>(
+    tabParam && ['home', 'bookings', 'messages', 'team', 'profile', 'promote', 'success'].includes(tabParam)
+      ? tabParam
+      : 'home'
+  )
   const [cleaner, setCleaner] = useState<Cleaner | null>(null)
   const [bookings, setBookings] = useState<Booking[]>([])
   const [comments, setComments] = useState<InternalComment[]>([])
