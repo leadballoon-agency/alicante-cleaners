@@ -102,8 +102,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'why.translateDesc': 'Messages translate automatically between languages',
     'why.calendarTitle': 'Calendar sync',
     'why.calendarDesc': 'Your bookings sync to your phone calendar',
-    'why.paymentTitle': 'Secure payments',
-    'why.paymentDesc': 'Pay safely online, no cash needed',
+    'why.paymentTitle': 'Transparent pricing',
+    'why.paymentDesc': 'No hidden fees - what you see is what you pay',
 
     // Technology section
     'tech.title': 'Professional tools for cleaners. Peace of mind for owners.',
@@ -302,8 +302,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'why.translateDesc': 'Los mensajes se traducen automáticamente entre idiomas',
     'why.calendarTitle': 'Sincronización de calendario',
     'why.calendarDesc': 'Tus reservas se sincronizan con tu calendario',
-    'why.paymentTitle': 'Pagos seguros',
-    'why.paymentDesc': 'Paga de forma segura online, sin efectivo',
+    'why.paymentTitle': 'Precios transparentes',
+    'why.paymentDesc': 'Sin cargos ocultos - lo que ves es lo que pagas',
 
     'tech.title': 'Herramientas profesionales para limpiadores. Tranquilidad para propietarios.',
     'tech.subtitle': 'Construimos VillaCare para resolver problemas reales - los que experimentamos nosotros mismos.',
@@ -488,8 +488,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'why.translateDesc': 'Nachrichten werden automatisch zwischen Sprachen übersetzt',
     'why.calendarTitle': 'Kalender-Sync',
     'why.calendarDesc': 'Ihre Buchungen synchronisieren sich mit Ihrem Kalender',
-    'why.paymentTitle': 'Sichere Zahlungen',
-    'why.paymentDesc': 'Sicher online bezahlen, kein Bargeld nötig',
+    'why.paymentTitle': 'Transparente Preise',
+    'why.paymentDesc': 'Keine versteckten Gebühren - was Sie sehen, zahlen Sie',
 
     'tech.title': 'Professionelle Tools für Reiniger. Sicherheit für Eigentümer.',
     'tech.subtitle': 'Wir haben VillaCare gebaut, um echte Probleme zu lösen - die wir selbst erlebt haben.',
@@ -602,8 +602,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'why.translateDesc': 'Les messages sont traduits automatiquement entre les langues',
     'why.calendarTitle': 'Sync calendrier',
     'why.calendarDesc': 'Vos réservations se synchronisent avec votre calendrier',
-    'why.paymentTitle': 'Paiements sécurisés',
-    'why.paymentDesc': 'Payez en ligne en toute sécurité, sans espèces',
+    'why.paymentTitle': 'Prix transparents',
+    'why.paymentDesc': 'Pas de frais cachés - ce que vous voyez est ce que vous payez',
 
     'tech.title': 'Outils professionnels pour nettoyeurs. Tranquillité pour propriétaires.',
     'tech.subtitle': 'Nous avons créé VillaCare pour résoudre de vrais problèmes - ceux que nous avons vécus nous-mêmes.',
@@ -716,8 +716,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'why.translateDesc': 'Berichten worden automatisch vertaald tussen talen',
     'why.calendarTitle': 'Agenda-sync',
     'why.calendarDesc': 'Uw boekingen synchroniseren met uw agenda',
-    'why.paymentTitle': 'Veilige betalingen',
-    'why.paymentDesc': 'Betaal veilig online, geen contant geld nodig',
+    'why.paymentTitle': 'Transparante prijzen',
+    'why.paymentDesc': 'Geen verborgen kosten - wat je ziet is wat je betaalt',
 
     'tech.title': 'Professionele tools voor schoonmakers. Gemoedsrust voor eigenaren.',
     'tech.subtitle': 'We hebben VillaCare gebouwd om echte problemen op te lossen - die we zelf hebben ervaren.',
@@ -830,8 +830,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'why.translateDesc': 'I messaggi vengono tradotti automaticamente tra le lingue',
     'why.calendarTitle': 'Sync calendario',
     'why.calendarDesc': 'Le tue prenotazioni si sincronizzano con il tuo calendario',
-    'why.paymentTitle': 'Pagamenti sicuri',
-    'why.paymentDesc': 'Paga in sicurezza online, senza contanti',
+    'why.paymentTitle': 'Prezzi trasparenti',
+    'why.paymentDesc': 'Nessun costo nascosto - quello che vedi è quello che paghi',
 
     'tech.title': 'Strumenti professionali per addetti. Tranquillità per proprietari.',
     'tech.subtitle': 'Abbiamo creato VillaCare per risolvere problemi reali - quelli che abbiamo vissuto noi stessi.',
@@ -944,8 +944,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'why.translateDesc': 'Mensagens são traduzidas automaticamente entre idiomas',
     'why.calendarTitle': 'Sincronização de calendário',
     'why.calendarDesc': 'Suas reservas sincronizam com seu calendário',
-    'why.paymentTitle': 'Pagamentos seguros',
-    'why.paymentDesc': 'Pague com segurança online, sem dinheiro',
+    'why.paymentTitle': 'Preços transparentes',
+    'why.paymentDesc': 'Sem taxas ocultas - o que você vê é o que você paga',
 
     'tech.title': 'Ferramentas profissionais para limpadores. Tranquilidade para proprietários.',
     'tech.subtitle': 'Criamos o VillaCare para resolver problemas reais - os que vivenciamos nós mesmos.',

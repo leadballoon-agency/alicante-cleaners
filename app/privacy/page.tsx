@@ -100,7 +100,8 @@ export default function PrivacyPolicy() {
             </p>
             <ul className="list-disc pl-6 text-[#6B6B6B] space-y-2">
               <li>Encrypted data transmission (HTTPS/TLS)</li>
-              <li>Secure password storage</li>
+              <li>Passwordless authentication (magic links, phone OTP via WhatsApp)</li>
+              <li>AES-256 encryption for sensitive property access information</li>
               <li>Regular security assessments</li>
               <li>Limited access to personal data</li>
             </ul>

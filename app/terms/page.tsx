@@ -56,7 +56,7 @@ export default function TermsAndConditions() {
             </p>
             <ul className="list-disc pl-6 text-[#6B6B6B] space-y-2">
               <li>Facilitate connections between Villa Owners and Cleaners</li>
-              <li>Process payments on behalf of Cleaners</li>
+              <li>Process online payments on behalf of Cleaners (coming soon)</li>
               <li>Provide a review and rating system</li>
               <li>Offer customer support for platform-related issues</li>
             </ul>
@@ -89,16 +89,16 @@ export default function TermsAndConditions() {
 
             <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">5.1 Booking Services</h3>
             <ul className="list-disc pl-6 text-[#6B6B6B] space-y-2 mb-4">
-              <li>Bookings are confirmed once payment is processed</li>
+              <li>Bookings are confirmed when your cleaner accepts the request</li>
               <li>You must provide accurate property details and access instructions</li>
               <li>Ensure the property is accessible at the scheduled time</li>
             </ul>
 
             <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">5.2 Payment</h3>
             <ul className="list-disc pl-6 text-[#6B6B6B] space-y-2 mb-4">
-              <li>Full payment is required at the time of booking</li>
-              <li>Payments are processed securely through Stripe</li>
-              <li>Prices include the Cleaner&apos;s rate and platform service fee</li>
+              <li><strong>Beta Period:</strong> Pay your cleaner directly after the service (cash or bank transfer)</li>
+              <li>Prices shown are the Cleaner&apos;s full rate with no additional platform fees during beta</li>
+              <li><strong>Coming Soon:</strong> Secure online payments via Stripe for added convenience</li>
             </ul>
 
             <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">5.3 Cancellation Policy</h3>
@@ -136,9 +136,9 @@ export default function TermsAndConditions() {
 
             <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">6.3 Payment Terms</h3>
             <ul className="list-disc pl-6 text-[#6B6B6B] space-y-2">
-              <li>Payments are processed after service completion</li>
-              <li>VillaCare retains a platform fee (15%) from each booking</li>
-              <li>Payments are transferred weekly to your registered bank account</li>
+              <li><strong>Beta Period:</strong> Receive payment directly from villa owners (cash or bank transfer)</li>
+              <li>You keep 100% of your earnings during the beta period - no platform fees</li>
+              <li><strong>Coming Soon:</strong> Online payments with automatic transfers to your bank account (small processing fee will apply)</li>
             </ul>
           </section>
 

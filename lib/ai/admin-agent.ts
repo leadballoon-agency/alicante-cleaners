@@ -989,7 +989,7 @@ function handleGenerateWhatsAppInvite(params: {
     case 'invite_new_cleaner':
       message = `¡Hola${params.recipient_name ? ` ${params.recipient_name}` : ''}! 👋
 
-Te escribo desde Alicante Cleaners, una plataforma de limpieza de villas en Alicante.
+Te escribo desde VillaCare, una plataforma de limpieza de villas en Alicante.
 
 Nos encantaría invitarte a unirte a nuestra red de limpiadores profesionales. Podrás:
 ✓ Gestionar tus reservas fácilmente
@@ -1004,7 +1004,7 @@ Para registrarte, visita: ${process.env.NEXT_PUBLIC_APP_URL || 'https://alicante
     case 'welcome_existing':
       message = `¡Hola${params.recipient_name ? ` ${params.recipient_name}` : ''}! 👋
 
-¡Bienvenida a Alicante Cleaners! Tu perfil ya está configurado y listo para recibir reservas.
+¡Bienvenida a VillaCare! Tu perfil ya está configurado y listo para recibir reservas.
 
 Para acceder a tu panel de control:
 1. Ve a ${process.env.NEXT_PUBLIC_APP_URL || 'https://alicantecleaners.com'}/dashboard
@@ -1017,11 +1017,11 @@ Tu página pública está en: ${process.env.NEXT_PUBLIC_APP_URL || 'https://alic
       break
 
     case 'custom':
-      message = params.custom_message || 'Hola desde Alicante Cleaners'
+      message = params.custom_message || 'Hola desde VillaCare'
       break
 
     default:
-      message = 'Hola desde Alicante Cleaners'
+      message = 'Hola desde VillaCare'
   }
 
   // URL encode the message
@@ -1245,7 +1245,7 @@ export async function processToolCall(
 }
 
 // Admin AI System Prompt - COMPACT VERSION (~400 tokens vs ~1000)
-const ADMIN_SYSTEM_PROMPT = `You are the Alicante Cleaners Admin Assistant. Be concise.
+const ADMIN_SYSTEM_PROMPT = `You are the VillaCare Admin Assistant. Be concise.
 
 RULES:
 - Query DB for data, don't guess

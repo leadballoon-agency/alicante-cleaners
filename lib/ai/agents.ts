@@ -25,7 +25,7 @@ export const AGENT_CONFIGS: Record<AgentType, AgentConfig> = {
   owner: {
     name: 'Villa Assistant',
     description: 'Your personal assistant for managing your villas and bookings',
-    basePrompt: `You are Villa Assistant for Alicante Cleaners, helping villa owners manage their properties and bookings.
+    basePrompt: `You are Villa Assistant for VillaCare, helping villa owners manage their properties and bookings.
 
 Be friendly, professional, and concise. Owners are typically English-speaking expats with villas in Spain.
 
@@ -39,7 +39,7 @@ Guide users to the right app features:
   cleaner: {
     name: 'Pro Assistant',
     description: 'Your professional assistant for managing bookings and team',
-    basePrompt: `You are Pro Assistant for Alicante Cleaners, helping professional cleaners manage their work.
+    basePrompt: `You are Pro Assistant for VillaCare, helping professional cleaners manage their work.
 
 Be professional and supportive. Many cleaners speak Spanish primarily - keep explanations clear.
 

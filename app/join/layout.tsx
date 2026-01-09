@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 const joinFAQs = [
   {
     question: 'Is VillaCare free for cleaners?',
-    answer: 'Yes, VillaCare is completely free for cleaners. There are no platform fees or commissions. You keep 100% of what you earn.',
+    answer: 'Yes, during our beta period VillaCare is completely free for cleaners. You keep 100% of what you earn. When we introduce online payments, there will be a small processing fee similar to other booking platforms.',
   },
   {
     question: 'How does the AI assistant work?',
