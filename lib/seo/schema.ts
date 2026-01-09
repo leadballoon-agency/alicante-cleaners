@@ -305,6 +305,176 @@ export function generateCleanerListSchema(cleaners: CleanerListItem[]) {
 }
 
 // ============================================
+// HowTo Schema (Step-by-step guides)
+// ============================================
+
+interface HowToStep {
+  name: string
+  text: string
+  image?: string
+}
+
+interface HowToSchemaInput {
+  name: string
+  description: string
+  totalTime?: string // ISO 8601 duration, e.g., "PT5M" for 5 minutes
+  steps: HowToStep[]
+  image?: string
+}
+
+export function generateHowToSchema(howTo: HowToSchemaInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: howTo.name,
+    description: howTo.description,
+    totalTime: howTo.totalTime,
+    image: howTo.image ? `${SITE_URL}${howTo.image}` : undefined,
+    step: howTo.steps.map((step, index) => ({
+      '@type': 'HowToStep',
+      position: index + 1,
+      name: step.name,
+      text: step.text,
+      image: step.image ? `${SITE_URL}${step.image}` : undefined,
+    })),
+  }
+}
+
+// ============================================
+// SoftwareApplication Schema (AI Assistant)
+// ============================================
+
+interface SoftwareAppSchemaInput {
+  name: string
+  description: string
+  applicationCategory: string
+  operatingSystem?: string
+  offers?: {
+    price: string
+    priceCurrency: string
+  }
+  featureList?: string[]
+}
+
+export function generateSoftwareApplicationSchema(app: SoftwareAppSchemaInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: app.name,
+    description: app.description,
+    applicationCategory: app.applicationCategory,
+    operatingSystem: app.operatingSystem || 'Web',
+    offers: app.offers || {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'EUR',
+    },
+    featureList: app.featureList,
+    provider: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+  }
+}
+
+// ============================================
+// AboutPage Schema
+// ============================================
+
+interface AboutPageSchemaInput {
+  name: string
+  description: string
+  url: string
+  mainEntity?: {
+    name: string
+    foundingDate: string
+    founders: Array<{ name: string; role: string }>
+  }
+}
+
+export function generateAboutPageSchema(about: AboutPageSchemaInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: about.name,
+    description: about.description,
+    url: about.url,
+    mainEntity: about.mainEntity ? {
+      '@type': 'Organization',
+      name: about.mainEntity.name,
+      foundingDate: about.mainEntity.foundingDate,
+      founder: about.mainEntity.founders.map(f => ({
+        '@type': 'Person',
+        name: f.name,
+        jobTitle: f.role,
+      })),
+    } : undefined,
+  }
+}
+
+// ============================================
+// ProfessionalService Schema (Enhanced for cleaners)
+// ============================================
+
+export function generateProfessionalServiceSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfessionalService',
+    name: SITE_NAME,
+    description: 'Professional villa cleaning services in Alicante, Spain. Trusted, verified cleaners with AI-powered booking and multilingual support.',
+    url: SITE_URL,
+    logo: `${SITE_URL}/villacare-horizontal-logo.png`,
+    image: `${SITE_URL}/og-image.png`,
+    priceRange: '€15-25/hour',
+    areaServed: [
+      { '@type': 'City', name: 'Alicante' },
+      { '@type': 'City', name: 'San Juan' },
+      { '@type': 'City', name: 'El Campello' },
+      { '@type': 'City', name: 'Mutxamel' },
+      { '@type': 'City', name: 'San Vicente del Raspeig' },
+      { '@type': 'City', name: 'Jijona' },
+    ],
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Villa Cleaning Services',
+      itemListElement: [
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Regular Clean',
+            description: 'Standard villa cleaning service (3 hours)',
+          },
+        },
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Deep Clean',
+            description: 'Thorough deep cleaning service (5 hours)',
+          },
+        },
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Arrival Prep',
+            description: 'Pre-arrival preparation for guests (4 hours)',
+          },
+        },
+      ],
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.9',
+      bestRating: '5',
+      ratingCount: '50',
+    },
+  }
+}
+
+// ============================================
 // Helper: Combine multiple schemas
 // ============================================
 

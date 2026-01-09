@@ -15,7 +15,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "VillaCare | Trusted Villa Cleaning in Alicante",
+  title: {
+    default: "VillaCare | Trusted Villa Cleaning in Alicante",
+    template: "%s | VillaCare",
+  },
   description: "Your villa, ready when you are. Vetted cleaners, photo proof, auto-translation. No passwords, no apps, no hassle.",
   metadataBase: new URL("https://alicantecleaners.com"),
   openGraph: {
