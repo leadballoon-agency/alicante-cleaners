@@ -18,6 +18,7 @@ export interface BookingCardData {
   memberId: string
   // Extended data for peek (optional)
   ownerName?: string
+  ownerLanguage?: string // Owner's preferred language for WhatsApp messages
   ownerPhone?: string
   accessNotes?: string
   propertyName?: string
@@ -34,6 +35,7 @@ interface Props {
   onDecline?: (bookingId: string) => void
   onComplete?: (bookingId: string) => void
   onSendMessage?: (bookingId: string, message: string) => void
+  cleanerName?: string // For WhatsApp messages
 }
 
 // Get initials from name
@@ -91,7 +93,8 @@ export default function BookingCard({
   onAccept,
   onDecline,
   onComplete,
-  onSendMessage
+  onSendMessage,
+  cleanerName
 }: Props) {
   const statusStyles = getStatusStyles(booking.status)
   const [isPeeking, setIsPeeking] = useState(false)
@@ -333,6 +336,8 @@ export default function BookingCard({
         onDecline={onDecline}
         onComplete={onComplete}
         onSendMessage={onSendMessage}
+        cleanerName={cleanerName}
+        ownerLanguage={booking.ownerLanguage}
       />
     </>
   )

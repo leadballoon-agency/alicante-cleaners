@@ -285,6 +285,7 @@ model Booking {
   property Property @relation(fields: [propertyId], references: [id])
   review   Review?
   responseTracker BookingResponseTracker?
+  events   BookingEvent[]
 }
 
 model Review {
@@ -301,6 +302,41 @@ model Review {
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   cleaner Cleaner @relation(fields: [cleanerId], references: [id])
   owner   Owner   @relation(fields: [ownerId], references: [id])
+}
+
+// ============================================
+// Booking Events (Quick Action & Completion Tracking)
+// ============================================
+
+enum BookingEventType {
+  RUNNING_LATE    // Cleaner sent "running late" message
+  ON_MY_WAY       // Cleaner sent "on my way" message
+  ARRIVED         // Cleaner arrived at property (work timer starts)
+  ACCESS_HELP     // Cleaner requested access help
+  CUSTOM_MESSAGE  // Cleaner sent custom message
+  COMPLETED       // Cleaner completed with checklist (work timer stops)
+}
+
+model BookingEvent {
+  id        String           @id @default(cuid())
+  bookingId String
+  cleanerId String           // Who triggered the event
+  type      BookingEventType
+
+  // Event-specific data (JSON)
+  // For RUNNING_LATE: { delayMinutes: 10 }
+  // For COMPLETED: { checklist: { doors: true, keys: true, pool: true }, message: "..." }
+  data      Json?
+
+  // Track if WhatsApp was opened (we can't track if they actually sent)
+  whatsappOpened Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+  @@index([cleanerId, createdAt])
 }
 
 model InternalComment {

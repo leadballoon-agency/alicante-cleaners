@@ -65,6 +65,7 @@ interface BookingFromAPI {
     name: string
     phone?: string
     email?: string
+    preferredLanguage?: string
   }
   cleanerId?: string
   cleanerName?: string
@@ -313,7 +314,8 @@ export default function TeamCalendar({
       bedrooms: b.property.bedrooms,
       accessNotes: b.property.accessNotes || undefined,
       ownerName: b.owner.name,
-      ownerPhone: b.owner.phone
+      ownerPhone: b.owner.phone,
+      ownerLanguage: b.owner.preferredLanguage || 'en',
     })).filter(b => {
       // Filter by selected view
       if (selectedView === 'me') {
@@ -578,6 +580,7 @@ export default function TeamCalendar({
               onDecline={booking.status.toLowerCase() === 'pending' ? (id) => handleBookingAction(id, 'decline') : undefined}
               onComplete={booking.status.toLowerCase() === 'confirmed' ? (id) => handleBookingAction(id, 'complete') : undefined}
               onSendMessage={handleSendMessage}
+              cleanerName={currentCleanerName}
             />
           ))}
         </div>
