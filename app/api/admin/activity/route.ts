@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 type ActivityItem = {
   id: string
-  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved'
+  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved' | 'cleaner_message'
   title: string
   description: string
   timestamp: Date
@@ -31,6 +31,7 @@ export async function GET() {
       recentReviews,
       recentCleaners,
       recentOwners,
+      recentCleanerMessages,
     ] = await Promise.all([
       // Recent bookings (last 24 hours)
       db.booking.findMany({
@@ -77,6 +78,25 @@ export async function GET() {
         include: { user: { select: { name: true, email: true } } },
         orderBy: { createdAt: 'desc' },
         take: 10,
+      }),
+
+      // Recent messages from cleaners (last 48 hours)
+      db.message.findMany({
+        where: {
+          createdAt: { gte: new Date(Date.now() - 48 * 60 * 60 * 1000) },
+          senderRole: 'CLEANER',
+        },
+        include: {
+          conversation: {
+            include: {
+              cleaner: {
+                include: { user: { select: { name: true } } },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
       }),
     ])
 
@@ -157,6 +177,29 @@ export async function GET() {
         meta: {
           name: owner.user.name,
           email: owner.user.email,
+        },
+      })
+    }
+
+    // Add cleaner messages
+    for (const message of recentCleanerMessages) {
+      const cleanerName = message.conversation.cleaner.user.name || 'Cleaner'
+      const messagePreview = message.originalText.length > 50
+        ? message.originalText.slice(0, 50) + '...'
+        : message.originalText
+      activities.push({
+        id: `message-${message.id}`,
+        type: 'cleaner_message',
+        title: `Message from ${cleanerName}`,
+        description: `"${messagePreview}"`,
+        timestamp: message.createdAt,
+        status: message.isRead ? 'read' : 'unread',
+        actionable: !message.isRead,
+        resourceId: message.conversationId,
+        meta: {
+          cleanerName,
+          conversationId: message.conversationId,
+          isRead: message.isRead,
         },
       })
     }

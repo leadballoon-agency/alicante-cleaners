@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 
 type ActivityItem = {
   id: string
-  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved'
+  type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved' | 'cleaner_message'
   title: string
   description: string
   timestamp: string
@@ -110,12 +110,13 @@ export default function LiveTab({ onTabChange, onApproveReview, onApproveCleaner
       case 'cleaner_signup': return '👋'
       case 'cleaner_approved': return '✓'
       case 'owner_signup': return '🏠'
+      case 'cleaner_message': return '💬'
       default: return '📌'
     }
   }
 
   const getActivityColor = (type: ActivityItem['type'], status?: string) => {
-    if (status === 'pending') return 'border-l-[#E65100] bg-[#FFF8F5]'
+    if (status === 'pending' || status === 'unread') return 'border-l-[#E65100] bg-[#FFF8F5]'
     switch (type) {
       case 'booking': return 'border-l-[#1565C0] bg-white'
       case 'booking_completed': return 'border-l-[#2E7D32] bg-white'
@@ -123,6 +124,7 @@ export default function LiveTab({ onTabChange, onApproveReview, onApproveCleaner
       case 'cleaner_signup': return 'border-l-[#7B1FA2] bg-white'
       case 'cleaner_approved': return 'border-l-[#2E7D32] bg-white'
       case 'owner_signup': return 'border-l-[#0288D1] bg-white'
+      case 'cleaner_message': return 'border-l-[#9C27B0] bg-white'
       default: return 'border-l-[#9B9B9B] bg-white'
     }
   }
@@ -139,6 +141,9 @@ export default function LiveTab({ onTabChange, onApproveReview, onApproveCleaner
       setActivities(prev => prev.map(a =>
         a.id === item.id ? { ...a, actionable: false, status: 'approved', type: 'cleaner_approved' } : a
       ))
+    } else if (item.type === 'cleaner_message') {
+      // Navigate to messages tab
+      onTabChange('messages')
     }
   }
 
@@ -373,22 +378,33 @@ export default function LiveTab({ onTabChange, onApproveReview, onApproveCleaner
                     {/* Quick action button for actionable items */}
                     {item.actionable ? (
                       <div className="mt-2 flex gap-2">
-                        <button
-                          onClick={() => handleAction(item)}
-                          className="px-3 py-1.5 bg-[#2E7D32] text-white rounded-lg text-xs font-medium active:scale-95 transition-transform"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (item.type === 'review') onTabChange('reviews')
-                            else if (item.type === 'cleaner_signup') onTabChange('cleaners')
-                            else if (item.type === 'booking') onTabChange('bookings')
-                          }}
-                          className="px-3 py-1.5 bg-white border border-[#DEDEDE] text-[#6B6B6B] rounded-lg text-xs font-medium active:scale-95 transition-transform"
-                        >
-                          View Details
-                        </button>
+                        {item.type === 'cleaner_message' ? (
+                          <button
+                            onClick={() => handleAction(item)}
+                            className="px-3 py-1.5 bg-[#9C27B0] text-white rounded-lg text-xs font-medium active:scale-95 transition-transform"
+                          >
+                            View & Reply
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleAction(item)}
+                              className="px-3 py-1.5 bg-[#2E7D32] text-white rounded-lg text-xs font-medium active:scale-95 transition-transform"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (item.type === 'review') onTabChange('reviews')
+                                else if (item.type === 'cleaner_signup') onTabChange('cleaners')
+                                else if (item.type === 'booking') onTabChange('bookings')
+                              }}
+                              className="px-3 py-1.5 bg-white border border-[#DEDEDE] text-[#6B6B6B] rounded-lg text-xs font-medium active:scale-95 transition-transform"
+                            >
+                              View Details
+                            </button>
+                          </>
+                        )}
                       </div>
                     ) : null}
 
