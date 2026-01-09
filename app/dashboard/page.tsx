@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import BookingsTab from './tabs/bookings'
@@ -15,6 +15,22 @@ import { useLanguage } from '@/components/language-context'
 import { JobsTimeline } from './components/team-calendar'
 
 type Tab = 'home' | 'bookings' | 'messages' | 'team' | 'profile' | 'promote' | 'success'
+
+// Wrapper component to handle Suspense boundary for useSearchParams
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] flex items-center justify-center">
+        <div className="text-center">
+          <span className="w-8 h-8 border-2 border-[#1A1A1A]/20 border-t-[#1A1A1A] rounded-full animate-spin inline-block" />
+          <p className="text-[#6B6B6B] mt-3">Loading dashboard...</p>
+        </div>
+      </div>
+    }>
+      <Dashboard />
+    </Suspense>
+  )
+}
 
 export type Owner = {
   id: string
@@ -83,7 +99,7 @@ export type TeamInfo = {
   members?: TeamMember[]
 }
 
-export default function Dashboard() {
+function Dashboard() {
   const { t, setLang } = useLanguage()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab') as Tab | null
