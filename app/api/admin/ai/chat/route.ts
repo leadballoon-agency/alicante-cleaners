@@ -68,8 +68,9 @@ export async function POST(req: NextRequest) {
     })
   } catch (error) {
     console.error('Error in admin AI chat:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to process chat request' },
+      { error: `Failed to process chat request: ${errorMessage}` },
       { status: 500 }
     )
   }
