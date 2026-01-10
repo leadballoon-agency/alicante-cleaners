@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Owner } from '../page'
+import { getRelativeTime, BOOKING_STATUS_COLORS } from '@/lib/admin/card-types'
 
 // Copy to clipboard helper
 async function copyToClipboard(text: string): Promise<boolean> {
@@ -153,25 +154,6 @@ function EmailModal({
   )
 }
 
-// Get relative time string
-function getRelativeTime(date: Date | string | null | undefined): string {
-  if (!date) return 'Never'
-  const d = typeof date === 'string' ? new Date(date) : date
-  const now = new Date()
-  const diffMs = now.getTime() - d.getTime()
-  const diffSecs = Math.floor(diffMs / 1000)
-  const diffMins = Math.floor(diffSecs / 60)
-  const diffHours = Math.floor(diffMins / 60)
-  const diffDays = Math.floor(diffHours / 24)
-
-  if (diffSecs < 60) return 'Just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-}
-
 type Props = {
   owners: Owner[]
 }
@@ -216,13 +198,6 @@ export default function OwnersTab({ owners }: Props) {
     nl: '🇳🇱',
     it: '🇮🇹',
     pt: '🇵🇹',
-  }
-
-  const statusColors: Record<string, string> = {
-    pending: 'bg-[#FFF3E0] text-[#E65100]',
-    confirmed: 'bg-[#E8F5E9] text-[#2E7D32]',
-    completed: 'bg-[#F5F5F3] text-[#6B6B6B]',
-    cancelled: 'bg-[#FFEBEE] text-[#C62828]',
   }
 
   // Properties view for selected owner
@@ -306,7 +281,7 @@ export default function OwnersTab({ owners }: Props) {
                     <p className="text-sm text-[#6B6B6B]">{formatDate(booking.date)}</p>
                     <p className="font-semibold text-[#1A1A1A]">{booking.service}</p>
                   </div>
-                  <span className={`text-xs px-2.5 py-1 rounded-full ${statusColors[booking.status]}`}>
+                  <span className={`text-xs px-2.5 py-1 rounded-full ${BOOKING_STATUS_COLORS[booking.status]}`}>
                     {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                   </span>
                 </div>

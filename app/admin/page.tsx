@@ -3,23 +3,22 @@
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
-import OverviewTab from './tabs/overview'
 import CleanersTab from './tabs/cleaners'
 import OwnersTab from './tabs/owners'
 import BookingsTab from './tabs/bookings'
 import ReviewsTab from './tabs/reviews'
 import FeedbackTab from './tabs/feedback'
 import SupportTab from './tabs/support'
-import AITab from './tabs/ai'
+// AITab removed - now using AdminAIPanel in header
 import SettingsTab, { PlatformSettings } from './tabs/settings'
 import AuditTab from './tabs/audit'
 import LiveTab from './tabs/live'
 import Image from 'next/image'
 import Link from 'next/link'
-import { AdminAIPanel } from './components'
+import { AdminAIPanel, PullToRefresh } from './components'
 import { useAdminLayout } from './AdminLayoutContext'
 
-type Tab = 'overview' | 'live' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'support' | 'ai' | 'audit' | 'settings'
+type Tab = 'live' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'support' | 'audit' | 'settings'
 
 type SupportConversation = {
   id: string
@@ -170,10 +169,16 @@ function AdminDashboardContent() {
   // AI Panel context - must be called before any early returns
   const { isAIPanelOpen, openAIPanel, closeAIPanel, aiPanelContext } = useAdminLayout()
 
+  // Menu drawer state
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   const tabFromUrl = searchParams.get('tab') as Tab | null
-  const validTabs: Tab[] = ['overview', 'live', 'cleaners', 'owners', 'bookings', 'reviews', 'feedback', 'support', 'ai', 'audit', 'settings']
-  const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'overview'
+  const cardFromUrl = searchParams.get('card') // e.g., "booking-abc123"
+  const searchFromUrl = searchParams.get('search') // e.g., "clara"
+  const validTabs: Tab[] = ['live', 'cleaners', 'owners', 'bookings', 'reviews', 'feedback', 'support', 'audit', 'settings']
+  const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'live'
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
+  const [searchQuery, setSearchQuery] = useState(searchFromUrl || '')
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS)
   const [cleaners, setCleaners] = useState<Cleaner[]>([])
   const [owners, setOwners] = useState<Owner[]>([])
@@ -185,16 +190,6 @@ function AdminDashboardContent() {
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
-  // Get today's bookings
-  const todayBookings = bookings.filter(b => {
-    const bookingDate = new Date(b.date)
-    const today = new Date()
-    return bookingDate.toDateString() === today.toDateString()
-  }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-
-  // Get pending reviews count
-  const pendingReviewsCount = reviews.filter(r => r.status === 'pending').length
 
   // Fetch support conversations
   const fetchSupportData = useCallback(async () => {
@@ -255,6 +250,11 @@ function AdminDashboardContent() {
 
   useEffect(() => {
     fetchAdminData()
+  }, [fetchAdminData])
+
+  // Pull-to-refresh handler (doesn't show full loading screen)
+  const handleRefresh = useCallback(async () => {
+    await fetchAdminData()
   }, [fetchAdminData])
 
   const handleApproveCleaner = async (id: string) => {
@@ -466,18 +466,7 @@ function AdminDashboardContent() {
     }
   }
 
-  const tabs: { id: Tab; label: string; icon: string; badge?: number }[] = [
-    { id: 'overview', label: 'Home', icon: '🏠' },
-    { id: 'live', label: 'Live', icon: '📡' },
-    { id: 'ai', label: 'AI', icon: '🤖' },
-    { id: 'cleaners', label: 'Cleaners', icon: '🧹', badge: cleaners.filter(c => c.status === 'pending').length },
-    { id: 'owners', label: 'Owners', icon: '👤' },
-    { id: 'bookings', label: 'Bookings', icon: '📋', badge: bookings.filter(b => b.status === 'pending').length },
-    { id: 'reviews', label: 'Reviews', icon: '⭐', badge: reviews.filter(r => r.status === 'pending').length },
-    { id: 'audit', label: 'Audit', icon: '📝' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
-  ]
-
+  
   if (loading) {
     return (
       <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] flex items-center justify-center">
@@ -508,10 +497,19 @@ function AdminDashboardContent() {
   }
 
   return (
-    <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-20">
+    <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-4">
       {/* Minimal Header */}
       <header className="px-4 py-3 bg-white border-b border-[#EBEBEB] sticky top-0 z-10">
         <div className="flex items-center justify-between">
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors bg-[#F5F5F3] hover:bg-[#EBEBEB]"
+            title="Menu"
+          >
+            <svg className="w-5 h-5 text-[#1A1A1A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           <Link href="/">
             <Image
               src="/villacare-horizontal-logo.png"
@@ -521,34 +519,83 @@ function AdminDashboardContent() {
               className="object-contain"
             />
           </Link>
-          <div className="flex items-center gap-3">
-            {/* AI Assistant Button */}
-            <button
-              onClick={() => openAIPanel()}
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors bg-gradient-to-br from-[#1A1A1A] to-[#333] text-white hover:opacity-90"
-              title="AI Assistant (swipe from right edge)"
-            >
-              <span className="text-xs font-bold">AI</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                activeTab === 'settings'
-                  ? 'bg-[#1A1A1A] text-white'
-                  : 'bg-[#F5F5F3] text-[#6B6B6B] hover:bg-[#EBEBEB]'
-              }`}
-              title="Settings"
-            >
-              <span className="text-sm">⚙️</span>
-            </button>
-            <div className="w-8 h-8 bg-[#1A1A1A] rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-medium">
-                {session?.user?.name?.charAt(0) || 'A'}
-              </span>
-            </div>
-          </div>
+          <button
+            onClick={() => openAIPanel()}
+            className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors bg-gradient-to-br from-[#1A1A1A] to-[#333] text-white"
+            title="AI Assistant"
+          >
+            <span className="text-sm font-medium">AI</span>
+          </button>
         </div>
       </header>
+
+      {/* Menu Drawer */}
+      <div
+        className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${
+          isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsMenuOpen(false)}
+      />
+      <div
+        className={`fixed top-0 left-0 bottom-0 w-[280px] bg-white z-50 shadow-2xl transition-transform duration-300 ease-out ${
+          isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="p-4 border-b border-[#EBEBEB]">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-[#1A1A1A]">Admin Menu</h2>
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="w-8 h-8 rounded-lg bg-[#F5F5F3] flex items-center justify-center text-[#6B6B6B]"
+            >
+              <span className="text-lg">&times;</span>
+            </button>
+          </div>
+        </div>
+        <nav className="p-2">
+          {[
+            { id: 'live', label: 'Live Feed', icon: '📡', badge: 0 },
+            { id: 'cleaners', label: 'Cleaners', icon: '🧹', badge: cleaners.filter(c => c.status === 'pending').length },
+            { id: 'owners', label: 'Owners', icon: '👤', badge: 0 },
+            { id: 'bookings', label: 'Bookings', icon: '📋', badge: bookings.filter(b => b.status === 'pending').length },
+            { id: 'reviews', label: 'Reviews', icon: '⭐', badge: reviews.filter(r => r.status === 'pending').length },
+            { id: 'feedback', label: 'Feedback', icon: '💬', badge: 0 },
+            { id: 'support', label: 'Support', icon: '🎧', badge: supportStats.escalated },
+            { id: 'audit', label: 'Audit Log', icon: '📝', badge: 0 },
+            { id: 'settings', label: 'Settings', icon: '⚙️', badge: 0 },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setActiveTab(item.id as Tab)
+                setIsMenuOpen(false)
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors ${
+                activeTab === item.id
+                  ? 'bg-[#1A1A1A] text-white'
+                  : 'hover:bg-[#F5F5F3] text-[#1A1A1A]'
+              }`}
+            >
+              <span className="text-xl">{item.icon}</span>
+              <span className="flex-1 font-medium">{item.label}</span>
+              {item.badge > 0 && (
+                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                  activeTab === item.id
+                    ? 'bg-white text-[#1A1A1A]'
+                    : 'bg-[#C4785A] text-white'
+                }`}>
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[#EBEBEB]">
+          <p className="text-xs text-[#9B9B9B] text-center">
+            Tap AI button for assistant
+          </p>
+        </div>
+      </div>
 
       {/* AI Panel (slide-in from right) */}
       <AdminAIPanel
@@ -558,28 +605,20 @@ function AdminDashboardContent() {
         initialContext={aiPanelContext}
       />
 
-      {/* Tab content */}
-      <main className="px-4 py-4">
-        {activeTab === 'overview' && (
-          <OverviewTab
-            stats={stats}
-            recentBookings={bookings.slice(0, 5)}
-            todayBookings={todayBookings}
-            pendingReviews={pendingReviewsCount}
-            adminName={session?.user?.name || 'Admin'}
-            onTabChange={(tab) => setActiveTab(tab as Tab)}
-          />
-        )}
-        {activeTab === 'live' && (
-          <LiveTab
-            onTabChange={(tab) => setActiveTab(tab as Tab)}
-            onApproveReview={handleApproveReview}
-            onApproveCleaner={handleApproveCleaner}
-          />
-        )}
-        {activeTab === 'ai' && (
-          <AITab adminName={session?.user?.name || 'Admin'} />
-        )}
+      {/* Tab content with pull-to-refresh */}
+      <PullToRefresh onRefresh={handleRefresh}>
+        <main className="px-4 py-4">
+          {activeTab === 'live' && (
+            <LiveTab
+              onTabChange={(tab) => setActiveTab(tab as Tab)}
+              onApproveReview={handleApproveReview}
+              onApproveCleaner={handleApproveCleaner}
+              stats={stats}
+              initialCardId={cardFromUrl}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
+          )}
         {activeTab === 'cleaners' && (
           <CleanersTab
             cleaners={cleaners}
@@ -634,35 +673,10 @@ function AdminDashboardContent() {
             onUpdate={setPlatformSettings}
           />
         )}
-      </main>
+        </main>
+      </PullToRefresh>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#EBEBEB] pb-safe z-50">
-        <div className="flex justify-around py-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg min-w-[56px] transition-colors ${
-                activeTab === tab.id
-                  ? 'text-[#C4785A]'
-                  : 'text-[#9B9B9B]'
-              }`}
-            >
-              <div className="relative">
-                <span className="text-xl">{tab.icon}</span>
-                {tab.badge && tab.badge > 0 && (
-                  <span className="absolute -top-1 -right-2 w-4 h-4 bg-[#C4785A] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {tab.badge > 9 ? '9+' : tab.badge}
-                  </span>
-                )}
-              </div>
-              <span className="text-[10px] font-medium">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
-    </div>
+          </div>
   )
 }
 

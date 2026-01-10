@@ -160,23 +160,27 @@ export default function AdminAIPanel({ isOpen, onClose, adminName, initialContex
     setTouchDelta(0)
   }
 
-  if (!isOpen) return null
-
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/30 z-40 transition-opacity"
+        className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
         onClick={onClose}
-        style={{ opacity: isOpen ? 1 - (touchDelta / 400) : 0 }}
+        style={{ opacity: isOpen ? Math.max(0, 1 - (touchDelta / 400)) : 0 }}
       />
 
       {/* Panel */}
       <div
         ref={panelRef}
-        className="fixed top-0 right-0 bottom-0 w-[85vw] max-w-[400px] bg-[#FAFAF8] z-50 flex flex-col shadow-2xl transition-transform duration-300"
+        className={`fixed top-0 right-0 bottom-0 w-[85vw] max-w-[400px] bg-[#FAFAF8] z-50 flex flex-col shadow-2xl transition-transform duration-300 ease-out ${
+          !isOpen && touchDelta === 0 ? 'pointer-events-none' : ''
+        }`}
         style={{
-          transform: `translateX(${isOpen ? touchDelta : '100%'}px)`,
+          transform: isOpen
+            ? `translateX(${touchDelta}px)`
+            : 'translateX(100%)',
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -190,7 +194,7 @@ export default function AdminAIPanel({ isOpen, onClose, adminName, initialContex
             </div>
             <div>
               <h2 className="text-base font-semibold text-[#1A1A1A]">Admin Assistant</h2>
-              <p className="text-xs text-[#6B6B6B]">Swipe right to close</p>
+              <p className="text-xs text-[#6B6B6B]">Your AI assistant</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -307,22 +311,22 @@ export default function AdminAIPanel({ isOpen, onClose, adminName, initialContex
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSubmit} className="p-4 border-t border-[#EBEBEB] bg-white">
-          <div className="flex items-end gap-2">
+        <form onSubmit={handleSubmit} className="p-4 pb-safe border-t border-[#DEDEDE] bg-[#F5F5F3]">
+          <div className="flex items-end gap-2 bg-white rounded-xl border-2 border-[#1A1A1A]/20 focus-within:border-[#1A1A1A] transition-colors p-1">
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything..."
-              className="flex-1 px-3 py-2.5 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none resize-none text-sm"
+              placeholder="Type your message here..."
+              className="flex-1 px-3 py-2.5 rounded-lg bg-transparent focus:outline-none resize-none text-sm placeholder:text-[#9B9B9B]"
               rows={1}
               style={{ maxHeight: '100px' }}
             />
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="w-10 h-10 rounded-xl bg-[#1A1A1A] text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform"
+              className="w-10 h-10 rounded-lg bg-[#1A1A1A] text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shrink-0"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Booking } from '../page'
+import { BOOKING_STATUS_COLORS, BOOKING_STATUS_DOTS } from '@/lib/admin/card-types'
 
 type Props = {
   bookings: Booking[]
@@ -57,20 +58,6 @@ export default function BookingsTab({ bookings, onBookingUpdate }: Props) {
       minute: '2-digit',
       hour12: false,
     })
-  }
-
-  const statusColors = {
-    pending: 'bg-[#FFF3E0] text-[#E65100]',
-    confirmed: 'bg-[#E8F5E9] text-[#2E7D32]',
-    completed: 'bg-[#F5F5F3] text-[#6B6B6B]',
-    cancelled: 'bg-[#FFEBEE] text-[#C62828]',
-  }
-
-  const statusDots = {
-    pending: 'bg-[#E65100]',
-    confirmed: 'bg-[#2E7D32]',
-    completed: 'bg-[#6B6B6B]',
-    cancelled: 'bg-[#C62828]',
   }
 
   const counts = {
@@ -144,7 +131,7 @@ export default function BookingsTab({ bookings, onBookingUpdate }: Props) {
                   <p className="font-semibold text-[#1A1A1A] text-lg">{booking.service}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${statusDots[booking.status]}`} />
+                  <span className={`w-2 h-2 rounded-full ${BOOKING_STATUS_DOTS[booking.status]}`} />
                   <span className="text-sm text-[#6B6B6B] capitalize">{booking.status}</span>
                 </div>
               </div>
@@ -168,7 +155,7 @@ export default function BookingsTab({ bookings, onBookingUpdate }: Props) {
 
               {/* Footer */}
               <div className="flex items-center justify-between pt-3 border-t border-[#EBEBEB]">
-                <span className={`text-xs px-2.5 py-1 rounded-full ${statusColors[booking.status]}`}>
+                <span className={`text-xs px-2.5 py-1 rounded-full ${BOOKING_STATUS_COLORS[booking.status]}`}>
                   {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                 </span>
                 <span className="font-semibold text-[#1A1A1A]">€{booking.price}</span>

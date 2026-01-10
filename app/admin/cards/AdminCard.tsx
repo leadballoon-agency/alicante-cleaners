@@ -36,6 +36,9 @@ interface Props {
   onAddNote?: (id: string, type: 'cleaner' | 'owner') => void
   onResolveAlert?: (id: string) => void
   onDismissAlert?: (id: string) => void
+  // Auto-open for deep linking
+  autoOpen?: boolean
+  onAutoOpened?: () => void
 }
 
 // Helper to get initials
@@ -62,6 +65,8 @@ export default function AdminCard({
   onAddNote,
   onResolveAlert,
   onDismissAlert,
+  autoOpen,
+  onAutoOpened,
 }: Props) {
   const [isPeeking, setIsPeeking] = useState(false)
   const [isLocked, setIsLocked] = useState(false)
@@ -73,6 +78,16 @@ export default function AdminCard({
   const hasTriggeredLock = useRef(false)
 
   const styles = CARD_STYLES[item.type]
+
+  // Auto-open for deep linking
+  useEffect(() => {
+    if (autoOpen && !isPeeking && !isLocked) {
+      setIsPeeking(true)
+      setIsLocked(true)
+      setLockProgress(1)
+      onAutoOpened?.()
+    }
+  }, [autoOpen, isPeeking, isLocked, onAutoOpened])
 
   // Clean up animation frame on unmount
   useEffect(() => {

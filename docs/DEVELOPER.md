@@ -458,10 +458,14 @@ prisma generate && next build
 - [ ] AI assistant responds
 
 **Admin Dashboard:**
-- [ ] Stats load correctly
+- [ ] Live feed loads with activity cards
+- [ ] Peek-to-lock card interaction works (300ms peek, 1.5s lock)
+- [ ] Deep link opens correct card (`?card=booking-xxx`)
+- [ ] Search filter works (`?search=elena`)
+- [ ] Urgent filter toggles ("⚡ X need attention")
+- [ ] Hamburger menu drawer opens/closes
+- [ ] AI panel opens from header button
 - [ ] Cleaner approval works
-- [ ] Support conversations visible
-- [ ] Platform settings editable
 - [ ] AI agent responds
 
 ### Browser Testing

@@ -1,6 +1,6 @@
 # VillaCare Current State Brief
 
-> Last updated: January 2026 | For investors, developers, and partners
+> Last updated: 10 January 2026 | For investors, developers, and partners
 
 ---
 
@@ -60,12 +60,15 @@
 
 | Feature | Status |
 |---------|--------|
-| Platform KPIs | Live |
+| Unified live activity feed | Live |
+| Peek-to-lock card interactions | Live |
+| Deep linking (`?card=xxx`, `?search=xxx`) | Live |
+| Urgent filter ("⚡ X need attention") | Live |
+| Hamburger menu navigation | Live |
+| AI Admin Agent (18+ tools) | Live |
 | Cleaner management & approval | Live |
 | Owner CRM with notes | Live |
 | Review moderation | Live |
-| AI Admin Agent (18+ tools) | Live |
-| Live activity feed | Live |
 | Audit logging | Live |
 
 ### AI Infrastructure (Complete)

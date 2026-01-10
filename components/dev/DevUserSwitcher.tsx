@@ -124,7 +124,7 @@ export default function DevUserSwitcher() {
     <>
       {/* Spacer to push content down */}
       <div className="h-8" />
-      <div className="fixed top-0 left-0 right-0 z-[9999] bg-[#1A1A1A] text-white text-xs">
+      <div className="fixed top-0 left-0 right-0 z-30 bg-[#1A1A1A] text-white text-xs">
       <div className="max-w-screen-xl mx-auto px-4 py-1.5 flex items-center justify-between gap-4">
         {/* Left: Dev Mode indicator */}
         <div className="flex items-center gap-2">
@@ -168,7 +168,7 @@ export default function DevUserSwitcher() {
 
           {/* Dropdown */}
           {isOpen && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white rounded-xl shadow-xl border border-[#EBEBEB] overflow-hidden text-[#1A1A1A]">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white rounded-xl shadow-xl border border-[#EBEBEB] overflow-hidden text-[#1A1A1A] z-50">
               <div className="px-3 py-2 bg-[#F5F5F3] border-b border-[#EBEBEB]">
                 <p className="text-[10px] text-[#6B6B6B] uppercase tracking-wide font-medium">Switch User</p>
               </div>

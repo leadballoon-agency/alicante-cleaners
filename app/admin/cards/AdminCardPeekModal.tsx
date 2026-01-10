@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import {
   AdminFeedItem,
@@ -73,6 +73,16 @@ export default function AdminCardPeekModal({
   onDismissAlert,
 }: Props) {
   const [showConfirmAction, setShowConfirmAction] = useState<string | null>(null)
+  const [linkCopied, setLinkCopied] = useState(false)
+
+  const copyLink = useCallback(() => {
+    if (!item) return
+    const url = `${window.location.origin}/admin?card=${item.id}`
+    navigator.clipboard.writeText(url).then(() => {
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    })
+  }, [item])
 
   // Prevent scroll when modal is visible
   useEffect(() => {
@@ -227,7 +237,7 @@ export default function AdminCardPeekModal({
           <div className="w-10 h-1 bg-[#DEDEDE] rounded-full" />
         </div>
 
-        {/* Type indicator */}
+        {/* Type indicator + Copy link */}
         <div className="px-6 pb-2 flex items-center gap-2">
           <div
             className="w-2 h-2 rounded-full"
@@ -236,10 +246,16 @@ export default function AdminCardPeekModal({
           <span className="text-xs font-medium text-[#6B6B6B]">{styles.label}</span>
           <span className="text-xs text-[#9B9B9B]">· {formatRelativeTime(item.timestamp)}</span>
           {item.isTest && (
-            <span className="ml-auto px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded">
+            <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded">
               TEST
             </span>
           )}
+          <button
+            onClick={copyLink}
+            className="ml-auto px-2 py-1 text-xs rounded-lg bg-[#F5F5F3] text-[#6B6B6B] hover:bg-[#EBEBEB] transition-colors"
+          >
+            {linkCopied ? '✓ Copied!' : '🔗 Copy link'}
+          </button>
         </div>
 
         {/* Content */}

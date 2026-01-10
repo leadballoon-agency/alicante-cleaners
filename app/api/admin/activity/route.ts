@@ -82,8 +82,8 @@ export async function GET(request: NextRequest) {
           createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
         },
         include: {
-          cleaner: { include: { user: { select: { name: true } } } },
-          owner: { include: { user: { select: { name: true } } } },
+          cleaner: { include: { user: { select: { name: true, image: true } } } },
+          owner: { include: { user: { select: { name: true, image: true } } } },
           property: { select: { name: true, address: true } },
         },
         orderBy: { createdAt: 'desc' },
@@ -96,8 +96,8 @@ export async function GET(request: NextRequest) {
           createdAt: { gte: new Date(Date.now() - 48 * 60 * 60 * 1000) },
         },
         include: {
-          cleaner: { include: { user: { select: { name: true } } } },
-          owner: { include: { user: { select: { name: true } } } },
+          cleaner: { include: { user: { select: { name: true, image: true } } } },
+          owner: { include: { user: { select: { name: true, image: true } } } },
         },
         orderBy: { createdAt: 'desc' },
         take: 10,
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
         where: {
           createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
         },
-        include: { user: { select: { name: true, email: true } } },
+        include: { user: { select: { name: true, email: true, image: true } } },
         orderBy: { createdAt: 'desc' },
         take: 10,
       }),
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
         where: {
           createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
         },
-        include: { user: { select: { name: true, email: true } } },
+        include: { user: { select: { name: true, email: true, image: true } } },
         orderBy: { createdAt: 'desc' },
         take: 10,
       }),
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
           conversation: {
             include: {
               cleaner: {
-                include: { user: { select: { name: true } } },
+                include: { user: { select: { name: true, image: true } } },
               },
             },
           },
@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
           },
         },
         include: {
-          user: { select: { name: true, lastLoginAt: true } },
+          user: { select: { name: true, lastLoginAt: true, image: true } },
         },
         orderBy: { user: { lastLoginAt: 'desc' } },
         take: 20,
@@ -165,7 +165,7 @@ export async function GET(request: NextRequest) {
           team: {
             include: {
               leader: {
-                include: { user: { select: { name: true } } },
+                include: { user: { select: { name: true, image: true } } },
               },
             },
           },

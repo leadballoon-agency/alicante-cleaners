@@ -427,9 +427,10 @@ export function getFilterForType(type: AdminCardType): FeedFilter {
 }
 
 // Helper to format relative time
-export function formatRelativeTime(date: Date): string {
+export function formatRelativeTime(date: Date | string): string {
   const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+  const diffMs = now.getTime() - dateObj.getTime()
   const diffMins = Math.floor(diffMs / 60000)
   const diffHours = Math.floor(diffMs / 3600000)
   const diffDays = Math.floor(diffMs / 86400000)
@@ -439,8 +440,38 @@ export function formatRelativeTime(date: Date): string {
   if (diffHours < 24) return `${diffHours}h ago`
   if (diffDays < 7) return `${diffDays}d ago`
 
-  return date.toLocaleDateString('en-GB', {
+  return dateObj.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
   })
+}
+
+// Helper that handles null/undefined dates
+export function getRelativeTime(date: Date | string | null | undefined): string {
+  if (!date) return 'Never'
+  return formatRelativeTime(date)
+}
+
+// ============================================
+// Shared Status Colors
+// ============================================
+
+export const BOOKING_STATUS_COLORS: Record<string, string> = {
+  pending: 'bg-[#FFF3E0] text-[#E65100]',
+  confirmed: 'bg-[#E8F5E9] text-[#2E7D32]',
+  completed: 'bg-[#F5F5F3] text-[#6B6B6B]',
+  cancelled: 'bg-[#FFEBEE] text-[#C62828]',
+}
+
+export const BOOKING_STATUS_DOTS: Record<string, string> = {
+  pending: 'bg-[#E65100]',
+  confirmed: 'bg-[#2E7D32]',
+  completed: 'bg-[#6B6B6B]',
+  cancelled: 'bg-[#C62828]',
+}
+
+export const CLEANER_STATUS_COLORS: Record<string, string> = {
+  pending: 'bg-[#FFF3E0] text-[#E65100]',
+  active: 'bg-[#E8F5E9] text-[#2E7D32]',
+  suspended: 'bg-[#FFEBEE] text-[#C62828]',
 }

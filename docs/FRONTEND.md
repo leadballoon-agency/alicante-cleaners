@@ -449,23 +449,45 @@ return (
 
 ### Admin Dashboard (`/admin`)
 
-**10 Tabs:**
-1. **Overview** - Platform KPIs (bookings, revenue, users)
-2. **Live Feed** - Real-time activity stream, page view analytics, trending cleaners
-3. **Cleaners** - Approval queue, management, team verification, impersonation
-4. **Owners** - Owner CRM with notes, booking history, referral tracking
-5. **Reviews** - Moderation queue, featuring reviews
-6. **Audit** - Track all admin actions (login, approve, reject, impersonate)
-7. **Feedback** - User feedback with mood tracking and voting
-8. **Support** - AI support conversations with escalation
-9. **Settings** - Platform configuration (team leader requirements, scripts, GTM, GA4)
-10. **AI Chat** - Admin AI assistant with 20+ tools
+**Mobile-First Unified Feed Design:**
+
+The admin dashboard has been redesigned from a tab-based interface to a unified activity feed with:
+
+- **Live Feed** - Chronological activity stream (bookings, cleaners, owners, reviews)
+- **Hamburger Menu** - Drawer navigation to other sections (Cleaners, Owners, Bookings, Reviews, etc.)
+- **AI Panel** - Slide-in AI assistant (button in header)
+- **Deep Linking** - Share links to specific cards (`?card=booking-xxx`)
+- **Search Filter** - Search across all feed items (`?search=elena`)
+- **Urgent Filter** - Click "⚡ X need attention" to filter to actionable items
+
+**Card Types in Feed:**
+- Booking cards (pending, confirmed, completed)
+- Cleaner cards (signup, login, profile updates)
+- Owner cards (signup, new properties)
+- Review cards (pending moderation)
+
+**Card Interactions (Peek-to-Lock):**
+- **300ms hold** - Peek modal with details
+- **1500ms hold** - Lock modal open
+- **Actions** - Approve, reject, message, login-as, cancel
+
+**Menu Sections:**
+1. Live Feed - Default view with unified activity
+2. Cleaners - Management, approval, team verification
+3. Owners - CRM with notes, booking history
+4. Bookings - All bookings with filtering
+5. Reviews - Moderation queue
+6. Feedback - User feedback tracking
+7. Support - AI support conversations
+8. Audit Log - Admin action tracking
+9. Settings - Platform configuration
 
 **Admin Features:**
 - **Impersonation** - Login as any user for support
 - **Audit Logging** - All admin actions tracked with timestamps
 - **GA4 Real-time** - Live visitor counts (optional integration)
-- **Script Management** - GTM, Facebook Pixel, GA4, ConvertBox configuration
+- **Deep Link Sharing** - Copy link button in card modals
+- **Search with URL State** - Shareable filtered views
 
 ---
 
