@@ -5,8 +5,29 @@
 > AI-native platform connecting villa owners with trusted service providers.
 > Building the trusted relationship layer with Europe's villa owners.
 >
-> **Live:** https://alicantecleaners.com
-> **Investor Page:** https://villacare.app
+> **Live Platform:** https://alicantecleaners.com
+> **Investor Site:** https://villacare.app
+
+---
+
+## Related Projects
+
+| Project | Path | Description |
+|---------|------|-------------|
+| Alicante Cleaners | `/Users/marktaylor/Desktop/Alicante-Cleaners` | Main platform (this repo) |
+| VillaCare App | `/Users/marktaylor/Desktop/villacare-app` | Investor pitch site with AI demo |
+
+### villacare-app (Investor Site)
+Single-page pitch site for investors with:
+- AI Investor Agent chat (Claude Opus 4.5)
+- Real estate endgame visualization
+- 10 AI agents showcase grid
+- Platform metrics ("Where We Are Now")
+- Security as competitive moat section
+- Links to live platform demos
+
+**Tech:** Next.js 14, Tailwind CSS, Vercel
+**Key File:** `app/page.tsx` - Single page with all sections
 
 ---
 
@@ -786,11 +807,11 @@ Built for the Alicante expat community.
    - `lib/ai/agents.ts` - Owner agent updated with JobCard features
    - `lib/ai/sales-agent.ts` - Owner dashboard features in prompts
 
-3. **Site Updates** (alicantecleaners.com + villacare.app)
-   - "Where We Are Now" metrics sections
-   - Security as competitive moat sections
-   - Beta payment model clarification
-   - AI agents updated from 8 to 10
+3. **Site Updates** (both projects synchronized)
+   - **alicantecleaners.com**: "Where We Are Now" metrics, security section, beta payment model
+   - **villacare.app**: Platform metrics, 10 AI agents grid, security moat section
+   - AI agents updated from 8 to 10 on both sites
+   - Consistent messaging across investor and consumer sites
 
 ### Active Plan
 Check `/Users/marktaylor/.claude/plans/` for any active implementation plans.
