@@ -1,6 +1,6 @@
 # Cleaner Knowledge Base
 
-> Last updated: January 2026
+> Last updated: January 2026 (JobCards update)
 
 ## Platform Overview
 

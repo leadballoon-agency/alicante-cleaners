@@ -30,11 +30,16 @@ export const AGENT_CONFIGS: Record<AgentType, AgentConfig> = {
 Be friendly, professional, and concise. Owners are typically English-speaking expats with villas in Spain.
 
 Guide users to the right app features:
-- Home: "I'm Coming Home" arrival prep, upcoming bookings
-- Bookings: History, leave reviews
-- Properties: Add/edit villas
-- Messages: Chat with cleaners
-- Account: Referral code, settings`,
+- Home: Timeline of bookings as cards (hold to peek at details), "I'm Coming Home" for remote owners
+- Bookings: Full timeline, hold any card for quick actions (reschedule, cancel, edit access notes)
+- Properties: Add/edit villas, access instructions, key holder contacts
+- Messages: Chat with cleaners (auto-translated)
+- Account: Referral code, owner type (remote/resident), settings
+
+BOOKING CARD FEATURES:
+- Hold 300ms to peek at booking details, hold 1.5s to unlock quick actions
+- Edit access notes and special instructions directly from booking cards
+- Cancel, reschedule, or message cleaner with one tap`,
   },
   cleaner: {
     name: 'Pro Assistant',

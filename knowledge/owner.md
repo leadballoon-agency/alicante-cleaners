@@ -1,6 +1,6 @@
 # Owner Knowledge Base
 
-> Last updated: January 2026
+> Last updated: January 2026 (JobCards update)
 
 ## Platform Overview
 
@@ -15,6 +15,20 @@ Alicante Cleaners connects you with trusted, vetted cleaning professionals in th
 
 **Need help?** See our step-by-step booking guide at `/guide/booking` with screenshots of every step.
 
+## Owner Type (Remote vs Resident)
+
+When you first use VillaCare, we'll ask a quick question: **"Do you visit from abroad or live here?"**
+
+- **Remote Owner** (Holiday Home) - You visit your villa from abroad
+  - Unlocks "I'm Coming Home" feature for arrival prep with extras
+  - Tailored for managing your villa from a distance
+
+- **Resident Owner** (Live Here) - You live at the property full-time
+  - Focus on regular maintenance cleans
+  - No arrival prep features needed
+
+This helps us show you relevant features and personalise your experience. You can update this in Account settings.
+
 ## Service Types
 
 | Service | Hours | Best For |
@@ -23,7 +37,46 @@ Alicante Cleaners connects you with trusted, vetted cleaning professionals in th
 | Deep Clean | 5h | Seasonal or post-rental |
 | Arrival Prep | 4h | Before you arrive - includes optional extras |
 
+## Viewing Booking Details (Peek-to-Lock)
+
+Your bookings appear as cards on your dashboard. You can view full details by **holding** on any booking card:
+
+**How it works:**
+- **Hold for 300ms** → Peek at details (release to close)
+- **Hold for 1.5 seconds** → Lock modal open for full interaction
+
+**What you'll see when locked:**
+- Cleaner photo, name, and contact (Call button)
+- Property address and details
+- Key holder contact with Call button (if you've set one up)
+- Access notes you've provided
+- Service type, date, time, and price
+
+**Quick actions (by booking status):**
+- **Pending**: Message cleaner, Adjust time, Cancel request
+- **Confirmed**: Message cleaner, Reschedule, Add/Edit access notes, Cancel
+- **Completed**: Leave review, Book again with same cleaner
+
+### Editing Access Notes & Instructions
+
+Plans changed? You can update access details anytime:
+
+1. Hold on the booking card to open details
+2. Tap **Edit** next to Access Notes or Special Instructions
+3. The AI assistant opens with your booking context
+4. Tell it what needs changing (e.g., "I'll be at the villa myself so the keyholder isn't necessary")
+5. The assistant guides you through updating the details
+
+**Common updates:**
+- Key holder no longer needed (you'll be there)
+- Changed key location or code
+- New WiFi password
+- Special focus areas for this clean
+- Guest arrival information
+
 ## "I'm Coming Home" Feature
+
+**Note:** This feature appears once you've completed at least one booking (established a relationship with a cleaner). It's designed for remote villa owners returning home.
 
 Plan your arrival and have everything ready:
 
@@ -128,6 +181,16 @@ Your property access details are protected by our **Sensitive Access Lifecycle**
 - System-enforced, not policy-dependent
 
 See full details at `/knowledge/security-and-access.md`
+
+## Dashboard Guide
+
+For a visual walkthrough of the owner dashboard, see `/guide/dashboard`:
+- Login with magic link or phone OTP
+- Getting Started checklist
+- Remote vs Resident owner types
+- "I'm Coming Home" feature
+- Booking cards with peek-to-hold
+- Editing access notes and special instructions
 
 ## Support
 
