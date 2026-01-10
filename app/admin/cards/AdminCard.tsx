@@ -223,7 +223,9 @@ export default function AdminCard({
         } ${item.priority === 'urgent' ? styles.urgentBg : 'bg-white'}`}
         style={{
           borderLeft: `4px solid ${styles.borderColor}`,
-        }}
+          WebkitTouchCallout: 'none',
+          WebkitUserSelect: 'none',
+        } as React.CSSProperties}
       >
         <div className="p-3">
           {/* Test data badge */}

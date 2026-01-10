@@ -227,10 +227,14 @@ export default function AdminCardPeekModal({
 
       {/* Modal */}
       <div
-        className={`relative w-full max-w-lg bg-white rounded-t-3xl transition-transform duration-200 ${
+        className={`relative w-full max-w-lg bg-white rounded-t-3xl transition-transform duration-200 select-none ${
           isVisible ? 'translate-y-0' : 'translate-y-full'
         }`}
-        style={{ maxHeight: '85vh' }}
+        style={{
+          maxHeight: '85vh',
+          WebkitTouchCallout: 'none',
+          WebkitUserSelect: 'none',
+        } as React.CSSProperties}
       >
         {/* Lock progress bar */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-[#EBEBEB] rounded-t-3xl overflow-hidden">
