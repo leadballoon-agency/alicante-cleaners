@@ -1,14 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { Owner, Property, OwnerBooking } from '../page'
+import { JobsTimeline, BookingCardData } from '@/components/job-card'
 
 type Props = {
   owner: Owner
   properties: Property[]
   bookings: OwnerBooking[]
+  onNavigate?: (tab: 'home' | 'bookings' | 'properties' | 'messages' | 'account') => void
+  onOwnerTypeChange?: (ownerType: 'REMOTE' | 'RESIDENT') => void
+  onMessage?: (bookingId: string) => void
+  onReschedule?: (bookingId: string) => void
+  onCancel?: (bookingId: string) => void
+  onReview?: (bookingId: string) => void
+  onAddAccess?: (bookingId: string) => void
+  onAddInstructions?: (bookingId: string) => void
+  onOpenChat?: (initialMessage?: string) => void
 }
 
 const EXTRAS = [
@@ -19,8 +29,10 @@ const EXTRAS = [
 ]
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function HomeTab({ owner, properties, bookings }: Props) {
+export default function HomeTab({ owner, properties, bookings, onNavigate, onOwnerTypeChange, onMessage, onReschedule, onCancel, onReview, onAddAccess, onAddInstructions, onOpenChat }: Props) {
+  const router = useRouter()
   const [showArrivalModal, setShowArrivalModal] = useState(false)
+  const [savingOwnerType, setSavingOwnerType] = useState(false)
   const [step, setStep] = useState<'details' | 'extras' | 'confirmed'>('details')
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
   const [arrivalDate, setArrivalDate] = useState('')
@@ -51,12 +63,61 @@ export default function HomeTab({ owner, properties, bookings }: Props) {
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 2)
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    })
+  // Transform bookings to shared BookingCardData format
+  const transformedBookings: BookingCardData[] = useMemo(() => {
+    return bookings.map(booking => ({
+      id: booking.id,
+      date: new Date(booking.date).toISOString().split('T')[0],
+      time: booking.time,
+      service: booking.service,
+      hours: 3, // Default to 3 hours - TODO: add to API
+      price: booking.price,
+      status: booking.status as 'pending' | 'confirmed' | 'completed' | 'cancelled',
+      // Property info
+      propertyId: booking.property.id,
+      propertyName: booking.property.name,
+      propertyAddress: booking.property.address,
+      bedrooms: booking.property.bedrooms,
+      // Access info (if available)
+      accessNotes: booking.property.accessNotes,
+      keyHolderName: booking.property.keyHolderName,
+      keyHolderPhone: booking.property.keyHolderPhone,
+      // Cleaner info
+      cleanerId: booking.cleaner.id,
+      cleanerName: booking.cleaner.name,
+      cleanerPhoto: booking.cleaner.photo,
+      cleanerSlug: booking.cleaner.slug,
+      cleanerPhone: booking.cleaner.phone,
+      // Review tracking
+      hasReviewedCleaner: booking.hasReviewedCleaner,
+      // Booking-specific instructions (if available)
+      specialInstructions: booking.specialInstructions,
+    }))
+  }, [bookings])
+
+  // Handlers for timeline actions
+  const handleNewBooking = () => {
+    // Open AI chat with a booking-focused prompt
+    if (onOpenChat) {
+      const message = bookings.length > 0
+        ? "I'd like to book another clean please"
+        : "I'd like to book my first villa clean"
+      onOpenChat(message)
+    } else {
+      // Fallback to homepage
+      router.push('/')
+    }
+  }
+
+  const handleBookAgain = (bookingId: string, cleanerSlug: string) => {
+    // Open AI chat with context about the cleaner
+    const booking = bookings.find(b => b.id === bookingId)
+    if (onOpenChat && booking) {
+      const message = `I'd like to book another clean with ${booking.cleaner.name} at ${booking.property.name}`
+      onOpenChat(message)
+    } else {
+      router.push(`/${cleanerSlug}`)
+    }
   }
 
   const formatArrivalDate = (dateStr: string) => {
@@ -161,72 +222,242 @@ export default function HomeTab({ owner, properties, bookings }: Props) {
   tomorrow.setDate(tomorrow.getDate() + 1)
   const minDate = tomorrow.toISOString().split('T')[0]
 
+  // Calculate onboarding progress
+  const onboarding = owner.onboarding || {
+    profileCompleted: !owner.needsName,
+    propertyAdded: properties.length > 0,
+    firstBooking: bookings.length > 0,
+    completed: false,
+  }
+  const completedSteps = [onboarding.profileCompleted, onboarding.propertyAdded, onboarding.firstBooking].filter(Boolean).length
+  const showGettingStarted = !onboarding.completed && completedSteps < 3
+
+  // Only show "I'm Coming Home" for REMOTE owners who have completed at least one booking
+  // (meaning they have an established relationship with a cleaner)
+  const hasCompletedBooking = bookings.some(b => b.status === 'completed')
+  const showComingHome = owner.ownerType === 'REMOTE' && hasCompletedBooking
+
+  // Show the owner type question when:
+  // 1. Owner type hasn't been set yet
+  // 2. They have completed some onboarding (have a property or booking)
+  const showOwnerTypeQuestion = !owner.ownerType && (onboarding.propertyAdded || onboarding.firstBooking)
+
+  const handleOwnerTypeSelect = async (type: 'REMOTE' | 'RESIDENT') => {
+    setSavingOwnerType(true)
+    try {
+      const res = await fetch('/api/dashboard/owner', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ownerType: type }),
+      })
+
+      if (res.ok) {
+        onOwnerTypeChange?.(type)
+      }
+    } catch (error) {
+      console.error('Failed to save owner type:', error)
+    }
+    setSavingOwnerType(false)
+  }
+
   return (
     <div className="space-y-6">
-      {/* I'm Coming Home CTA */}
-      <div className="bg-gradient-to-br from-[#C4785A] to-[#A66348] rounded-2xl p-6 text-white">
-        <div className="flex items-start gap-4">
-          <div className="text-4xl">✈️</div>
-          <div className="flex-1">
-            <h2 className="text-xl font-semibold mb-1">I&apos;m Coming Home</h2>
-            <p className="text-white/80 text-sm mb-4">
-              Let your cleaner know when you&apos;re arriving and they&apos;ll have your villa ready
-            </p>
-            <button
-              onClick={() => setShowArrivalModal(true)}
-              className="bg-white text-[#C4785A] px-5 py-2.5 rounded-xl font-medium text-sm active:scale-[0.98] transition-all"
-            >
-              Schedule arrival prep
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Upcoming bookings */}
-      {upcomingBookings.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-medium text-[#1A1A1A]">Upcoming</h2>
-            <button className="text-sm text-[#C4785A] font-medium">View all</button>
-          </div>
-          <div className="space-y-3">
-            {upcomingBookings.map((booking) => (
-              <div key={booking.id} className="bg-white rounded-2xl p-4 border border-[#EBEBEB]">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="font-medium text-[#1A1A1A]">{booking.service}</h3>
-                    <p className="text-sm text-[#6B6B6B]">
-                      {formatDate(booking.date)} · {booking.time}
-                    </p>
-                  </div>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#E8F5E9] text-[#2E7D32]">
-                    Confirmed
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden relative">
-                    {booking.cleaner.photo ? (
-                      <Image src={booking.cleaner.photo} alt="" fill className="object-cover" unoptimized />
-                    ) : (
-                      <span className="text-sm">👤</span>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-[#1A1A1A]">{booking.cleaner.name}</p>
-                    <p className="text-xs text-[#6B6B6B]">{booking.property.name}</p>
-                  </div>
-                  <Link
-                    href={`/${booking.cleaner.slug}`}
-                    className="text-sm text-[#C4785A] font-medium"
-                  >
-                    View
-                  </Link>
-                </div>
+      {/* Getting Started Checklist */}
+      {showGettingStarted && (
+        <div className="bg-white rounded-2xl border border-[#EBEBEB] overflow-hidden">
+          <div className="p-4 border-b border-[#EBEBEB]">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold text-[#1A1A1A]">Getting Started</h2>
+                <p className="text-sm text-[#6B6B6B]">{completedSteps} of 3 complete</p>
               </div>
-            ))}
+              <div className="w-10 h-10 rounded-full bg-[#F5F5F3] flex items-center justify-center">
+                <span className="text-lg font-semibold text-[#C4785A]">{Math.round((completedSteps / 3) * 100)}%</span>
+              </div>
+            </div>
+            {/* Progress bar */}
+            <div className="mt-3 h-2 bg-[#EBEBEB] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#C4785A] transition-all duration-500"
+                style={{ width: `${(completedSteps / 3) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="divide-y divide-[#EBEBEB]">
+            {/* Step 1: Complete profile */}
+            <button
+              onClick={() => onNavigate?.('account')}
+              className="w-full p-4 flex items-center gap-4 text-left hover:bg-[#FAFAF8] transition-colors"
+            >
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                onboarding.profileCompleted
+                  ? 'bg-[#2E7D32] text-white'
+                  : 'border-2 border-[#DEDEDE]'
+              }`}>
+                {onboarding.profileCompleted && <span className="text-sm">✓</span>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`font-medium ${onboarding.profileCompleted ? 'text-[#9B9B9B] line-through' : 'text-[#1A1A1A]'}`}>
+                  Complete your profile
+                </p>
+                <p className="text-sm text-[#6B6B6B]">Add your name for a personal touch</p>
+              </div>
+              <span className="text-[#9B9B9B]">→</span>
+            </button>
+
+            {/* Step 2: Add a property */}
+            <button
+              onClick={() => onNavigate?.('properties')}
+              className="w-full p-4 flex items-center gap-4 text-left hover:bg-[#FAFAF8] transition-colors"
+            >
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                onboarding.propertyAdded
+                  ? 'bg-[#2E7D32] text-white'
+                  : 'border-2 border-[#DEDEDE]'
+              }`}>
+                {onboarding.propertyAdded && <span className="text-sm">✓</span>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`font-medium ${onboarding.propertyAdded ? 'text-[#9B9B9B] line-through' : 'text-[#1A1A1A]'}`}>
+                  Add your villa
+                </p>
+                <p className="text-sm text-[#6B6B6B]">Enter your property details</p>
+              </div>
+              <span className="text-[#9B9B9B]">→</span>
+            </button>
+
+            {/* Step 3: Book first clean */}
+            <Link
+              href="/"
+              className="w-full p-4 flex items-center gap-4 text-left hover:bg-[#FAFAF8] transition-colors"
+            >
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                onboarding.firstBooking
+                  ? 'bg-[#2E7D32] text-white'
+                  : 'border-2 border-[#DEDEDE]'
+              }`}>
+                {onboarding.firstBooking && <span className="text-sm">✓</span>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`font-medium ${onboarding.firstBooking ? 'text-[#9B9B9B] line-through' : 'text-[#1A1A1A]'}`}>
+                  Book your first clean
+                </p>
+                <p className="text-sm text-[#6B6B6B]">Find a trusted cleaner nearby</p>
+              </div>
+              <span className="text-[#9B9B9B]">→</span>
+            </Link>
           </div>
         </div>
       )}
+
+      {/* Welcome message for truly first-time users (no completed bookings yet) */}
+      {!showGettingStarted && upcomingBookings.length > 0 && !showOwnerTypeQuestion && !hasCompletedBooking && (
+        <div className="bg-gradient-to-br from-[#E8F5E9] to-[#C8E6C9] rounded-2xl p-5 border border-[#A5D6A7]">
+          <div className="flex items-start gap-4">
+            <div className="text-3xl">✨</div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-[#2E7D32] mb-1">You&apos;re all set!</h2>
+              <p className="text-[#1B5E20] text-sm">
+                Your first clean is booked with {upcomingBookings[0]?.cleaner.name.split(' ')[0]}.
+                We&apos;ll send you reminders via WhatsApp.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Owner Type Question - ask once they have property or booking */}
+      {showOwnerTypeQuestion && (
+        <div className="bg-white rounded-2xl border border-[#EBEBEB] overflow-hidden">
+          <div className="p-5">
+            <div className="text-center mb-5">
+              <div className="text-3xl mb-2">🏡</div>
+              <h2 className="text-lg font-semibold text-[#1A1A1A] mb-1">One quick question</h2>
+              <p className="text-sm text-[#6B6B6B]">This helps us personalise your experience</p>
+            </div>
+
+            <p className="text-center text-[#1A1A1A] font-medium mb-4">
+              Do you live at your villa or visit from abroad?
+            </p>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => handleOwnerTypeSelect('REMOTE')}
+                disabled={savingOwnerType}
+                className="w-full p-4 rounded-xl border-2 border-[#EBEBEB] hover:border-[#1A1A1A] bg-white text-left transition-all flex items-center gap-4 disabled:opacity-50"
+              >
+                <span className="text-2xl">✈️</span>
+                <div className="flex-1">
+                  <p className="font-medium text-[#1A1A1A]">I visit from abroad</p>
+                  <p className="text-sm text-[#6B6B6B]">My villa is a holiday home</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleOwnerTypeSelect('RESIDENT')}
+                disabled={savingOwnerType}
+                className="w-full p-4 rounded-xl border-2 border-[#EBEBEB] hover:border-[#1A1A1A] bg-white text-left transition-all flex items-center gap-4 disabled:opacity-50"
+              >
+                <span className="text-2xl">🏠</span>
+                <div className="flex-1">
+                  <p className="font-medium text-[#1A1A1A]">I live here</p>
+                  <p className="text-sm text-[#6B6B6B]">It&apos;s my primary residence</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* I'm Coming Home CTA - only show for REMOTE owners */}
+      {showComingHome && (
+        <div className="bg-gradient-to-br from-[#C4785A] to-[#A66348] rounded-2xl p-6 text-white">
+          <div className="flex items-start gap-4">
+            <div className="text-4xl">✈️</div>
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold mb-1">I&apos;m Coming Home</h2>
+              <p className="text-white/80 text-sm mb-4">
+                Let your cleaner know when you&apos;re arriving and they&apos;ll have your villa ready
+              </p>
+              <button
+                onClick={() => setShowArrivalModal(true)}
+                className="bg-white text-[#C4785A] px-5 py-2.5 rounded-xl font-medium text-sm active:scale-[0.98] transition-all"
+              >
+                Schedule arrival prep
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Jobs Timeline */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-medium text-[#1A1A1A]">Your Bookings</h2>
+          <button
+            onClick={() => onNavigate?.('bookings')}
+            className="text-sm text-[#C4785A] font-medium"
+          >
+            View all
+          </button>
+        </div>
+        <JobsTimeline
+          bookings={transformedBookings}
+          context="owner"
+          filter="upcoming"
+          showNewBookingCard={true}
+          hasExistingBookings={bookings.length > 0}
+          onNewBooking={handleNewBooking}
+          onMessage={onMessage}
+          onAddInstructions={onAddInstructions}
+          onAddAccess={onAddAccess}
+          onAdjustTime={onReschedule}
+          onCancel={onCancel}
+          onReview={onReview}
+          onBookAgain={handleBookAgain}
+        />
+      </div>
 
       {/* Your properties */}
       <div>

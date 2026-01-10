@@ -1,56 +1,86 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
+import { useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { OwnerBooking } from '../page'
+import { JobsTimeline, BookingCardData } from '@/components/job-card'
 
 type Props = {
   bookings: OwnerBooking[]
   onLeaveReview?: (bookingId: string, cleanerId: string, cleanerName: string) => void
   onMessage?: (cleanerId: string, cleanerName: string, propertyId?: string) => void
+  onOpenChat?: (initialMessage?: string) => void
 }
 
-type Filter = 'all' | 'upcoming' | 'completed'
+export default function BookingsTab({ bookings, onLeaveReview, onMessage, onOpenChat }: Props) {
+  const router = useRouter()
 
-export default function BookingsTab({ bookings, onLeaveReview, onMessage }: Props) {
-  const [filter, setFilter] = useState<Filter>('all')
+  // Transform bookings to shared BookingCardData format
+  const transformedBookings: BookingCardData[] = useMemo(() => {
+    return bookings.map(booking => ({
+      id: booking.id,
+      date: new Date(booking.date).toISOString().split('T')[0],
+      time: booking.time,
+      service: booking.service,
+      hours: 3, // Default to 3 hours - TODO: add to API
+      price: booking.price,
+      status: booking.status as 'pending' | 'confirmed' | 'completed' | 'cancelled',
+      // Property info
+      propertyId: booking.property.id,
+      propertyName: booking.property.name,
+      propertyAddress: booking.property.address,
+      bedrooms: booking.property.bedrooms,
+      // Access info (if available)
+      accessNotes: booking.property.accessNotes,
+      keyHolderName: booking.property.keyHolderName,
+      keyHolderPhone: booking.property.keyHolderPhone,
+      // Cleaner info
+      cleanerId: booking.cleaner.id,
+      cleanerName: booking.cleaner.name,
+      cleanerPhoto: booking.cleaner.photo,
+      cleanerSlug: booking.cleaner.slug,
+      cleanerPhone: booking.cleaner.phone,
+      // Review tracking
+      hasReviewedCleaner: booking.hasReviewedCleaner,
+      // Booking-specific instructions (if available)
+      specialInstructions: booking.specialInstructions,
+    }))
+  }, [bookings])
 
-  const now = new Date()
-
-  const filteredBookings = bookings
-    .filter(b => {
-      if (filter === 'upcoming') return new Date(b.date) > now && b.status !== 'completed'
-      if (filter === 'completed') return b.status === 'completed'
-      return true
-    })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
+  // Handlers for timeline actions
+  const handleNewBooking = () => {
+    if (onOpenChat) {
+      const message = bookings.length > 0
+        ? "I'd like to book another clean please"
+        : "I'd like to book my first villa clean"
+      onOpenChat(message)
+    } else {
+      router.push('/')
+    }
   }
 
-  const filters: { id: Filter; label: string }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'upcoming', label: 'Upcoming' },
-    { id: 'completed', label: 'Past' },
-  ]
-
-  const statusColors = {
-    pending: 'bg-[#FFF3E0] text-[#E65100]',
-    confirmed: 'bg-[#E8F5E9] text-[#2E7D32]',
-    completed: 'bg-[#F5F5F3] text-[#6B6B6B]',
+  const handleMessage = (bookingId: string) => {
+    const booking = bookings.find(b => b.id === bookingId)
+    if (booking && onMessage) {
+      onMessage(booking.cleaner.id, booking.cleaner.name, booking.property.id)
+    }
   }
 
-  const statusLabels = {
-    pending: 'Pending',
-    confirmed: 'Confirmed',
-    completed: 'Completed',
+  const handleReview = (bookingId: string) => {
+    const booking = bookings.find(b => b.id === bookingId)
+    if (booking && onLeaveReview) {
+      onLeaveReview(bookingId, booking.cleaner.id, booking.cleaner.name)
+    }
+  }
+
+  const handleBookAgain = (bookingId: string, cleanerSlug: string) => {
+    const booking = bookings.find(b => b.id === bookingId)
+    if (onOpenChat && booking) {
+      const message = `I'd like to book another clean with ${booking.cleaner.name} at ${booking.property.name}`
+      onOpenChat(message)
+    } else {
+      router.push(`/${cleanerSlug}`)
+    }
   }
 
   // Calculate total spent
@@ -58,105 +88,51 @@ export default function BookingsTab({ bookings, onLeaveReview, onMessage }: Prop
     .filter(b => b.status === 'completed')
     .reduce((sum, b) => sum + b.price, 0)
 
+  const upcomingCount = bookings.filter(b => new Date(b.date) >= new Date() && b.status !== 'completed').length
+
   return (
-    <div>
+    <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-2xl p-4 border border-[#EBEBEB]">
-          <p className="text-sm text-[#6B6B6B] mb-1">Total bookings</p>
-          <p className="text-2xl font-semibold text-[#1A1A1A]">{bookings.length}</p>
+          <p className="text-xs text-[#6B6B6B] mb-1">Total</p>
+          <p className="text-xl font-semibold text-[#1A1A1A]">{bookings.length}</p>
         </div>
         <div className="bg-white rounded-2xl p-4 border border-[#EBEBEB]">
-          <p className="text-sm text-[#6B6B6B] mb-1">Total spent</p>
-          <p className="text-2xl font-semibold text-[#1A1A1A]">€{totalSpent}</p>
+          <p className="text-xs text-[#6B6B6B] mb-1">Upcoming</p>
+          <p className="text-xl font-semibold text-[#C4785A]">{upcomingCount}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-4 border border-[#EBEBEB]">
+          <p className="text-xs text-[#6B6B6B] mb-1">Spent</p>
+          <p className="text-xl font-semibold text-[#1A1A1A]">€{totalSpent}</p>
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-2 mb-6">
-        {filters.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all active:scale-[0.98] ${
-              filter === f.id
-                ? 'bg-[#1A1A1A] text-white'
-                : 'bg-white border border-[#EBEBEB] text-[#6B6B6B]'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      {/* Timeline */}
+      <JobsTimeline
+        bookings={transformedBookings}
+        context="owner"
+        filter="all"
+        showNewBookingCard={true}
+        hasExistingBookings={bookings.length > 0}
+        onNewBooking={handleNewBooking}
+        onMessage={handleMessage}
+        onReview={handleReview}
+        onBookAgain={handleBookAgain}
+      />
 
-      {/* Bookings list */}
-      {filteredBookings.length === 0 ? (
-        <div className="bg-[#F5F5F3] rounded-2xl p-8 text-center">
-          <p className="text-[#6B6B6B]">No {filter === 'all' ? '' : filter} bookings</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filteredBookings.map((booking) => (
-            <div key={booking.id} className="bg-white rounded-2xl p-4 border border-[#EBEBEB]">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-medium text-[#1A1A1A]">{booking.service}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[booking.status]}`}>
-                      {statusLabels[booking.status]}
-                    </span>
-                  </div>
-                  <p className="text-sm text-[#6B6B6B]">
-                    {formatDate(booking.date)} · {booking.time}
-                  </p>
-                </div>
-                <span className="font-semibold text-[#1A1A1A]">€{booking.price}</span>
-              </div>
-
-              <div className="flex items-center gap-3 pt-3 border-t border-[#EBEBEB]">
-                <div className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden relative">
-                  {booking.cleaner.photo ? (
-                    <Image src={booking.cleaner.photo} alt="" fill className="object-cover" unoptimized />
-                  ) : (
-                    <span className="text-sm">👤</span>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-[#1A1A1A]">{booking.cleaner.name}</p>
-                  <p className="text-xs text-[#6B6B6B]">{booking.property.name}</p>
-                </div>
-                <div className="flex gap-2">
-                  {onMessage && (
-                    <button
-                      onClick={() => onMessage(booking.cleaner.id, booking.cleaner.name, booking.property.id)}
-                      className="text-sm bg-[#F5F5F3] px-3 py-1.5 rounded-lg text-[#1A1A1A] font-medium active:scale-[0.98] transition-all flex items-center gap-1"
-                    >
-                      <span>💬</span>
-                      Message
-                    </button>
-                  )}
-                  {booking.status === 'completed' && (
-                    <>
-                      {onLeaveReview && (
-                        <button
-                          onClick={() => onLeaveReview(booking.id, booking.cleaner.id, booking.cleaner.name)}
-                          className="text-sm bg-[#C4785A] px-3 py-1.5 rounded-lg text-white font-medium active:scale-[0.98] transition-all"
-                        >
-                          Review
-                        </button>
-                      )}
-                      <Link
-                        href={`/${booking.cleaner.slug}`}
-                        className="text-sm bg-[#F5F5F3] px-3 py-1.5 rounded-lg text-[#1A1A1A] font-medium active:scale-[0.98] transition-all"
-                      >
-                        Book again
-                      </Link>
-                    </>
-                  )}
-                </div>
-              </div>
+      {/* Empty state hint */}
+      {bookings.length === 0 && (
+        <div className="bg-[#FFF8F5] rounded-2xl p-5 border border-[#F5E6E0]">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">💡</span>
+            <div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">Ready to book?</h3>
+              <p className="text-sm text-[#6B6B6B]">
+                Find a trusted cleaner in your area and book your first villa clean.
+              </p>
             </div>
-          ))}
+          </div>
         </div>
       )}
     </div>

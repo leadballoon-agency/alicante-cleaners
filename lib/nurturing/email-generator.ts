@@ -19,9 +19,15 @@ const EMAIL_TEMPLATES: Record<NurturingEmailType, {
     maxLength: 150,
   },
   PROFILE_INCOMPLETE: {
-    goal: 'Encourage owner to complete their profile and add a property so they can book cleanings',
-    tone: 'Gentle nudge, helpful, not pushy',
+    goal: 'Encourage owner to add their name to personalize their experience',
+    tone: 'Gentle nudge, helpful, emphasize the personal touch',
     cta: 'Complete your profile',
+    maxLength: 120,
+  },
+  ADD_PROPERTY_NUDGE: {
+    goal: 'Encourage owner to add their villa details so they can book cleanings',
+    tone: 'Helpful, emphasize how quick and easy it is',
+    cta: 'Add your villa',
     maxLength: 120,
   },
   FIRST_BOOKING_PROMPT: {
@@ -124,7 +130,9 @@ function getDefaultSubject(emailType: NurturingEmailType, name: string): string 
     case 'WELCOME':
       return `Welcome to VillaCare, ${name}!`
     case 'PROFILE_INCOMPLETE':
-      return `${name}, complete your profile to get started`
+      return `${name}, add your name for a personal touch`
+    case 'ADD_PROPERTY_NUDGE':
+      return `${name}, add your villa to get started`
     case 'FIRST_BOOKING_PROMPT':
       return `Ready to book your first clean, ${name}?`
     case 'RE_ENGAGEMENT':
@@ -149,9 +157,17 @@ The VillaCare Team`
     case 'PROFILE_INCOMPLETE':
       return `Hi ${name},
 
-We noticed you haven't added your property details yet. Adding your villa takes just a minute and unlocks access to our trusted local cleaners.
+Adding your name helps us personalize your experience and makes it easier for cleaners to greet you.
 
-Once your property is set up, booking a clean is quick and easy.
+Just a quick update to your profile and you're all set!
+
+The VillaCare Team`
+    case 'ADD_PROPERTY_NUDGE':
+      return `Hi ${name},
+
+You're one step away from booking your first clean! Add your villa details - it only takes a minute.
+
+Once your property is set up, you can browse our trusted cleaners and book in just a few clicks.
 
 The VillaCare Team`
     case 'FIRST_BOOKING_PROMPT':
@@ -189,6 +205,8 @@ export function getCTAUrl(emailType: NurturingEmailType): string {
       return `${baseUrl}/owner/dashboard?tab=properties&action=add`
     case 'PROFILE_INCOMPLETE':
       return `${baseUrl}/owner/dashboard?tab=account`
+    case 'ADD_PROPERTY_NUDGE':
+      return `${baseUrl}/owner/dashboard?tab=properties&action=add`
     case 'FIRST_BOOKING_PROMPT':
       return `${baseUrl}/`
     case 'RE_ENGAGEMENT':

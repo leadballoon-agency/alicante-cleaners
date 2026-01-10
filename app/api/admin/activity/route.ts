@@ -15,6 +15,33 @@ type ActivityItem = {
   actionable?: boolean
   resourceId?: string
   meta?: Record<string, unknown>
+  isTest?: boolean // Flag for test/demo data
+}
+
+// Detect test accounts by email patterns
+const TEST_EMAIL_PATTERNS = [
+  /@example\.com$/i,
+  /@test\.com$/i,
+  /\+test/i,
+  /^test@/i,
+  /^demo@/i,
+  /^mark@leadballoon/i, // Dev accounts
+  /^kerry@leadballoon/i,
+  /^admin@villacare/i,
+]
+
+// Detect test accounts by name patterns
+const TEST_NAME_PATTERNS = [
+  /^test\s/i,
+  /\stest$/i,
+  /^demo\s/i,
+  /^(clara|maria|carlos|ana|luis)\s(martinez|garcia|rodriguez|fernandez|lopez)$/i, // Seed data names
+]
+
+function isTestAccount(email?: string | null, name?: string | null): boolean {
+  if (email && TEST_EMAIL_PATTERNS.some(p => p.test(email))) return true
+  if (name && TEST_NAME_PATTERNS.some(p => p.test(name))) return true
+  return false
 }
 
 export async function GET() {
@@ -155,6 +182,9 @@ export async function GET() {
 
     // Add bookings
     for (const booking of recentBookings) {
+      const ownerEmail = (booking.owner as { user: { email?: string | null } }).user?.email
+      const isTest = isTestAccount(ownerEmail, booking.owner.user.name) ||
+                     isTestAccount(null, booking.cleaner.user.name)
       activities.push({
         id: `booking-${booking.id}`,
         type: booking.status === 'COMPLETED' ? 'booking_completed' : 'booking',
@@ -166,6 +196,7 @@ export async function GET() {
         status: booking.status.toLowerCase(),
         actionable: booking.status === 'PENDING',
         resourceId: booking.id,
+        isTest,
         meta: {
           cleanerName: booking.cleaner.user.name,
           ownerName: booking.owner.user.name,
@@ -178,6 +209,9 @@ export async function GET() {
 
     // Add reviews
     for (const review of recentReviews) {
+      const ownerEmail = (review.owner as { user: { email?: string | null } }).user?.email
+      const isTest = isTestAccount(ownerEmail, review.owner.user.name) ||
+                     isTestAccount(null, review.cleaner.user.name)
       activities.push({
         id: `review-${review.id}`,
         type: 'review',
@@ -187,6 +221,7 @@ export async function GET() {
         status: review.approved ? 'approved' : 'pending',
         actionable: !review.approved,
         resourceId: review.id,
+        isTest,
         meta: {
           rating: review.rating,
           cleanerName: review.cleaner.user.name,
@@ -198,6 +233,7 @@ export async function GET() {
     // Add cleaner signups
     for (const cleaner of recentCleaners) {
       const isActive = cleaner.status === 'ACTIVE'
+      const isTest = isTestAccount(cleaner.user.email, cleaner.user.name)
       activities.push({
         id: `cleaner-${cleaner.id}`,
         type: isActive ? 'cleaner_approved' : 'cleaner_signup',
@@ -207,6 +243,7 @@ export async function GET() {
         status: isActive ? 'active' : 'pending',
         actionable: cleaner.status === 'PENDING',
         resourceId: cleaner.id,
+        isTest,
         meta: {
           name: cleaner.user.name,
           email: cleaner.user.email,
@@ -217,6 +254,7 @@ export async function GET() {
 
     // Add owner signups
     for (const owner of recentOwners) {
+      const isTest = isTestAccount(owner.user.email, owner.user.name)
       activities.push({
         id: `owner-${owner.id}`,
         type: 'owner_signup',
@@ -224,6 +262,7 @@ export async function GET() {
         description: owner.user.name || owner.user.email || 'Unknown',
         timestamp: owner.createdAt,
         resourceId: owner.id,
+        isTest,
         meta: {
           name: owner.user.name,
           email: owner.user.email,
@@ -234,6 +273,7 @@ export async function GET() {
     // Add cleaner messages
     for (const message of recentCleanerMessages) {
       const cleanerName = message.conversation.cleaner.user.name || 'Cleaner'
+      const isTest = isTestAccount(null, cleanerName)
       const messagePreview = message.originalText.length > 50
         ? message.originalText.slice(0, 50) + '...'
         : message.originalText
@@ -246,6 +286,7 @@ export async function GET() {
         status: message.isRead ? 'read' : 'unread',
         actionable: !message.isRead,
         resourceId: message.conversationId,
+        isTest,
         meta: {
           cleanerName,
           conversationId: message.conversationId,
@@ -257,6 +298,7 @@ export async function GET() {
     // Add cleaner logins
     for (const cleaner of recentCleanerLogins) {
       if (cleaner.user.lastLoginAt) {
+        const isTest = isTestAccount(null, cleaner.user.name)
         activities.push({
           id: `login-${cleaner.id}-${cleaner.user.lastLoginAt.getTime()}`,
           type: 'cleaner_login',
@@ -266,6 +308,7 @@ export async function GET() {
             : 'Active cleaner',
           timestamp: cleaner.user.lastLoginAt,
           resourceId: cleaner.id,
+          isTest,
           meta: {
             cleanerName: cleaner.user.name,
             slug: cleaner.slug,
@@ -277,6 +320,7 @@ export async function GET() {
     // Add pending services
     for (const service of pendingServices) {
       const teamLeaderName = service.team.leader.user.name || 'Team Leader'
+      const isTest = isTestAccount(null, teamLeaderName)
       const priceInfo = service.priceType === 'FIXED'
         ? `€${Number(service.price)}`
         : `${service.hours}h`
@@ -289,6 +333,7 @@ export async function GET() {
         status: 'pending',
         actionable: true,
         resourceId: service.id,
+        isTest,
         meta: {
           serviceName: service.name,
           teamLeaderName,
@@ -306,6 +351,7 @@ export async function GET() {
       const character = event.action === 'EASTER_EGG_ALAN' ? 'Alan' : 'Amanda'
       const emoji = event.action === 'EASTER_EGG_ALAN' ? '🎤' : '💕'
       const cleanerName = event.cleaner?.user?.name || 'Unknown cleaner'
+      const isTest = isTestAccount(null, cleanerName)
       activities.push({
         id: `easter-egg-${event.id}`,
         type: 'easter_egg',
@@ -314,6 +360,7 @@ export async function GET() {
         timestamp: event.createdAt,
         status: character.toLowerCase(),
         resourceId: event.cleanerId || undefined,
+        isTest,
         meta: {
           character,
           cleanerName,

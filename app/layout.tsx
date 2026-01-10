@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/components/providers";
 import FeedbackWidget from "@/components/feedback-widget";
 import ImpersonationBanner from "@/components/impersonation-banner";
+import DevUserSwitcher from "@/components/dev/DevUserSwitcher";
 import { SchemaScript } from "@/components/seo/schema-script";
 import { ScriptLoader } from "@/components/analytics/script-loader";
 import { generateOrganizationSchema, generateWebSiteSchema } from "@/lib/seo/schema";
@@ -64,6 +65,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <Providers>
+          <DevUserSwitcher />
           <ScriptLoader />
           <ImpersonationBanner />
           {children}

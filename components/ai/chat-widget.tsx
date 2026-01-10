@@ -11,10 +11,14 @@ interface ChatWidgetProps {
   agentType: 'owner' | 'cleaner'
   agentName: string
   agentDescription: string
+  externalOpen?: boolean
+  onExternalClose?: () => void
+  initialMessage?: string
 }
 
-export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidgetProps) {
+export function ChatWidget({ agentType, agentName, agentDescription, externalOpen, onExternalClose, initialMessage }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [hasAutoSent, setHasAutoSent] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -27,6 +31,32 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Handle external open control
+  useEffect(() => {
+    if (externalOpen) {
+      setIsOpen(true)
+    }
+  }, [externalOpen])
+
+  // Handle initial message when opened externally
+  useEffect(() => {
+    if (isOpen && initialMessage && !hasAutoSent && messages.length === 0) {
+      setHasAutoSent(true)
+      // Auto-send the initial message
+      setInput(initialMessage)
+      setTimeout(() => {
+        const sendBtn = document.querySelector('[data-chat-send]') as HTMLButtonElement
+        sendBtn?.click()
+      }, 100)
+    }
+  }, [isOpen, initialMessage, hasAutoSent, messages.length])
+
+  const handleClose = () => {
+    setIsOpen(false)
+    setHasAutoSent(false)
+    onExternalClose?.()
+  }
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return
@@ -101,7 +131,7 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
           />
           <div className="fixed inset-x-3 bottom-20 h-[70vh] max-h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 sm:inset-x-auto sm:right-6 sm:w-96">
           {/* Header */}
@@ -133,7 +163,7 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
               </div>
             </div>
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={handleClose}
               className="text-white/80 hover:text-white transition-colors"
             >
               <svg
@@ -229,6 +259,7 @@ export function ChatWidget({ agentType, agentName, agentDescription }: ChatWidge
               <button
                 onClick={sendMessage}
                 disabled={!input.trim() || isLoading}
+                data-chat-send
                 className={`px-4 py-2 rounded-xl text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   agentType === 'owner'
                     ? 'bg-[#C4785A] hover:bg-[#B56A4F]'

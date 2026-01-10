@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import BookingCard, { BookingCardData } from './BookingCard'
+import { JobCard, BookingCardData } from '@/components/job-card'
 import { useLanguage } from '@/components/language-context'
 
 interface BookingFromAPI {
@@ -13,6 +13,7 @@ interface BookingFromAPI {
   date: string
   time: string
   property: {
+    id?: string
     address: string
     bedrooms?: number
     accessNotes?: string | null
@@ -24,6 +25,7 @@ interface BookingFromAPI {
   owner?: {
     name: string
     phone?: string
+    preferredLanguage?: string
   }
   cleanerId?: string
   cleanerName?: string
@@ -225,18 +227,23 @@ export default function JobsTimeline({
         service: b.service,
         hours: b.hours,
         price: b.price,
-        status: b.status,
+        status: b.status.toLowerCase() as 'pending' | 'confirmed' | 'completed' | 'cancelled',
+        // Property info
+        propertyId: b.property.id || '',
         propertyAddress: b.property.address,
-        memberName: b.cleanerName || currentCleanerName,
-        memberPhoto: b.cleanerPhoto ?? currentCleanerPhoto ?? null,
-        memberId: b.cleanerId || currentCleanerId || '',
-        // Extended data for peek modal
+        bedrooms: b.property.bedrooms,
+        accessNotes: b.property.accessNotes ?? undefined,
+        keyHolderName: b.property.keyHolderName ?? undefined,
+        keyHolderPhone: b.property.keyHolderPhone ?? undefined,
+        // Cleaner info (for display in cleaner context, shows owner photo)
+        cleanerId: b.cleanerId || currentCleanerId || '',
+        cleanerName: b.cleanerName || currentCleanerName,
+        cleanerPhoto: b.cleanerPhoto ?? currentCleanerPhoto ?? null,
+        cleanerSlug: '', // Not needed for cleaner view
+        // Owner info (cleaner sees this)
         ownerName: b.owner?.name,
         ownerPhone: b.owner?.phone,
-        accessNotes: b.property.accessNotes ?? undefined,
-        bedrooms: b.property.bedrooms,
-        keyHolderName: b.property.keyHolderName ?? undefined,
-        keyHolderPhone: b.property.keyHolderPhone ?? undefined
+        ownerLanguage: b.owner?.preferredLanguage,
       }))
       .filter(b => {
         if (filter === 'upcoming') {
@@ -362,9 +369,10 @@ export default function JobsTimeline({
                 {/* Day's bookings */}
                 <div className="space-y-2 pl-2 border-l-2 border-[#EBEBEB] ml-6">
                   {dayBookings.map(booking => (
-                    <BookingCard
+                    <JobCard
                       key={booking.id}
                       booking={booking}
+                      context="cleaner"
                       onClick={() => {
                         console.log('View booking:', booking.id)
                       }}
@@ -372,6 +380,7 @@ export default function JobsTimeline({
                       onDecline={handleDecline}
                       onComplete={handleComplete}
                       onSendMessage={handleSendMessage}
+                      cleanerName={currentCleanerName}
                     />
                   ))}
                 </div>

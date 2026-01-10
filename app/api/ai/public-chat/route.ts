@@ -170,6 +170,11 @@ const createMagicLinkTool: ChatCompletionTool = {
           type: 'string',
           description: 'Preferred time (e.g., "10:00 AM")',
         },
+        ownerType: {
+          type: 'string',
+          enum: ['REMOTE', 'RESIDENT'],
+          description: 'Whether the owner lives at the villa (RESIDENT) or visits from abroad (REMOTE). Ask this naturally during the conversation.',
+        },
       },
       required: ['visitorName', 'visitorPhone', 'bedrooms', 'bathrooms', 'serviceType', 'preferredDate', 'preferredTime'],
     },
@@ -286,8 +291,11 @@ When someone wants to book, collect this information step by step:
    - Number of bedrooms
    - Number of bathrooms
    - Outdoor areas (terrace, pool, garden) - optional
+   - Ask if they live at the villa or visit from abroad (this helps us personalise their experience)
 3. Preferred date and time (from available dates above)
 4. Their name and phone number
+
+Note: When asking about living situation, phrase it naturally like "Do you live at your villa year-round, or is it more of a holiday home you visit from abroad?" - this determines if they see the "I'm Coming Home" feature to notify cleaners of their arrival.
 
 IMPORTANT: Once you have the required details (service, bedrooms, bathrooms, date, time, name, phone), you MUST call the create_magic_link function immediately. Do NOT just say you will send a link - actually call the function.
 
@@ -443,6 +451,7 @@ If someone says they're "just testing", "trying out the chat", "seeing how this 
               bedrooms: args.bedrooms,
               bathrooms: args.bathrooms,
               outdoorAreas: args.outdoorAreas || [],
+              ownerType: args.ownerType, // REMOTE = visits from abroad, RESIDENT = lives there
               // accessNotes intentionally omitted - collected securely on magic link form
               serviceType: args.serviceType,
               preferredDate: args.preferredDate,

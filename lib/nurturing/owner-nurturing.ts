@@ -3,6 +3,7 @@ import { sendNurturingEmail } from './send-email'
 
 interface NurturingResults {
   profileNudges: number
+  propertyNudges: number
   bookingPrompts: number
   reEngagements: number
   errors: string[]
@@ -11,27 +12,34 @@ interface NurturingResults {
 /**
  * Process all owner nurturing campaigns
  * Called by daily cron job at 8am UTC
+ *
+ * Uses onboarding state fields for smarter nudge timing:
+ * - profileCompletedAt: when name was set
+ * - firstPropertyAddedAt: when first property was added
+ * - firstBookingAt: when first booking was made
+ * - onboardingCompletedAt: when all steps were done
  */
 export async function processOwnerNurturing(): Promise<NurturingResults> {
   const results: NurturingResults = {
     profileNudges: 0,
+    propertyNudges: 0,
     bookingPrompts: 0,
     reEngagements: 0,
     errors: [],
   }
 
   const now = new Date()
-  const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
-  const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
   const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
 
-  // 1. Profile Incomplete: 2+ days old, no name, no properties
+  // 1. Profile Incomplete: 24h+ since signup, no name set
+  // Quick nudge to complete profile
   try {
     const incompleteProfiles = await db.owner.findMany({
       where: {
-        createdAt: { lte: twoDaysAgo },
+        createdAt: { lte: oneDayAgo },
+        profileCompletedAt: null, // Uses new onboarding state field
         user: { name: null },
-        properties: { none: {} },
         nurturingCampaigns: { none: { emailType: 'PROFILE_INCOMPLETE' } },
       },
       include: {
@@ -58,15 +66,47 @@ export async function processOwnerNurturing(): Promise<NurturingResults> {
     results.errors.push(`Profile nudge batch error: ${error}`)
   }
 
-  // 2. First Booking Prompt: Property added 3+ days ago, no bookings
+  // 2. Property Nudge: 24h+ since profile completed, no property added
+  // Encourage adding their villa details
+  try {
+    const needsProperty = await db.owner.findMany({
+      where: {
+        profileCompletedAt: { not: null, lte: oneDayAgo }, // Profile done 24h+ ago
+        firstPropertyAddedAt: null, // No property yet
+        properties: { none: {} },
+        nurturingCampaigns: { none: { emailType: 'ADD_PROPERTY_NUDGE' } },
+      },
+      include: {
+        user: true,
+        properties: true,
+        bookings: { orderBy: { createdAt: 'desc' }, take: 1 },
+        publicChatConversations: { orderBy: { createdAt: 'desc' }, take: 5 },
+      },
+      take: 50,
+    })
+
+    console.log(`[Nurturing] Found ${needsProperty.length} owners needing property nudge`)
+
+    for (const owner of needsProperty) {
+      const result = await sendNurturingEmail(owner, 'ADD_PROPERTY_NUDGE')
+      if (result.success) {
+        results.propertyNudges++
+      } else if (result.error !== 'Email already sent') {
+        results.errors.push(`Property nudge to ${owner.user.email}: ${result.error}`)
+      }
+    }
+  } catch (error) {
+    console.error('[Nurturing] Error processing property nudges:', error)
+    results.errors.push(`Property nudge batch error: ${error}`)
+  }
+
+  // 3. First Booking Prompt: 24h+ since property added, no bookings
+  // Faster nudge to book their first clean
   try {
     const needsFirstBooking = await db.owner.findMany({
       where: {
-        properties: {
-          some: {
-            createdAt: { lte: threeDaysAgo },
-          },
-        },
+        firstPropertyAddedAt: { not: null, lte: oneDayAgo }, // Property added 24h+ ago
+        firstBookingAt: null, // No booking yet
         bookings: { none: {} },
         nurturingCampaigns: { none: { emailType: 'FIRST_BOOKING_PROMPT' } },
       },
@@ -94,7 +134,7 @@ export async function processOwnerNurturing(): Promise<NurturingResults> {
     results.errors.push(`Booking prompt batch error: ${error}`)
   }
 
-  // 3. Re-engagement: No login for 2+ weeks, has had activity before
+  // 4. Re-engagement: No login for 2+ weeks, has had activity before
   try {
     const inactive = await db.owner.findMany({
       where: {

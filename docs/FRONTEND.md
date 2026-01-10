@@ -421,11 +421,31 @@ return (
 ### Owner Dashboard (`/owner/dashboard`)
 
 **Tabs:**
-1. **Home** - Stats, upcoming bookings
-2. **Bookings** - All bookings with status
-3. **Messages** - Conversations with cleaners
+1. **Home** - Timeline view with JobCards, "I'm Coming Home" for remote owners, Getting Started checklist
+2. **Bookings** - All bookings with timeline grouping and peek-to-lock interaction
+3. **Messages** - Conversations with cleaners (auto-translated)
 4. **Villas** - Property management
 5. **Account** - Settings, language preference
+
+**JobCard Features:**
+- Same peek-to-lock gesture pattern as cleaner dashboard (300ms peek, 1500ms lock)
+- Owner-specific quick actions in locked mode:
+  - **Pending**: Message cleaner, Adjust time, Cancel request
+  - **Confirmed**: Message cleaner, Adjust time, Add access notes, Cancel
+  - **Completed**: Leave review, Book again with same cleaner
+- Edit buttons on Access Notes and Special Instructions (opens AI chat with context)
+- Skeleton "+" card at top of timeline to trigger new booking via AI
+
+**"I'm Coming Home" Feature:**
+- Only shown for REMOTE owners with at least one completed booking
+- Allows remote owners to notify cleaner of arrival and request extras (fresh flowers, groceries, linens)
+- Opens AI assistant pre-filled with arrival prep context
+
+**Owner Type Detection:**
+- New owners asked "One quick question" after first property/booking
+- Options: "I visit from abroad" (REMOTE) or "I live here" (RESIDENT)
+- Question disappears after answering to free up dashboard space
+- Can be repurposed for future nudge-type questions
 
 ### Admin Dashboard (`/admin`)
 
@@ -499,7 +519,7 @@ Shown on team leader profile pages when `?applicant={id}` parameter is present:
 | `NavigationMenu` | `components/smart-widget/NavigationMenu.tsx` | Full-screen navigation (long-press) |
 | `QuickActionMenu` | `components/smart-widget/QuickActionMenu.tsx` | Context-aware quick actions (tap) |
 
-### Dashboard Tab Components
+### Dashboard Tab Components (Cleaner)
 
 | Component | File | Purpose |
 |-----------|------|---------|
@@ -512,6 +532,44 @@ Shown on team leader profile pages when `?applicant={id}` parameter is present:
 | `TeamTab` | `app/dashboard/tabs/team.tsx` | Team management |
 | `ProfileTab` | `app/dashboard/tabs/profile.tsx` | Profile editing |
 | `SuccessTab` | `app/dashboard/tabs/success.tsx` | AI Success Coach with profile health and growth tips |
+
+### Dashboard Tab Components (Owner)
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `OwnerJobsTimeline` | `app/owner/dashboard/components/OwnerJobsTimeline.tsx` | Timeline view with date grouping and skeleton "+" card |
+| `OwnerBookingCard` | `app/owner/dashboard/components/OwnerBookingCard.tsx` | JobCard with peek-to-lock gesture for owners |
+| `OwnerBookingPeekModal` | `app/owner/dashboard/components/OwnerBookingPeekModal.tsx` | Peek modal with owner-specific actions |
+| `NewBookingCard` | `app/owner/dashboard/components/NewBookingCard.tsx` | Skeleton card with "+" to trigger new booking |
+| `HomeTab` | `app/owner/dashboard/tabs/home.tsx` | Timeline, "I'm Coming Home", Getting Started |
+| `BookingsTab` | `app/owner/dashboard/tabs/bookings.tsx` | Full timeline with all bookings |
+| `PropertiesTab` | `app/owner/dashboard/tabs/properties.tsx` | Villa management |
+| `AccountTab` | `app/owner/dashboard/tabs/account.tsx` | Profile and settings |
+
+### Universal JobCard Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `JobCard` | `components/job-card/JobCard.tsx` | Context-aware booking card (owner/cleaner/admin) |
+| `JobCardPeekModal` | `components/job-card/JobCardPeekModal.tsx` | Universal peek modal with context-based actions |
+
+These universal components accept a `context` prop to render appropriate UI and actions:
+- `context: 'owner'` - Shows cleaner info, edit buttons, cancel/reschedule
+- `context: 'cleaner'` - Shows owner info, accept/decline, complete job
+- `context: 'admin'` - Shows full details for both parties
+
+### Development Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `DevUserSwitcher` | `components/dev/DevUserSwitcher.tsx` | Dev-mode user switching toolbar (only in development) |
+
+**DevUserSwitcher Features:**
+- Fixed banner at top of screen (development mode only)
+- Quick switch between test users (Owner, Clara, Maria, Admin)
+- Uses `dev-login` NextAuth provider (bypasses OTP/magic link)
+- Quick nav links to each dashboard type
+- Shows current user role with colored badge
 
 ### UI Components
 

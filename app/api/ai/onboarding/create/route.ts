@@ -25,6 +25,7 @@ interface OnboardingData {
   outdoorAreas: string[]
   accessNotes?: string
   address?: string
+  ownerType?: 'REMOTE' | 'RESIDENT' // REMOTE = visits from abroad, RESIDENT = lives there
 
   // Booking details
   serviceType: 'regular' | 'deep' | 'arrival'
@@ -89,6 +90,7 @@ export async function POST(request: Request) {
         outdoorAreas: data.outdoorAreas,
         accessNotes: data.accessNotes,
         address: data.address,
+        ownerType: data.ownerType,
         serviceType: data.serviceType,
         servicePrice,
         serviceHours: serviceInfo.hours,

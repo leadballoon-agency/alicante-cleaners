@@ -28,6 +28,12 @@ export async function GET() {
             image: true,
           },
         },
+        _count: {
+          select: {
+            properties: true,
+            bookings: true,
+          },
+        },
       },
     })
 
@@ -69,6 +75,12 @@ export async function GET() {
               image: true,
             },
           },
+          _count: {
+            select: {
+              properties: true,
+              bookings: true,
+            },
+          },
         },
       })
 
@@ -87,6 +99,14 @@ export async function GET() {
       (owner.user.email ? owner.user.email.split('@')[0] : null) ||
       (owner.user.phone ? `Owner ${owner.user.phone.slice(-4)}` : 'Villa Owner')
 
+    // Build onboarding state for Getting Started checklist
+    const onboarding = {
+      profileCompleted: !!owner.profileCompletedAt || !!owner.user.name,
+      propertyAdded: !!owner.firstPropertyAddedAt || (owner._count?.properties ?? 0) > 0,
+      firstBooking: !!owner.firstBookingAt || (owner._count?.bookings ?? 0) > 0,
+      completed: !!owner.onboardingCompletedAt,
+    }
+
     return NextResponse.json({
       owner: {
         id: owner.id,
@@ -98,6 +118,8 @@ export async function GET() {
         totalBookings: owner.totalBookings,
         referrals,
         needsName: !owner.user.name, // Flag to prompt user to set their name
+        ownerType: owner.ownerType, // null = not asked, REMOTE = visits, RESIDENT = lives there
+        onboarding, // Getting Started checklist state
       },
     })
   } catch (error) {
@@ -122,10 +144,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, phone } = body
+    const { name, phone, ownerType } = body
 
     // Validate inputs
-    const updates: { name?: string; phone?: string | null } = {}
+    const userUpdates: { name?: string; phone?: string | null } = {}
+    const ownerUpdates: { ownerType?: 'REMOTE' | 'RESIDENT' } = {}
 
     if (name !== undefined) {
       if (typeof name !== 'string' || name.trim().length < 2) {
@@ -134,12 +157,22 @@ export async function PATCH(request: NextRequest) {
           { status: 400 }
         )
       }
-      updates.name = name.trim()
+      userUpdates.name = name.trim()
+    }
+
+    if (ownerType !== undefined) {
+      if (ownerType !== 'REMOTE' && ownerType !== 'RESIDENT') {
+        return NextResponse.json(
+          { error: 'Invalid owner type' },
+          { status: 400 }
+        )
+      }
+      ownerUpdates.ownerType = ownerType
     }
 
     if (phone !== undefined) {
       if (phone === '' || phone === null) {
-        updates.phone = null
+        userUpdates.phone = null
       } else if (typeof phone === 'string') {
         // Normalize phone: remove spaces, ensure starts with +
         const normalizedPhone = phone.replace(/\s/g, '')
@@ -165,31 +198,72 @@ export async function PATCH(request: NextRequest) {
           )
         }
 
-        updates.phone = normalizedPhone
+        userUpdates.phone = normalizedPhone
       }
     }
 
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(userUpdates).length === 0 && Object.keys(ownerUpdates).length === 0) {
       return NextResponse.json(
         { error: 'No valid updates provided' },
         { status: 400 }
       )
     }
 
-    // Update the user record
-    const updatedUser = await db.user.update({
-      where: { id: session.user.id },
-      data: updates,
-      select: {
-        name: true,
-        email: true,
-        phone: true,
-      },
-    })
+    // Update the user record if there are user updates
+    let updatedUser = null
+    if (Object.keys(userUpdates).length > 0) {
+      updatedUser = await db.user.update({
+        where: { id: session.user.id },
+        data: userUpdates,
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+        },
+      })
+    }
+
+    // Update owner record if there are owner updates
+    if (Object.keys(ownerUpdates).length > 0) {
+      await db.owner.update({
+        where: { userId: session.user.id },
+        data: ownerUpdates,
+      })
+    }
+
+    // Track onboarding progress: mark profile as completed if name is now set
+    if (userUpdates.name) {
+      const owner = await db.owner.findUnique({
+        where: { userId: session.user.id },
+        select: {
+          id: true,
+          profileCompletedAt: true,
+          firstPropertyAddedAt: true,
+          firstBookingAt: true,
+        },
+      })
+
+      if (owner && !owner.profileCompletedAt) {
+        const onboardingUpdates: { profileCompletedAt: Date; onboardingCompletedAt?: Date } = {
+          profileCompletedAt: new Date(),
+        }
+
+        // Check if all onboarding steps are now complete
+        if (owner.firstPropertyAddedAt && owner.firstBookingAt) {
+          onboardingUpdates.onboardingCompletedAt = new Date()
+        }
+
+        await db.owner.update({
+          where: { id: owner.id },
+          data: onboardingUpdates,
+        })
+      }
+    }
 
     return NextResponse.json({
       success: true,
       user: updatedUser,
+      ownerType: ownerUpdates.ownerType,
     })
   } catch (error) {
     console.error('Error updating owner profile:', error)

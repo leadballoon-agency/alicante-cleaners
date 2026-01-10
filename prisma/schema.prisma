@@ -141,6 +141,11 @@ enum FeedbackCategory {
   QUESTION
 }
 
+enum OwnerType {
+  REMOTE    // Lives abroad, visits villa occasionally
+  RESIDENT  // Lives at the villa full-time or mostly
+}
+
 enum FeedbackMood {
   LOVE
   LIKE
@@ -232,6 +237,15 @@ model Owner {
   // AI Nurturing
   derivedName        String?              // Name parsed from email if user.name is null
   welcomeEmailSentAt DateTime?            // Track when welcome email was sent
+
+  // Owner living situation
+  ownerType              OwnerType?       // null = not yet asked, REMOTE = visits, RESIDENT = lives there
+
+  // Onboarding State (null = not completed)
+  profileCompletedAt      DateTime?       // Name + phone filled
+  firstPropertyAddedAt    DateTime?       // First villa added
+  firstBookingAt          DateTime?       // First booking created
+  onboardingCompletedAt   DateTime?       // All steps done
 
   user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   properties              Property[]
@@ -706,6 +720,7 @@ model PendingOnboarding {
   outdoorAreas String[]         // ["pool", "garden", "terrace"]
   accessNotes  String?          @db.Text // Key location, gate codes, parking
   address      String?
+  ownerType    OwnerType?       // REMOTE = visits from abroad, RESIDENT = lives there
 
   // Booking details
   serviceType  String           // regular, deep, arrival
@@ -972,8 +987,9 @@ model PublicChatMessage {
 // Types of nurturing emails
 enum NurturingEmailType {
   WELCOME              // Sent immediately on signup
-  PROFILE_INCOMPLETE   // 2 days after signup if no name/property
-  FIRST_BOOKING_PROMPT // 3 days after property added, no booking
+  PROFILE_INCOMPLETE   // 24h after signup if no name set
+  ADD_PROPERTY_NUDGE   // 24h after profile completed if no property
+  FIRST_BOOKING_PROMPT // 24h after property added if no booking
   RE_ENGAGEMENT        // 2 weeks no login
 }
 

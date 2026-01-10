@@ -95,6 +95,32 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Track onboarding progress: mark first property as added
+    const ownerData = await db.owner.findUnique({
+      where: { id: owner.id },
+      select: {
+        firstPropertyAddedAt: true,
+        profileCompletedAt: true,
+        firstBookingAt: true,
+      },
+    })
+
+    if (ownerData && !ownerData.firstPropertyAddedAt) {
+      const onboardingUpdates: { firstPropertyAddedAt: Date; onboardingCompletedAt?: Date } = {
+        firstPropertyAddedAt: new Date(),
+      }
+
+      // Check if all onboarding steps are now complete
+      if (ownerData.profileCompletedAt && ownerData.firstBookingAt) {
+        onboardingUpdates.onboardingCompletedAt = new Date()
+      }
+
+      await db.owner.update({
+        where: { id: owner.id },
+        data: onboardingUpdates,
+      })
+    }
+
     return NextResponse.json({
       success: true,
       property: {

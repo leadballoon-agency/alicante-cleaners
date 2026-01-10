@@ -105,6 +105,7 @@ export async function POST(
         data: {
           userId: user.id,
           referralCode: generateReferralCode(),
+          ownerType: onboarding.ownerType, // Set from AI conversation
         },
       })
     } else if (!owner) {
@@ -114,6 +115,7 @@ export async function POST(
         data: {
           userId: user.id,
           referralCode: generateReferralCode(),
+          ownerType: onboarding.ownerType, // Set from AI conversation
         },
       })
     }

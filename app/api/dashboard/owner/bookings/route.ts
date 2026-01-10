@@ -36,6 +36,9 @@ export async function GET() {
             name: true,
             address: true,
             bedrooms: true,
+            notes: true,
+            keyHolderName: true,
+            keyHolderPhone: true,
           },
         },
         cleaner: {
@@ -44,6 +47,7 @@ export async function GET() {
               select: {
                 name: true,
                 image: true,
+                phone: true,
               },
             },
           },
@@ -58,22 +62,27 @@ export async function GET() {
     // Transform bookings to match frontend expectations
     const formattedBookings = bookings.map(b => ({
       id: b.id,
-      status: b.status.toLowerCase() as 'pending' | 'confirmed' | 'completed',
+      status: b.status.toLowerCase() as 'pending' | 'confirmed' | 'completed' | 'cancelled',
       service: b.service,
       price: Number(b.price),
       date: b.date,
       time: b.time,
+      specialInstructions: b.notes || undefined,
       property: {
         id: b.property.id,
         name: b.property.name,
         address: b.property.address,
         bedrooms: b.property.bedrooms,
+        accessNotes: b.property.notes || undefined,
+        keyHolderName: b.property.keyHolderName || undefined,
+        keyHolderPhone: b.property.keyHolderPhone || undefined,
       },
       cleaner: {
         id: b.cleaner.id,
         name: b.cleaner.user.name || 'Unknown',
         photo: b.cleaner.user.image,
         slug: b.cleaner.slug,
+        phone: b.cleaner.user.phone || undefined,
       },
       hasReviewedCleaner: !!b.review,
     }))

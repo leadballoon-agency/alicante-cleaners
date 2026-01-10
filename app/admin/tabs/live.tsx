@@ -12,6 +12,7 @@ type ActivityItem = {
   actionable?: boolean
   resourceId?: string
   meta?: Record<string, unknown>
+  isTest?: boolean
 }
 
 type Analytics = {
@@ -392,7 +393,14 @@ export default function LiveTab({ onTabChange, onApproveReview, onApproveCleaner
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-medium text-[#1A1A1A] text-sm">{item.title}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-[#1A1A1A] text-sm">{item.title}</p>
+                          {item.isTest && (
+                            <span className="px-1.5 py-0.5 bg-[#9B9B9B]/20 text-[#6B6B6B] text-[10px] font-medium rounded uppercase tracking-wide">
+                              Test
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-[#6B6B6B] truncate">{item.description}</p>
                       </div>
                       <span className="text-xs text-[#9B9B9B] whitespace-nowrap">

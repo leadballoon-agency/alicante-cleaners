@@ -315,6 +315,32 @@ export async function POST(request: NextRequest) {
       linkChatConversations(nurturingInfo.userId, nurturingInfo.email, nurturingInfo.phone).catch(console.error)
     }
 
+    // Track onboarding progress: mark first booking
+    const ownerData = await db.owner.findUnique({
+      where: { id: result.ownerId },
+      select: {
+        firstBookingAt: true,
+        profileCompletedAt: true,
+        firstPropertyAddedAt: true,
+      },
+    })
+
+    if (ownerData && !ownerData.firstBookingAt) {
+      const onboardingUpdates: { firstBookingAt: Date; onboardingCompletedAt?: Date } = {
+        firstBookingAt: new Date(),
+      }
+
+      // Check if all onboarding steps are now complete
+      if (ownerData.profileCompletedAt && ownerData.firstPropertyAddedAt) {
+        onboardingUpdates.onboardingCompletedAt = new Date()
+      }
+
+      await db.owner.update({
+        where: { id: result.ownerId },
+        data: onboardingUpdates,
+      })
+    }
+
     return NextResponse.json({
       success: true,
       booking: {

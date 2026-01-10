@@ -21,6 +21,14 @@ export type Owner = {
   referralCode: string
   referrals: { name: string; joinedAt: Date; hasBooked: boolean }[]
   referralCredits: number
+  needsName?: boolean
+  ownerType?: 'REMOTE' | 'RESIDENT' | null
+  onboarding?: {
+    profileCompleted: boolean
+    propertyAdded: boolean
+    firstBooking: boolean
+    completed: boolean
+  }
 }
 
 export type Property = {
@@ -38,22 +46,27 @@ export type Property = {
 
 export type OwnerBooking = {
   id: string
-  status: 'pending' | 'confirmed' | 'completed'
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
   service: string
   price: number
   date: Date
   time: string
+  specialInstructions?: string
   property: {
     id: string
     name: string
     address: string
     bedrooms: number
+    accessNotes?: string
+    keyHolderName?: string
+    keyHolderPhone?: string
   }
   cleaner: {
     id: string
     name: string
     photo: string | null
     slug: string
+    phone?: string
   }
   hasReviewedCleaner?: boolean
 }
@@ -74,6 +87,8 @@ export default function OwnerDashboard() {
     cleanerId: string
     cleanerName: string
   } | null>(null)
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatInitialMessage, setChatInitialMessage] = useState<string | undefined>()
 
   // Fetch owner data
   const fetchDashboardData = useCallback(async () => {
@@ -158,6 +173,60 @@ export default function OwnerDashboard() {
     } catch (err) {
       console.error('Error adding property:', err)
       return false
+    }
+  }
+
+  const handleOpenChat = (initialMessage?: string) => {
+    setChatInitialMessage(initialMessage)
+    setChatOpen(true)
+  }
+
+  const handleCloseChat = () => {
+    setChatOpen(false)
+    setChatInitialMessage(undefined)
+  }
+
+  const handleReschedule = (bookingId: string) => {
+    const booking = bookings.find(b => b.id === bookingId)
+    if (booking) {
+      const message = `I need to reschedule my ${booking.service.toLowerCase()} at ${booking.property.name} (currently ${new Date(booking.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })} at ${booking.time}). Can you help me find a new time?`
+      handleOpenChat(message)
+    }
+  }
+
+  const handleCancel = async (bookingId: string) => {
+    try {
+      const response = await fetch(`/api/dashboard/owner/bookings/${bookingId}/cancel`, {
+        method: 'POST',
+      })
+      if (response.ok) {
+        // Update local state
+        setBookings(prev => prev.map(b =>
+          b.id === bookingId ? { ...b, status: 'cancelled' as const } : b
+        ))
+      }
+    } catch (err) {
+      console.error('Error cancelling booking:', err)
+    }
+  }
+
+  const handleAddAccess = (bookingId: string) => {
+    const booking = bookings.find(b => b.id === bookingId)
+    if (booking) {
+      // Check if access notes already exist (editing vs adding)
+      const hasAccessNotes = booking.property.accessNotes || booking.property.keyHolderName
+      const message = hasAccessNotes
+        ? `I need to update the access details for my ${booking.property.name} booking. The current notes may need changing - for example, I might be at the villa myself so the key holder isn't necessary.`
+        : `I need to add access details for my ${booking.property.name} booking. Can you help me provide key location, alarm codes, or key holder info for my cleaner?`
+      handleOpenChat(message)
+    }
+  }
+
+  const handleAddInstructions = (bookingId: string) => {
+    const booking = bookings.find(b => b.id === bookingId)
+    if (booking) {
+      const message = `I'd like to add special instructions for my upcoming ${booking.service.toLowerCase()} at ${booking.property.name}. What details should I include for ${booking.cleaner.name}?`
+      handleOpenChat(message)
     }
   }
 
@@ -275,10 +344,31 @@ export default function OwnerDashboard() {
             owner={owner}
             properties={properties}
             bookings={bookings}
+            onNavigate={(tab: Tab) => setActiveTab(tab)}
+            onOwnerTypeChange={(ownerType: 'REMOTE' | 'RESIDENT') => {
+              setOwner(prev => prev ? { ...prev, ownerType } : null)
+            }}
+            onMessage={(bookingId) => {
+              const booking = bookings.find(b => b.id === bookingId)
+              if (booking) {
+                handleMessage(booking.cleaner.id, booking.cleaner.name, booking.property.id)
+              }
+            }}
+            onReschedule={handleReschedule}
+            onCancel={handleCancel}
+            onReview={(bookingId) => {
+              const booking = bookings.find(b => b.id === bookingId)
+              if (booking) {
+                handleLeaveReview(bookingId, booking.cleaner.id, booking.cleaner.name)
+              }
+            }}
+            onAddAccess={handleAddAccess}
+            onAddInstructions={handleAddInstructions}
+            onOpenChat={handleOpenChat}
           />
         )}
         {activeTab === 'bookings' && (
-          <BookingsTab bookings={bookings} onLeaveReview={handleLeaveReview} onMessage={handleMessage} />
+          <BookingsTab bookings={bookings} onLeaveReview={handleLeaveReview} onMessage={handleMessage} onOpenChat={handleOpenChat} />
         )}
         {activeTab === 'messages' && <MessagesTab />}
         {activeTab === 'properties' && (
@@ -325,6 +415,9 @@ export default function OwnerDashboard() {
         agentType="owner"
         agentName="Villa Assistant"
         agentDescription="Your personal villa management helper"
+        externalOpen={chatOpen}
+        onExternalClose={handleCloseChat}
+        initialMessage={chatInitialMessage}
       />
     </div>
   )

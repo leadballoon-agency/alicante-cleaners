@@ -427,6 +427,28 @@ Get owner's bookings.
 
 ---
 
+### POST /api/dashboard/owner/bookings/[id]/cancel
+
+Cancel a pending or confirmed booking.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Booking cancelled successfully"
+}
+```
+
+**Errors:**
+- `404` - Booking not found or doesn't belong to owner
+- `400` - Cannot cancel completed or already cancelled bookings
+
+**Side Effects:**
+- Updates booking status to CANCELLED
+- (TODO) Sends notification to cleaner about cancellation
+
+---
+
 ### GET/POST /api/dashboard/owner/properties
 
 Manage properties.

@@ -179,6 +179,54 @@ export const authOptions: NextAuthOptions = {
       },
     }),
 
+    // DEV-ONLY: Quick login for testing (bypasses all auth)
+    ...(process.env.ALLOW_DEV_OTP_BYPASS === 'true'
+      ? [
+          CredentialsProvider({
+            id: 'dev-login',
+            name: 'Dev Login',
+            credentials: {
+              identifier: { label: 'Email or Phone', type: 'text' },
+            },
+            async authorize(credentials) {
+              if (process.env.NODE_ENV !== 'development') {
+                return null
+              }
+
+              const identifier = credentials?.identifier
+              if (!identifier) return null
+
+              // Find user by email or phone
+              const user = await db.user.findFirst({
+                where: {
+                  OR: [
+                    { email: identifier },
+                    { phone: identifier },
+                    { phone: normalizePhone(identifier) },
+                  ],
+                },
+              })
+
+              if (!user) {
+                console.log(`[DEV LOGIN] User not found: ${identifier}`)
+                return null
+              }
+
+              console.log(`[DEV LOGIN] Authenticated as: ${user.name || user.email || user.phone} (${user.role})`)
+
+              return {
+                id: user.id,
+                email: user.email ?? undefined,
+                name: user.name ?? undefined,
+                phone: user.phone ?? undefined,
+                image: user.image ?? undefined,
+                role: user.role,
+              }
+            },
+          }),
+        ]
+      : []),
+
     // Google OAuth (for Calendar Sync - cleaners connect during onboarding)
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? [
