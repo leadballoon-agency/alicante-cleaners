@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import {
   AdminFeedItem,
@@ -97,7 +98,13 @@ export default function AdminCardPeekModal({
     }
   }, [isVisible])
 
-  if (!item || !isVisible) return null
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    setPortalContainer(document.body)
+  }, [])
+
+  if (!item || !isVisible || !portalContainer) return null
 
   const styles = CARD_STYLES[item.type]
 
@@ -205,7 +212,7 @@ export default function AdminCardPeekModal({
     }
   }
 
-  return (
+  return createPortal(
     <div
       className={`fixed inset-0 z-50 flex items-end justify-center transition-all duration-200 ${
         isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -270,7 +277,8 @@ export default function AdminCardPeekModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    portalContainer
   )
 }
 

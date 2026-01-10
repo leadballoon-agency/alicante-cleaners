@@ -216,7 +216,7 @@ export default function AdminCard({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
         onPointerLeave={handlePointerCancel}
-        className={`w-full bg-white rounded-xl transition-all text-left touch-none select-none overflow-hidden ${
+        className={`w-full bg-white rounded-xl transition-all text-left select-none overflow-hidden ${
           isPeeking
             ? 'shadow-lg scale-[0.98] ring-2 ring-[#C4785A]'
             : 'hover:shadow-sm'
