@@ -14,6 +14,7 @@ import {
   OwnerActivityCardData,
   SystemAlertCardData,
   AuditEntryCardData,
+  EmailSentCardData,
   AdminBookingAction,
   AdminCleanerAction,
   AdminReviewAction,
@@ -529,11 +530,101 @@ export function transformAuditEntryToCard(entry: ApiAuditEntry): AuditEntryCardD
 }
 
 // ============================================
+// Email Sent Transformers
+// ============================================
+
+// Owner nurturing campaign
+interface ApiOwnerNurturingCampaign {
+  id: string
+  emailType: string
+  subject?: string | null
+  sentAt: Date | string
+  owner: {
+    id: string
+    userId: string
+    user: {
+      name?: string | null
+      email: string
+    }
+  }
+}
+
+// Cleaner nurturing campaign
+interface ApiCleanerNurturingCampaign {
+  id: string
+  emailType: string
+  subject?: string | null
+  sentAt: Date | string
+  cleaner: {
+    id: string
+    slug: string
+    user: {
+      name?: string | null
+      email?: string | null
+    }
+  }
+}
+
+export function transformOwnerNurturingToCard(campaign: ApiOwnerNurturingCampaign): EmailSentCardData {
+  const isTest = isTestAccount(campaign.owner.user.email, campaign.owner.user.name)
+
+  return {
+    id: `email-owner-${campaign.id}`,
+    type: 'email_sent',
+    timestamp: new Date(campaign.sentAt),
+    priority: 'low',
+    isTest,
+    resourceId: campaign.id,
+    email: {
+      id: campaign.id,
+      emailType: campaign.emailType,
+      recipientType: 'owner',
+      recipientId: campaign.owner.id,
+      recipientName: campaign.owner.user.name || 'Unknown Owner',
+      recipientEmail: campaign.owner.user.email,
+      subject: campaign.subject || undefined,
+      sentAt: new Date(campaign.sentAt),
+      ownerId: campaign.owner.id,
+      ownerName: campaign.owner.user.name || 'Unknown Owner',
+    },
+    availableActions: ['view_recipient'],
+  }
+}
+
+export function transformCleanerNurturingToCard(campaign: ApiCleanerNurturingCampaign): EmailSentCardData {
+  const isTest = isTestAccount(campaign.cleaner.user.email, campaign.cleaner.user.name)
+
+  return {
+    id: `email-cleaner-${campaign.id}`,
+    type: 'email_sent',
+    timestamp: new Date(campaign.sentAt),
+    priority: 'low',
+    isTest,
+    resourceId: campaign.id,
+    email: {
+      id: campaign.id,
+      emailType: campaign.emailType,
+      recipientType: 'cleaner',
+      recipientId: campaign.cleaner.id,
+      recipientName: campaign.cleaner.user.name || 'Unknown Cleaner',
+      recipientEmail: campaign.cleaner.user.email || '',
+      subject: campaign.subject || undefined,
+      sentAt: new Date(campaign.sentAt),
+      cleanerId: campaign.cleaner.id,
+      cleanerName: campaign.cleaner.user.name || 'Unknown Cleaner',
+      cleanerSlug: campaign.cleaner.slug,
+    },
+    availableActions: ['view_recipient'],
+  }
+}
+
+// ============================================
 // Batch Transformer
 // ============================================
 
 interface TransformOptions {
   includeAudit?: boolean
+  includeEmails?: boolean
   showTestData?: boolean
   filter?: string
 }
@@ -551,6 +642,8 @@ export function transformToFeed(
     dormantOwners?: ApiOwnerWithStats[]
     alerts?: ApiAlert[]
     auditEntries?: ApiAuditEntry[]
+    ownerNurturingCampaigns?: ApiOwnerNurturingCampaign[]
+    cleanerNurturingCampaigns?: ApiCleanerNurturingCampaign[]
   },
   options: TransformOptions = {}
 ): AdminFeedItem[] {
@@ -596,6 +689,16 @@ export function transformToFeed(
     items.push(...data.auditEntries.map(transformAuditEntryToCard))
   }
 
+  // Transform email campaigns (if requested)
+  if (options.includeEmails) {
+    if (data.ownerNurturingCampaigns) {
+      items.push(...data.ownerNurturingCampaigns.map(transformOwnerNurturingToCard))
+    }
+    if (data.cleanerNurturingCampaigns) {
+      items.push(...data.cleanerNurturingCampaigns.map(transformCleanerNurturingToCard))
+    }
+  }
+
   // Filter out test data if requested
   let filtered = options.showTestData
     ? items
@@ -617,6 +720,8 @@ export function transformToFeed(
           return item.type.startsWith('owner_')
         case 'alerts':
           return item.type === 'system_alert'
+        case 'emails':
+          return item.type === 'email_sent'
         default:
           return true
       }

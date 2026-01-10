@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
   const format = searchParams.get('format') // 'cards' for new format
   const filter = searchParams.get('filter') || 'all'
   const includeAudit = searchParams.get('includeAudit') === 'true'
+  const includeEmails = searchParams.get('includeEmails') === 'true'
   const showTestData = searchParams.get('showTestData') === 'true'
 
   try {
@@ -75,6 +76,8 @@ export async function GET(request: NextRequest) {
       recentCleanerLogins,
       pendingServices,
       easterEggEvents,
+      ownerNurturingCampaigns,
+      cleanerNurturingCampaigns,
     ] = await Promise.all([
       // Recent bookings (last 24 hours)
       db.booking.findMany({
@@ -188,6 +191,38 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         take: 20,
       }),
+
+      // Owner nurturing campaigns (last 7 days) - only if includeEmails
+      includeEmails ? db.nurturingCampaign.findMany({
+        where: {
+          sentAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        },
+        include: {
+          owner: {
+            include: {
+              user: { select: { name: true, email: true } },
+            },
+          },
+        },
+        orderBy: { sentAt: 'desc' },
+        take: 50,
+      }) : Promise.resolve([]),
+
+      // Cleaner nurturing campaigns (last 7 days) - only if includeEmails
+      includeEmails ? db.cleanerNurturingCampaign.findMany({
+        where: {
+          sentAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        },
+        include: {
+          cleaner: {
+            include: {
+              user: { select: { name: true, email: true } },
+            },
+          },
+        },
+        orderBy: { sentAt: 'desc' },
+        take: 50,
+      }) : Promise.resolve([]),
     ])
 
     // NEW CARD FORMAT - If requested, return unified feed items
@@ -200,9 +235,12 @@ export async function GET(request: NextRequest) {
           cleanerLogins: recentCleanerLogins as unknown as Parameters<typeof transformToFeed>[0]['cleanerLogins'],
           reviews: recentReviews as unknown as Parameters<typeof transformToFeed>[0]['reviews'],
           owners: recentOwners as unknown as Parameters<typeof transformToFeed>[0]['owners'],
+          ownerNurturingCampaigns: ownerNurturingCampaigns as unknown as Parameters<typeof transformToFeed>[0]['ownerNurturingCampaigns'],
+          cleanerNurturingCampaigns: cleanerNurturingCampaigns as unknown as Parameters<typeof transformToFeed>[0]['cleanerNurturingCampaigns'],
         },
         {
           includeAudit,
+          includeEmails,
           showTestData,
           filter,
         }
@@ -216,8 +254,10 @@ export async function GET(request: NextRequest) {
           cleanerLogins: recentCleanerLogins as unknown as Parameters<typeof transformToFeed>[0]['cleanerLogins'],
           reviews: recentReviews as unknown as Parameters<typeof transformToFeed>[0]['reviews'],
           owners: recentOwners as unknown as Parameters<typeof transformToFeed>[0]['owners'],
+          ownerNurturingCampaigns: ownerNurturingCampaigns as unknown as Parameters<typeof transformToFeed>[0]['ownerNurturingCampaigns'],
+          cleanerNurturingCampaigns: cleanerNurturingCampaigns as unknown as Parameters<typeof transformToFeed>[0]['cleanerNurturingCampaigns'],
         },
-        { showTestData } // No filter, get all for counts
+        { showTestData, includeEmails } // No filter, get all for counts
       )
 
       const byType = countByType(allItems)

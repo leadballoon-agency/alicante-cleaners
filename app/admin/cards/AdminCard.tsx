@@ -12,6 +12,7 @@ import {
   OwnerActivityCardData,
   SystemAlertCardData,
   AuditEntryCardData,
+  EmailSentCardData,
   CARD_STYLES,
   formatRelativeTime,
 } from '@/lib/admin/card-types'
@@ -203,6 +204,9 @@ export default function AdminCard({
 
       case 'audit_entry':
         return <AuditCardContent item={item as AuditEntryCardData} />
+
+      case 'email_sent':
+        return <EmailSentCardContent item={item as EmailSentCardData} />
 
       default:
         return null
@@ -566,6 +570,46 @@ function AuditCardContent({ item }: { item: AuditEntryCardData }) {
         {audit.targetName && (
           <span className="text-[#1A1A1A] font-medium">{audit.targetName}</span>
         )}
+      </div>
+    </div>
+  )
+}
+
+function EmailSentCardContent({ item }: { item: EmailSentCardData }) {
+  const { email } = item
+
+  // Format email type nicely
+  const formatEmailType = (type: string) => {
+    return type
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .split(' ')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ')
+  }
+
+  const recipientIcon = email.recipientType === 'owner' ? '🏠' : '🧹'
+
+  return (
+    <div className="flex items-center gap-3 py-1">
+      {/* Email icon */}
+      <div className="w-8 h-8 rounded-lg bg-[#F3E5F5] flex items-center justify-center text-sm flex-shrink-0">
+        ✉️
+      </div>
+
+      <div className="flex-1 min-w-0">
+        {/* Email type */}
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <span className="text-xs">{recipientIcon}</span>
+          <span className="text-sm font-medium text-[#1A1A1A] truncate">
+            {formatEmailType(email.emailType)}
+          </span>
+        </div>
+
+        {/* Recipient */}
+        <p className="text-xs text-[#6B6B6B] truncate">
+          To: {email.recipientName}
+        </p>
       </div>
     </div>
   )

@@ -156,11 +156,15 @@ export default function LiveTab({
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [pendingCount, setPendingCount] = useState({ bookings: 0, reviews: 0, cleaners: 0 })
   const [urgentOnly, setUrgentOnly] = useState(false)
+  const [showEmails, setShowEmails] = useState(false)
 
   const fetchActivity = useCallback(async () => {
     try {
+      const params = new URLSearchParams({ format: 'cards' })
+      if (showEmails) params.append('includeEmails', 'true')
+
       const [activityRes, analyticsRes, ga4Res] = await Promise.all([
-        fetch('/api/admin/activity?format=cards'),
+        fetch(`/api/admin/activity?${params.toString()}`),
         fetch('/api/admin/analytics'),
         fetch('/api/admin/ga4-realtime'),
       ])
@@ -191,7 +195,7 @@ export default function LiveTab({
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [showEmails])
 
   useEffect(() => {
     fetchActivity()
@@ -330,6 +334,16 @@ export default function LiveTab({
           }`}
         >
           {autoRefresh ? '● Live' : '○ Paused'}
+        </button>
+        <button
+          onClick={() => setShowEmails(!showEmails)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            showEmails
+              ? 'bg-[#F3E5F5] text-[#7B1FA2]'
+              : 'bg-[#F5F5F3] text-[#6B6B6B]'
+          }`}
+        >
+          ✉️ Emails {showEmails ? 'On' : 'Off'}
         </button>
         {stats && (
           <span className="text-lg font-bold text-[#1A1A1A]">€{stats.thisMonthRevenue.toLocaleString()}</span>

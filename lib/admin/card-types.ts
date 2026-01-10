@@ -18,6 +18,7 @@ export type AdminCardType =
   | 'owner_dormant'
   | 'system_alert'
   | 'audit_entry'
+  | 'email_sent'
 
 // Priority levels for feed ordering
 export type CardPriority = 'urgent' | 'normal' | 'low'
@@ -233,6 +234,36 @@ export interface SystemAlertCardData extends AdminCardBase {
 }
 
 // ============================================
+// Email Sent Cards
+// ============================================
+
+export type EmailCardType = 'email_sent'
+
+export type EmailRecipientType = 'owner' | 'cleaner'
+
+export interface EmailSentCardData extends AdminCardBase {
+  type: 'email_sent'
+  email: {
+    id: string
+    emailType: string // NurturingEmailType or CleanerNurturingEmailType
+    recipientType: EmailRecipientType
+    // Recipient
+    recipientId: string
+    recipientName: string
+    recipientEmail: string
+    // Context
+    subject?: string
+    sentAt: Date
+    // For linking
+    cleanerId?: string
+    cleanerName?: string
+    cleanerSlug?: string
+    ownerId?: string
+    ownerName?: string
+  }
+  availableActions: ('view_recipient')[]}
+
+// ============================================
 // Audit Entry Cards
 // ============================================
 
@@ -286,6 +317,7 @@ export type AdminFeedItem =
   | OwnerActivityCardData
   | SystemAlertCardData
   | AuditEntryCardData
+  | EmailSentCardData
 
 // ============================================
 // Filter Types
@@ -299,11 +331,13 @@ export type FeedFilter =
   | 'reviews'
   | 'owners'
   | 'alerts'
+  | 'emails'
 
 export interface FeedFilterState {
   activeFilter: FeedFilter
   showAudit: boolean
   showTestData: boolean
+  showEmails: boolean
   dateRange?: 'today' | 'week' | 'month' | 'all'
 }
 
@@ -398,6 +432,12 @@ export const CARD_STYLES: Record<AdminCardType, {
     urgentBg: 'white',
     label: 'Audit Log',
   },
+  email_sent: {
+    borderColor: '#7B1FA2',
+    icon: 'mail',
+    urgentBg: 'white',
+    label: 'Email Sent',
+  },
 }
 
 // Helper to get styles for a card
@@ -423,6 +463,7 @@ export function getFilterForType(type: AdminCardType): FeedFilter {
   if (type.startsWith('review_')) return 'reviews'
   if (type.startsWith('owner_')) return 'owners'
   if (type === 'system_alert') return 'alerts'
+  if (type === 'email_sent') return 'emails'
   return 'all'
 }
 
