@@ -214,9 +214,10 @@ export default function AdminCardPeekModal({
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-50 flex items-end justify-center transition-all duration-200 ${
+      className={`fixed left-0 right-0 top-0 z-50 flex items-end justify-center transition-all duration-200 ${
         isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
+      style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}
     >
       {/* Backdrop */}
       <div
