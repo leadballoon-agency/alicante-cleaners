@@ -211,6 +211,34 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Where We Are Now - Metrics Block */}
+      <section className="px-6 py-8 bg-[#1A1A1A]">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-semibold text-white mb-2">Where we are now</h2>
+            <p className="text-white/60 text-sm">Building the trusted service layer for Spain&apos;s vacation villas</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white/10 rounded-xl p-4 text-center">
+              <p className="text-2xl sm:text-3xl font-bold text-white">{cleaners.length || 6}+</p>
+              <p className="text-xs sm:text-sm text-white/70">Vetted cleaners</p>
+            </div>
+            <div className="bg-white/10 rounded-xl p-4 text-center">
+              <p className="text-2xl sm:text-3xl font-bold text-white">10</p>
+              <p className="text-xs sm:text-sm text-white/70">AI agents live</p>
+            </div>
+            <div className="bg-white/10 rounded-xl p-4 text-center">
+              <p className="text-2xl sm:text-3xl font-bold text-white">7</p>
+              <p className="text-xs sm:text-sm text-white/70">Languages</p>
+            </div>
+            <div className="bg-white/10 rounded-xl p-4 text-center">
+              <p className="text-2xl sm:text-3xl font-bold text-[#C4785A]">Beta</p>
+              <p className="text-xs sm:text-sm text-white/70">Pay cleaner direct</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Partners Grid */}
       <main className="px-6 py-8 max-w-5xl mx-auto">
         {loading ? (
@@ -525,6 +553,54 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Security Trust Section */}
+      <section className="px-6 py-12 bg-gradient-to-b from-[#1A1A1A] to-[#2A2A2A]">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#2E7D32]/20 text-[#81C784] text-sm font-medium rounded-full border border-[#2E7D32]/30 mb-4">
+              <span className="w-2 h-2 bg-[#81C784] rounded-full" />
+              Enterprise-grade security
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-3">
+              Your villa access codes are protected
+            </h2>
+            <p className="text-white/70 max-w-xl mx-auto">
+              We built serious security because we take key codes, alarm codes, and property access seriously.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+              <div className="w-10 h-10 bg-[#2E7D32]/20 rounded-lg flex items-center justify-center mb-3">
+                <span className="text-lg">🔐</span>
+              </div>
+              <h3 className="font-medium text-white mb-1">Encrypted at rest</h3>
+              <p className="text-sm text-white/60">AES-256 encryption for all sensitive property details</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+              <div className="w-10 h-10 bg-[#2E7D32]/20 rounded-lg flex items-center justify-center mb-3">
+                <span className="text-lg">⏰</span>
+              </div>
+              <h3 className="font-medium text-white mb-1">Just-in-time access</h3>
+              <p className="text-sm text-white/60">Codes only visible 24h before booking, auto-revoked after</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+              <div className="w-10 h-10 bg-[#2E7D32]/20 rounded-lg flex items-center justify-center mb-3">
+                <span className="text-lg">👤</span>
+              </div>
+              <h3 className="font-medium text-white mb-1">Role-limited</h3>
+              <p className="text-sm text-white/60">Only your assigned cleaner sees access details - no one else</p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <p className="text-white/50 text-sm">
+              No permanent storage of codes. System-enforced, not policy-dependent.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* How it Works */}
       <section className="px-6 py-10 bg-white border-y border-[#EBEBEB]">
         <div className="max-w-4xl mx-auto">
@@ -796,8 +872,8 @@ export default function HomePage() {
             </div>
             <div className="text-center">
               <div className="text-2xl mb-2">💳</div>
-              <h3 className="font-medium text-[#1A1A1A] text-sm mb-1">{t('why.paymentTitle')}</h3>
-              <p className="text-xs text-[#6B6B6B]">{t('why.paymentDesc')}</p>
+              <h3 className="font-medium text-[#1A1A1A] text-sm mb-1">Pay cleaner direct</h3>
+              <p className="text-xs text-[#6B6B6B]">Beta: No platform fees</p>
             </div>
           </div>
         </div>

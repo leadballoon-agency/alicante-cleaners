@@ -247,6 +247,55 @@ export default function AboutPage() {
           </div>
         </section>
 
+        {/* Where We Are Now */}
+        <section className="mb-12">
+          <div className="bg-[#1A1A1A] rounded-2xl p-6 sm:p-8">
+            <h2 className="text-xl font-semibold text-white mb-4 text-center">
+              Where we are now
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white/10 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-white">6+</p>
+                <p className="text-xs text-white/70">Vetted cleaners</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-white">10</p>
+                <p className="text-xs text-white/70">AI agents live</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-white">7</p>
+                <p className="text-xs text-white/70">Languages</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-[#C4785A]">Beta</p>
+                <p className="text-xs text-white/70">Pay cleaner direct</p>
+              </div>
+            </div>
+            <p className="text-sm text-white/60 text-center">
+              Building the trusted service layer for Spain&apos;s vacation villas
+            </p>
+          </div>
+        </section>
+
+        {/* Security */}
+        <section className="mb-12">
+          <div className="bg-white rounded-xl p-6 border border-[#EBEBEB]">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-10 h-10 bg-[#2E7D32]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-xl">🔐</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-[#1A1A1A] mb-1">Enterprise-grade security</h3>
+                <p className="text-sm text-[#6B6B6B]">
+                  Your villa access codes are protected with AES-256 encryption. Key codes and alarm details
+                  are only visible to your assigned cleaner, and only 24 hours before the booking.
+                  After the job, access is automatically revoked. System-enforced, not policy-dependent.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Beta Note */}
         <section className="mb-12">
           <div className="bg-white rounded-xl p-6 border border-[#EBEBEB] border-dashed">
@@ -254,8 +303,9 @@ export default function AboutPage() {
             <p className="text-sm text-[#6B6B6B]">
               VillaCare is currently in beta, focused on the Alicante and Costa Blanca region.
               We&apos;re growing carefully, adding cleaners through referrals, and refining
-              the platform based on real feedback from owners and cleaners. If you&apos;d like
-              to be part of shaping how this works, we&apos;d love to hear from you.
+              the platform based on real feedback from owners and cleaners. During beta,
+              you pay your cleaner directly — no platform fees. If you&apos;d like to be part
+              of shaping how this works, we&apos;d love to hear from you.
             </p>
           </div>
         </section>
