@@ -157,12 +157,12 @@ export default function AuditTab() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
+      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
         {actionTypes.map((type) => (
           <button
             key={type.value}
             onClick={() => setActionFilter(type.value)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
               actionFilter === type.value
                 ? 'bg-[#1A1A1A] text-white'
                 : 'bg-white text-[#1A1A1A] border border-[#EBEBEB] hover:border-[#1A1A1A]'
@@ -171,6 +171,8 @@ export default function AuditTab() {
             {type.label}
           </button>
         ))}
+        {/* Spacer to ensure last button isn't cut off */}
+        <div className="w-4 flex-shrink-0" />
       </div>
 
       {/* Log List */}
