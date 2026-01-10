@@ -161,7 +161,7 @@ Zillow gets data from listings. We get it from relationships. Our cleaners are i
 
 ## Why Now
 
-1. **AI enables 24/7 operations** - 8 agents handle sales, support, coaching without humans
+1. **AI enables 24/7 operations** - 10 agents handle sales, support, coaching without humans
 2. **WhatsApp Business API** - Previously enterprise-only, now accessible
 3. **Post-COVID boom** - Spain hit record tourism 2023-2024
 4. **Gig workers want ownership** - Path from cleaner to business owner
@@ -178,7 +178,7 @@ Zillow gets data from listings. We get it from relationships. Our cleaners are i
 - **WhatsApp:** Live with Twilio
 - **AI Agents:** 10 in production
 - **AI Demo:** Alan & Amanda personality agents live
-- **Codebase:** 40,000+ lines TypeScript
+- **Codebase:** 45,000+ lines TypeScript
 
 ---
 

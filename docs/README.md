@@ -112,7 +112,7 @@ VillaCare is a two-sided marketplace connecting villa owners in Spain with trust
 
 | Metric | Value |
 |--------|-------|
-| **Codebase** | ~40,000 lines TypeScript |
+| **Codebase** | 45,000+ lines TypeScript |
 | **Pages** | 25+ routes |
 | **API Endpoints** | 100+ endpoints |
 | **Database Models** | 35+ tables |
@@ -314,7 +314,7 @@ The platform is built for expansion beyond cleaning into a full **Villa Services
 
 ### Market Timing
 
-1. **AI enables 24/7 sales without humans** - Our 8 AI agents handle inquiries, bookings, coaching, and support around the clock
+1. **AI enables 24/7 sales without humans** - Our 10 AI agents handle inquiries, bookings, coaching, and support around the clock
 2. **WhatsApp Business API now accessible** - Previously enterprise-only, now available for startups
 3. **Post-COVID vacation rental boom** - Spain saw record tourism in 2023-2024
 4. **Service providers want ownership** - Gig economy workers want to build businesses, not just jobs
