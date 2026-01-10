@@ -21,6 +21,7 @@ export type AuditAction =
   | 'SEND_MESSAGE'
   | 'SEND_EMAIL'
   | 'SEND_NURTURING_EMAIL'
+  | 'SEND_CLEANER_NURTURING_EMAIL'
   | 'CREATE_PROPERTY'
   | 'UPDATE_PROPERTY'
   | 'DELETE_PROPERTY'
@@ -48,6 +49,7 @@ export function formatAuditAction(action: string): string {
     SEND_MESSAGE: 'Sent message',
     SEND_EMAIL: 'Sent email',
     SEND_NURTURING_EMAIL: 'Sent nurturing email',
+    SEND_CLEANER_NURTURING_EMAIL: 'Sent cleaner education email',
     CREATE_PROPERTY: 'Created property',
     UPDATE_PROPERTY: 'Updated property',
     DELETE_PROPERTY: 'Deleted property',

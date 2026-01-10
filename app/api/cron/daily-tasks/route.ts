@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { processBookingReminders } from '@/lib/notifications/booking-notifications'
 import { syncAllTeamCalendars } from '@/lib/google-calendar'
 import { processOwnerNurturing } from '@/lib/nurturing/owner-nurturing'
+import { processCleanerNurturing } from '@/lib/nurturing/cleaner-nurturing'
 import { generateRecurringBookings } from '@/lib/recurring-bookings'
 
 /**
@@ -14,7 +15,8 @@ import { generateRecurringBookings } from '@/lib/recurring-bookings'
  * 2. Clean up old rate limit entries
  * 3. Sync team members' Google Calendars
  * 4. Process owner nurturing emails
- * 5. Generate recurring bookings (top up active series)
+ * 5. Process cleaner education emails
+ * 6. Generate recurring bookings (top up active series)
  */
 
 export async function GET(request: NextRequest) {
@@ -98,7 +100,29 @@ export async function GET(request: NextRequest) {
       results.ownerNurturing = { success: false, error: String(error) }
     }
 
-    // Task 5: Generate recurring bookings (top up active series)
+    // Task 5: Process cleaner education emails
+    try {
+      const cleanerNurturingResult = await processCleanerNurturing()
+      results.cleanerNurturing = {
+        success: true,
+        profileTips: cleanerNurturingResult.profileTips,
+        calendarGuides: cleanerNurturingResult.calendarGuides,
+        bookingTips: cleanerNurturingResult.bookingTips,
+        teamOpportunities: cleanerNurturingResult.teamOpportunities,
+        promoteTips: cleanerNurturingResult.promoteTips,
+        reactivations: cleanerNurturingResult.reactivations,
+        errors: cleanerNurturingResult.errors.length,
+      }
+      console.log(`[Cron] Cleaner nurturing: ${cleanerNurturingResult.profileTips} profile tips, ${cleanerNurturingResult.calendarGuides} calendar guides, ${cleanerNurturingResult.bookingTips} booking tips, ${cleanerNurturingResult.teamOpportunities} team opportunities, ${cleanerNurturingResult.reactivations} reactivations`)
+      if (cleanerNurturingResult.errors.length > 0) {
+        console.warn('[Cron] Cleaner nurturing errors:', cleanerNurturingResult.errors)
+      }
+    } catch (error) {
+      console.error('[Cron] Cleaner nurturing failed:', error)
+      results.cleanerNurturing = { success: false, error: String(error) }
+    }
+
+    // Task 6: Generate recurring bookings (top up active series)
     try {
       const recurringResult = await generateRecurringBookings(4) // Keep 4 future bookings minimum
       results.recurringBookings = {

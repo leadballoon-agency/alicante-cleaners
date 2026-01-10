@@ -229,6 +229,9 @@ model Cleaner {
   conversationSummaries ConversationSummary[]
   pendingOnboardings   PendingOnboarding[]
   responseTrackers     BookingResponseTracker[]
+
+  // Education emails
+  nurturingCampaigns   CleanerNurturingCampaign[]
 }
 
 model Owner {
@@ -1020,6 +1023,19 @@ enum NurturingEmailType {
   POST_REVIEW_REBOOK   // After owner leaves positive review - promote rebook features
 }
 
+// Cleaner education email types
+enum CleanerNurturingEmailType {
+  CLEANER_WELCOME           // Welcome to platform, overview of features
+  PROFILE_TIPS              // 24h after signup - complete profile (photo, bio, areas)
+  CALENDAR_SYNC_GUIDE       // 48h after signup - connect Google Calendar
+  FIRST_BOOKING_GUIDE       // After first booking - how to use peek modal, accept/decline
+  SUCCESS_COACH_INTRO       // After first completed job - unlock Success Coach
+  BOOKING_MANAGEMENT_TIPS   // 1 week in - advanced tips (assign to team, quick messages)
+  TEAM_OPPORTUNITY          // 2 weeks in - info about joining/creating teams
+  PROMOTE_PROFILE_TIPS      // 3 weeks in - share profile, get more bookings
+  CLEANER_REACTIVATION      // 2 weeks no login - win back inactive cleaners
+}
+
 // Track nurturing emails sent to each owner
 model NurturingCampaign {
   id        String             @id @default(cuid())
@@ -1045,5 +1061,33 @@ model NurturingCampaign {
   owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@unique([ownerId, emailType]) // Only one of each type per owner
+  @@index([sentAt])
+}
+
+// Track education emails sent to each cleaner
+model CleanerNurturingCampaign {
+  id        String                    @id @default(cuid())
+  cleanerId String
+  emailType CleanerNurturingEmailType
+
+  // Email content (AI-generated)
+  subject   String
+  body      String                    @db.Text
+
+  // Personalization context used
+  context   Json?
+
+  // Tracking
+  sentAt    DateTime                  @default(now())
+  openedAt  DateTime?
+  clickedAt DateTime?
+
+  // Result
+  messageId String?                   // Resend message ID
+  error     String?                   // If send failed
+
+  cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+
+  @@unique([cleanerId, emailType]) // Only one of each type per cleaner
   @@index([sentAt])
 }

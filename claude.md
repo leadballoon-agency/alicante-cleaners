@@ -801,6 +801,16 @@ After running `npx prisma db seed`:
 - **Make Recurring** - Set up weekly, fortnightly, or monthly recurring bookings
 - **Post-Review Email Sequence** - AI-generated nurturing emails sent after positive reviews (4+ stars)
 - **Feature Showcase Pages** - `/features/rebook` (bilingual ES/EN) promotes rebook features
+- **Cleaner Education Email System** - 9 automated emails educating cleaners on platform features:
+  - CLEANER_WELCOME (onboarding complete)
+  - PROFILE_TIPS (24h, profile incomplete)
+  - CALENDAR_SYNC_GUIDE (48h, calendar not connected)
+  - FIRST_BOOKING_GUIDE (after first booking)
+  - SUCCESS_COACH_INTRO (after first completed job)
+  - BOOKING_MANAGEMENT_TIPS (1 week after first job)
+  - TEAM_OPPORTUNITY (2 weeks, not on team)
+  - PROMOTE_PROFILE_TIPS (3 weeks)
+  - CLEANER_REACTIVATION (2 weeks no login)
 
 ### Planned 📋
 - Stripe payment integration

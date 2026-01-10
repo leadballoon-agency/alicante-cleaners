@@ -617,6 +617,44 @@ model NurturingCampaign {
 
 ---
 
+## Cleaner Nurturing Campaigns
+
+Tracks education emails sent to cleaners to help them succeed on the platform.
+
+```prisma
+model CleanerNurturingCampaign {
+  id        String                    @id @default(cuid())
+  cleanerId String
+  emailType CleanerNurturingEmailType
+
+  subject   String
+  body      String                    @db.Text
+  context   Json?                     // Cleaner context used for personalization
+  messageId String?                   // Resend message ID
+  error     String?                   // If send failed
+  sentAt    DateTime                  @default(now())
+
+  cleaner Cleaner @relation(fields: [cleanerId], references: [id])
+
+  @@unique([cleanerId, emailType])    // One email per type per cleaner
+}
+```
+
+**Email Sequence Timing:**
+| Email Type | Trigger |
+|------------|---------|
+| CLEANER_WELCOME | Immediately on onboarding complete |
+| PROFILE_TIPS | 24h after signup, profile incomplete |
+| CALENDAR_SYNC_GUIDE | 48h after signup, calendar not connected |
+| FIRST_BOOKING_GUIDE | After receiving first booking |
+| SUCCESS_COACH_INTRO | After first completed job |
+| BOOKING_MANAGEMENT_TIPS | 1 week after first completed job |
+| TEAM_OPPORTUNITY | 2 weeks after signup, not on team |
+| PROMOTE_PROFILE_TIPS | 3 weeks after signup |
+| CLEANER_REACTIVATION | 2 weeks no login |
+
+---
+
 ## Rate Limiting
 
 ```prisma
@@ -736,6 +774,18 @@ enum NurturingEmailType {
   FIRST_BOOKING_PROMPT // Encourage first booking
   RE_ENGAGEMENT        // Win back inactive owners
   POST_REVIEW_REBOOK   // After positive review - promote rebook features
+}
+
+enum CleanerNurturingEmailType {
+  CLEANER_WELCOME           // Welcome to platform, overview of features
+  PROFILE_TIPS              // 24h after signup - complete profile
+  CALENDAR_SYNC_GUIDE       // 48h after signup - connect Google Calendar
+  FIRST_BOOKING_GUIDE       // After first booking - how to use peek modal
+  SUCCESS_COACH_INTRO       // After first completed job - unlock Success Coach
+  BOOKING_MANAGEMENT_TIPS   // 1 week in - advanced tips
+  TEAM_OPPORTUNITY          // 2 weeks in - info about joining/creating teams
+  PROMOTE_PROFILE_TIPS      // 3 weeks in - share profile, get more bookings
+  CLEANER_REACTIVATION      // 2 weeks no login - win back inactive cleaners
 }
 ```
 

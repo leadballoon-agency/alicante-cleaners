@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 import { db } from '@/lib/db'
-import { NurturingEmailType, Owner, User, Property, Booking, PublicChatConversation } from '@prisma/client'
-import { generateNurturingEmail, getCTAUrl, getCTAText, OwnerContext } from './email-generator'
+import { NurturingEmailType, CleanerNurturingEmailType, Owner, User, Property, Booking, PublicChatConversation, Cleaner } from '@prisma/client'
+import { generateNurturingEmail, getCTAUrl, getCTAText, OwnerContext, generateCleanerNurturingEmail, getCleanerCTAUrl, getCleanerCTAText, CleanerContext } from './email-generator'
 import { parseNameFromEmail } from './name-extraction'
 import { logAudit } from '@/lib/audit'
 
@@ -293,4 +293,213 @@ function buildEmailHTML(
   </body>
 </html>
 `
+}
+
+// ============================================
+// CLEANER EDUCATION EMAIL FUNCTIONS
+// ============================================
+
+type CleanerWithRelations = Cleaner & {
+  user: User
+  bookings?: Booking[]
+}
+
+/**
+ * Send an education email to a cleaner
+ * Returns success status and any error
+ */
+export async function sendCleanerNurturingEmail(
+  cleaner: CleanerWithRelations,
+  emailType: CleanerNurturingEmailType
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    // Check if email already sent (database constraint will also catch this)
+    const existing = await db.cleanerNurturingCampaign.findUnique({
+      where: {
+        cleanerId_emailType: {
+          cleanerId: cleaner.id,
+          emailType,
+        },
+      },
+    })
+
+    if (existing) {
+      return { success: false, error: 'Email already sent' }
+    }
+
+    // Check if cleaner has an email
+    const email = cleaner.user.email
+    if (!email) {
+      return { success: false, error: 'Cleaner has no email' }
+    }
+
+    // Skip admin emails
+    if (ADMIN_EMAILS.includes(email.toLowerCase())) {
+      console.log('[Cleaner Nurturing] Skipping admin email:', email)
+      return { success: false, error: 'Admin email excluded from nurturing' }
+    }
+
+    // Count completed bookings
+    const completedBookings = cleaner.bookings?.filter(b => b.status === 'COMPLETED') || []
+
+    // Build context for AI generation
+    const context: CleanerContext = {
+      name: cleaner.user.name,
+      email: cleaner.user.email,
+      phone: cleaner.user.phone,
+      slug: cleaner.slug,
+      bio: cleaner.bio,
+      photoUrl: cleaner.user.image,
+      serviceAreaCount: cleaner.serviceAreas?.length || 0,
+      languageCount: cleaner.languages?.length || 0,
+      bookingCount: cleaner.totalBookings || 0,
+      completedBookingCount: completedBookings.length,
+      rating: cleaner.rating ? Number(cleaner.rating) : null,
+      reviewCount: cleaner.reviewCount || 0,
+      googleCalendarConnected: cleaner.googleCalendarConnected || false,
+      teamLeader: cleaner.teamLeader || false,
+      teamId: cleaner.teamId,
+      daysOnPlatform: Math.floor(
+        (Date.now() - cleaner.createdAt.getTime()) / (24 * 60 * 60 * 1000)
+      ),
+    }
+
+    // Generate personalized email
+    const { subject, body } = await generateCleanerNurturingEmail(emailType, context)
+
+    // Build HTML email
+    const ctaUrl = getCleanerCTAUrl(emailType)
+    const ctaText = getCleanerCTAText(emailType)
+    const displayName = cleaner.user.name || 'there'
+    const html = buildEmailHTML(displayName, body, ctaUrl, ctaText)
+
+    // Send via Resend
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [email],
+      subject,
+      html,
+    })
+
+    // Record the campaign
+    await db.cleanerNurturingCampaign.create({
+      data: {
+        cleanerId: cleaner.id,
+        emailType,
+        subject,
+        body,
+        context: context as object,
+        messageId: data?.id,
+        error: error?.message,
+      },
+    })
+
+    // Log to audit
+    await logAudit({
+      userId: 'SYSTEM',
+      action: 'SEND_CLEANER_NURTURING_EMAIL',
+      target: cleaner.id,
+      targetType: 'CLEANER',
+      details: {
+        emailType,
+        subject,
+        messageId: data?.id,
+        error: error?.message,
+      },
+    })
+
+    if (error) {
+      console.error('[Cleaner Nurturing] Resend error:', error)
+      return { success: false, error: error.message }
+    }
+
+    console.log(`[Cleaner Nurturing] Sent ${emailType} to ${email}, messageId: ${data?.id}`)
+    return { success: true, messageId: data?.id }
+  } catch (error) {
+    console.error('[Cleaner Nurturing] Error sending email:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
+
+/**
+ * Trigger welcome email for a new cleaner
+ * Called from cleaner onboarding completion
+ */
+export async function triggerCleanerWelcomeEmail(cleanerId: string): Promise<void> {
+  try {
+    const cleaner = await db.cleaner.findUnique({
+      where: { id: cleanerId },
+      include: {
+        user: true,
+        bookings: { orderBy: { createdAt: 'desc' }, take: 10 },
+      },
+    })
+
+    if (!cleaner) {
+      console.error('[Cleaner Nurturing] Cleaner not found:', cleanerId)
+      return
+    }
+
+    await sendCleanerNurturingEmail(cleaner, 'CLEANER_WELCOME')
+  } catch (error) {
+    console.error('[Cleaner Nurturing] Error triggering welcome email:', error)
+  }
+}
+
+/**
+ * Trigger first booking guide after a cleaner receives their first booking
+ */
+export async function triggerFirstBookingGuide(cleanerId: string): Promise<void> {
+  try {
+    const cleaner = await db.cleaner.findUnique({
+      where: { id: cleanerId },
+      include: {
+        user: true,
+        bookings: { orderBy: { createdAt: 'desc' }, take: 10 },
+      },
+    })
+
+    if (!cleaner) {
+      console.error('[Cleaner Nurturing] Cleaner not found:', cleanerId)
+      return
+    }
+
+    // Only send if this is their first booking
+    if (cleaner.totalBookings === 1) {
+      await sendCleanerNurturingEmail(cleaner, 'FIRST_BOOKING_GUIDE')
+    }
+  } catch (error) {
+    console.error('[Cleaner Nurturing] Error triggering first booking guide:', error)
+  }
+}
+
+/**
+ * Trigger Success Coach intro after first completed job
+ */
+export async function triggerSuccessCoachIntro(cleanerId: string): Promise<void> {
+  try {
+    const cleaner = await db.cleaner.findUnique({
+      where: { id: cleanerId },
+      include: {
+        user: true,
+        bookings: { where: { status: 'COMPLETED' }, orderBy: { createdAt: 'desc' }, take: 10 },
+      },
+    })
+
+    if (!cleaner) {
+      console.error('[Cleaner Nurturing] Cleaner not found:', cleanerId)
+      return
+    }
+
+    // Only send after first completed job
+    const completedCount = cleaner.bookings?.length || 0
+    if (completedCount === 1) {
+      await sendCleanerNurturingEmail(cleaner, 'SUCCESS_COACH_INTRO')
+    }
+  } catch (error) {
+    console.error('[Cleaner Nurturing] Error triggering success coach intro:', error)
+  }
 }
