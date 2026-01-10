@@ -24,6 +24,7 @@ For detailed documentation, see the `docs/` folder:
 | [FRONTEND.md](docs/FRONTEND.md) | Pages, components, design system, mobile considerations |
 | [DEVELOPER.md](docs/DEVELOPER.md) | Setup guide, deployment, common tasks, handoff checklist |
 | [AI-SALES-ASSISTANT.md](docs/AI-SALES-ASSISTANT.md) | AI chat assistant, booking flow, security features |
+| [CURRENT-STATE.md](docs/CURRENT-STATE.md) | 2-page investor brief - metrics, moat, business model |
 
 ---
 
@@ -55,7 +56,7 @@ For detailed documentation, see the `docs/` folder:
 
 **Why this works:** Cleaners visit properties weekly. They know when owners are selling before anyone else. This is the Zillow play, but with a services moat.
 
-**8 AI Agents:**
+**10 AI Agents:**
 1. Sales Agent - Handles inquiries 24/7
 2. Support Agent - Answers questions
 3. Success Coach - Helps cleaners grow
@@ -64,6 +65,8 @@ For detailed documentation, see the `docs/` folder:
 6. Owner Agent - Property owner assistant
 7. Cleaner Agent - Booking management
 8. Investor Agent - Investment inquiries (villacare.app)
+9. Alan Agent - Camp entertainer personality (engagement)
+10. Amanda Agent - Warm & reassuring personality (conversion)
 
 ---
 
@@ -109,9 +112,15 @@ For detailed documentation, see the `docs/` folder:
 - **Language Sync** - Dashboard syncs language preference from database for consistent localization across all tabs
 
 ### Owner Features
-- **Dashboard** - Properties, booking history, reviews, messaging
-- **Arrival Prep** - "I'm Coming Home" feature for pre-arrival services
-- **AI Assistant** - Contextual help in dashboard
+- **Dashboard** - 5-tab layout: Home, Bookings, Properties, Messages, Account
+  - **Home** - Timeline of bookings as JobCards, Getting Started checklist, "I'm Coming Home" for remote owners
+  - **Bookings** - Full booking timeline with all past and upcoming bookings
+  - **JobCards** - Peek-to-lock interaction (300ms peek, 1.5s lock for quick actions)
+  - **Quick Actions** - Cancel, reschedule, message cleaner, edit access notes, leave review
+  - **Edit Access Notes** - Update property access details and special instructions directly from booking cards
+- **Owner Type** - REMOTE (away most of year) or RESIDENT (lives in villa) - affects dashboard features
+- **Arrival Prep** - "I'm Coming Home" feature for pre-arrival services (remote owners only)
+- **AI Assistant** - Contextual help in dashboard, opens with context from booking cards
 - **WhatsApp notifications** - Booking confirmations, status updates, completion with review links
 - **Account Management** - Pause or delete account with 30-day retention
 
@@ -186,6 +195,15 @@ For detailed documentation, see the `docs/` folder:
 - `components/smart-widget/NavigationMenu.tsx` - Full navigation menu (long-press)
 - `components/smart-widget/QuickActionMenu.tsx` - Context-aware quick actions (tap)
 
+### Owner Dashboard Components
+- `app/owner/dashboard/page.tsx` - Main owner dashboard with tab navigation
+- `app/owner/dashboard/tabs/home.tsx` - Home tab with JobCards timeline
+- `app/owner/dashboard/tabs/bookings.tsx` - Full booking timeline
+- `app/owner/dashboard/components/OwnerBookingCard.tsx` - JobCard with peek-to-lock (300ms/1.5s)
+- `app/owner/dashboard/components/OwnerBookingPeekModal.tsx` - Quick actions modal
+- `app/owner/dashboard/components/OwnerJobsTimeline.tsx` - Timeline grouping by date
+- `app/owner/dashboard/components/NewBookingCard.tsx` - Skeleton "+" card for new bookings
+
 ---
 
 ## API Routes
@@ -258,6 +276,7 @@ POST /api/calendar/google/disconnect  Disconnect calendar
 ```
 GET       /api/dashboard/owner              Profile + stats
 GET       /api/dashboard/owner/bookings     Owner's bookings
+POST      /api/dashboard/owner/bookings/[id]/cancel  Cancel booking (with optional reason)
 POST      /api/dashboard/owner/bookings/[id]/review  Leave review
 GET/POST  /api/dashboard/owner/properties   Properties
 PATCH/DEL /api/dashboard/owner/properties/[id]  Update/delete property
@@ -743,3 +762,46 @@ After running `npx prisma db seed`:
 Built for the Alicante expat community.
 - Email: hello@alicantecleaners.com
 - Domain: alicantecleaners.com
+
+---
+
+## Recent Work (Session Continuity)
+
+> **Last Updated:** January 2026
+
+### Just Completed ✅
+1. **Owner Dashboard JobCards** - Full implementation of peek-to-lock booking cards for owners
+   - `OwnerBookingCard.tsx` - 300ms peek, 1.5s lock gesture
+   - `OwnerBookingPeekModal.tsx` - Quick actions by booking status
+   - `OwnerJobsTimeline.tsx` - Timeline grouping with date headers
+   - `NewBookingCard.tsx` - Skeleton "+" card for new bookings (opens AI)
+   - Cancel booking API endpoint with WhatsApp notification
+   - Edit access notes directly from booking cards
+
+2. **Documentation & Knowledge Bases Updated**
+   - `docs/CURRENT-STATE.md` - 2-page investor brief
+   - `docs/FRONTEND.md` - Owner JobCard components
+   - `docs/API.md` - Cancel booking endpoint
+   - `knowledge/owner.md` - Peek-to-lock, editing access notes
+   - `lib/ai/agents.ts` - Owner agent updated with JobCard features
+   - `lib/ai/sales-agent.ts` - Owner dashboard features in prompts
+
+3. **Site Updates** (alicantecleaners.com + villacare.app)
+   - "Where We Are Now" metrics sections
+   - Security as competitive moat sections
+   - Beta payment model clarification
+   - AI agents updated from 8 to 10
+
+### Active Plan
+Check `/Users/marktaylor/.claude/plans/` for any active implementation plans.
+
+### Development Tools
+- **DevUserSwitcher** - `components/dev/DevUserSwitcher.tsx` - Quick user switching in development
+- Run `npm run dev` and look for dev panel at bottom of owner dashboard
+
+### Next Steps (Ideas)
+- [ ] Universal JobCard component (refactor cleaner + owner into shared)
+- [ ] Admin live feed JobCards for booking activities
+- [ ] Recurring bookings display (single card with 🔄 badge)
+- [ ] Photo uploads for before/after cleaning proof
+- [ ] Stripe payment integration
