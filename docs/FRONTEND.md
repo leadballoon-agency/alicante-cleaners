@@ -106,6 +106,21 @@ Screenshots are captured at iPhone 14 viewport (390×844) for mobile-first prese
 - FAQ accordion sections
 - CTA button linking to dashboard
 
+### Feature Showcase Pages
+
+| Route | File | Description |
+|-------|------|-------------|
+| `/features/rebook` | `app/features/rebook/page.tsx` | 1-click rebook & recurring features (ES/EN) |
+| `/features/ai-assistant` | `app/features/ai-assistant/page.tsx` | AI Sales Assistant feature page (ES/EN) |
+| `/features/success-coach` | `app/features/success-coach/page.tsx` | Success Coach feature page |
+
+**Feature Page Components:**
+- Bilingual language toggle (ES/EN) in header
+- Phone mockup frames displaying dashboard screenshots
+- Feature sections with icons and descriptions
+- FAQ accordion sections
+- CTA buttons linking to relevant dashboards
+
 ### Authentication Pages
 
 | Route | File | Description |
@@ -432,9 +447,15 @@ return (
 - Owner-specific quick actions in locked mode:
   - **Pending**: Message cleaner, Adjust time, Cancel request
   - **Confirmed**: Message cleaner, Adjust time, Add access notes, Cancel
-  - **Completed**: Leave review, Book again with same cleaner
+  - **Completed**: Leave review, Rebook (1-click), Make Recurring
 - Edit buttons on Access Notes and Special Instructions (opens AI chat with context)
 - Skeleton "+" card at top of timeline to trigger new booking via AI
+
+**Rebook & Recurring Features:**
+- **1-Click Rebook**: Creates new booking for same day next week with same cleaner
+- **Make Recurring**: Opens modal to select frequency (Weekly, Fortnightly, Monthly)
+- AI confirmation message after successful rebook shows new booking details
+- Skip button available for recurring bookings to skip individual occurrences
 
 **"I'm Coming Home" Feature:**
 - Only shown for REMOTE owners with at least one completed booking

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { triggerPostReviewEmail } from '@/lib/nurturing/send-email'
 
 // POST /api/dashboard/owner/bookings/[id]/review - Review cleaner (owner reviews cleaner)
 export async function POST(
@@ -104,6 +105,16 @@ export async function POST(
           reviewCount: cleanerReviews.length,
         },
       })
+    }
+
+    // Send post-review email for positive reviews (4+ stars)
+    // Introduces rebook and recurring features to happy customers
+    if (rating >= 4) {
+      const cleaner = await db.cleaner.findUnique({
+        where: { id: booking.cleanerId },
+        select: { user: { select: { name: true } } },
+      })
+      triggerPostReviewEmail(owner.id, cleaner?.user.name || 'your cleaner')
     }
 
     return NextResponse.json({

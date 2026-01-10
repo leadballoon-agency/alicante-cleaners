@@ -449,6 +449,109 @@ Cancel a pending or confirmed booking.
 
 ---
 
+### POST /api/dashboard/owner/bookings/[id]/rebook
+
+1-click rebook - creates a new booking for the same day next week with the same cleaner.
+
+**Request:** No body required (all details copied from original booking)
+
+**Response:**
+```json
+{
+  "success": true,
+  "booking": {
+    "id": "booking456...",
+    "date": "2024-02-22",
+    "time": "10:00",
+    "service": "Regular Clean",
+    "price": 54,
+    "status": "PENDING"
+  },
+  "message": "Booking created for Thursday, February 22nd"
+}
+```
+
+**Errors:**
+- `404` - Booking not found or doesn't belong to owner
+- `400` - Cannot rebook a booking that wasn't completed
+
+**Side Effects:**
+- Creates new PENDING booking
+- WhatsApp notification sent to cleaner
+
+---
+
+### POST /api/dashboard/owner/bookings/[id]/recurring
+
+Create a recurring booking schedule.
+
+**Request Body:**
+```json
+{
+  "frequency": "WEEKLY"  // "WEEKLY", "FORTNIGHTLY", or "MONTHLY"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "recurringSchedule": {
+    "id": "rec123...",
+    "frequency": "WEEKLY",
+    "nextDate": "2024-02-22"
+  },
+  "message": "Weekly recurring booking created"
+}
+```
+
+---
+
+### POST /api/dashboard/owner/bookings/[id]/skip
+
+Skip a single occurrence in a recurring booking schedule.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "This week's booking has been skipped"
+}
+```
+
+---
+
+### POST /api/dashboard/owner/bookings/[id]/review
+
+Leave a review for a completed booking.
+
+**Request Body:**
+```json
+{
+  "rating": 5,
+  "text": "Excellent service, very thorough!"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "review": {
+    "id": "rev123...",
+    "rating": 5,
+    "pending": true
+  }
+}
+```
+
+**Side Effects:**
+- Creates review (pending admin approval)
+- Updates cleaner rating (once approved)
+- Triggers POST_REVIEW_REBOOK nurturing email for ratings 4+ stars
+
+---
+
 ### GET/POST /api/dashboard/owner/properties
 
 Manage properties.

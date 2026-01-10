@@ -43,6 +43,7 @@ interface Props {
   onReview?: (bookingId: string) => void
   onBookAgain?: (bookingId: string, cleanerSlug: string) => void
   onMakeRecurring?: (bookingId: string) => void
+  onRebook?: (bookingId: string) => void
   // Cleaner actions
   onAccept?: (bookingId: string) => void
   onDecline?: (bookingId: string) => void
@@ -66,6 +67,7 @@ export default function JobCardPeekModal({
   onReview,
   onBookAgain,
   onMakeRecurring,
+  onRebook,
   onAccept,
   onDecline,
   onComplete,
@@ -504,7 +506,7 @@ export default function JobCardPeekModal({
                         </>
                       )}
 
-                      {/* COMPLETED: Review, Book Again, Make Recurring */}
+                      {/* COMPLETED: Review, Rebook, Book Again, Make Recurring */}
                       {isCompleted && (
                         <>
                           <div className="flex gap-2">
@@ -516,23 +518,33 @@ export default function JobCardPeekModal({
                                 <span>⭐</span> Leave Review
                               </button>
                             )}
-                            {onBookAgain && (
+                            {onRebook && (
                               <button
-                                onClick={() => { onBookAgain(booking.id, booking.cleanerSlug); onClose() }}
-                                className={`flex-1 py-3 px-4 ${canReview ? 'bg-[#F5F5F3] text-[#1A1A1A]' : 'bg-[#1A1A1A] text-white'} rounded-xl font-medium hover:opacity-90 transition-colors flex items-center justify-center gap-2`}
+                                onClick={() => { onRebook(booking.id); onClose() }}
+                                className={`flex-1 py-3 px-4 ${canReview ? 'bg-[#1A1A1A] text-white' : 'bg-[#1A1A1A] text-white'} rounded-xl font-medium hover:bg-[#333] transition-colors flex items-center justify-center gap-2`}
                               >
-                                <span>🔄</span> Book Again
+                                <span>⚡</span> Rebook
                               </button>
                             )}
                           </div>
-                          {onMakeRecurring && !booking.isRecurring && (
-                            <button
-                              onClick={() => { onMakeRecurring(booking.id); onClose() }}
-                              className="w-full py-3 px-4 border border-[#1565C0] text-[#1565C0] rounded-xl font-medium hover:bg-[#E3F2FD] transition-colors flex items-center justify-center gap-2 text-sm"
-                            >
-                              <span>🔄</span> Make this a recurring clean
-                            </button>
-                          )}
+                          <div className="flex gap-2">
+                            {onBookAgain && (
+                              <button
+                                onClick={() => { onBookAgain(booking.id, booking.cleanerSlug); onClose() }}
+                                className="flex-1 py-3 px-4 border border-[#DEDEDE] text-[#6B6B6B] rounded-xl font-medium hover:bg-[#F5F5F3] transition-colors flex items-center justify-center gap-2 text-sm"
+                              >
+                                <span>📅</span> Different date
+                              </button>
+                            )}
+                            {onMakeRecurring && !booking.isRecurring && (
+                              <button
+                                onClick={() => { onMakeRecurring(booking.id); onClose() }}
+                                className="flex-1 py-3 px-4 border border-[#1565C0] text-[#1565C0] rounded-xl font-medium hover:bg-[#E3F2FD] transition-colors flex items-center justify-center gap-2 text-sm"
+                              >
+                                <span>🔄</span> Make recurring
+                              </button>
+                            )}
+                          </div>
                           {!canReview && booking.hasReviewedCleaner && (
                             <p className="text-xs text-center text-[#9B9B9B]">
                               You&apos;ve already reviewed this clean

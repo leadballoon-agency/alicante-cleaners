@@ -22,6 +22,7 @@ interface Props {
   onReview?: (bookingId: string) => void
   onBookAgain?: (bookingId: string, cleanerSlug: string) => void
   onMakeRecurring?: (bookingId: string) => void
+  onRebook?: (bookingId: string) => void
   onNewBooking?: () => void
   // Cleaner actions
   onAccept?: (bookingId: string) => void
@@ -124,6 +125,7 @@ export default function JobsTimeline({
   onReview,
   onBookAgain,
   onMakeRecurring,
+  onRebook,
   onNewBooking,
   onAccept,
   onDecline,
@@ -335,6 +337,7 @@ export default function JobsTimeline({
                     onReview={onReview}
                     onBookAgain={onBookAgain}
                     onMakeRecurring={onMakeRecurring}
+                    onRebook={onRebook}
                     // Cleaner actions
                     onAccept={onAccept}
                     onDecline={onDecline}

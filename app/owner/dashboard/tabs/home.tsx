@@ -20,6 +20,7 @@ type Props = {
   onAddInstructions?: (bookingId: string) => void
   onOpenChat?: (initialMessage?: string) => void
   onMakeRecurring?: (bookingId: string) => void
+  onRebook?: (bookingId: string) => void
   onRefresh?: () => void
 }
 
@@ -31,7 +32,7 @@ const EXTRAS = [
 ]
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function HomeTab({ owner, properties, bookings, onNavigate, onOwnerTypeChange, onMessage, onReschedule, onCancel, onReview, onAddAccess, onAddInstructions, onOpenChat, onMakeRecurring, onRefresh }: Props) {
+export default function HomeTab({ owner, properties, bookings, onNavigate, onOwnerTypeChange, onMessage, onReschedule, onCancel, onReview, onAddAccess, onAddInstructions, onOpenChat, onMakeRecurring, onRebook, onRefresh }: Props) {
   const router = useRouter()
   const [showArrivalModal, setShowArrivalModal] = useState(false)
   const [savingOwnerType, setSavingOwnerType] = useState(false)
@@ -463,6 +464,7 @@ export default function HomeTab({ owner, properties, bookings, onNavigate, onOwn
           onReview={onReview}
           onBookAgain={handleBookAgain}
           onMakeRecurring={onMakeRecurring}
+          onRebook={onRebook}
         />
       </div>
 

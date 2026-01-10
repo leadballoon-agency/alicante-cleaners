@@ -587,6 +587,36 @@ model PlatformSettings {
 
 ---
 
+## Nurturing Campaigns
+
+Tracks email nurturing sequences sent to owners.
+
+```prisma
+model NurturingCampaign {
+  id        String             @id @default(cuid())
+  ownerId   String
+  emailType NurturingEmailType
+  subject   String
+  body      String
+  context   Json               // Owner context used for personalization
+  messageId String?            // Resend message ID
+  error     String?            // Error if send failed
+  createdAt DateTime           @default(now())
+
+  owner     Owner              @relation(fields: [ownerId], references: [id])
+
+  @@unique([ownerId, emailType])  // One email per type per owner
+}
+```
+
+**Key Points:**
+- Each email type sent only once per owner (enforced by unique constraint)
+- AI-generated personalized content using owner context
+- Sent via Resend email service
+- Admin emails excluded from campaigns
+
+---
+
 ## Rate Limiting
 
 ```prisma
@@ -697,6 +727,15 @@ enum NotificationType {
   TEAM_COVERAGE
   NEW_REVIEW
   AI_ACTION
+}
+
+enum NurturingEmailType {
+  WELCOME              // First email after signup
+  PROFILE_INCOMPLETE   // Nudge to complete profile
+  ADD_PROPERTY_NUDGE   // Reminder to add property
+  FIRST_BOOKING_PROMPT // Encourage first booking
+  RE_ENGAGEMENT        // Win back inactive owners
+  POST_REVIEW_REBOOK   // After positive review - promote rebook features
 }
 ```
 

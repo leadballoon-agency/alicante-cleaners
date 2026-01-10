@@ -321,7 +321,10 @@ POST /api/calendar/google/disconnect  Disconnect calendar
 GET       /api/dashboard/owner              Profile + stats
 GET       /api/dashboard/owner/bookings     Owner's bookings
 POST      /api/dashboard/owner/bookings/[id]/cancel  Cancel booking (with optional reason)
-POST      /api/dashboard/owner/bookings/[id]/review  Leave review
+POST      /api/dashboard/owner/bookings/[id]/review  Leave review (triggers POST_REVIEW_REBOOK email for 4+ stars)
+POST      /api/dashboard/owner/bookings/[id]/rebook  1-click rebook (same cleaner, next week)
+POST      /api/dashboard/owner/bookings/[id]/recurring  Make booking recurring (weekly/fortnightly/monthly)
+POST      /api/dashboard/owner/bookings/[id]/skip    Skip next recurring booking
 GET/POST  /api/dashboard/owner/properties   Properties
 PATCH/DEL /api/dashboard/owner/properties/[id]  Update/delete property
 GET/PATCH /api/dashboard/owner/preferences  Owner preferences
@@ -419,6 +422,9 @@ POST /api/onboarding/cleaner       Complete cleaner onboarding
 /owner/dashboard               Owner dashboard (5 tabs)
 /owner/dashboard/account       Owner account settings (pause/delete)
 /admin                         Admin dashboard (10 tabs: Overview, Live, AI, Cleaners, Owners, Bookings, Reviews, Audit, Settings)
+/features/rebook               Rebook features showcase (1-click rebook, recurring) - ES/EN
+/features/ai-assistant         AI Sales Assistant feature page - ES/EN
+/features/success-coach        Success Coach feature page
 /privacy                       Privacy policy
 /terms                         Terms of service
 ```
@@ -791,6 +797,10 @@ After running `npx prisma db seed`:
 - **Team Progression Tracking** - Solo → Team Member → Team Leader → Business Owner
 - Expand Guide page (`/join/expand-guide`)
 - Services Guide page (`/join/services-guide`)
+- **1-Click Rebook** - Owners can rebook same cleaner for next week with one tap
+- **Make Recurring** - Set up weekly, fortnightly, or monthly recurring bookings
+- **Post-Review Email Sequence** - AI-generated nurturing emails sent after positive reviews (4+ stars)
+- **Feature Showcase Pages** - `/features/rebook` (bilingual ES/EN) promotes rebook features
 
 ### Planned 📋
 - Stripe payment integration
@@ -814,27 +824,33 @@ Built for the Alicante expat community.
 > **Last Updated:** January 2026
 
 ### Just Completed ✅
-1. **Owner Dashboard JobCards** - Full implementation of peek-to-lock booking cards for owners
+1. **1-Click Rebook & Make Recurring** - Owner dashboard features for easy rebooking
+   - `POST /api/dashboard/owner/bookings/[id]/rebook` - Creates new booking for same day next week
+   - `POST /api/dashboard/owner/bookings/[id]/recurring` - Creates recurring booking schedule
+   - `POST /api/dashboard/owner/bookings/[id]/skip` - Skip a single occurrence in recurring
+   - JobCard peek modal updated with Rebook and Make Recurring buttons
+   - AI confirmation after rebook with new booking details
+
+2. **Feature Showcase Page** (`/features/rebook`)
+   - Bilingual ES/EN page showcasing 1-click rebook and recurring features
+   - Phone mockups with screenshots of dashboard features
+   - How to Access, Feature sections, FAQ, CTA linking to dashboard
+
+3. **Post-Review Nurturing Email**
+   - New `POST_REVIEW_REBOOK` email type added to NurturingEmailType enum
+   - Triggered automatically after positive reviews (4+ stars)
+   - AI-generated personalized email thanking owner for review
+   - Introduces 1-click rebook and recurring booking features
+   - CTA links to `/features/rebook` showcase page
+   - Admin emails excluded from nurturing campaigns
+
+4. **Owner Dashboard JobCards** - Full implementation of peek-to-lock booking cards for owners
    - `OwnerBookingCard.tsx` - 300ms peek, 1.5s lock gesture
    - `OwnerBookingPeekModal.tsx` - Quick actions by booking status
    - `OwnerJobsTimeline.tsx` - Timeline grouping with date headers
    - `NewBookingCard.tsx` - Skeleton "+" card for new bookings (opens AI)
    - Cancel booking API endpoint with WhatsApp notification
    - Edit access notes directly from booking cards
-
-2. **Documentation & Knowledge Bases Updated**
-   - `docs/CURRENT-STATE.md` - 2-page investor brief
-   - `docs/FRONTEND.md` - Owner JobCard components
-   - `docs/API.md` - Cancel booking endpoint
-   - `knowledge/owner.md` - Peek-to-lock, editing access notes
-   - `lib/ai/agents.ts` - Owner agent updated with JobCard features
-   - `lib/ai/sales-agent.ts` - Owner dashboard features in prompts
-
-3. **Site Updates** (both projects synchronized)
-   - **alicantecleaners.com**: "Where We Are Now" metrics, security section, beta payment model
-   - **villacare.app**: Platform metrics, 10 AI agents grid, security moat section
-   - AI agents updated from 8 to 10 on both sites
-   - Consistent messaging across investor and consumer sites
 
 ### Active Plan
 Check `/Users/marktaylor/.claude/plans/` for any active implementation plans.

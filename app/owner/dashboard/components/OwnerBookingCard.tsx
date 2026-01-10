@@ -37,6 +37,8 @@ interface Props {
   onCancel?: (bookingId: string) => void
   onReview?: (bookingId: string) => void
   onBookAgain?: (bookingId: string, cleanerSlug: string) => void
+  onMakeRecurring?: (bookingId: string) => void
+  onRebook?: (bookingId: string) => void
 }
 
 // Get initials from name
@@ -112,7 +114,9 @@ export default function OwnerBookingCard({
   onReschedule,
   onCancel,
   onReview,
-  onBookAgain
+  onBookAgain,
+  onMakeRecurring,
+  onRebook
 }: Props) {
   const statusStyles = getStatusStyles(booking.status)
   const recurringBadge = booking.isRecurring ? getRecurringBadge(booking.recurringFrequency) : null
@@ -345,6 +349,8 @@ export default function OwnerBookingCard({
         onCancel={onCancel}
         onReview={onReview}
         onBookAgain={onBookAgain}
+        onMakeRecurring={onMakeRecurring}
+        onRebook={onRebook}
       />
     </>
   )

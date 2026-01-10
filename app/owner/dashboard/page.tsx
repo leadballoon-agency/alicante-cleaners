@@ -233,6 +233,38 @@ export default function OwnerDashboard() {
     }
   }
 
+  // 1-click rebook - creates same booking for next week
+  const handleRebook = async (bookingId: string) => {
+    try {
+      const response = await fetch(`/api/dashboard/owner/bookings/${bookingId}/rebook`, {
+        method: 'POST',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Refresh bookings to show the new one
+        const bookingsRes = await fetch('/api/dashboard/owner/bookings')
+        if (bookingsRes.ok) {
+          const bookingsData = await bookingsRes.json()
+          setBookings(bookingsData.bookings)
+        }
+        // Show success with new booking details
+        const newDate = new Date(data.booking.date).toLocaleDateString('en-GB', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'short'
+        })
+        handleOpenChat(`Great news! I've rebooked your ${data.booking.service} with ${data.booking.cleanerName} for ${newDate}. ${data.booking.status === 'PENDING' ? 'Waiting for confirmation.' : ''} Is there anything else you need?`)
+      } else {
+        const data = await response.json()
+        handleOpenChat(`I couldn't rebook that clean: ${data.error}. Would you like me to help you book manually instead?`)
+      }
+    } catch (err) {
+      console.error('Error rebooking:', err)
+      handleOpenChat("Sorry, something went wrong with the rebook. Would you like me to help you book manually instead?")
+    }
+  }
+
   // Actually create the recurring booking
   const handleConfirmRecurring = async (frequency: 'WEEKLY' | 'FORTNIGHTLY' | 'MONTHLY') => {
     if (!recurringModal) return
@@ -419,6 +451,7 @@ export default function OwnerDashboard() {
             onAddInstructions={handleAddInstructions}
             onOpenChat={handleOpenChat}
             onMakeRecurring={handleMakeRecurring}
+            onRebook={handleRebook}
             onRefresh={fetchDashboardData}
           />
         )}

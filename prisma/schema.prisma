@@ -1017,6 +1017,7 @@ enum NurturingEmailType {
   ADD_PROPERTY_NUDGE   // 24h after profile completed if no property
   FIRST_BOOKING_PROMPT // 24h after property added if no booking
   RE_ENGAGEMENT        // 2 weeks no login
+  POST_REVIEW_REBOOK   // After owner leaves positive review - promote rebook features
 }
 
 // Track nurturing emails sent to each owner

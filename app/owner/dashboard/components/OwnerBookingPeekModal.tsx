@@ -15,6 +15,8 @@ interface Props {
   onCancel?: (bookingId: string) => void
   onReview?: (bookingId: string) => void
   onBookAgain?: (bookingId: string, cleanerSlug: string) => void
+  onMakeRecurring?: (bookingId: string) => void
+  onRebook?: (bookingId: string) => void
 }
 
 // Format date nicely
@@ -104,7 +106,9 @@ export default function OwnerBookingPeekModal({
   onReschedule,
   onCancel,
   onReview,
-  onBookAgain
+  onBookAgain,
+  onMakeRecurring,
+  onRebook
 }: Props) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
@@ -342,7 +346,7 @@ export default function OwnerBookingPeekModal({
                       </>
                     )}
 
-                    {/* CONFIRMED: Message, Reschedule, Calendar, Cancel */}
+                    {/* CONFIRMED: Message, Reschedule, Calendar, Make Recurring, Cancel */}
                     {isConfirmed && (
                       <>
                         <div className="grid grid-cols-2 gap-2">
@@ -387,10 +391,23 @@ export default function OwnerBookingPeekModal({
                             </button>
                           )}
                         </div>
+                        {/* Make Recurring - only show if not already recurring */}
+                        {!booking.isRecurring && onMakeRecurring && (
+                          <button
+                            onClick={() => {
+                              onMakeRecurring(booking.id)
+                              onClose()
+                            }}
+                            className="w-full py-3 px-4 bg-[#E3F2FD] text-[#1565C0] rounded-xl font-medium hover:bg-[#BBDEFB] transition-colors flex items-center justify-center gap-2 text-sm"
+                          >
+                            <span>🔄</span>
+                            Make this a recurring clean
+                          </button>
+                        )}
                       </>
                     )}
 
-                    {/* COMPLETED: Review, Book Again */}
+                    {/* COMPLETED: Review, Rebook, Make Recurring */}
                     {isCompleted && (
                       <>
                         <div className="flex gap-2">
@@ -406,19 +423,32 @@ export default function OwnerBookingPeekModal({
                               Leave Review
                             </button>
                           )}
-                          {onBookAgain && (
+                          {onRebook && (
                             <button
                               onClick={() => {
-                                onBookAgain(booking.id, booking.cleanerSlug)
+                                onRebook(booking.id)
                                 onClose()
                               }}
-                              className={`flex-1 py-3 px-4 ${canReview ? 'bg-[#F5F5F3] text-[#1A1A1A]' : 'bg-[#1A1A1A] text-white'} rounded-xl font-medium hover:opacity-90 transition-colors flex items-center justify-center gap-2`}
+                              className={`flex-1 py-3 px-4 ${canReview ? 'bg-[#1A1A1A] text-white' : 'bg-[#1A1A1A] text-white'} rounded-xl font-medium hover:bg-[#333] transition-colors flex items-center justify-center gap-2`}
                             >
-                              <span>🔄</span>
-                              Book Again
+                              <span>⚡</span>
+                              Rebook
                             </button>
                           )}
                         </div>
+                        {/* Make Recurring - only show if not already recurring */}
+                        {!booking.isRecurring && onMakeRecurring && (
+                          <button
+                            onClick={() => {
+                              onMakeRecurring(booking.id)
+                              onClose()
+                            }}
+                            className="w-full py-3 px-4 bg-[#E3F2FD] text-[#1565C0] rounded-xl font-medium hover:bg-[#BBDEFB] transition-colors flex items-center justify-center gap-2 text-sm"
+                          >
+                            <span>🔄</span>
+                            Make this a recurring clean
+                          </button>
+                        )}
                         {!canReview && booking.hasReviewedCleaner && (
                           <p className="text-xs text-center text-[#9B9B9B] mt-2">
                             You&apos;ve already reviewed this clean

@@ -15,6 +15,8 @@ interface Props {
   onCancel?: (bookingId: string) => void
   onReview?: (bookingId: string) => void
   onBookAgain?: (bookingId: string, cleanerSlug: string) => void
+  onMakeRecurring?: (bookingId: string) => void
+  onRebook?: (bookingId: string) => void
   onNewBooking?: () => void
 }
 
@@ -94,6 +96,8 @@ export default function OwnerJobsTimeline({
   onCancel,
   onReview,
   onBookAgain,
+  onMakeRecurring,
+  onRebook,
   onNewBooking
 }: Props) {
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'past' | 'all'>(filter)
@@ -219,6 +223,8 @@ export default function OwnerJobsTimeline({
                     onCancel={onCancel}
                     onReview={onReview}
                     onBookAgain={onBookAgain}
+                    onMakeRecurring={onMakeRecurring}
+                    onRebook={onRebook}
                   />
                 ))}
               </div>

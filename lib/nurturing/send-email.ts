@@ -9,6 +9,13 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 const FROM_EMAIL = 'VillaCare <hello@alicantecleaners.com>'
 
+// Admin emails should not receive nurturing campaigns
+const ADMIN_EMAILS = [
+  'admin@villacare.com',
+  'mark@leadballoon.co.uk',
+  'kerry@leadballoon.co.uk',
+]
+
 type OwnerWithRelations = Owner & {
   user: User
   properties?: Property[]
@@ -42,6 +49,12 @@ export async function sendNurturingEmail(
     // Make sure owner has an email
     if (!owner.user.email) {
       return { success: false, error: 'Owner has no email' }
+    }
+
+    // Skip admin emails - they shouldn't receive nurturing campaigns
+    if (ADMIN_EMAILS.includes(owner.user.email.toLowerCase())) {
+      console.log('[Nurturing] Skipping admin email:', owner.user.email)
+      return { success: false, error: 'Admin email excluded from nurturing' }
     }
 
     // Get or derive name from email
@@ -181,6 +194,49 @@ export async function triggerWelcomeEmail(ownerId: string): Promise<void> {
     await sendNurturingEmail(owner, 'WELCOME')
   } catch (error) {
     console.error('[Nurturing] Error triggering welcome email:', error)
+  }
+}
+
+/**
+ * Trigger post-review rebook email after owner leaves a positive review
+ * Called from review submission route
+ */
+export async function triggerPostReviewEmail(ownerId: string, cleanerName: string): Promise<void> {
+  try {
+    const owner = await db.owner.findUnique({
+      where: { id: ownerId },
+      include: {
+        user: true,
+        properties: true,
+        bookings: { orderBy: { createdAt: 'desc' }, take: 1 },
+        publicChatConversations: { orderBy: { createdAt: 'desc' }, take: 5 },
+      },
+    })
+
+    if (!owner) {
+      console.error('[Nurturing] Owner not found for post-review email:', ownerId)
+      return
+    }
+
+    // Check if already sent
+    const existing = await db.nurturingCampaign.findUnique({
+      where: {
+        ownerId_emailType: {
+          ownerId: owner.id,
+          emailType: 'POST_REVIEW_REBOOK',
+        },
+      },
+    })
+
+    if (existing) {
+      console.log('[Nurturing] Post-review email already sent to:', owner.user.email)
+      return
+    }
+
+    await sendNurturingEmail(owner, 'POST_REVIEW_REBOOK')
+    console.log(`[Nurturing] Sent POST_REVIEW_REBOOK to ${owner.user.email} after reviewing ${cleanerName}`)
+  } catch (error) {
+    console.error('[Nurturing] Error triggering post-review email:', error)
   }
 }
 

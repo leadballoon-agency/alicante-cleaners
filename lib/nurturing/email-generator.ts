@@ -42,6 +42,12 @@ const EMAIL_TEMPLATES: Record<NurturingEmailType, {
     cta: 'See available cleaners',
     maxLength: 140,
   },
+  POST_REVIEW_REBOOK: {
+    goal: 'Thank owner for their review and introduce the new 1-click rebook and recurring booking features',
+    tone: 'Grateful, excited about new features, emphasize convenience of rebooking same cleaner',
+    cta: 'Rebook your cleaner',
+    maxLength: 150,
+  },
 }
 
 export interface OwnerContext {
@@ -137,6 +143,8 @@ function getDefaultSubject(emailType: NurturingEmailType, name: string): string 
       return `Ready to book your first clean, ${name}?`
     case 'RE_ENGAGEMENT':
       return `We miss you, ${name}! Your villa awaits`
+    case 'POST_REVIEW_REBOOK':
+      return `Thanks for your review! Here's an easier way to rebook`
     default:
       return `Hello from VillaCare`
   }
@@ -186,6 +194,21 @@ It's been a while! We wanted to check in and remind you that VillaCare is here w
 Book a clean anytime - our trusted cleaners are ready to help.
 
 The VillaCare Team`
+    case 'POST_REVIEW_REBOOK':
+      return `Hi ${name},
+
+Thank you for leaving a review - it means a lot to us and helps other villa owners find great cleaners.
+
+We've just added some new features to make rebooking even easier:
+
+⚡ 1-Click Rebook - Book the same cleaner for next week with one tap
+🔄 Make it Recurring - Set up weekly, fortnightly, or monthly cleans automatically
+
+Just hold any past booking in your dashboard to try these features.
+
+Happy cleaning!
+
+The VillaCare Team`
     default:
       return `Hi ${name},
 
@@ -211,6 +234,8 @@ export function getCTAUrl(emailType: NurturingEmailType): string {
       return `${baseUrl}/`
     case 'RE_ENGAGEMENT':
       return `${baseUrl}/`
+    case 'POST_REVIEW_REBOOK':
+      return `${baseUrl}/features/rebook`
     default:
       return baseUrl
   }
