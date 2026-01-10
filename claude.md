@@ -35,17 +35,40 @@ Single-page pitch site for investors with:
 
 For detailed documentation, see the `docs/` folder:
 
+### Core Technical Docs
 | Document | Description |
 |----------|-------------|
 | [README.md](docs/README.md) | Executive summary - problem, solution, business model |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, tech stack rationale, data flow diagrams |
 | [DATABASE.md](docs/DATABASE.md) | Prisma schema, all models, relationships, queries |
-| [API.md](docs/API.md) | 60+ REST endpoints with request/response examples |
+| [API.md](docs/API.md) | 90+ REST endpoints with request/response examples |
 | [INTEGRATIONS.md](docs/INTEGRATIONS.md) | Twilio, OpenAI, Anthropic, Resend configuration |
-| [FRONTEND.md](docs/FRONTEND.md) | Pages, components, design system, mobile considerations |
+| [FRONTEND.md](docs/FRONTEND.md) | Pages, components, design system, Owner/Cleaner JobCards |
 | [DEVELOPER.md](docs/DEVELOPER.md) | Setup guide, deployment, common tasks, handoff checklist |
+
+### AI & Features
+| Document | Description |
+|----------|-------------|
 | [AI-SALES-ASSISTANT.md](docs/AI-SALES-ASSISTANT.md) | AI chat assistant, booking flow, security features |
+| [TEAM-JOBS.md](docs/TEAM-JOBS.md) | Team management, job assignment, calendar sync |
+
+### Business & Strategy
+| Document | Description |
+|----------|-------------|
 | [CURRENT-STATE.md](docs/CURRENT-STATE.md) | 2-page investor brief - metrics, moat, business model |
+| [PITCH.md](docs/PITCH.md) | Investor pitch narrative and positioning |
+| [REVENUE.md](docs/REVENUE.md) | Revenue model, pricing strategy, projections |
+
+### Audits & Planning
+| Document | Description |
+|----------|-------------|
+| [SITE-AUDIT-JAN2026.md](docs/SITE-AUDIT-JAN2026.md) | Site audit findings and recommendations |
+| [PRIORITY-FIXES-JAN2026.md](docs/PRIORITY-FIXES-JAN2026.md) | Priority fixes and improvements list |
+
+### Assets
+| Folder | Description |
+|--------|-------------|
+| [screenshots/](docs/screenshots/) | 195 UI screenshots for documentation |
 
 ---
 
