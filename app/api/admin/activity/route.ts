@@ -1,10 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import {
+  transformToFeed,
+  countByType,
+  countUrgent,
+} from '@/lib/admin/card-transformers'
 
 export const dynamic = 'force-dynamic'
 
+// Legacy activity item type (for backwards compatibility)
 type ActivityItem = {
   id: string
   type: 'booking' | 'review' | 'cleaner_signup' | 'owner_signup' | 'booking_completed' | 'cleaner_approved' | 'cleaner_message' | 'cleaner_login' | 'service_pending' | 'easter_egg'
@@ -15,7 +21,7 @@ type ActivityItem = {
   actionable?: boolean
   resourceId?: string
   meta?: Record<string, unknown>
-  isTest?: boolean // Flag for test/demo data
+  isTest?: boolean
 }
 
 // Detect test accounts by email patterns
@@ -44,12 +50,19 @@ function isTestAccount(email?: string | null, name?: string | null): boolean {
   return false
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
 
   if (!session?.user || session.user.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  // Check for new card format
+  const { searchParams } = new URL(request.url)
+  const format = searchParams.get('format') // 'cards' for new format
+  const filter = searchParams.get('filter') || 'all'
+  const includeAudit = searchParams.get('includeAudit') === 'true'
+  const showTestData = searchParams.get('showTestData') === 'true'
 
   try {
     // Get recent activity from multiple sources
@@ -177,7 +190,51 @@ export async function GET() {
       }),
     ])
 
-    // Transform into unified activity feed
+    // NEW CARD FORMAT - If requested, return unified feed items
+    if (format === 'cards') {
+      // Cast data to transformer types - transformers handle partial data gracefully
+      const feedItems = transformToFeed(
+        {
+          bookings: recentBookings as unknown as Parameters<typeof transformToFeed>[0]['bookings'],
+          cleaners: recentCleaners as unknown as Parameters<typeof transformToFeed>[0]['cleaners'],
+          cleanerLogins: recentCleanerLogins as unknown as Parameters<typeof transformToFeed>[0]['cleanerLogins'],
+          reviews: recentReviews as unknown as Parameters<typeof transformToFeed>[0]['reviews'],
+          owners: recentOwners as unknown as Parameters<typeof transformToFeed>[0]['owners'],
+        },
+        {
+          includeAudit,
+          showTestData,
+          filter,
+        }
+      )
+
+      // Calculate counts for filter badges
+      const allItems = transformToFeed(
+        {
+          bookings: recentBookings as unknown as Parameters<typeof transformToFeed>[0]['bookings'],
+          cleaners: recentCleaners as unknown as Parameters<typeof transformToFeed>[0]['cleaners'],
+          cleanerLogins: recentCleanerLogins as unknown as Parameters<typeof transformToFeed>[0]['cleanerLogins'],
+          reviews: recentReviews as unknown as Parameters<typeof transformToFeed>[0]['reviews'],
+          owners: recentOwners as unknown as Parameters<typeof transformToFeed>[0]['owners'],
+        },
+        { showTestData } // No filter, get all for counts
+      )
+
+      const byType = countByType(allItems)
+      const urgent = countUrgent(allItems)
+
+      return NextResponse.json({
+        items: feedItems,
+        counts: {
+          total: allItems.length,
+          byType,
+          urgent,
+        },
+        lastUpdated: new Date().toISOString(),
+      })
+    }
+
+    // LEGACY FORMAT - Transform into unified activity feed
     const activities: ActivityItem[] = []
 
     // Add bookings

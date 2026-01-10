@@ -16,6 +16,8 @@ import AuditTab from './tabs/audit'
 import LiveTab from './tabs/live'
 import Image from 'next/image'
 import Link from 'next/link'
+import { AdminAIPanel } from './components'
+import { useAdminLayout } from './AdminLayoutContext'
 
 type Tab = 'overview' | 'live' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'support' | 'ai' | 'audit' | 'settings'
 
@@ -164,6 +166,10 @@ const DEFAULT_STATS: Stats = {
 function AdminDashboardContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
+
+  // AI Panel context - must be called before any early returns
+  const { isAIPanelOpen, openAIPanel, closeAIPanel, aiPanelContext } = useAdminLayout()
+
   const tabFromUrl = searchParams.get('tab') as Tab | null
   const validTabs: Tab[] = ['overview', 'live', 'cleaners', 'owners', 'bookings', 'reviews', 'feedback', 'support', 'ai', 'audit', 'settings']
   const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'overview'
@@ -516,6 +522,14 @@ function AdminDashboardContent() {
             />
           </Link>
           <div className="flex items-center gap-3">
+            {/* AI Assistant Button */}
+            <button
+              onClick={() => openAIPanel()}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors bg-gradient-to-br from-[#1A1A1A] to-[#333] text-white hover:opacity-90"
+              title="AI Assistant (swipe from right edge)"
+            >
+              <span className="text-xs font-bold">AI</span>
+            </button>
             <button
               onClick={() => setActiveTab('settings')}
               className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
@@ -535,6 +549,14 @@ function AdminDashboardContent() {
           </div>
         </div>
       </header>
+
+      {/* AI Panel (slide-in from right) */}
+      <AdminAIPanel
+        isOpen={isAIPanelOpen}
+        onClose={closeAIPanel}
+        adminName={session?.user?.name || 'Admin'}
+        initialContext={aiPanelContext}
+      />
 
       {/* Tab content */}
       <main className="px-4 py-4">
