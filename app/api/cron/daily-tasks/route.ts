@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { processBookingReminders } from '@/lib/notifications/booking-notifications'
 import { syncAllTeamCalendars } from '@/lib/google-calendar'
 import { processOwnerNurturing } from '@/lib/nurturing/owner-nurturing'
+import { generateRecurringBookings } from '@/lib/recurring-bookings'
 
 /**
  * Combined Daily Cron Job
@@ -13,6 +14,7 @@ import { processOwnerNurturing } from '@/lib/nurturing/owner-nurturing'
  * 2. Clean up old rate limit entries
  * 3. Sync team members' Google Calendars
  * 4. Process owner nurturing emails
+ * 5. Generate recurring bookings (top up active series)
  */
 
 export async function GET(request: NextRequest) {
@@ -94,6 +96,24 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       console.error('[Cron] Owner nurturing failed:', error)
       results.ownerNurturing = { success: false, error: String(error) }
+    }
+
+    // Task 5: Generate recurring bookings (top up active series)
+    try {
+      const recurringResult = await generateRecurringBookings(4) // Keep 4 future bookings minimum
+      results.recurringBookings = {
+        success: true,
+        seriesProcessed: recurringResult.seriesProcessed,
+        bookingsCreated: recurringResult.bookingsCreated,
+        errors: recurringResult.errors.length,
+      }
+      console.log(`[Cron] Recurring bookings: ${recurringResult.bookingsCreated} bookings created across ${recurringResult.seriesProcessed} series`)
+      if (recurringResult.errors.length > 0) {
+        console.warn('[Cron] Recurring booking errors:', recurringResult.errors)
+      }
+    } catch (error) {
+      console.error('[Cron] Recurring bookings failed:', error)
+      results.recurringBookings = { success: false, error: String(error) }
     }
 
     return NextResponse.json({

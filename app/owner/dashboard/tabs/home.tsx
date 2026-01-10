@@ -19,6 +19,8 @@ type Props = {
   onAddAccess?: (bookingId: string) => void
   onAddInstructions?: (bookingId: string) => void
   onOpenChat?: (initialMessage?: string) => void
+  onMakeRecurring?: (bookingId: string) => void
+  onRefresh?: () => void
 }
 
 const EXTRAS = [
@@ -29,7 +31,7 @@ const EXTRAS = [
 ]
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function HomeTab({ owner, properties, bookings, onNavigate, onOwnerTypeChange, onMessage, onReschedule, onCancel, onReview, onAddAccess, onAddInstructions, onOpenChat }: Props) {
+export default function HomeTab({ owner, properties, bookings, onNavigate, onOwnerTypeChange, onMessage, onReschedule, onCancel, onReview, onAddAccess, onAddInstructions, onOpenChat, onMakeRecurring, onRefresh }: Props) {
   const router = useRouter()
   const [showArrivalModal, setShowArrivalModal] = useState(false)
   const [savingOwnerType, setSavingOwnerType] = useState(false)
@@ -70,7 +72,7 @@ export default function HomeTab({ owner, properties, bookings, onNavigate, onOwn
       date: new Date(booking.date).toISOString().split('T')[0],
       time: booking.time,
       service: booking.service,
-      hours: 3, // Default to 3 hours - TODO: add to API
+      hours: booking.hours || 3,
       price: booking.price,
       status: booking.status as 'pending' | 'confirmed' | 'completed' | 'cancelled',
       // Property info
@@ -92,6 +94,10 @@ export default function HomeTab({ owner, properties, bookings, onNavigate, onOwn
       hasReviewedCleaner: booking.hasReviewedCleaner,
       // Booking-specific instructions (if available)
       specialInstructions: booking.specialInstructions,
+      // Recurring booking fields
+      isRecurring: booking.isRecurring,
+      recurringFrequency: booking.recurringFrequency,
+      recurringGroupId: booking.recurringGroupId,
     }))
   }, [bookings])
 
@@ -456,6 +462,7 @@ export default function HomeTab({ owner, properties, bookings, onNavigate, onOwn
           onCancel={onCancel}
           onReview={onReview}
           onBookAgain={handleBookAgain}
+          onMakeRecurring={onMakeRecurring}
         />
       </div>
 

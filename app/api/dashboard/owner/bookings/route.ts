@@ -67,6 +67,7 @@ export async function GET() {
       price: Number(b.price),
       date: b.date,
       time: b.time,
+      hours: b.hours,
       specialInstructions: b.notes || undefined,
       property: {
         id: b.property.id,
@@ -85,6 +86,12 @@ export async function GET() {
         phone: b.cleaner.user.phone || undefined,
       },
       hasReviewedCleaner: !!b.review,
+      // Recurring booking fields
+      isRecurring: b.isRecurring,
+      recurringFrequency: b.recurringFrequency?.toLowerCase() as 'weekly' | 'fortnightly' | 'monthly' | undefined,
+      recurringGroupId: b.recurringGroupId || undefined,
+      recurringStatus: b.recurringStatus?.toLowerCase() as 'active' | 'paused' | 'cancelled' | undefined,
+      recurringSkipped: b.recurringSkipped,
     }))
 
     return NextResponse.json({ bookings: formattedBookings })

@@ -134,6 +134,18 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum RecurringFrequency {
+  WEEKLY
+  FORTNIGHTLY
+  MONTHLY
+}
+
+enum RecurringStatus {
+  ACTIVE    // Recurring series is running
+  PAUSED    // Temporarily paused
+  CANCELLED // Series cancelled (no more future bookings)
+}
+
 enum FeedbackCategory {
   IDEA
   ISSUE
@@ -294,12 +306,26 @@ model Booking {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
+  // Recurring booking fields
+  isRecurring        Boolean             @default(false)
+  recurringFrequency RecurringFrequency?
+  recurringGroupId   String?             // Links all bookings in a recurring series
+  recurringStatus    RecurringStatus?    // ACTIVE, PAUSED, CANCELLED (only set on parent)
+  recurringParentId  String?             // Points to original booking that started the series
+  recurringSkipped   Boolean             @default(false) // True if this instance was skipped
+
   cleaner  Cleaner  @relation(fields: [cleanerId], references: [id])
   owner    Owner    @relation(fields: [ownerId], references: [id])
   property Property @relation(fields: [propertyId], references: [id])
   review   Review?
   responseTracker BookingResponseTracker?
   events   BookingEvent[]
+
+  // Self-relation for recurring parent
+  recurringParent   Booking?  @relation("RecurringBookings", fields: [recurringParentId], references: [id])
+  recurringChildren Booking[] @relation("RecurringBookings")
+
+  @@index([recurringGroupId])
 }
 
 model Review {

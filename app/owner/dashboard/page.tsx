@@ -49,6 +49,7 @@ export type OwnerBooking = {
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
   service: string
   price: number
+  hours?: number
   date: Date
   time: string
   specialInstructions?: string
@@ -69,6 +70,12 @@ export type OwnerBooking = {
     phone?: string
   }
   hasReviewedCleaner?: boolean
+  // Recurring booking fields
+  isRecurring?: boolean
+  recurringFrequency?: 'weekly' | 'fortnightly' | 'monthly'
+  recurringGroupId?: string
+  recurringStatus?: 'active' | 'paused' | 'cancelled'
+  recurringSkipped?: boolean
 }
 
 export default function OwnerDashboard() {
@@ -87,6 +94,11 @@ export default function OwnerDashboard() {
     cleanerId: string
     cleanerName: string
   } | null>(null)
+  const [recurringModal, setRecurringModal] = useState<{
+    bookingId: string
+    cleanerName: string
+  } | null>(null)
+  const [recurringLoading, setRecurringLoading] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [chatInitialMessage, setChatInitialMessage] = useState<string | undefined>()
 
@@ -208,6 +220,47 @@ export default function OwnerDashboard() {
     } catch (err) {
       console.error('Error cancelling booking:', err)
     }
+  }
+
+  // Open the recurring modal
+  const handleMakeRecurring = (bookingId: string) => {
+    const booking = bookings.find(b => b.id === bookingId)
+    if (booking) {
+      setRecurringModal({
+        bookingId,
+        cleanerName: booking.cleaner.name,
+      })
+    }
+  }
+
+  // Actually create the recurring booking
+  const handleConfirmRecurring = async (frequency: 'WEEKLY' | 'FORTNIGHTLY' | 'MONTHLY') => {
+    if (!recurringModal) return
+
+    setRecurringLoading(true)
+    try {
+      const response = await fetch(`/api/dashboard/owner/bookings/${recurringModal.bookingId}/recurring`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frequency, count: 4 }),
+      })
+
+      if (response.ok) {
+        // Refresh bookings to get the new recurring instances
+        const bookingsRes = await fetch('/api/dashboard/owner/bookings')
+        if (bookingsRes.ok) {
+          const data = await bookingsRes.json()
+          setBookings(data.bookings)
+        }
+        setRecurringModal(null)
+      } else {
+        const data = await response.json()
+        console.error('Failed to make recurring:', data.error)
+      }
+    } catch (err) {
+      console.error('Error making booking recurring:', err)
+    }
+    setRecurringLoading(false)
   }
 
   const handleAddAccess = (bookingId: string) => {
@@ -365,6 +418,8 @@ export default function OwnerDashboard() {
             onAddAccess={handleAddAccess}
             onAddInstructions={handleAddInstructions}
             onOpenChat={handleOpenChat}
+            onMakeRecurring={handleMakeRecurring}
+            onRefresh={fetchDashboardData}
           />
         )}
         {activeTab === 'bookings' && (
@@ -408,6 +463,62 @@ export default function OwnerDashboard() {
           onClose={() => setReviewModal(null)}
           onSubmit={handleSubmitReview}
         />
+      )}
+
+      {/* Recurring Booking Modal */}
+      {recurringModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+            <h2 className="text-xl font-semibold text-[#1A1A1A] mb-2">
+              Make this a recurring clean
+            </h2>
+            <p className="text-sm text-[#6B6B6B] mb-6">
+              {recurringModal.cleanerName} will clean your villa on a regular schedule.
+              Choose how often:
+            </p>
+
+            <div className="space-y-3 mb-6">
+              <button
+                onClick={() => handleConfirmRecurring('WEEKLY')}
+                disabled={recurringLoading}
+                className="w-full p-4 border border-[#DEDEDE] rounded-xl text-left hover:border-[#1A1A1A] transition-colors disabled:opacity-50"
+              >
+                <div className="font-medium text-[#1A1A1A]">🔄 Weekly</div>
+                <div className="text-sm text-[#6B6B6B]">Same day & time every week</div>
+              </button>
+
+              <button
+                onClick={() => handleConfirmRecurring('FORTNIGHTLY')}
+                disabled={recurringLoading}
+                className="w-full p-4 border border-[#DEDEDE] rounded-xl text-left hover:border-[#1A1A1A] transition-colors disabled:opacity-50"
+              >
+                <div className="font-medium text-[#1A1A1A]">🔄 Fortnightly</div>
+                <div className="text-sm text-[#6B6B6B]">Every two weeks</div>
+              </button>
+
+              <button
+                onClick={() => handleConfirmRecurring('MONTHLY')}
+                disabled={recurringLoading}
+                className="w-full p-4 border border-[#DEDEDE] rounded-xl text-left hover:border-[#1A1A1A] transition-colors disabled:opacity-50"
+              >
+                <div className="font-medium text-[#1A1A1A]">🔄 Monthly</div>
+                <div className="text-sm text-[#6B6B6B]">Once a month</div>
+              </button>
+            </div>
+
+            <p className="text-xs text-[#9B9B9B] mb-4">
+              We&apos;ll create the next 4 bookings automatically. You can skip or cancel anytime.
+            </p>
+
+            <button
+              onClick={() => setRecurringModal(null)}
+              disabled={recurringLoading}
+              className="w-full py-3 text-[#6B6B6B] font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       {/* AI Chat Widget */}
