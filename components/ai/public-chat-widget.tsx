@@ -70,7 +70,7 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       const welcomeContent = isApplicant
-        ? `Hi! I'm Clara, ${cleaner.name}'s assistant. ${cleaner.name} asked me to chat with you about joining the team!\n\nI'd love to learn a bit about your cleaning experience. What brings you to VillaCare?`
+        ? `Hi! I'm ${cleaner.name}'s assistant. ${cleaner.name} asked me to chat with you about joining the team!\n\nI'd love to learn a bit about your cleaning experience. What brings you to VillaCare?`
         : `Hi! I'm ${cleaner.name}'s assistant. I can help you with:\n\n• Pricing and availability\n• Booking a cleaning\n• Questions about services\n\nHow can I help you today?`
 
       const welcomeMessage: Message = {

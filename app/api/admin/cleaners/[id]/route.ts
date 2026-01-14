@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
+import { triggerCleanerWelcomeEmail } from '@/lib/nurturing/send-email'
 
 // PATCH /api/admin/cleaners/[id] - Approve/suspend cleaner
 export async function PATCH(
@@ -165,6 +166,11 @@ export async function PATCH(
         newStatus: newStatus,
       },
     })
+
+    // Send welcome email when cleaner is approved (only if previously PENDING)
+    if (action === 'approve' && cleaner.status === 'PENDING') {
+      triggerCleanerWelcomeEmail(cleaner.id).catch(console.error)
+    }
 
     return NextResponse.json({
       success: true,
