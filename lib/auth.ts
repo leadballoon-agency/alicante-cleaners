@@ -10,13 +10,9 @@ import { verifyCode, normalizePhone } from './otp'
 import { triggerWelcomeEmail } from './nurturing/send-email'
 import { linkChatConversations } from './nurturing/link-conversations'
 
-// Lazy initialize Resend only when needed (avoids build-time errors if API key missing)
-let resendClient: Resend | null = null
+// Create fresh Resend client each time (env vars can change between deployments)
 const getResend = () => {
-  if (!resendClient) {
-    resendClient = new Resend(process.env.RESEND_API_KEY || 'dummy_key_for_build')
-  }
-  return resendClient
+  return new Resend(process.env.RESEND_API_KEY)
 }
 
 export const authOptions: NextAuthOptions = {
