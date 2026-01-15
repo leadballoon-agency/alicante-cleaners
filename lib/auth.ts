@@ -31,8 +31,10 @@ export const authOptions: NextAuthOptions = {
     EmailProvider({
       from: process.env.EMAIL_FROM || 'VillaCare <noreply@alicantecleaners.com>',
       sendVerificationRequest: async ({ identifier: email, url }) => {
+        console.log('[MAGIC LINK] Attempting to send to:', email)
+        console.log('[MAGIC LINK] API Key present:', !!process.env.RESEND_API_KEY)
         try {
-          await getResend().emails.send({
+          const result = await getResend().emails.send({
             from: process.env.EMAIL_FROM || 'VillaCare <noreply@alicantecleaners.com>',
             to: email,
             subject: 'Sign in to VillaCare',
@@ -57,8 +59,16 @@ export const authOptions: NextAuthOptions = {
               </html>
             `,
           })
+          console.log('[MAGIC LINK] Send result:', JSON.stringify(result))
+          if (result.error) {
+            console.error('[MAGIC LINK] Resend API error:', result.error)
+            throw new Error(result.error.message || 'Resend API error')
+          }
         } catch (error) {
           console.error('Failed to send verification email:', error)
+          console.error('RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY)
+          console.error('RESEND_API_KEY length:', process.env.RESEND_API_KEY?.length)
+          console.error('EMAIL_FROM:', process.env.EMAIL_FROM)
           throw new Error('Failed to send verification email')
         }
       },
