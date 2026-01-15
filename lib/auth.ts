@@ -241,7 +241,13 @@ export const authOptions: NextAuthOptions = {
       : []),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, email }) {
+      // Skip processing for verification requests (sending magic link to new user)
+      // NextAuth creates a fake user object with id=email for new users
+      if (email?.verificationRequest) {
+        return true
+      }
+
       // For email magic link, ensure user has OWNER role and Owner profile
       if (account?.provider === 'email' && user.id) {
         const dbUser = await db.user.findUnique({
