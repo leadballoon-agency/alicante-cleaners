@@ -304,11 +304,17 @@ export const authOptions: NextAuthOptions = {
       }
 
       // Update lastLoginAt for all successful sign-ins
+      // Use try-catch to prevent crashes if user doesn't exist yet
       if (user.id) {
-        await db.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() },
-        })
+        try {
+          await db.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+          })
+        } catch (error) {
+          // User might not exist yet for new signups - this is ok
+          console.log('Could not update lastLoginAt:', error)
+        }
       }
 
       return true

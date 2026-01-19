@@ -224,6 +224,24 @@ function LoginContent() {
               The sign-in link has expired or has already been used. Please request a new one.
             </div>
           )}
+          {error === 'EmailSignin' && (
+            <div className="mb-6 p-4 bg-[#FFEBEE] border border-[#C75050] rounded-xl text-[#C75050] text-sm">
+              There was a problem sending the sign-in link. Please try again.
+            </div>
+          )}
+          {error === 'Callback' && (
+            <div className="mb-6 p-4 bg-[#FFF3E0] border border-[#E65100] rounded-xl text-[#1A1A1A] text-sm">
+              <p className="font-medium mb-1">Sign-in link expired</p>
+              <p className="text-[#6B6B6B]">This link is no longer valid. Please request a new sign-in link below.</p>
+            </div>
+          )}
+          {/* Catch-all for unknown errors (including Prisma errors) */}
+          {error && !['unauthorized', 'admin_only', 'owner_only', 'cleaner_only', 'Verification', 'EmailSignin', 'Callback'].includes(error) && (
+            <div className="mb-6 p-4 bg-[#FFF3E0] border border-[#E65100] rounded-xl text-[#1A1A1A] text-sm">
+              <p className="font-medium mb-1">Something went wrong</p>
+              <p className="text-[#6B6B6B]">Your sign-in link may have expired. Please request a new one below.</p>
+            </div>
+          )}
 
           {/* Step: Select user type */}
           {step === 'select' && (
