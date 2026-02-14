@@ -125,6 +125,8 @@ const translations = {
     guideTeamMemberDesc: 'How to join an existing team',
     guideCalendar: 'Calendar Sync',
     guideCalendarDesc: 'Connect your calendar',
+    guideSmartWidget: 'SmartWidget',
+    guideSmartWidgetDesc: 'Navigate your dashboard',
   },
   es: {
     alreadyMember: '¿Ya eres miembro? Inicia sesión',
@@ -240,6 +242,8 @@ const translations = {
     guideTeamMemberDesc: 'Cómo unirte a un equipo existente',
     guideCalendar: 'Sincronizar Calendario',
     guideCalendarDesc: 'Conecta tu calendario',
+    guideSmartWidget: 'SmartWidget',
+    guideSmartWidgetDesc: 'Navega tu panel de control',
   },
 }
 
@@ -828,7 +832,7 @@ export default function JoinPage() {
             <h2 className="text-2xl font-semibold text-[#1A1A1A] mb-2">{t.guidesTitle}</h2>
             <p className="text-[#6B6B6B]">{t.guidesSubtitle}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <Link
               href="/join/guide"
               className="bg-white rounded-xl p-5 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-md transition-all group"
@@ -878,6 +882,16 @@ export default function JoinPage() {
               </div>
               <h3 className="font-medium text-[#1A1A1A] mb-1">{t.guideCalendar}</h3>
               <p className="text-sm text-[#6B6B6B]">{t.guideCalendarDesc}</p>
+            </Link>
+            <Link
+              href="/join/smartwidget-guide"
+              className="bg-white rounded-xl p-5 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-md transition-all group"
+            >
+              <div className="w-10 h-10 bg-[#FFF8E1] rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-xl">📱</span>
+              </div>
+              <h3 className="font-medium text-[#1A1A1A] mb-1">{t.guideSmartWidget}</h3>
+              <p className="text-sm text-[#6B6B6B]">{t.guideSmartWidgetDesc}</p>
             </Link>
           </div>
         </div>

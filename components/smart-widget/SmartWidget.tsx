@@ -140,6 +140,9 @@ export default function SmartWidget({
     if (action === 'support') {
       // Open support chat
       onQuickAction?.('support')
+    } else if (action === 'guide') {
+      // Open SmartWidget guide
+      window.open('/join/smartwidget-guide', '_blank')
     } else if (action === 'feedback') {
       // Open feedback form
       onQuickAction?.('feedback')

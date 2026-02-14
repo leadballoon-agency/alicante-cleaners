@@ -38,6 +38,7 @@ const translations = {
     success: 'Success',
     settings: 'Settings',
     support: 'Support',
+    guide: 'Guide',
     feedback: 'Feedback',
   },
   es: {
@@ -50,6 +51,7 @@ const translations = {
     success: 'Éxito',
     settings: 'Ajustes',
     support: 'Soporte',
+    guide: 'Guía',
     feedback: 'Comentarios',
   },
 }
@@ -80,6 +82,7 @@ export default function NavigationMenu({
     { id: 'divider', divider: true, icon: '', label: '' },
     { id: 'settings', icon: '⚙️', label: t.settings },
     { id: 'support', icon: '💬', label: t.support },
+    { id: 'guide', icon: '📖', label: t.guide },
     { id: 'feedback', icon: '📝', label: t.feedback },
   ]
 

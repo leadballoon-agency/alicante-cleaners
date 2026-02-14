@@ -21,6 +21,7 @@ const translations = {
   en: {
     myBookings: 'My Bookings',
     promote: 'Promote Me',
+    profile: 'Profile',
     home: 'Home',
     weekView: 'Week View',
     dayView: 'Day View',
@@ -35,6 +36,7 @@ const translations = {
   es: {
     myBookings: 'Mis Reservas',
     promote: 'Promocionarme',
+    profile: 'Perfil',
     home: 'Inicio',
     weekView: 'Vista Semanal',
     dayView: 'Vista Diaria',
@@ -55,7 +57,7 @@ const getQuickActions = (screen: Screen): QuickAction[] => {
       // Home is now the calendar, show calendar controls
       { id: 'home:week', icon: '📆', labelKey: 'weekView' },
       { id: 'home:day', icon: '📅', labelKey: 'dayView' },
-      { id: 'navigate:promote', icon: '📈', labelKey: 'promote' },
+      { id: 'navigate:profile', icon: '👤', labelKey: 'profile' },
     ],
     bookings: [
       { id: 'navigate:home', icon: '🏠', labelKey: 'home' },
