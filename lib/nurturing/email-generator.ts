@@ -103,6 +103,10 @@ REQUIREMENTS:
 6. DO NOT include the CTA button in the body - it will be added automatically
 7. DO NOT use placeholder text like [Name] - use the actual name provided
 8. Keep it concise and scannable - busy villa owners don't have time for long emails
+9. Include ONE relevant guide link for new users:
+   - Booking guide: alicantecleaners.com/guide/booking (for booking-related emails)
+   - Dashboard guide: alicantecleaners.com/guide/dashboard (for account/dashboard emails)
+   - All guides: alicantecleaners.com/guide (for general emails)
 
 Return JSON: { "subject": "...", "body": "..." }`
 
@@ -161,6 +165,10 @@ Our trusted local cleaners are ready to help with regular cleaning, deep cleans,
 
 Add your property details to get started and book your first clean in minutes.
 
+📚 **New to VillaCare?** Check out our guides:
+- How to Book a Clean: alicantecleaners.com/guide/booking
+- Using Your Dashboard: alicantecleaners.com/guide/dashboard
+
 The VillaCare Team`
     case 'PROFILE_INCOMPLETE':
       return `Hi ${name},
@@ -185,6 +193,8 @@ Great news - your property is all set up! Now you're ready to book your first cl
 
 Our cleaners are experienced, trusted, and know the Alicante area well. Whether you need a regular clean or a deep clean before guests arrive, we've got you covered.
 
+📚 **Need help?** See our step-by-step booking guide: alicantecleaners.com/guide/booking
+
 The VillaCare Team`
     case 'RE_ENGAGEMENT':
       return `Hi ${name},
@@ -192,6 +202,8 @@ The VillaCare Team`
 It's been a while! We wanted to check in and remind you that VillaCare is here whenever you need cleaning support for your villa.
 
 Book a clean anytime - our trusted cleaners are ready to help.
+
+📚 **Quick refresher:** See our guides: alicantecleaners.com/guide
 
 The VillaCare Team`
     case 'POST_REVIEW_REBOOK':
@@ -377,6 +389,10 @@ REQUIREMENTS:
 7. DO NOT use placeholder text like [Name] - use the actual name provided
 8. Keep it concise - busy cleaners appreciate quick reads
 9. Use Spanish greetings where appropriate (they may prefer Spanish)
+10. Include ONE relevant guide link from these options:
+    - Booking guide: alicantecleaners.com/join/booking-guide (for booking-related emails)
+    - Team guide: alicantecleaners.com/join/team-guide (for team-related emails)
+    - Growth guide: alicantecleaners.com/join/expand-guide (for profile/growth emails)
 
 Return JSON: { "subject": "...", "body": "..." }`
 
@@ -443,6 +459,11 @@ Here's what you can do on the platform:
 📅 **Calendar Sync** - Connect Google Calendar to manage availability automatically
 💬 **WhatsApp Alerts** - Get booking notifications and respond with ACCEPT or DECLINE
 
+📚 **Helpful Guides:**
+- How to Handle Bookings: alicantecleaners.com/join/booking-guide
+- Growing Your Business: alicantecleaners.com/join/expand-guide
+- Working in Teams: alicantecleaners.com/join/team-guide
+
 Villa owners are looking for reliable cleaners like you. Complete your profile to start receiving bookings!
 
 The VillaCare Team`
@@ -454,6 +475,8 @@ Cleaners with complete profiles get up to 3x more booking requests. Here are som
 
 ${!context.photoUrl ? '📷 **Add a professional photo** - Owners want to see who they\'re welcoming into their home\n' : ''}${!context.bio || context.bio.length < 100 ? '✍️ **Write a compelling bio** - Share your experience, what you love about cleaning, and why owners should choose you\n' : ''}${context.serviceAreaCount < 3 ? '📍 **Add more service areas** - The more areas you cover, the more booking opportunities\n' : ''}${context.languageCount < 2 ? '🌍 **Add languages you speak** - Many villa owners are international\n' : ''}
 A strong profile builds trust before you even meet. Take 5 minutes to polish yours!
+
+📚 **Need help?** Check out our guide to growing your business: alicantecleaners.com/join/expand-guide
 
 The VillaCare Team`
 
@@ -494,6 +517,8 @@ Congratulations on your first booking! Here's how the VillaCare system works:
 
 📍 **Access Notes** - Property access details (codes, key locations) only appear within 24 hours of the booking for security.
 
+📚 **Full Guide:** For step-by-step screenshots, visit: alicantecleaners.com/join/booking-guide
+
 You've got this! Your first happy customer awaits.
 
 The VillaCare Team`
@@ -528,6 +553,8 @@ You're getting the hang of VillaCare! Here are some pro tips:
 
 📊 **Track Your Stats** - Your Promote tab shows profile views, bookings, and earnings. Use it to track your growth.
 
+📚 **Learn more:** Full booking guide with screenshots: alicantecleaners.com/join/booking-guide
+
 The best cleaners on VillaCare treat it like a business. You're building something great!
 
 The VillaCare Team`
@@ -547,6 +574,8 @@ Have you considered joining a VillaCare team? Here's why cleaners love teams:
 
 ${context.teamId ? 'You\'re already on a team - great choice! Check with your team leader about coverage opportunities.' : 'Browse available teams in your dashboard or ask a team leader for their referral code.'}
 
+📚 **Full guide:** Learn more about teams: alicantecleaners.com/join/team-guide
+
 Growing together is better than growing alone.
 
 The VillaCare Team`
@@ -564,6 +593,8 @@ Want more bookings? Let's get your profile in front of more villa owners:
 
 🗣️ **Word of Mouth** - Happy owners tell their friends. Exceptional service is your best marketing.
 
+📚 **Growth tips:** More strategies in our guide: alicantecleaners.com/join/expand-guide
+
 Your profile is your digital business card. The more people see it, the more opportunities come your way!
 
 The VillaCare Team`
@@ -576,6 +607,8 @@ It's been a while since we've seen you on VillaCare! We wanted to check in.
 Villa owners in ${context.serviceAreaCount > 0 ? 'your service areas are' : 'Alicante are'} actively looking for cleaners right now. Your profile is still live at alicantecleaners.com/${context.slug}
 
 Whether you took a break or life got busy, we're here when you're ready. No pressure - just wanted you to know the opportunity is always open.
+
+📚 **Catch up on what's new:** Our guides are always updated: alicantecleaners.com/join/booking-guide
 
 Drop by your dashboard anytime to check for booking requests.
 
