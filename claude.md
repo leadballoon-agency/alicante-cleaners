@@ -126,6 +126,7 @@ For detailed documentation, see the `docs/` folder:
   - `/join/team-leader-guide` - How to grow your team (for leaders)
   - `/join/team-guide` - How to join a team (for members)
   - `/join/services-guide` - How to add custom services (for team leaders)
+  - `/join/smartwidget-guide` - How to use the SmartWidget navigation
 - **About page** (`/about`) - Origin story
 - **Cleaner profiles** (`/{slug}`) - Public pages with reviews, services, AI chat assistant, booking
 
@@ -406,6 +407,7 @@ POST /api/onboarding/cleaner       Complete cleaner onboarding
 /join                          Cleaner recruitment landing page
 /join/guide                    Step-by-step onboarding guide (ES/EN)
 /join/calendar-guide           Google Calendar sync guide (ES/EN)
+/join/smartwidget-guide        SmartWidget navigation guide (ES/EN)
 /guide                         General platform guide
 /about                         Origin story
 /[slug]                        Public cleaner profile with AI chat
@@ -811,6 +813,9 @@ After running `npx prisma db seed`:
   - TEAM_OPPORTUNITY (2 weeks, not on team)
   - PROMOTE_PROFILE_TIPS (3 weeks)
   - CLEANER_REACTIVATION (2 weeks no login)
+- **SmartWidget Navigation Guide** (`/join/smartwidget-guide`) - Bilingual EN/ES guide for dashboard navigation
+- **SmartWidget Profile Quick Action** - Profile shortcut added to Home screen tap menu
+- **Guide links in nurturing emails** - All owner and cleaner nurturing emails now include relevant guide URLs
 
 ### Planned 📋
 - Stripe payment integration
@@ -831,36 +836,30 @@ Built for the Alicante expat community.
 
 ## Recent Work (Session Continuity)
 
-> **Last Updated:** January 2026
+> **Last Updated:** February 2026
 
 ### Just Completed ✅
-1. **1-Click Rebook & Make Recurring** - Owner dashboard features for easy rebooking
-   - `POST /api/dashboard/owner/bookings/[id]/rebook` - Creates new booking for same day next week
-   - `POST /api/dashboard/owner/bookings/[id]/recurring` - Creates recurring booking schedule
-   - `POST /api/dashboard/owner/bookings/[id]/skip` - Skip a single occurrence in recurring
-   - JobCard peek modal updated with Rebook and Make Recurring buttons
-   - AI confirmation after rebook with new booking details
+1. **SmartWidget Navigation Guide** (`/join/smartwidget-guide`)
+   - Bilingual EN/ES guide page explaining SmartWidget tap/long-press navigation
+   - 5 steps: floating button, quick actions, full menu, tab navigation, badges
+   - Icon-based illustrations, FAQ section, SEO schema markup (HowTo + Breadcrumb)
+   - Added to `/join` page guide grid as 6th card
 
-2. **Feature Showcase Page** (`/features/rebook`)
-   - Bilingual ES/EN page showcasing 1-click rebook and recurring features
-   - Phone mockups with screenshots of dashboard features
-   - How to Access, Feature sections, FAQ, CTA linking to dashboard
+2. **SmartWidget Profile Quick Action**
+   - Replaced "Promote Me" with "Profile" in Home screen tap quick actions
+   - Added "Guide" link (opens `/join/smartwidget-guide`) to NavigationMenu bottom section
+   - Guide action handler opens in new tab from SmartWidget
 
-3. **Post-Review Nurturing Email**
-   - New `POST_REVIEW_REBOOK` email type added to NurturingEmailType enum
-   - Triggered automatically after positive reviews (4+ stars)
-   - AI-generated personalized email thanking owner for review
-   - Introduces 1-click rebook and recurring booking features
-   - CTA links to `/features/rebook` showcase page
-   - Admin emails excluded from nurturing campaigns
+3. **Guide Links in Nurturing Emails**
+   - Added guide URL instructions to AI prompt for owner and cleaner email generation
+   - Added guide links to all fallback email templates (owner: booking/dashboard guides, cleaner: booking/team/expand guides)
+   - Both AI-generated and fallback emails now include contextually relevant guide URLs
 
-4. **Owner Dashboard JobCards** - Full implementation of peek-to-lock booking cards for owners
-   - `OwnerBookingCard.tsx` - 300ms peek, 1.5s lock gesture
-   - `OwnerBookingPeekModal.tsx` - Quick actions by booking status
-   - `OwnerJobsTimeline.tsx` - Timeline grouping with date headers
-   - `NewBookingCard.tsx` - Skeleton "+" card for new bookings (opens AI)
-   - Cancel booking API endpoint with WhatsApp notification
-   - Edit access notes directly from booking cards
+### Previous Work
+- 1-Click Rebook & Make Recurring (owner dashboard)
+- Feature Showcase Page (`/features/rebook`)
+- Post-Review Nurturing Email system
+- Owner Dashboard JobCards (peek-to-lock)
 
 ### Active Plan
 Check `/Users/marktaylor/.claude/plans/` for any active implementation plans.
