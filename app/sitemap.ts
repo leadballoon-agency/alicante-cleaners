@@ -5,7 +5,7 @@ import { db } from '@/lib/db'
 // keeps the sitemap off the hot path for the DB.
 export const revalidate = 86400
 
-const BASE = 'https://alicantecleaners.com'
+const BASE = 'https://www.alicantecleaners.com'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [

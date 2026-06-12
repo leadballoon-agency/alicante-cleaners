@@ -18,6 +18,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: 'https://alicantecleaners.com/sitemap.xml',
+    sitemap: 'https://www.alicantecleaners.com/sitemap.xml',
   }
 }
