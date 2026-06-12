@@ -295,7 +295,7 @@ CLEANER CONTEXT:
 
   // Initial request
   let response = await client.messages.create({
-    model: 'claude-3-5-haiku-20241022',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 512,
     system: `${SUCCESS_SYSTEM_PROMPT}${contextInfo}`,
     tools: availableTools,
@@ -322,7 +322,7 @@ CLEANER CONTEXT:
 
     // Continue conversation with tool results
     response = await client.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 512,
       system: `${SUCCESS_SYSTEM_PROMPT}${contextInfo}`,
       tools: availableTools,

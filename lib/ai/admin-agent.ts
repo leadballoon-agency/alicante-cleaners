@@ -1335,7 +1335,7 @@ export async function chatWithAdminAgent(
 
   // OPTIMIZATION: Use Haiku 3.5 for simple queries, Sonnet 4 for complex ones
   const isSimpleQuery = relevantTools.length <= 4 && !latestMessage.toLowerCase().includes('approve')
-  const model = isSimpleQuery ? 'claude-3-5-haiku-20241022' : 'claude-sonnet-4-20250514'
+  const model = isSimpleQuery ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-20250514'
 
   // Load admin knowledge base
   const adminKnowledge = loadKnowledge('admin')
