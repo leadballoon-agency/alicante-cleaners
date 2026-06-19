@@ -1,22 +1,15 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { hasStaffAccess } from '@/lib/staff-access'
 import { db } from '@/lib/db'
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Check if user is admin
-    const user = await db.user.findUnique({
-      where: { email: session.user.email },
-    })
-
-    if (!user || user.role !== 'ADMIN') {
+    // Staff check by user ID (not email — managers may be phone-only cleaners)
+    if (!session?.user?.id || !hasStaffAccess(session.user.staffLevel, 'MANAGER')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

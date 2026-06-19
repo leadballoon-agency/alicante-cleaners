@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { hasStaffAccess } from '@/lib/staff-access'
 import { chatWithAdminAgent, AdminChatMessage } from '@/lib/ai/admin-agent'
 import { db } from '@/lib/db'
 
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
       select: { role: true, name: true },
     })
 
-    if (!user || user.role !== 'ADMIN') {
+    if (!user || !hasStaffAccess(session.user.staffLevel, 'MANAGER')) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }

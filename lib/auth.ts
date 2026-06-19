@@ -9,6 +9,8 @@ import { db } from './db'
 import { verifyCode, normalizePhone } from './otp'
 import { triggerWelcomeEmail } from './nurturing/send-email'
 import { linkChatConversations } from './nurturing/link-conversations'
+import { computeStaffLevel, hasStaffAccess } from './staff-access'
+import { logAudit } from './audit'
 
 // Create fresh Resend client each time (env vars can change between deployments)
 const getResend = () => {
@@ -342,12 +344,16 @@ export const authOptions: NextAuthOptions = {
         })
         token.role = dbUser?.role || token.role
       }
+
+      // Derive staff access (decoupled from role — see lib/staff-access.ts)
+      token.staffLevel = computeStaffLevel({ id: token.id as string, role: token.role as string })
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        session.user.staffLevel = token.staffLevel || 'NONE'
       }
 
       // Check for impersonation
@@ -357,13 +363,13 @@ export const authOptions: NextAuthOptions = {
         const adminUserId = cookieStore.get('admin_user_id')?.value
 
         if (impersonatingUserId && adminUserId && session.user) {
-          // Verify the admin is still valid
+          // Verify the impersonator is still valid staff (manager or admin)
           const admin = await db.user.findUnique({
             where: { id: adminUserId },
-            select: { role: true },
+            select: { id: true, role: true },
           })
 
-          if (admin?.role === 'ADMIN') {
+          if (admin && hasStaffAccess(computeStaffLevel({ id: admin.id, role: admin.role }), 'MANAGER')) {
             // Get the impersonated user's info
             const impersonatedUser = await db.user.findUnique({
               where: { id: impersonatingUserId },
@@ -376,6 +382,9 @@ export const authOptions: NextAuthOptions = {
               session.user.email = impersonatedUser.email
               session.user.image = impersonatedUser.image
               session.user.role = impersonatedUser.role || 'CLEANER'
+              // Recompute staff level for the impersonated identity so admin
+              // powers don't bleed through impersonation.
+              session.user.staffLevel = computeStaffLevel({ id: impersonatedUser.id, role: impersonatedUser.role })
               session.user.isImpersonating = true
               session.user.adminId = adminUserId
             }
@@ -386,6 +395,30 @@ export const authOptions: NextAuthOptions = {
       }
 
       return session
+    },
+  },
+  events: {
+    // Accountability trail — record every successful sign-in. Logins were
+    // previously never audited (the LOGIN action type existed but nothing
+    // wrote it). Best-effort: never let an audit failure block a login.
+    async signIn({ user }) {
+      try {
+        if (user?.id) {
+          await logAudit({ userId: user.id, action: 'LOGIN', targetType: 'USER', target: user.id })
+        }
+      } catch {
+        // swallow — auditing must not break authentication
+      }
+    },
+    async signOut({ token }) {
+      try {
+        const id = token?.id as string | undefined
+        if (id) {
+          await logAudit({ userId: id, action: 'LOGOUT', targetType: 'USER', target: id })
+        }
+      } catch {
+        // swallow
+      }
     },
   },
 }

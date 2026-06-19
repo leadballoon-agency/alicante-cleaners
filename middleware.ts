@@ -6,14 +6,22 @@ export default withAuth(
     const token = req.nextauth.token
     const path = req.nextUrl.pathname
     const role = token?.role
+    // Staff access is decoupled from role: a CLEANER can also be a platform
+    // MANAGER. Fall back to role==='ADMIN' so existing admins are never locked
+    // out even on a token issued before staffLevel existed.
+    const staffLevel = (token?.staffLevel as string) || (role === 'ADMIN' ? 'ADMIN' : 'NONE')
+    const isStaff = staffLevel === 'ADMIN' || staffLevel === 'MANAGER'
 
-    // ADMIN can access everything (admin, owner, cleaner dashboards)
-    if (role === 'ADMIN') {
+    // Full-access staff (ADMIN) can access everything
+    if (staffLevel === 'ADMIN') {
       return NextResponse.next()
     }
 
-    // Admin routes - require ADMIN role
+    // Admin area - require staff access (MANAGER or ADMIN)
     if (path.startsWith('/admin')) {
+      if (isStaff) {
+        return NextResponse.next()
+      }
       return NextResponse.redirect(new URL('/login?error=admin_only&callbackUrl=/admin', req.url))
     }
 

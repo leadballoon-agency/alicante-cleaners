@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { hasStaffAccess } from '@/lib/staff-access'
 import { db } from '@/lib/db'
 import { BetaAnalyticsDataClient } from '@google-analytics/data'
 
@@ -41,13 +42,8 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify admin role
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    })
-
-    if (user?.role !== 'ADMIN') {
+    // Verify staff access (manager or admin)
+    if (!hasStaffAccess(session.user.staffLevel, 'MANAGER')) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 

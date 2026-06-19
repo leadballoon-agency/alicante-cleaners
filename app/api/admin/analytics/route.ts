@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { hasStaffAccess } from '@/lib/staff-access'
 import { db } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -8,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   const session = await getServerSession(authOptions)
 
-  if (!session?.user || session.user.role !== 'ADMIN') {
+  if (!session?.user || !hasStaffAccess(session.user.staffLevel, 'MANAGER')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

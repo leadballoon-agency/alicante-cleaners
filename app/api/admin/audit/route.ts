@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { hasStaffAccess } from '@/lib/staff-access'
 import { getAuditLogs, AuditAction, TargetType } from '@/lib/audit'
 
 // GET /api/admin/audit - Get audit logs
@@ -8,7 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user?.id || session.user.role !== 'ADMIN') {
+    if (!session?.user?.id || !hasStaffAccess(session.user.staffLevel, 'ADMIN')) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

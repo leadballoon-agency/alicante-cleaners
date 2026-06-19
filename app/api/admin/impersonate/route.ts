@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { hasStaffAccess, computeStaffLevel } from '@/lib/staff-access'
 import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
 import { logAudit } from '@/lib/audit'
@@ -10,7 +11,8 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user?.id || session.user.role !== 'ADMIN') {
+    // Managers and admins may impersonate (it's support tooling, fully audited)
+    if (!session?.user?.id || !hasStaffAccess(session.user.staffLevel, 'MANAGER')) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -44,6 +46,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Cleaner not found' },
         { status: 404 }
+      )
+    }
+
+    // Never allow impersonating another staff member — no sideways/upward
+    // privilege escalation, and it keeps the audit trail honest.
+    if (hasStaffAccess(computeStaffLevel({ id: cleaner.user.id, role: cleaner.user.role }), 'MANAGER')) {
+      return NextResponse.json(
+        { error: 'Cannot impersonate another staff member' },
+        { status: 403 }
       )
     }
 

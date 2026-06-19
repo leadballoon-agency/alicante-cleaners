@@ -6,6 +6,7 @@ declare module 'next-auth' {
     user: {
       id: string
       role: string
+      staffLevel?: 'NONE' | 'MANAGER' | 'ADMIN'
       isImpersonating?: boolean
       adminId?: string
     } & DefaultSession['user']
@@ -21,5 +22,6 @@ declare module 'next-auth/jwt' {
   interface JWT extends DefaultJWT {
     id?: string
     role?: string
+    staffLevel?: 'NONE' | 'MANAGER' | 'ADMIN'
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { hasStaffAccess } from '@/lib/staff-access'
 import { db } from '@/lib/db'
 import {
   transformToFeed,
@@ -53,7 +54,7 @@ function isTestAccount(email?: string | null, name?: string | null): boolean {
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
 
-  if (!session?.user || session.user.role !== 'ADMIN') {
+  if (!session?.user || !hasStaffAccess(session.user.staffLevel, 'MANAGER')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

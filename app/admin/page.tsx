@@ -165,6 +165,9 @@ const DEFAULT_STATS: Stats = {
 function AdminDashboardContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
+  // Founder-only surfaces (Audit, Settings, impersonation) are hidden from
+  // platform MANAGERs — only full ADMINs see them.
+  const isAdmin = session?.user?.staffLevel === 'ADMIN'
 
   // AI Panel context - must be called before any early returns
   const { isAIPanelOpen, openAIPanel, closeAIPanel, aiPanelContext } = useAdminLayout()
@@ -561,8 +564,10 @@ function AdminDashboardContent() {
             { id: 'reviews', label: 'Reviews', icon: '⭐', badge: reviews.filter(r => r.status === 'pending').length },
             { id: 'feedback', label: 'Feedback', icon: '💬', badge: 0 },
             { id: 'support', label: 'Support', icon: '🎧', badge: supportStats.escalated },
-            { id: 'audit', label: 'Audit Log', icon: '📝', badge: 0 },
-            { id: 'settings', label: 'Settings', icon: '⚙️', badge: 0 },
+            ...(isAdmin ? [
+              { id: 'audit', label: 'Audit Log', icon: '📝', badge: 0 },
+              { id: 'settings', label: 'Settings', icon: '⚙️', badge: 0 },
+            ] : []),
           ].map((item) => (
             <button
               key={item.id}
