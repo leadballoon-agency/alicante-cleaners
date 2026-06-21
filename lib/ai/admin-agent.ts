@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { db } from '@/lib/db'
 import { Prisma } from '@prisma/client'
 import { loadKnowledge } from './knowledge'
+import { createFeedbackIssue } from '@/lib/feedback-issue'
 
 // Lazy initialization
 let anthropic: Anthropic | null = null
@@ -336,6 +337,19 @@ export const ADMIN_TOOLS: Anthropic.Tool[] = [
         },
       },
       required: ['owner_id', 'notes'],
+    },
+  },
+  {
+    name: 'report_feedback',
+    description: "Capture a bug, feature request, idea, or improvement from the manager and file it to the development backlog (GitHub issue). Use this whenever someone reports something broken, suggests a feature, or has an idea to improve the platform. Confirm the title/details briefly, then file it.",
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        type: { type: 'string', enum: ['bug', 'feature', 'idea', 'improvement'], description: 'The kind of feedback' },
+        title: { type: 'string', description: 'A short, specific one-line summary' },
+        details: { type: 'string', description: 'The full description: what happens / what is wanted / why it matters. Include any context the manager gave.' },
+      },
+      required: ['type', 'title', 'details'],
     },
   },
 ]
@@ -1152,6 +1166,27 @@ async function handleUpdateOwnerNotes(params: {
   }
 }
 
+async function handleReportFeedback(
+  params: { type: 'bug' | 'feature' | 'idea' | 'improvement'; title: string; details: string },
+  adminId?: string
+) {
+  let submittedBy: string | undefined
+  if (adminId) {
+    const u = await db.user.findUnique({ where: { id: adminId }, select: { name: true } })
+    submittedBy = u?.name || undefined
+  }
+  const result = await createFeedbackIssue({
+    type: params.type,
+    title: params.title,
+    details: params.details,
+    submittedBy,
+  })
+  if (result.ok) {
+    return { success: true, message: `Filed to the backlog as issue #${result.number}.`, url: result.url, number: result.number }
+  }
+  return { success: false, error: result.error }
+}
+
 // Process tool calls
 export async function processToolCall(
   toolName: string,
@@ -1232,6 +1267,12 @@ export async function processToolCall(
           toolInput as { owner_id: string; notes: string; append?: boolean }
         )
         break
+      case 'report_feedback':
+        result = await handleReportFeedback(
+          toolInput as { type: 'bug' | 'feature' | 'idea' | 'improvement'; title: string; details: string },
+          adminId
+        )
+        break
       default:
         result = { error: `Unknown tool: ${toolName}` }
     }
@@ -1255,6 +1296,7 @@ HOW TO SHOW UP
 - Be a partner, not a butler: warm, sharp, concise, encouraging. These are founders building something — talk like a teammate who wants them to win.
 - Spain runs on WhatsApp and in Spanish — factor that into how cleaners and owners are reached.
 - Proactively flag what needs attention: pending cleaners, unfilled bookings, completed jobs with no review yet, a rating slipping, a coverage gap by area, a quiet owner.
+- This product improves WITH its operators. If they hit a bug, want a feature, or have an idea, capture it with report_feedback so it reaches the dev backlog — Ernesto especially is technical and will want to shape the product. Make them feel heard.
 
 RULES (non-negotiable)
 - Query the database for facts — never guess or invent data.
@@ -1277,8 +1319,8 @@ export interface AdminChatMessage {
 function selectRelevantTools(message: string): Anthropic.Tool[] {
   const lowerMsg = message.toLowerCase()
 
-  // Always include basic query tools
-  const baseTools = ['get_dashboard_stats', 'query_cleaners', 'get_cleaner_details']
+  // Always include basic query tools + feedback capture (can come up any time)
+  const baseTools = ['get_dashboard_stats', 'query_cleaners', 'get_cleaner_details', 'report_feedback']
   const selectedToolNames = new Set(baseTools)
 
   // Add tools based on keywords
