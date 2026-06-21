@@ -1,135 +1,90 @@
-# Admin Knowledge Base
+# VillaCare — Operating Brain Knowledge Base
 
-> Last updated: January 2026
+> The context behind your mission. Last updated: June 2026.
 
-## Platform Stats (Typical)
+## What VillaCare is
 
-- Active cleaners: 5-10
-- Active owners: 20-50
-- Bookings per week: 10-30
-- Average rating: 4.8+
+A trust-first villa-services marketplace on Spain's Costa Blanca (live as **Alicante Cleaners**, alicantecleaners.com). It connects villa owners — many of them expats living ~2,000km away — with vetted local cleaners. Beta phase: owners pay cleaners directly, no platform fees yet, while we build trust and bookings.
 
-## Cleaner Approval Process
+## The vision (why we exist)
 
-1. Cleaner applies via `/onboarding/cleaner`
-2. They must provide a referrer name
-3. Admin verifies with the referrer
-4. If vouched for, approve in admin dashboard
-5. Cleaner receives welcome message
+Cleaning is the wedge, not the destination:
+1. **Services (now)** — cleaning, then pool/garden/handyman via cleaner teams. ~€60/clean.
+2. **Property management** — once we hold the bookings, the keys and the trusted people, managing the whole villa is the natural upgrade. €200–500/month per villa.
+3. **Real estate** — cleaners visit villas every week; they know who's thinking of selling before any agent. The "Zillow play" with a services moat. One sale ≈ 1,250 cleans of revenue.
 
-**Rejection reasons:**
-- No valid referrer
-- Referrer doesn't vouch for them
-- Outside service area
-- Incomplete profile
+## The flywheel (your north star)
 
-## Review Moderation
+More vetted cleaners → better coverage across areas → reliable service → great reviews & repeat bookings → word of mouth → more owners → more work → attracts more cleaners → ↻
 
-Reviews require approval before publishing:
-- Check for inappropriate content
-- Verify it's a genuine booking
-- Featured reviews appear on homepage
+Your job is to help spin this. Bias every suggestion toward: **adding supply, filling a coverage gap, winning or keeping an owner, or earning a review.**
 
-## Service Approval
+## The market & how it works
 
-Team leaders can add custom services that require admin approval:
+- **Spain runs on WhatsApp, in Spanish.** Cleaners sign in by phone (OTP), get booking alerts on WhatsApp, reply ACCEPT/DECLINE. Owners may use any of 7 languages; messages auto-translate between owner and cleaner.
+- **Trust is the product.** Referral-only network: every cleaner is vouched for by someone already on the platform. Door codes are encrypted and visible to the assigned cleaner only 24h before a job.
+- **Teams:** experienced cleaners become team leaders, recruit others, and cover each other so an owner is never left without service.
 
-**Service types:**
-- **CUSTOM** - Standalone services (Pool Cleaning, Window Washing)
-- **ADDON** - Extras added to bookings (+€20 Ironing, +€15 Fridge Cleaning)
+## The team
 
-**Approval process:**
-1. Team leader creates service in their dashboard
-2. Service appears in Live Feed with "Pending" status
-3. Admin reviews: name, description, pricing
-4. Click "Approve" to make it live, or navigate to reject
+- **Mark** — founder, product & tech.
+- **Kerry** — operations.
+- **Ernesto & Jessica** — operating partners (a couple) running the platform day to day. Jessica: marketing background + ran cleaning/management for holiday rentals — the operations lead. Ernesto: specialist cleaner who also manages the platform. Both are also cleaners on the platform.
+- **Clara Rodrigues** — original co-founder/lead cleaner; has stepped back to start her own food business. Handle her profile and team gracefully.
 
-**What to check:**
-- Reasonable pricing (hourly services should match cleaner's rate)
-- Appropriate service name and description
-- Not duplicate of existing standard services
-- Relevant to cleaning/home services
+## What good looks like (metrics to watch)
 
-**After approval:**
-- Service immediately appears on public profiles
-- Available to all team members (not just the leader)
-- Can be selected during booking flow
+- Pending cleaner applications: cleared within 48h
+- Cleaner response rate: within 24h; completion rate 95%+
+- Platform review average: stay above 4.5
+- Coverage: vetted cleaners across all areas — Alicante City, San Juan, Playa de San Juan, El Campello, Mutxamel, San Vicente, Jijona
+- Completed jobs with no review → chase them (reviews are flywheel fuel)
+- Quiet owners (no booking in weeks) → re-engage
 
-## Common Issues
+## Platform capabilities (so you can explain them)
 
-### Cleaner Not Responding
-- Check their last login date
-- Send in-app message
-- If no response in 48h, consider suspending
+New managers often don't know everything the platform already does. When asked "what can it do?" or about a specific feature, explain clearly. Key capabilities:
 
-### Double Booking
-- Check calendar for conflicts
-- Contact both parties
-- Offer to reassign one booking
+**For owners**
+- Book a clean in 4 steps — no app, no password (WhatsApp phone verification).
+- Owner dashboard: bookings timeline, messages (auto-translated to/from the cleaner's language), reschedule, cancel, review.
+- **"I'm Coming Home"** — remote owners trigger arrival prep (fridge, linens, etc.) before they land.
+- **1-click rebook** and **recurring bookings** (weekly / fortnightly / monthly).
+- **Photo proof** — every completed clean comes with photos.
 
-### Payment Disputes
-- Review booking details
-- Check completion status
-- Contact both parties for resolution
+**For cleaners**
+- Phone-OTP login (no passwords); booking alerts on WhatsApp, reply ACCEPT/DECLINE.
+- Dashboard: calendar, accept/decline, earnings, profile.
+- **Google Calendar sync** to prevent double-booking.
+- **Success Coach** — an AI coach that scores profile health (0–100), shows views/earnings, and gives personalised growth tips. Locked until first completed job, then unlocks fully. (Big lever: photo + full bio + high-demand areas = more bookings.)
+- **Teams** — experienced cleaners become leaders, recruit members, cover each other, and add custom services.
+- Multilingual: work in your own language, auto-translated to owners.
 
-## Key Contacts
+**Trust & security**
+- **Referral-only network** — every cleaner vouched for by someone already on the platform.
+- **Just-in-time key access** — access notes (door codes, key location) are AES-256 encrypted, visible to the *assigned* cleaner *only in the 24h before* the booking, and auto-revoked afterwards. System-enforced, not policy.
 
-- Clara Rodrigues: Co-founder, Team Leader (+34612345678)
-- Tech support: hello@alicantecleaners.com
+**For managers (you + the admin dashboard)**
+- Live Feed (real-time activity), cleaner/owner/booking/review management, this AI assistant.
+- "Login As" to view the platform as any cleaner/owner for support.
+- (Founder-only: Audit Log, Settings.)
 
-## Seasonal Notes
+## Operating procedures
 
-**Summer (Jun-Sep):**
-- High demand, cleaners may be busy
-- More arrival prep bookings
-- Tourist owners need quick responses
+### Cleaner approval
+Applicant must name a referrer who vouches for them → approve in the dashboard → they get a welcome message. Reject if: no valid referrer, not vouched for, outside service area, or incomplete profile.
 
-**Winter (Nov-Feb):**
-- Lower demand
-- Good time for deep cleans
-- Maintenance bookings
+### Review moderation
+Reviews need approval before publishing: check for inappropriate content and that it's a genuine booking. Featured reviews show on the homepage.
 
-## Metrics to Watch
+### Service approval
+Team leaders add custom services (CUSTOM standalone, e.g. Pool Cleaning; or ADDON extras, e.g. +€20 Ironing). They appear pending in the Live Feed → check pricing is reasonable, name/description appropriate, not a duplicate → approve.
 
-- Response rate: Cleaners should respond within 24h
-- Completion rate: Should be 95%+
-- Review score: Platform average should stay above 4.5
-- Pending applications: Clear within 48h
-- Cleaner logins: Track activity in Live Feed (shows last 24h logins)
-- Pending services: Approve team services promptly
+### Common issues
+- **Cleaner not responding:** check last login → message → if silent 48h, consider suspending.
+- **Double booking:** check the calendar, contact both parties, reassign one.
+- **Payment dispute (beta = direct pay):** review booking + completion status, mediate between parties.
 
-## AI Agents
+## You're one of several AI agents
 
-The platform has 7 AI agents that help different users:
-
-| Agent | Who It Helps | What It Does |
-|-------|--------------|--------------|
-| **Admin Agent** | Admins | Platform management, cleaner approval, stats, messaging |
-| **Success Agent** | Cleaners | Profile coaching, growth tips, view stats |
-| **Cleaner Agent** | Cleaners | Dashboard help, booking guidance |
-| **Owner Agent** | Owners | Booking help, property management |
-| **Onboarding Agent** | New cleaners | Signup assistance |
-| **Public Chat Agent** | Website visitors | Pre-booking inquiries |
-| **Support Agent** | Everyone | Contextual help across platform |
-
-### Success Agent Details
-
-The Success Agent (Success Coach) helps cleaners maximize their opportunity:
-
-**What it analyzes:**
-- Profile completeness score (0-100)
-- Profile views from PageView table
-- Booking history and revenue
-- Response rate and patterns
-- Team opportunities
-
-**Gamification:**
-- **Locked** until first completed job (shows teaser progress bar)
-- **Unlocked** after first job (full AI chat, stats, tips)
-
-**Common recommendations:**
-- Add a profile photo (3x more bookings)
-- Write a longer bio (50+ words)
-- Cover high-demand areas (San Juan, El Campello)
-- Respond quickly to bookings
-- Import external reviews (Google, Facebook)
+Cleaners get a Success Coach (profile & growth tips, unlocks after their first job). Owners get a booking assistant. Every cleaner profile has a public sales assistant that answers questions and takes bookings 24/7. You are the **management** one — the operator's growth partner.
