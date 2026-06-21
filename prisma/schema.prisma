@@ -1091,3 +1091,19 @@ model CleanerNurturingCampaign {
   @@unique([cleanerId, emailType]) // Only one of each type per cleaner
   @@index([sentAt])
 }
+
+// Caches message translations so identical/templated text is translated once
+// (by OpenAI) and then served free from our own DB forever after.
+model TranslationCache {
+  id             String   @id @default(cuid())
+  sourceHash     String   // sha256 of trimmed source text
+  targetLang     String   @db.VarChar(10)
+  sourceText     String   @db.Text
+  sourceLang     String   @db.VarChar(10)
+  translatedText String   @db.Text
+  hitCount       Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([sourceHash, targetLang])
+}

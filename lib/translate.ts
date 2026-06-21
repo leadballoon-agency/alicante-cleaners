@@ -1,4 +1,8 @@
 import OpenAI from 'openai'
+import { createHash } from 'crypto'
+import { db } from './db'
+
+const hashText = (text: string) => createHash('sha256').update(text).digest('hex')
 
 // Lazy initialization to avoid build-time errors
 let openai: OpenAI | null = null
@@ -108,21 +112,47 @@ export async function detectAndTranslate(
   originalLang: LanguageCode
   translatedText: string
 }> {
-  const originalLang = await detectLanguage(text)
+  const trimmed = text.trim()
+  if (!trimmed) return { originalLang: 'en', translatedText: text }
+  const sourceHash = hashText(trimmed)
 
-  if (originalLang === targetLang) {
-    return {
-      originalLang,
-      translatedText: text, // No translation needed
+  // 1. Cache lookup — best-effort. If the cache table is missing or the DB
+  //    errors, we silently fall through to a live translation (never block).
+  try {
+    const cached = await db.translationCache.findUnique({
+      where: { sourceHash_targetLang: { sourceHash, targetLang } },
+    })
+    if (cached) {
+      // fire-and-forget usage bump; ignore failures
+      db.translationCache
+        .update({ where: { sourceHash_targetLang: { sourceHash, targetLang } }, data: { hitCount: { increment: 1 } } })
+        .catch(() => {})
+      return { originalLang: cached.sourceLang as LanguageCode, translatedText: cached.translatedText }
     }
+  } catch {
+    // cache unavailable — translate live
   }
 
-  const translatedText = await translateText(text, originalLang, targetLang)
+  // 2. Live translate (detect + translate, both via OpenAI)
+  const originalLang = await detectLanguage(trimmed)
+  const translatedText = originalLang === targetLang ? text : await translateText(trimmed, originalLang, targetLang)
 
-  return {
-    originalLang,
-    translatedText,
+  // 3. Cache write — best-effort (ignore unique races / missing table)
+  try {
+    await db.translationCache.create({
+      data: {
+        sourceHash,
+        targetLang,
+        sourceText: trimmed.slice(0, 4000),
+        sourceLang: originalLang,
+        translatedText,
+      },
+    })
+  } catch {
+    // ignore — caching is an optimisation, not a requirement
   }
+
+  return { originalLang, translatedText }
 }
 
 // Get the preferred language for a user role
