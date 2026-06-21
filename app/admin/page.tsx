@@ -14,12 +14,13 @@ import SettingsTab, { PlatformSettings } from './tabs/settings'
 import AuditTab from './tabs/audit'
 import LiveTab from './tabs/live'
 import TodayTab from './tabs/today'
+import MessagesTab from './tabs/messages'
 import Image from 'next/image'
 import Link from 'next/link'
 import { AdminAIPanel, PullToRefresh } from './components'
 import { useAdminLayout } from './AdminLayoutContext'
 
-type Tab = 'today' | 'live' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'support' | 'audit' | 'settings'
+type Tab = 'today' | 'live' | 'messages' | 'cleaners' | 'owners' | 'bookings' | 'reviews' | 'feedback' | 'support' | 'audit' | 'settings'
 
 type SupportConversation = {
   id: string
@@ -179,7 +180,7 @@ function AdminDashboardContent() {
   const tabFromUrl = searchParams.get('tab') as Tab | null
   const cardFromUrl = searchParams.get('card') // e.g., "booking-abc123"
   const searchFromUrl = searchParams.get('search') // e.g., "clara"
-  const validTabs: Tab[] = ['today', 'live', 'cleaners', 'owners', 'bookings', 'reviews', 'feedback', 'support', 'audit', 'settings']
+  const validTabs: Tab[] = ['today', 'live', 'messages', 'cleaners', 'owners', 'bookings', 'reviews', 'feedback', 'support', 'audit', 'settings']
   const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'today'
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [searchQuery, setSearchQuery] = useState(searchFromUrl || '')
@@ -560,6 +561,7 @@ function AdminDashboardContent() {
           {[
             { id: 'today', label: 'Today', icon: '🌅', badge: 0 },
             { id: 'live', label: 'Live Feed', icon: '📡', badge: 0 },
+            { id: 'messages', label: 'Messages', icon: '💬', badge: 0 },
             { id: 'cleaners', label: 'Cleaners', icon: '🧹', badge: cleaners.filter(c => c.status === 'pending').length },
             { id: 'owners', label: 'Owners', icon: '👤', badge: 0 },
             { id: 'bookings', label: 'Bookings', icon: '📋', badge: bookings.filter(b => b.status === 'pending').length },
@@ -621,6 +623,7 @@ function AdminDashboardContent() {
               onTabChange={(tab) => setActiveTab(tab as Tab)}
             />
           )}
+          {activeTab === 'messages' && <MessagesTab />}
           {activeTab === 'live' && (
             <LiveTab
               onTabChange={(tab) => setActiveTab(tab as Tab)}
