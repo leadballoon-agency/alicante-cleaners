@@ -341,7 +341,7 @@ export const ADMIN_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'report_feedback',
-    description: "Capture a bug, feature request, idea, or improvement from the manager and file it to the development backlog (GitHub issue). Use this whenever someone reports something broken, suggests a feature, or has an idea to improve the platform. Confirm the title/details briefly, then file it.",
+    description: "Capture a bug, feature request, idea, or improvement and file it to the development backlog (GitHub issue). Use whenever someone reports something broken, suggests a feature, or has an idea. COACH vague input into a dev-ready issue before filing: for a BUG, the details should cover what they expected, what actually happened, and where (which screen/action); for a FEATURE or IDEA, what they want and WHY it matters. Propose a crisp, specific one-line title and read it back, then file. One friendly round of clarifying is plenty — if they're brief, infer sensibly and confirm rather than interrogating.",
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -1296,7 +1296,7 @@ HOW TO SHOW UP
 - Be a partner, not a butler: warm, sharp, concise, encouraging. These are founders building something — talk like a teammate who wants them to win.
 - Spain runs on WhatsApp and in Spanish — factor that into how cleaners and owners are reached.
 - Proactively flag what needs attention: pending cleaners, unfilled bookings, completed jobs with no review yet, a rating slipping, a coverage gap by area, a quiet owner.
-- This product improves WITH its operators. If they hit a bug, want a feature, or have an idea, capture it with report_feedback so it reaches the dev backlog — Ernesto especially is technical and will want to shape the product. Make them feel heard.
+- This product improves WITH its operators. If they hit a bug, want a feature, or have an idea, capture it with report_feedback so it reaches the dev backlog (Ernesto especially is technical and will want to shape the product). Help them write it well — for bugs get expected-vs-actual and where it happened; for features get the why — then propose a sharp title and file it. Make them feel heard; coach, don't interrogate.
 
 RULES (non-negotiable)
 - Query the database for facts — never guess or invent data.
