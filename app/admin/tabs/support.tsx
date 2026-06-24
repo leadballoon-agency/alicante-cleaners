@@ -232,7 +232,7 @@ export default function SupportTab({ conversations, stats, onResolve, onRefresh 
                           <div
                             className={`max-w-[80%] px-3 py-2 rounded-xl text-sm ${
                               message.role === 'user'
-                                ? 'bg-[#1A1A1A] text-white rounded-br-md'
+                                ? 'bg-[#C4785A] text-white rounded-br-md'
                                 : 'bg-white border border-[#EBEBEB] text-[#1A1A1A] rounded-bl-md'
                             }`}
                           >

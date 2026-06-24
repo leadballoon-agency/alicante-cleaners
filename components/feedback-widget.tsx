@@ -536,7 +536,7 @@ ${t.askServices}`
                 <div
                   className={`max-w-[85%] px-4 py-3 rounded-2xl ${
                     message.role === 'user'
-                      ? 'bg-[#1A1A1A] text-white rounded-br-md'
+                      ? 'bg-[#C4785A] text-white rounded-br-md'
                       : 'bg-white border border-[#EBEBEB] text-[#1A1A1A] rounded-bl-md shadow-sm'
                   }`}
                 >

@@ -217,7 +217,7 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
                   <div
                     className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
                       msg.role === 'user'
-                        ? 'bg-[#1A1A1A] text-white rounded-br-md'
+                        ? 'bg-[#C4785A] text-white rounded-br-md'
                         : msg.easterEgg === 'alan'
                           ? 'bg-blue-50 border-2 border-blue-300 text-[#1A1A1A] rounded-bl-md'
                           : msg.easterEgg === 'amanda'
