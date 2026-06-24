@@ -76,7 +76,7 @@ export default function MessagesTab() {
           {!thread && <div className="text-center text-[#A89E95] text-sm py-8">Loading…</div>}
           {thread?.messages.length === 0 && <div className="text-center text-[#A89E95] text-sm py-8">No messages yet — say hello 👋</div>}
           {thread?.messages.map((m) => (
-            <div key={m.id} className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-[14.5px] leading-snug ${m.mine ? 'self-end bg-[#1A1A1A] text-white rounded-br-md' : 'self-start bg-white border border-[#EFE8E1] text-[#1A1A1A] rounded-bl-md'}`}>{m.text}</div>
+            <div key={m.id} className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-[14.5px] leading-snug ${m.mine ? 'self-end bg-[#C4785A] text-white rounded-br-md' : 'self-start bg-white border border-[#EFE8E1] text-[#1A1A1A] rounded-bl-md'}`}>{m.text}</div>
           ))}
         </div>
         <div className="pt-2 border-t border-[#EFE8E1]">
