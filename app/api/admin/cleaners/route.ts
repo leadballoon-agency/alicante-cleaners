@@ -41,6 +41,8 @@ export async function GET() {
       photo: c.user.image || null,
       status: c.status.toLowerCase() as 'pending' | 'active' | 'suspended',
       joinedAt: c.createdAt,
+      bio: c.bio || null,
+      languages: c.languages || [],
       areas: c.serviceAreas,
       hourlyRate: Number(c.hourlyRate),
       totalBookings: c.totalBookings,

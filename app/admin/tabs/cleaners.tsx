@@ -24,6 +24,10 @@ type EditingCleaner = {
   email: string
 } | null
 
+const LANG_LABELS: Record<string, string> = {
+  es: 'Español', en: 'English', de: 'Deutsch', fr: 'Français', nl: 'Nederlands', it: 'Italiano', pt: 'Português',
+}
+
 export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTeamLeader, onLoginAs, onEdit }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
@@ -126,6 +130,24 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
                 </div>
               </div>
 
+              {/* Pending review info — what a manager needs to vet a new cleaner */}
+              {cleaner.status === 'pending' && (
+                <div className="mb-3 space-y-2">
+                  {cleaner.bio ? (
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-[#B59B8E] font-semibold mb-1">About / experience</p>
+                      <p className="text-sm text-[#4A4A4A] bg-white border border-[#F0E6E0] rounded-xl p-3 whitespace-pre-wrap">{cleaner.bio}</p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[#B59B8E] italic">No bio or experience added yet.</p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#6B6B6B]">
+                    <span>💶 {cleaner.hourlyRate ? `€${cleaner.hourlyRate}/hr` : 'No rate set'}</span>
+                    <span>🗣️ {cleaner.languages && cleaner.languages.length > 0 ? cleaner.languages.map(l => LANG_LABELS[l] || l).join(', ') : 'No languages set'}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Stats Row */}
               {cleaner.status === 'active' && (
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mb-3">
@@ -146,16 +168,20 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
               )}
 
               {/* Areas */}
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {cleaner.areas.map(area => (
-                  <span
-                    key={area}
-                    className="text-xs bg-[#F5F5F3] text-[#6B6B6B] px-2 py-1 rounded-full"
-                  >
-                    {area}
-                  </span>
-                ))}
-              </div>
+              {cleaner.areas.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {cleaner.areas.map(area => (
+                    <span
+                      key={area}
+                      className="text-xs bg-[#F5F5F3] text-[#6B6B6B] px-2 py-1 rounded-full"
+                    >
+                      {area}
+                    </span>
+                  ))}
+                </div>
+              ) : cleaner.status === 'pending' ? (
+                <p className="text-sm text-[#B59B8E] italic mb-3">No service areas selected yet.</p>
+              ) : null}
 
               {/* Actions */}
               <div className="flex gap-2 pt-2 border-t border-[#EBEBEB]/50">
