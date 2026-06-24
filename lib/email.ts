@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { sendPushToStaff } from '@/lib/push'
 
 // Lazy initialize Resend
 let resendClient: Resend | null = null
@@ -343,6 +344,14 @@ export async function notifyAdminNewMessage(details: {
     const previewText = details.messageText.length > 200
       ? details.messageText.substring(0, 200) + '...'
       : details.messageText
+
+    // Web push to staff devices (best-effort — never blocks the email)
+    sendPushToStaff({
+      title: `💬 ${details.cleanerName}`,
+      body: previewText,
+      url: `/admin?tab=messages&conversation=${details.conversationId}`,
+      tag: `msg-${details.conversationId}`,
+    }).catch(() => {})
 
     await getResend().emails.send({
       from: EMAIL_FROM,
