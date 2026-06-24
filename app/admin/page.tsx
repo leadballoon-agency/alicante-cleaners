@@ -74,6 +74,8 @@ export type Cleaner = {
   status: 'pending' | 'active' | 'suspended'
   joinedAt: Date
   lastLoginAt?: Date | null
+  bio?: string | null
+  languages?: string[]
   areas: string[]
   hourlyRate: number
   totalBookings: number
