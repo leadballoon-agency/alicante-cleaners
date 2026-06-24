@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import EnableNotifications from '@/components/push/EnableNotifications'
 
 type Action = { key: string; lever: string; icon: string; title: string; sub: string; count: number }
 type TodayData = {
@@ -93,6 +94,11 @@ export default function TodayTab({
         <Stat n={`${pulse.averageRating || '—'}★`} l="RATING" />
         <Stat n={pulse.bookingsThisWeek} l="THIS WEEK" />
         <Stat n={`${pulse.areasCovered}/${pulse.totalAreas}`} l="AREAS" highlight={pulse.areasCovered === pulse.totalAreas} />
+      </div>
+
+      {/* Enable push notifications — only renders if supported and not yet granted */}
+      <div className="mt-4">
+        <EnableNotifications />
       </div>
 
       {/* Needs you now */}
