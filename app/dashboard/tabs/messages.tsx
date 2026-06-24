@@ -138,7 +138,9 @@ export default function MessagesTab() {
   const [sending, setSending] = useState(false)
   const [showOriginal, setShowOriginal] = useState<Record<string, boolean>>({})
   const [copied, setCopied] = useState<string | null>(null)
+  const [sendError, setSendError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const composerRef = useRef<HTMLTextAreaElement>(null)
 
   const copyToClipboard = async (text: string, messageId: string) => {
     try {
@@ -160,14 +162,33 @@ export default function MessagesTab() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Poll for new messages when in a conversation
+  // Poll for new messages when in a conversation.
+  // IMPORTANT: only updates the message list (never replaces selectedConversation)
+  // and only when something actually changed. The previous version re-fetched the
+  // whole conversation every 5s, which re-rendered the composer and broke sending
+  // on mobile (the Send button shifted / state churned under the user's tap).
   useEffect(() => {
     if (!selectedConversation) return
+    const conversationId = selectedConversation.id
 
-    const interval = setInterval(() => {
-      fetchMessages(selectedConversation.id)
-    }, 5000) // Poll every 5 seconds
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/messages/conversations/${conversationId}`)
+        if (!res.ok) return
+        const data = await res.json()
+        const next: Message[] = data.messages || []
+        setMessages((prev) => {
+          const unchanged =
+            prev.length === next.length &&
+            prev[prev.length - 1]?.id === next[next.length - 1]?.id
+          return unchanged ? prev : next
+        })
+      } catch {
+        // best-effort poll; ignore transient errors
+      }
+    }
 
+    const interval = setInterval(poll, 5000) // Poll every 5 seconds
     return () => clearInterval(interval)
   }, [selectedConversation])
 
@@ -201,26 +222,34 @@ export default function MessagesTab() {
   }
 
   const handleSendMessage = async () => {
-    if (!selectedConversation || !newMessage.trim()) return
+    if (!selectedConversation || !newMessage.trim() || sending) return
 
+    const text = newMessage.trim()
     setSending(true)
+    setSendError(null)
     try {
       const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           conversationId: selectedConversation.id,
-          text: newMessage.trim(),
+          text,
         }),
       })
 
-      if (res.ok) {
-        const data = await res.json()
-        setMessages((prev) => [...prev, data.message])
-        setNewMessage('')
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setSendError(err.error || 'No se pudo enviar el mensaje. Inténtalo de nuevo.')
+        return
       }
+
+      const data = await res.json()
+      setMessages((prev) => [...prev, data.message])
+      setNewMessage('')
+      if (composerRef.current) composerRef.current.style.height = 'auto'
     } catch (error) {
       console.error('Error sending message:', error)
+      setSendError('No se pudo enviar el mensaje. Revisa tu conexión e inténtalo de nuevo.')
     } finally {
       setSending(false)
     }
@@ -523,19 +552,34 @@ export default function MessagesTab() {
       </div>
 
       {/* Message input */}
-      <div className="flex gap-2">
-        <input
-          type="text"
+      {sendError && (
+        <div className="mb-2 text-xs text-[#C75050] bg-[#FFEBEE] border border-[#F5C6C6] rounded-lg px-3 py-2">
+          {sendError}
+        </div>
+      )}
+      <div className="flex gap-2 items-end">
+        <textarea
+          ref={composerRef}
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+          onChange={(e) => {
+            setNewMessage(e.target.value)
+            e.target.style.height = 'auto'
+            e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              handleSendMessage()
+            }
+          }}
+          rows={1}
           placeholder="Escribe tu mensaje..."
-          className="flex-1 px-4 py-3 rounded-xl border border-[#DEDEDE] focus:outline-none focus:border-[#1A1A1A] transition-colors"
+          className="flex-1 px-4 py-3 rounded-xl border border-[#DEDEDE] focus:outline-none focus:border-[#1A1A1A] transition-colors resize-none max-h-[120px]"
         />
         <button
           onClick={handleSendMessage}
           disabled={!newMessage.trim() || sending}
-          className="px-4 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
         >
           {sending ? (
             <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
