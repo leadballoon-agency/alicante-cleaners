@@ -251,7 +251,7 @@ export default function AdminAIPanel({ isOpen, onClose, adminName, initialContex
                   <div
                     className={`max-w-[90%] rounded-2xl px-3 py-2.5 ${
                       message.role === 'user'
-                        ? 'bg-[#1A1A1A] text-white'
+                        ? 'bg-[#C4785A] text-white'
                         : 'bg-white border border-[#EBEBEB]'
                     }`}
                   >
