@@ -1383,9 +1383,9 @@ export async function chatWithAdminAgent(
   const latestMessage = messages[messages.length - 1]?.content || ''
   const relevantTools = selectRelevantTools(latestMessage)
 
-  // OPTIMIZATION: Use Haiku 3.5 for simple queries, Sonnet 4 for complex ones
+  // OPTIMIZATION: Use Haiku 4.5 for simple queries, Sonnet 4.6 for complex ones
   const isSimpleQuery = relevantTools.length <= 4 && !latestMessage.toLowerCase().includes('approve')
-  const model = isSimpleQuery ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-20250514'
+  const model = isSimpleQuery ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6'
 
   // Load admin knowledge base
   const adminKnowledge = loadKnowledge('admin')

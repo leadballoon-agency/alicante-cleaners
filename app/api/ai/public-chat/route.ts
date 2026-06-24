@@ -364,7 +364,7 @@ If someone says they're "just testing", "trying out the chat", "seeing how this 
       ]
 
       const easterEggResponse = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 500,
         system: easterEggPrompt,
         messages: anthropicMessages,
