@@ -111,7 +111,7 @@ const translations = {
     faqs: [
       {
         q: 'How do I update my profile?',
-        a: 'Log in to your dashboard and go to the Account tab. You can update your photo, bio, areas, and pricing anytime.',
+        a: 'Log in to your dashboard and go to the Profile tab. You can update your photo, bio, areas, and pricing anytime.',
       },
       {
         q: 'How do reviews help my ranking?',
@@ -119,7 +119,7 @@ const translations = {
       },
       {
         q: 'Can I change my service areas?',
-        a: 'Yes! Update your areas anytime from the Account tab. Adding more areas means more potential bookings.',
+        a: 'Yes! Update your areas anytime from the Profile tab. Adding more areas means more potential bookings.',
       },
       {
         q: 'What\'s the best way to get reviews?',
@@ -232,7 +232,7 @@ const translations = {
     faqs: [
       {
         q: '¿Cómo actualizo mi perfil?',
-        a: 'Inicia sesión en tu panel y ve a la pestaña Cuenta. Puedes actualizar tu foto, bio, zonas y precios cuando quieras.',
+        a: 'Inicia sesión en tu panel y ve a la pestaña Perfil. Puedes actualizar tu foto, bio, zonas y precios cuando quieras.',
       },
       {
         q: '¿Cómo ayudan las reseñas a mi posicionamiento?',
@@ -240,7 +240,7 @@ const translations = {
       },
       {
         q: '¿Puedo cambiar mis zonas de servicio?',
-        a: '¡Sí! Actualiza tus zonas cuando quieras desde la pestaña Cuenta. Añadir más zonas significa más reservas potenciales.',
+        a: '¡Sí! Actualiza tus zonas cuando quieras desde la pestaña Perfil. Añadir más zonas significa más reservas potenciales.',
       },
       {
         q: '¿Cuál es la mejor forma de conseguir reseñas?',
@@ -292,7 +292,7 @@ export default function ProfileGuide() {
               </button>
             </div>
             <Link
-              href="/dashboard/account"
+              href="/dashboard?tab=profile"
               className="bg-[#1A1A1A] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#333] transition-colors"
             >
               {t.updateProfile}
@@ -501,7 +501,7 @@ export default function ProfileGuide() {
             {t.ctaText}
           </p>
           <Link
-            href="/dashboard/account"
+            href="/dashboard?tab=profile"
             className="inline-block bg-[#C4785A] text-white px-8 py-4 rounded-xl font-medium text-lg hover:bg-[#B56A4F] transition-colors"
           >
             {t.ctaButton}
