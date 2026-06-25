@@ -71,8 +71,24 @@ export default function EnableNotifications() {
     }
   }
 
-  // Hide entirely when not configured/supported on non-iOS — no clutter
-  if (status === 'unconfigured' || status === 'unsupported') return null
+  // Surface the exact state instead of hiding silently — this is the admin
+  // home, so a small diagnostic note is appropriate and tells us what's wrong.
+  if (status === 'unconfigured') {
+    return (
+      <div className="bg-[#FFFBEB] border border-[#E0C878] rounded-xl p-3 text-xs text-[#8A6D1F]">
+        🔔 Notifications can&apos;t start on this device — the server is missing the
+        {' '}<strong>NEXT_PUBLIC_VAPID_PUBLIC_KEY</strong> environment variable (Production).
+        Once it&apos;s set and the app is redeployed, the Enable button shows up here.
+      </div>
+    )
+  }
+  if (status === 'unsupported') {
+    return (
+      <div className="bg-[#F5F5F3] border border-[#EBEBEB] rounded-xl p-3 text-xs text-[#9B9B9B]">
+        🔔 This browser doesn&apos;t support web push. On iPhone you need iOS 16.4+ and the app added to your Home Screen.
+      </div>
+    )
+  }
 
   if (status === 'granted') {
     return (
