@@ -1387,6 +1387,11 @@ export async function chatWithAdminAgent(
   const isSimpleQuery = relevantTools.length <= 4 && !latestMessage.toLowerCase().includes('approve')
   const model = isSimpleQuery ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6'
 
+  // Sonnet 4.6 defaults to 'high' effort (much slower than Sonnet 4). Use
+  // 'low' to keep the admin chat fast — it was timing out the client at ~20s.
+  // Effort is NOT supported on Haiku 4.5, so only apply it for the Sonnet path.
+  const tuning = isSimpleQuery ? {} : { output_config: { effort: 'low' as const } }
+
   // Load admin knowledge base
   const adminKnowledge = loadKnowledge('admin')
   const knowledgeSection = adminKnowledge ? `\n\nKNOWLEDGE BASE:\n${adminKnowledge.substring(0, 8000)}` : ''
@@ -1396,6 +1401,7 @@ export async function chatWithAdminAgent(
   // Initial request
   let response = await client.messages.create({
     model,
+    ...tuning,
     max_tokens: 1024,
     system: `${ADMIN_SYSTEM_PROMPT}\nAdmin: ${adminName} | Date: ${new Date().toISOString().split('T')[0]}${knowledgeSection}`,
     tools: relevantTools,
@@ -1423,6 +1429,7 @@ export async function chatWithAdminAgent(
     // Continue conversation with tool results
     response = await client.messages.create({
       model,
+      ...tuning,
       max_tokens: 1024,
       system: `${ADMIN_SYSTEM_PROMPT}\nAdmin: ${adminName} | Date: ${new Date().toISOString().split('T')[0]}`,
       tools: relevantTools,
