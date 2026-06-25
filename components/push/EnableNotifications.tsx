@@ -2,11 +2,19 @@
 
 import { useEffect, useState } from 'react'
 
+// Sanitize at the source: env values pasted into Vercel can arrive with
+// wrapping quotes or stray whitespace/newlines, which make atob() throw
+// "The string contains invalid characters". Strip them once, here.
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  ?.trim()
+  .replace(/^['"]+|['"]+$/g, '')
+  .replace(/\s+/g, '')
 
 function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  // Defensive: keep only valid base64url characters before decoding.
+  const cleaned = base64String.replace(/[^A-Za-z0-9_-]/g, '')
+  const padding = '='.repeat((4 - (cleaned.length % 4)) % 4)
+  const base64 = (cleaned + padding).replace(/-/g, '+').replace(/_/g, '/')
   const raw = atob(base64)
   const output = new Uint8Array(raw.length)
   for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i)
