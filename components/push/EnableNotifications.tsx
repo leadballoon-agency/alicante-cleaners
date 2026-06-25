@@ -21,6 +21,30 @@ function urlBase64ToUint8Array(base64String: string) {
   return output
 }
 
+// Register the SW, get-or-create the push subscription, and persist it.
+// Throws if anything fails so callers can fall back appropriately. Assumes
+// Notification.permission is already 'granted'.
+async function ensureSubscription() {
+  const reg = await navigator.serviceWorker.register('/sw.js')
+  await navigator.serviceWorker.ready
+
+  const existing = await reg.pushManager.getSubscription()
+  const sub =
+    existing ||
+    (await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY as string) as BufferSource,
+    }))
+
+  const json = sub.toJSON()
+  const res = await fetch('/api/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys, userAgent: navigator.userAgent }),
+  })
+  if (!res.ok) throw new Error('No se pudo guardar la suscripción.')
+}
+
 type Status = 'idle' | 'granted' | 'working' | 'denied' | 'error' | 'ios-install' | 'unsupported' | 'unconfigured'
 
 export default function EnableNotifications() {
@@ -43,7 +67,15 @@ export default function EnableNotifications() {
       setStatus('unsupported')
       return
     }
-    if (Notification.permission === 'granted') setStatus('granted')
+    // Permission being 'granted' is NOT proof of a live subscription — an
+    // earlier failed attempt can leave permission on with nothing saved.
+    // Ensure a real subscription exists and is persisted before showing green;
+    // if that can't be done silently, fall back to the Enable button.
+    if (Notification.permission === 'granted') {
+      ensureSubscription()
+        .then(() => setStatus('granted'))
+        .catch(() => setStatus('idle'))
+    }
   }, [])
 
   const enable = async () => {
@@ -52,26 +84,7 @@ export default function EnableNotifications() {
     try {
       const permission = await Notification.requestPermission()
       if (permission !== 'granted') { setStatus('denied'); return }
-
-      const reg = await navigator.serviceWorker.register('/sw.js')
-      await navigator.serviceWorker.ready
-
-      const existing = await reg.pushManager.getSubscription()
-      const sub =
-        existing ||
-        (await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY as string) as BufferSource,
-        }))
-
-      const json = sub.toJSON()
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys, userAgent: navigator.userAgent }),
-      })
-      if (!res.ok) { setStatus('error'); setError('No se pudo guardar la suscripción.'); return }
-
+      await ensureSubscription()
       setStatus('granted')
     } catch (err) {
       setStatus('error')
