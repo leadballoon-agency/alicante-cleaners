@@ -5,6 +5,10 @@ import { hasStaffAccess } from '@/lib/staff-access'
 import { chatWithAdminAgent, AdminChatMessage } from '@/lib/ai/admin-agent'
 import { db } from '@/lib/db'
 
+// The admin agent runs a multi-tool agentic loop — give it headroom so the
+// serverless function isn't killed mid-loop.
+export const maxDuration = 60
+
 export async function POST(req: NextRequest) {
   try {
     // Layer 1: Auth check
