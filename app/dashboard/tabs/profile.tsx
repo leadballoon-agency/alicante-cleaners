@@ -651,7 +651,6 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp,image/gif"
-                        capture="user"
                         onChange={handlePhotoSelect}
                         className="hidden"
                       />

@@ -135,7 +135,6 @@ export default function NamePhoto({ name, photoUrl, bio, reviewsLink, onUpdate, 
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="user"
             onChange={handlePhotoChange}
             className="hidden"
           />
