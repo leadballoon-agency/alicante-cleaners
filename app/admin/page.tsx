@@ -306,6 +306,59 @@ function AdminDashboardContent() {
     }
   }
 
+  const handleArchiveCleaner = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/cleaners/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'suspend' }),
+      })
+      if (response.ok) {
+        setCleaners(prev => prev.map(c =>
+          c.id === id ? { ...c, status: 'suspended' as const } : c
+        ))
+        setStats(prev => ({ ...prev, activeCleaners: Math.max(0, prev.activeCleaners - 1) }))
+      }
+    } catch (err) {
+      console.error('Error archiving cleaner:', err)
+    }
+  }
+
+  const handleReactivateCleaner = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/cleaners/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'activate' }),
+      })
+      if (response.ok) {
+        setCleaners(prev => prev.map(c =>
+          c.id === id ? { ...c, status: 'active' as const } : c
+        ))
+        setStats(prev => ({ ...prev, activeCleaners: prev.activeCleaners + 1 }))
+      }
+    } catch (err) {
+      console.error('Error reactivating cleaner:', err)
+    }
+  }
+
+  // Permanent delete. Throws on failure (e.g. the API blocks deletion when the
+  // cleaner has active bookings) so the confirm modal can surface the reason.
+  const handleDeleteCleaner = async (id: string) => {
+    const wasActive = cleaners.find(c => c.id === id)?.status === 'active'
+    const response = await fetch(`/api/admin/cleaners/${id}`, { method: 'DELETE' })
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.error || 'Failed to delete cleaner')
+    }
+    setCleaners(prev => prev.filter(c => c.id !== id))
+    setStats(prev => ({
+      ...prev,
+      totalCleaners: Math.max(0, prev.totalCleaners - 1),
+      activeCleaners: wasActive ? Math.max(0, prev.activeCleaners - 1) : prev.activeCleaners,
+    }))
+  }
+
   const handleToggleTeamLeader = async (id: string) => {
     const cleaner = cleaners.find(c => c.id === id)
     if (!cleaner) return
@@ -642,6 +695,9 @@ function AdminDashboardContent() {
             cleaners={cleaners}
             onApprove={handleApproveCleaner}
             onReject={handleRejectCleaner}
+            onArchive={handleArchiveCleaner}
+            onReactivate={handleReactivateCleaner}
+            onDelete={handleDeleteCleaner}
             onToggleTeamLeader={handleToggleTeamLeader}
             onLoginAs={handleLoginAs}
             onEdit={handleEditCleaner}
