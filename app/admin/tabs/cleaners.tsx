@@ -10,12 +10,15 @@ type Props = {
   cleaners: Cleaner[]
   onApprove: (id: string) => void
   onReject: (id: string) => void
+  onArchive: (id: string) => void
+  onReactivate: (id: string) => void
+  onDelete: (id: string) => Promise<void>
   onToggleTeamLeader: (id: string) => void
   onLoginAs: (id: string) => void
   onEdit: (id: string, data: { name?: string; phone?: string; email?: string }) => Promise<void>
 }
 
-type Filter = 'all' | 'active' | 'pending'
+type Filter = 'all' | 'active' | 'pending' | 'suspended'
 
 type EditingCleaner = {
   id: string
@@ -24,15 +27,25 @@ type EditingCleaner = {
   email: string
 } | null
 
+// UI labels the SUSPENDED status as "Archived" — clearer for managers
+// (it's reversible and keeps all data, per Ernesto's feedback).
+const statusLabel = (s: string) =>
+  s === 'active' ? '✓ Active' : s === 'suspended' ? 'Archived' : s.charAt(0).toUpperCase() + s.slice(1)
+const statusChipClass = (s: string) =>
+  s === 'suspended' ? 'bg-[#F0F0EE] text-[#6B6B6B]' : CLEANER_STATUS_COLORS[s]
+
 const LANG_LABELS: Record<string, string> = {
   es: 'Español', en: 'English', de: 'Deutsch', fr: 'Français', nl: 'Nederlands', it: 'Italiano', pt: 'Português',
 }
 
-export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTeamLeader, onLoginAs, onEdit }: Props) {
+export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, onReactivate, onDelete, onToggleTeamLeader, onLoginAs, onEdit }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<EditingCleaner>(null)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const filteredCleaners = cleaners
     .filter(c => filter === 'all' || c.status === filter)
@@ -43,13 +56,14 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
 
   const pendingCount = cleaners.filter(c => c.status === 'pending').length
   const activeCount = cleaners.filter(c => c.status === 'active').length
+  const archivedCount = cleaners.filter(c => c.status === 'suspended').length
 
   return (
     <div className="space-y-4">
       {/* Header */}
       <div>
         <h2 className="text-xl font-semibold text-[#1A1A1A]">Cleaners</h2>
-        <p className="text-sm text-[#6B6B6B]">{activeCount} active, {pendingCount} pending</p>
+        <p className="text-sm text-[#6B6B6B]">{activeCount} active, {pendingCount} pending{archivedCount > 0 ? `, ${archivedCount} archived` : ''}</p>
       </div>
 
       {/* Search */}
@@ -63,7 +77,7 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
 
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {(['all', 'pending', 'active'] as Filter[]).map((f) => (
+        {(['all', 'pending', 'active', 'suspended'] as Filter[]).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -73,7 +87,7 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
                 : 'bg-white border border-[#EBEBEB] text-[#6B6B6B]'
             }`}
           >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
+            {f === 'suspended' ? 'Archived' : f.charAt(0).toUpperCase() + f.slice(1)}
             {f === 'pending' && pendingCount > 0 && (
               <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
                 filter === f ? 'bg-white/20 text-white' : 'bg-[#C4785A] text-white'
@@ -123,8 +137,8 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
                       <h3 className="font-semibold text-[#1A1A1A]">{cleaner.name}</h3>
                       <p className="text-sm text-[#6B6B6B]">{cleaner.phone}</p>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${CLEANER_STATUS_COLORS[cleaner.status]}`}>
-                      {cleaner.status === 'active' ? '✓ Active' : cleaner.status.charAt(0).toUpperCase() + cleaner.status.slice(1)}
+                    <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${statusChipClass(cleaner.status)}`}>
+                      {statusLabel(cleaner.status)}
                     </span>
                   </div>
                 </div>
@@ -184,9 +198,9 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
               ) : null}
 
               {/* Actions */}
-              <div className="flex gap-2 pt-2 border-t border-[#EBEBEB]/50">
+              <div className="pt-2 border-t border-[#EBEBEB]/50 space-y-2">
                 {cleaner.status === 'pending' ? (
-                  <>
+                  <div className="flex gap-2">
                     <button
                       onClick={() => onApprove(cleaner.id)}
                       className="flex-1 py-2.5 bg-[#2E7D32] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
@@ -199,44 +213,75 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
                     >
                       Reject
                     </button>
-                  </>
+                  </div>
                 ) : (
                   <>
-                    <button
-                      onClick={() => onLoginAs(cleaner.id)}
-                      className="flex-1 py-2.5 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
-                    >
-                      Login As
-                    </button>
-                    <button
-                      onClick={() => setEditing({
-                        id: cleaner.id,
-                        name: cleaner.name,
-                        phone: cleaner.phone || '',
-                        email: cleaner.email || '',
-                      })}
-                      className="px-4 py-2.5 bg-white border border-[#DEDEDE] text-[#1A1A1A] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
-                      title="Edit cleaner details"
-                    >
-                      Edit
-                    </button>
-                    <Link
-                      href={`/${cleaner.slug}`}
-                      className="px-4 py-2.5 bg-white border border-[#DEDEDE] text-[#1A1A1A] rounded-xl text-sm font-medium text-center active:scale-[0.98] transition-transform"
-                    >
-                      View
-                    </Link>
-                    <button
-                      onClick={() => onToggleTeamLeader(cleaner.id)}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-medium active:scale-[0.98] transition-all ${
-                        cleaner.teamLeader
-                          ? 'bg-[#C4785A] text-white'
-                          : 'bg-white border border-[#DEDEDE] text-[#6B6B6B]'
-                      }`}
-                      title={cleaner.teamLeader ? 'Remove as team leader' : 'Make team leader'}
-                    >
-                      👑
-                    </button>
+                    {/* Primary actions */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onLoginAs(cleaner.id)}
+                        className="flex-1 py-2.5 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                      >
+                        Login As
+                      </button>
+                      <button
+                        onClick={() => setEditing({
+                          id: cleaner.id,
+                          name: cleaner.name,
+                          phone: cleaner.phone || '',
+                          email: cleaner.email || '',
+                        })}
+                        className="px-4 py-2.5 bg-white border border-[#DEDEDE] text-[#1A1A1A] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                        title="Edit cleaner details"
+                      >
+                        Edit
+                      </button>
+                      <Link
+                        href={`/${cleaner.slug}`}
+                        className="px-4 py-2.5 bg-white border border-[#DEDEDE] text-[#1A1A1A] rounded-xl text-sm font-medium text-center active:scale-[0.98] transition-transform"
+                      >
+                        View
+                      </Link>
+                      <button
+                        onClick={() => onToggleTeamLeader(cleaner.id)}
+                        className={`px-4 py-2.5 rounded-xl text-sm font-medium active:scale-[0.98] transition-all ${
+                          cleaner.teamLeader
+                            ? 'bg-[#C4785A] text-white'
+                            : 'bg-white border border-[#DEDEDE] text-[#6B6B6B]'
+                        }`}
+                        title={cleaner.teamLeader ? 'Remove as team leader' : 'Make team leader'}
+                      >
+                        👑
+                      </button>
+                    </div>
+
+                    {/* Management: archive (reversible) vs delete (permanent) */}
+                    <div className="flex gap-2">
+                      {cleaner.status === 'suspended' ? (
+                        <button
+                          onClick={() => onReactivate(cleaner.id)}
+                          className="flex-1 py-2 bg-[#E8F5E9] border border-[#2E7D32]/30 text-[#2E7D32] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                          title="Restore this cleaner to the active list"
+                        >
+                          ↩︎ Reactivate
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onArchive(cleaner.id)}
+                          className="flex-1 py-2 bg-white border border-[#DEDEDE] text-[#6B6B6B] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                          title="Hide from the active list but keep all their information. You can reactivate them later."
+                        >
+                          🗄 Archive
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { setDeleteError(''); setDeleting({ id: cleaner.id, name: cleaner.name }) }}
+                        className="px-4 py-2 bg-white border border-[#F0D6D6] text-[#C62828] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                        title="Permanently delete this cleaner and their account"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
@@ -330,6 +375,56 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onToggleTea
                 className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation — permanent, so require an explicit confirm */}
+      {deleting && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#FFEBEE] flex items-center justify-center flex-shrink-0 text-lg">⚠️</div>
+              <div>
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">Delete {deleting.name}?</h2>
+                <p className="text-sm text-[#6B6B6B] mt-1">
+                  This permanently removes their profile and account. This <strong>cannot be undone</strong>.
+                  If you only want to take them off the active list, use <strong>Archive</strong> instead.
+                </p>
+              </div>
+            </div>
+
+            {deleteError && (
+              <p className="text-sm text-[#C62828] bg-[#FFEBEE] rounded-xl p-3 mb-3">{deleteError}</p>
+            )}
+
+            <div className="flex gap-3 mt-2">
+              <button
+                onClick={() => { setDeleting(null); setDeleteError('') }}
+                disabled={deleteBusy}
+                className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setDeleteBusy(true)
+                  setDeleteError('')
+                  try {
+                    await onDelete(deleting.id)
+                    setDeleting(null)
+                  } catch (err) {
+                    setDeleteError((err as Error)?.message || 'Could not delete this cleaner.')
+                  } finally {
+                    setDeleteBusy(false)
+                  }
+                }}
+                disabled={deleteBusy}
+                className="flex-1 py-3 rounded-xl bg-[#C62828] text-white font-medium disabled:opacity-50"
+              >
+                {deleteBusy ? 'Deleting...' : 'Delete permanently'}
               </button>
             </div>
           </div>
