@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { notifyCleanerNewBooking, sendBookingConfirmation } from '@/lib/whatsapp'
 import { notifyAdminNewBooking } from '@/lib/email'
+import { sendOwnerBookingReceivedEmail } from '@/lib/emails/owner-booking-emails'
 import { checkRateLimit, getClientIdentifier, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
 import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
 import { linkChatConversations } from '@/lib/nurturing/link-conversations'
@@ -253,7 +254,7 @@ export async function POST(request: NextRequest) {
       // Get owner for notifications
       const owner = await tx.owner.findUnique({
         where: { id: ownerId },
-        include: { user: { select: { name: true, phone: true } } },
+        include: { user: { select: { name: true, phone: true, email: true, preferredLanguage: true } } },
       })
 
       return { booking, owner, ownerId, nurturingInfo }
@@ -294,6 +295,25 @@ export async function POST(request: NextRequest) {
         service: serviceType,
         price: `€${price}`,
       }).catch((err) => console.error('Failed to confirm to owner:', err))
+    }
+
+    // Send booking-received email to owner (additive to WhatsApp above —
+    // reliable fallback while the WABA is offline). Guest bookings always
+    // have an email (required by the schema below); logged-in owners use
+    // their canonical db email.
+    const recipientEmail = owner?.user.email || guestEmail || session?.user?.email
+    if (recipientEmail) {
+      sendOwnerBookingReceivedEmail({
+        to: recipientEmail,
+        ownerName: owner?.user.name || guestName || 'there',
+        cleanerName: cleaner.user.name || 'your cleaner',
+        service: serviceType,
+        date: formattedDate,
+        time,
+        address: propertyAddress,
+        price: `€${price}`,
+        preferredLanguage: owner?.user.preferredLanguage,
+      }).catch((err) => console.error('Failed to send owner booking-received email:', err))
     }
 
     // Send email notification to admins

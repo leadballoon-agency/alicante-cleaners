@@ -10,6 +10,7 @@
 
 import { db } from '@/lib/db'
 import { sendPushToStaff } from '@/lib/push'
+import { sendOwnerBookingDeclinedEmail } from '@/lib/emails/owner-booking-emails'
 
 interface BookingDetails {
   id: string
@@ -228,6 +229,16 @@ async function escalateToTeam(
     day: 'numeric',
   })
 
+  // Web push to staff devices (best-effort — never blocks escalation).
+  // WhatsApp reminders to the cleaner are dead pending WABA reinstatement,
+  // so this push gives staff visibility that a booking needs attention.
+  sendPushToStaff({
+    title: '⚠️ Booking escalated',
+    body: `${cleaner.user.name || 'A cleaner'} unresponsive 2h — ${booking.owner.user.name || 'owner'}'s booking on ${dateStr}`,
+    url: '/admin?tab=bookings',
+    tag: `booking-escalated-${booking.id}`,
+  }).catch((err) => console.error('Failed to push staff booking escalation:', err))
+
   // Notify the original cleaner about escalation
   await db.notification.create({
     data: {
@@ -281,18 +292,46 @@ async function autoDeclineBooking(
   booking: {
     id: string
     cleanerId: string
-    owner: { user: { name: string | null } }
+    owner: { user: { name: string | null; email: string | null; preferredLanguage: string } }
     property: { name: string }
     service: string
     date: Date
     cleaner: { user: { name: string | null } }
   }
 ) {
+  const dateStr = booking.date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+
+  // Web push to staff devices (best-effort — never blocks the auto-decline).
+  // Sent right before the decline happens so staff can still intervene.
+  sendPushToStaff({
+    title: '🔴 Auto-declining booking',
+    body: `${booking.owner.user.name || 'Owner'}'s booking — no response from ${booking.cleaner.user.name || 'cleaner'} after 6h`,
+    url: '/admin?tab=bookings',
+    tag: `booking-autodecline-${booking.id}`,
+  }).catch((err) => console.error('Failed to push staff auto-decline notice:', err))
+
   // Update booking status to CANCELLED
   await db.booking.update({
     where: { id: booking.id },
     data: { status: 'CANCELLED' },
   })
+
+  // Email notification to owner (additive to any WhatsApp/in-app notification
+  // above — reliable fallback while the WABA is offline)
+  if (booking.owner.user.email) {
+    sendOwnerBookingDeclinedEmail({
+      to: booking.owner.user.email,
+      ownerName: booking.owner.user.name || 'there',
+      cleanerName: booking.cleaner.user.name || 'Your cleaner',
+      date: dateStr,
+      reason: 'auto_declined',
+      preferredLanguage: booking.owner.user.preferredLanguage,
+    }).catch((err) => console.error('Failed to send owner auto-declined email:', err))
+  }
 
   // Notify owner with apology and alternatives
   // Note: In production, this would trigger an AI message with alternative cleaner suggestions

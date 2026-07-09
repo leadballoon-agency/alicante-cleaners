@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { sendWhatsAppMessage } from '@/lib/whatsapp'
 import { notifyStaffBookingResponse } from '@/lib/notifications/booking-notifications'
+import { sendOwnerBookingConfirmedEmail, sendOwnerBookingDeclinedEmail } from '@/lib/emails/owner-booking-emails'
 import twilio from 'twilio'
 
 // Reconstruct the public URL that Twilio signed (Vercel serverless fix)
@@ -164,7 +165,7 @@ export async function POST(request: NextRequest) {
           },
           include: {
             owner: {
-              include: { user: { select: { name: true, phone: true } } },
+              include: { user: { select: { name: true, phone: true, email: true, preferredLanguage: true } } },
             },
             property: { select: { address: true } },
           },
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest) {
           orderBy: { createdAt: 'desc' },
           include: {
             owner: {
-              include: { user: { select: { name: true, phone: true } } },
+              include: { user: { select: { name: true, phone: true, email: true, preferredLanguage: true } } },
             },
             property: { select: { address: true } },
           },
@@ -256,6 +257,21 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Email notification to owner (additive to WhatsApp above — reliable
+      // fallback while the WABA is offline)
+      if (pendingBooking.owner.user.email) {
+        sendOwnerBookingConfirmedEmail({
+          to: pendingBooking.owner.user.email,
+          ownerName: pendingBooking.owner.user.name || 'there',
+          cleanerName: cleaner.user.name || 'Your cleaner',
+          service: pendingBooking.service,
+          date: formattedDate,
+          time: pendingBooking.time,
+          address: pendingBooking.property.address,
+          preferredLanguage: pendingBooking.owner.user.preferredLanguage,
+        }).catch((err) => console.error('Failed to send owner booking-confirmed email:', err))
+      }
+
       // Notify staff (web push)
       notifyStaffBookingResponse({
         bookingId: pendingBooking.id,
@@ -277,7 +293,7 @@ export async function POST(request: NextRequest) {
           },
           include: {
             owner: {
-              include: { user: { select: { name: true, phone: true } } },
+              include: { user: { select: { name: true, phone: true, email: true, preferredLanguage: true } } },
             },
             property: { select: { address: true } },
           },
@@ -296,7 +312,7 @@ export async function POST(request: NextRequest) {
           orderBy: { createdAt: 'desc' },
           include: {
             owner: {
-              include: { user: { select: { name: true, phone: true } } },
+              include: { user: { select: { name: true, phone: true, email: true, preferredLanguage: true } } },
             },
             property: { select: { address: true } },
           },
@@ -365,6 +381,19 @@ export async function POST(request: NextRequest) {
           ownerPhone,
           `*Booking Declined* ❌\n\nUnfortunately, ${cleaner.user.name} is not available for ${formattedDate}.\n\nPlease try booking with another cleaner at villacare.app\n\n- VillaCare`
         )
+      }
+
+      // Email notification to owner (additive to WhatsApp above — reliable
+      // fallback while the WABA is offline)
+      if (pendingBooking.owner.user.email) {
+        sendOwnerBookingDeclinedEmail({
+          to: pendingBooking.owner.user.email,
+          ownerName: pendingBooking.owner.user.name || 'there',
+          cleanerName: cleaner.user.name || 'Your cleaner',
+          date: formattedDate,
+          reason: 'declined',
+          preferredLanguage: pendingBooking.owner.user.preferredLanguage,
+        }).catch((err) => console.error('Failed to send owner booking-declined email:', err))
       }
 
       // Notify staff (web push)

@@ -4,6 +4,11 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { sendWhatsAppMessage, sendBookingCompleted } from '@/lib/whatsapp'
 import { notifyStaffBookingResponse } from '@/lib/notifications/booking-notifications'
+import {
+  sendOwnerBookingConfirmedEmail,
+  sendOwnerBookingDeclinedEmail,
+  sendOwnerBookingCompletedEmail,
+} from '@/lib/emails/owner-booking-emails'
 
 // PATCH /api/dashboard/cleaner/bookings/[id] - Accept/decline/assign booking
 export async function PATCH(
@@ -164,7 +169,7 @@ export async function PATCH(
       data: { status: newStatus },
       include: {
         owner: {
-          include: { user: { select: { name: true, phone: true } } },
+          include: { user: { select: { name: true, phone: true, email: true, preferredLanguage: true } } },
         },
         cleaner: {
           include: { user: { select: { name: true } } },
@@ -222,6 +227,62 @@ export async function PATCH(
           cleanerName,
           reviewLink,
         }).catch((err) => console.error('Failed to notify owner of completion:', err))
+      }
+    }
+
+    // Email notifications to owner (additive to WhatsApp above — reliable
+    // fallback while the WABA is offline).
+    const ownerEmail = updatedBooking.owner.user.email
+    if (ownerEmail) {
+      const cleanerName = updatedBooking.cleaner.user.name || 'Your cleaner'
+      const formattedDate = updatedBooking.date.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      })
+      const preferredLanguage = updatedBooking.owner.user.preferredLanguage
+
+      if (newStatus === 'CONFIRMED') {
+        sendOwnerBookingConfirmedEmail({
+          to: ownerEmail,
+          ownerName: updatedBooking.owner.user.name || 'there',
+          cleanerName,
+          service: updatedBooking.service,
+          date: formattedDate,
+          time: updatedBooking.time,
+          address: updatedBooking.property.address,
+          preferredLanguage,
+        }).catch((err) => console.error('Failed to send owner booking-confirmed email:', err))
+      } else if (newStatus === 'CANCELLED') {
+        sendOwnerBookingDeclinedEmail({
+          to: ownerEmail,
+          ownerName: updatedBooking.owner.user.name || 'there',
+          cleanerName,
+          date: formattedDate,
+          reason: 'declined',
+          preferredLanguage,
+        }).catch((err) => console.error('Failed to send owner booking-declined email:', err))
+      } else if (newStatus === 'COMPLETED') {
+        // Guard against double-emailing: if the cleaner already logged a
+        // COMPLETED event via the checklist flow (app/api/dashboard/cleaner/bookings/[id]/events),
+        // that flow already sent a richer completion email (lib/email.ts
+        // sendCompletionEmail) with the checklist and a review link — skip
+        // ours so the owner doesn't get two completion emails.
+        const existingCompletionEvent = await db.bookingEvent.findFirst({
+          where: { bookingId: updatedBooking.id, type: 'COMPLETED' },
+          select: { id: true },
+        })
+
+        if (!existingCompletionEvent) {
+          const reviewLink = `${process.env.NEXT_PUBLIC_APP_URL}/owner/dashboard?tab=bookings&review=${updatedBooking.id}`
+          sendOwnerBookingCompletedEmail({
+            to: ownerEmail,
+            ownerName: updatedBooking.owner.user.name || 'there',
+            cleanerName,
+            reviewLink,
+            preferredLanguage,
+          }).catch((err) => console.error('Failed to send owner booking-completed email:', err))
+        }
       }
     }
 
