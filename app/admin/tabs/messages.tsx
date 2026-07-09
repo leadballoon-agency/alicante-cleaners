@@ -12,7 +12,7 @@ type ThreadMsg = { id: string; text: string; mine: boolean; at: string }
 type Thread = { cleaner: { id: string; name: string; image: string | null }; messages: ThreadMsg[] }
 type CleanerLite = { id: string; name: string; status: string }
 
-export default function MessagesTab() {
+export default function MessagesTab({ initialConversationId }: { initialConversationId?: string | null } = {}) {
   const [view, setView] = useState<'list' | 'new' | 'thread'>('list')
   const [convos, setConvos] = useState<Convo[]>([])
   const [loading, setLoading] = useState(true)
@@ -22,6 +22,7 @@ export default function MessagesTab() {
   const [sending, setSending] = useState(false)
   const [cleaners, setCleaners] = useState<CleanerLite[]>([])
   const [search, setSearch] = useState('')
+  const [autoOpenedConversation, setAutoOpenedConversation] = useState(false)
 
   const loadConvos = useCallback(() => {
     setLoading(true)
@@ -34,6 +35,18 @@ export default function MessagesTab() {
     setActiveId(id); setView('thread'); setThread(null)
     fetch(`/api/admin/messages/${id}`).then((r) => r.json()).then(setThread).catch(() => {})
   }, [])
+
+  // Deep-link support: /admin?tab=messages&conversation=<id> auto-opens that
+  // thread once the conversation list has loaded — but only if it's actually
+  // one of this admin's conversations (private per-admin threads). If not
+  // found (e.g. it belongs to a different admin), fall back to the list.
+  useEffect(() => {
+    if (!initialConversationId || autoOpenedConversation) return
+    if (convos.some((c) => c.id === initialConversationId)) {
+      setAutoOpenedConversation(true)
+      openThread(initialConversationId)
+    }
+  }, [convos, initialConversationId, autoOpenedConversation, openThread])
 
   const startNew = () => {
     setView('new')
