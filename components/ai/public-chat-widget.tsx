@@ -3,12 +3,22 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 
+type BookingSummary = {
+  service: string
+  date: string
+  time: string
+  price: number
+  cleaner: { name: string | null }
+  property: { name: string; address: string }
+}
+
 type Message = {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
   easterEgg?: 'alan' | 'amanda' // 🎭 Easter egg character!
+  booking?: BookingSummary // Set when the AI booked directly for a returning owner
 }
 
 type CleanerInfo = {
@@ -131,6 +141,7 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
         content: data.response || 'Sorry, I had trouble responding. Please try again.',
         timestamp: new Date(),
         easterEgg: data.easterEgg, // 🎭 Alan or Amanda appeared!
+        booking: data.bookingCreated ? data.booking : undefined, // Booked directly for a returning owner
       }
 
       setMessages(prev => [...prev, assistantMessage])
@@ -243,6 +254,36 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
                       </div>
                     )}
                     <p className="text-sm whitespace-pre-line">{msg.content}</p>
+                    {msg.booking && (
+                      <div className="mt-3 bg-[#FAFAF8] border border-[#EBEBEB] rounded-xl p-3 space-y-1">
+                        <div className="flex items-center gap-1.5 text-[#2E7D32] text-xs font-semibold mb-1.5">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Booking requested
+                        </div>
+                        <p className="text-sm font-medium text-[#1A1A1A]">{msg.booking.service}</p>
+                        <p className="text-xs text-[#6B6B6B]">{msg.booking.property.name}</p>
+                        <p className="text-xs text-[#6B6B6B]">
+                          {new Date(msg.booking.date).toLocaleDateString('en-GB', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                          })}{' '}
+                          at {msg.booking.time}
+                        </p>
+                        <p className="text-sm font-semibold text-[#C4785A] pt-0.5">€{msg.booking.price}</p>
+                        <p className="text-[11px] text-[#9B9B9B] pt-1.5 leading-snug">
+                          {msg.booking.cleaner.name || 'Your cleaner'} will confirm shortly — you&apos;ll get an email.
+                        </p>
+                        <a
+                          href="/owner/dashboard"
+                          className="inline-block text-xs font-medium text-[#1A1A1A] underline pt-1"
+                        >
+                          View in your dashboard →
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

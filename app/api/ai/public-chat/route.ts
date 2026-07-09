@@ -9,10 +9,13 @@
  */
 
 import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { getOpenAI } from '@/lib/ai/agents'
 import Anthropic from '@anthropic-ai/sdk'
 import type { ChatCompletionTool } from 'openai/resources/chat/completions'
+import { createBookingCore, BookingCreationError } from '@/lib/bookings/create-booking'
 
 // Easter egg: Alan & Amanda can be summoned!
 let anthropic: Anthropic | null = null
@@ -181,6 +184,62 @@ const createMagicLinkTool: ChatCompletionTool = {
   },
 }
 
+// Maps the AI's short service codes to the canonical service names the
+// booking system uses (same mapping as /api/ai/onboarding/create).
+const AI_SERVICE_TYPE_MAP: Record<string, string> = {
+  regular: 'Regular Clean',
+  deep: 'Deep Clean',
+  arrival: 'Arrival Prep',
+}
+
+// Tool definition for RETURNING owners only (logged in, has a saved
+// property). Replaces create_magic_link in that mode - there's no need to
+// re-collect identity or property details we already have on file.
+const createBookingTool: ChatCompletionTool = {
+  type: 'function',
+  function: {
+    name: 'create_booking',
+    description: 'Book a cleaning directly for this logged-in returning owner, against one of their saved properties. Only call this AFTER the owner has explicitly confirmed a one-line summary (service, property, date, time, price). Never call it just because a date or service was mentioned - always get an explicit yes first.',
+    parameters: {
+      type: 'object',
+      properties: {
+        propertyId: {
+          type: 'string',
+          description: 'The exact property id copied from the PROPERTIES list in your system instructions (not the property name).',
+        },
+        serviceType: {
+          type: 'string',
+          enum: ['regular', 'deep', 'arrival'],
+          description: 'Type of cleaning service: regular, deep, or arrival prep',
+        },
+        date: {
+          type: 'string',
+          description: 'Booking date in YYYY-MM-DD format, resolved from today\'s date and whatever the owner said (e.g. "next Tuesday").',
+        },
+        time: {
+          type: 'string',
+          description: 'Booking time in 24-hour HH:MM format (e.g. "10:00", "14:30").',
+        },
+      },
+      required: ['propertyId', 'serviceType', 'date', 'time'],
+    },
+  },
+}
+
+// Look up the Owner profile (and saved properties) for a logged-in user,
+// regardless of their User.role. Owner profiles are role-agnostic - staff
+// like Kerry/Mark carry ADMIN role but still have their own villa/Owner
+// profile, and must get the same returning-owner experience as anyone else.
+function getOwnerWithProperties(userId: string) {
+  return db.owner.findUnique({
+    where: { userId },
+    include: {
+      user: { select: { name: true, phone: true, email: true, preferredLanguage: true } },
+      properties: { orderBy: { createdAt: 'asc' } },
+    },
+  })
+}
+
 export async function POST(request: Request) {
   try {
     const { cleanerSlug, message, history = [], sessionId, source } = await request.json()
@@ -215,7 +274,7 @@ export async function POST(request: Request) {
     const cleaner = await db.cleaner.findUnique({
       where: { slug: cleanerSlug },
       include: {
-        user: { select: { name: true } },
+        user: { select: { name: true, phone: true } },
       },
     })
 
@@ -225,6 +284,28 @@ export async function POST(request: Request) {
         { status: 404 }
       )
     }
+
+    // Session-aware booking: figure out if this visitor is already a
+    // logged-in VillaCare owner (role-agnostic - admins like Kerry/Mark also
+    // have Owner profiles and must get the same fast-booking experience).
+    // Three modes:
+    //   1. No session -> anonymous funnel (unchanged, below)
+    //   2. Session + owner profile + >=1 property -> RETURNING-OWNER mode
+    //   3. Session + owner profile with 0 properties (or no profile yet) ->
+    //      anonymous-style flow, but the prompt already knows name/phone
+    const session = await getServerSession(authOptions)
+    let ownerProfile: Awaited<ReturnType<typeof getOwnerWithProperties>> = null
+    let sessionUser: { name: string | null; phone: string | null; email: string | null } | null = null
+
+    if (session?.user?.id) {
+      ownerProfile = await getOwnerWithProperties(session.user.id)
+      sessionUser = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { name: true, phone: true, email: true },
+      })
+    }
+
+    const isReturningOwner = !!ownerProfile && ownerProfile.properties.length > 0
 
     // Get availability for next 2 weeks
     const today = new Date()
@@ -323,6 +404,73 @@ If someone says they're "just testing", "trying out the chat", "seeing how this 
 - If they don't have a property: "No problem! If you know anyone with a holiday home in Alicante, we'd love to help them. Feel free to share this page with them."
 - The goal is to convert testers into leads or referrals, not to let them leave empty-handed`
 
+    // RETURNING-OWNER mode: a completely different, much shorter prompt.
+    // They're already known - the only job left is picking service/property/
+    // date/time and confirming, then calling create_booking directly.
+    let returningOwnerSystemPrompt = ''
+    if (isReturningOwner && ownerProfile) {
+      const firstName = ownerProfile.user.name?.split(' ')[0] || 'there'
+      const propertyList = ownerProfile.properties
+        .map(p => `- propertyId: ${p.id} | "${p.name}" (${p.bedrooms} bed, ${p.bathrooms} bath) - ${p.address}`)
+        .join('\n')
+      const todayStr = today.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+
+      returningOwnerSystemPrompt = `You are the AI assistant for ${cleaner.user.name}, a professional villa cleaner in Alicante, Spain.
+
+The person chatting with you is ${firstName}, an existing VillaCare owner who is already logged in. Greet them by first name. You already know everything you need about them - NEVER ask for their name, phone number, number of bedrooms/bathrooms, or property address. That's all already saved.
+
+THEIR PROPERTIES:
+${propertyList}
+${ownerProfile.properties.length === 1
+  ? `They only have one property on file ("${ownerProfile.properties[0].name}") - use it automatically, don't ask which property.`
+  : 'They have more than one property - ask which one if it is not already obvious from the conversation.'}
+
+CLEANER INFO:
+- Name: ${cleaner.user.name}
+- Hourly Rate: €${hourlyRate}
+- Rating: ${cleaner.rating ? `${Number(cleaner.rating).toFixed(1)}/5 (${cleaner.reviewCount} reviews)` : 'New cleaner'}
+
+SERVICES & PRICING:
+${services.map(s => `- ${s.name}: ${s.hours} hours = €${s.price}`).join('\n')}
+
+TODAY'S DATE: ${todayStr}
+
+AVAILABILITY (next 2 weeks):
+- Available: ${availableDates.length > 0 ? availableDates.join(', ') : 'Contact for availability'}
+- Booked: ${busyDates.length > 0 ? busyDates.join(', ') : 'None'}
+
+YOUR GOAL: Book them a cleaning FAST. Only collect what you don't already know:
+1. Service type (regular, deep, or arrival prep)
+2. Which property, only if they have more than one and it isn't already clear
+3. Preferred date and time
+
+Do NOT collect or ask for: name, phone number, bedrooms, bathrooms, outdoor areas, or access notes/codes - all of that is already on file or handled securely elsewhere.
+
+CONFIRM BEFORE BOOKING: Before calling create_booking, restate a one-line summary and get an explicit yes, e.g. "Deep clean at ${ownerProfile.properties[0].name} next Tuesday at 10:00 - €${services[1].price}. Shall I book it?" Only call create_booking AFTER they clearly confirm (e.g. "yes", "sure", "book it", "confirmado", "dale"). Never call it on the same message that first mentions a date or service.
+
+When you do call create_booking, use the exact propertyId string from THEIR PROPERTIES above (not the property name).
+
+IMPORTANT RULES:
+- Be warm, helpful, and professional
+- Answer in the language ${firstName} uses (English or Spanish at minimum)
+- Parse dates flexibly relative to today's date above (e.g. "next Tuesday")
+- Prices include everything (supplies, travel)
+- If asked something unrelated to booking, just answer normally like a helpful assistant would`
+    }
+
+    // Session exists but no saved property yet: keep the anonymous funnel
+    // (still need to collect property details via create_magic_link), but
+    // never re-ask for name/phone we already have from their account.
+    let knownVisitorSystemPrompt = systemPrompt
+    if (!isReturningOwner && sessionUser) {
+      knownVisitorSystemPrompt = `${systemPrompt}
+
+NOTE: This visitor is already logged in as ${sessionUser.name || 'a VillaCare member'}${sessionUser.phone ? ` (phone: ${sessionUser.phone})` : ''}${sessionUser.email ? ` (email: ${sessionUser.email})` : ''}. Do NOT ask for their name or phone number again - use these exact values as visitorName/visitorPhone when you call create_magic_link. They don't have a saved property yet, so still collect service type, bedrooms, bathrooms, outdoor areas, date and time as usual.`
+    }
+
+    const activeSystemPrompt = isReturningOwner ? returningOwnerSystemPrompt : knownVisitorSystemPrompt
+    const activeTools: ChatCompletionTool[] = isReturningOwner ? [createBookingTool] : [createMagicLinkTool]
+
     const openai = getOpenAI()
 
     // Check if the user is trying to share sensitive information
@@ -330,7 +478,7 @@ If someone says they're "just testing", "trying out the chat", "seeing how this 
 
     // Build messages array
     const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: activeSystemPrompt },
       ...history.map((m: ChatMessage) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
@@ -421,7 +569,7 @@ If someone says they're "just testing", "trying out the chat", "seeing how this 
       temperature: 0.7,
       max_tokens: 500,
       messages,
-      tools: [createMagicLinkTool],
+      tools: activeTools,
       tool_choice: 'auto',
     })
 
@@ -429,11 +577,104 @@ If someone says they're "just testing", "trying out the chat", "seeing how this 
     let tokensUsed = response.usage?.total_tokens || 0
     let magicLinkCreated = false
     let magicLinkUrl: string | null = null
+    let bookingCreated = false
+    let createdBooking: Awaited<ReturnType<typeof createBookingCore>>['booking'] | null = null
 
     // Handle tool calls
     if (assistantMessage?.tool_calls && assistantMessage.tool_calls.length > 0) {
       for (const toolCall of assistantMessage.tool_calls) {
         if (toolCall.type !== 'function') continue
+
+        if (toolCall.function.name === 'create_booking' && isReturningOwner && ownerProfile) {
+          const args = JSON.parse(toolCall.function.arguments)
+
+          try {
+            // Never trust the model: re-validate everything server-side.
+            const property = ownerProfile.properties.find(p => p.id === args.propertyId)
+            if (!property) {
+              throw new BookingCreationError('That property was not found on your account.', 404)
+            }
+
+            const canonicalServiceType = AI_SERVICE_TYPE_MAP[args.serviceType]
+            if (!canonicalServiceType) {
+              throw new BookingCreationError('Unknown service type.', 400)
+            }
+
+            if (typeof args.time !== 'string' || !/^([01]?\d|2[0-3]):([0-5]\d)$/.test(args.time)) {
+              throw new BookingCreationError('Invalid time format.', 400)
+            }
+
+            const parsedDate = new Date(args.date)
+            const startOfToday = new Date()
+            startOfToday.setHours(0, 0, 0, 0)
+            if (isNaN(parsedDate.getTime()) || parsedDate < startOfToday) {
+              throw new BookingCreationError('That date is invalid or in the past - please pick a future date.', 400)
+            }
+
+            const { booking } = await createBookingCore({
+              cleaner: {
+                id: cleaner.id,
+                hourlyRate: cleaner.hourlyRate,
+                user: { name: cleaner.user.name, phone: cleaner.user.phone },
+              },
+              ownerId: ownerProfile.id,
+              propertyId: property.id,
+              propertyAddress: property.address,
+              serviceType: canonicalServiceType,
+              date: args.date,
+              time: args.time,
+              notes: null,
+              createdByAI: true,
+              nurturingInfo: null, // returning owner already exists - no welcome nurturing
+              sessionEmail: session?.user?.email,
+            })
+
+            bookingCreated = true
+            createdBooking = booking
+
+            // Get a natural closing message from the model
+            const toolResultMessages = [
+              ...messages,
+              { role: 'assistant' as const, content: assistantMessage.content || '' },
+              {
+                role: 'user' as const,
+                content: `[System: Booking created successfully! Service: ${booking.service}, Property: ${booking.property.name}, Date: ${new Date(booking.date).toLocaleDateString()}, Time: ${booking.time}, Price: €${booking.price}. Tell them their booking request has been sent to ${cleaner.user.name} and they'll get a confirmation once it's accepted - no need to do anything else.]`,
+              },
+            ]
+
+            const finalResponse = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              temperature: 0.7,
+              max_tokens: 300,
+              messages: toolResultMessages,
+            })
+
+            assistantMessage = finalResponse.choices[0]?.message
+            tokensUsed += finalResponse.usage?.total_tokens || 0
+          } catch (err) {
+            console.error('create_booking failed:', err)
+            const errMessage = err instanceof BookingCreationError ? err.message : 'Something went wrong creating the booking.'
+
+            const toolResultMessages = [
+              ...messages,
+              { role: 'assistant' as const, content: assistantMessage.content || '' },
+              {
+                role: 'user' as const,
+                content: `[System: The booking could NOT be created (${errMessage}). Apologize briefly and ask them to clarify or try again - do NOT tell them the booking succeeded.]`,
+              },
+            ]
+
+            const finalResponse = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              temperature: 0.7,
+              max_tokens: 300,
+              messages: toolResultMessages,
+            })
+
+            assistantMessage = finalResponse.choices[0]?.message
+            tokensUsed += finalResponse.usage?.total_tokens || 0
+          }
+        }
 
         if (toolCall.function.name === 'create_magic_link') {
           const args = JSON.parse(toolCall.function.arguments)
@@ -543,7 +784,11 @@ If someone says they're "just testing", "trying out the chat", "seeing how this 
       data: {
         cleanerId: cleaner.id,
         conversationId: conversation?.id || 'public-chat',
-        action: magicLinkCreated ? 'PUBLIC_CHAT_ONBOARDING' : 'PUBLIC_CHAT',
+        action: bookingCreated
+          ? 'PUBLIC_CHAT_BOOKING'
+          : magicLinkCreated
+            ? 'PUBLIC_CHAT_ONBOARDING'
+            : 'PUBLIC_CHAT',
         tokensUsed,
       },
     })
@@ -552,6 +797,8 @@ If someone says they're "just testing", "trying out the chat", "seeing how this 
       response: finalContent,
       magicLinkCreated,
       magicLinkUrl: magicLinkCreated ? magicLinkUrl : undefined,
+      bookingCreated,
+      booking: bookingCreated ? createdBooking : undefined,
     })
   } catch (error) {
     console.error('Public chat error:', error)
