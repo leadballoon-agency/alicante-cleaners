@@ -17,22 +17,27 @@ export default withAuth(
       return NextResponse.next()
     }
 
+    // Preserve the exact path + query the user was trying to reach (e.g.
+    // /admin?tab=messages) so login sends them right back there instead of
+    // dropping them on the section root.
+    const requestedUrl = path + req.nextUrl.search
+
     // Admin area - require staff access (MANAGER or ADMIN)
     if (path.startsWith('/admin')) {
       if (isStaff) {
         return NextResponse.next()
       }
-      return NextResponse.redirect(new URL('/login?error=admin_only&callbackUrl=/admin', req.url))
+      return NextResponse.redirect(new URL(`/login?error=admin_only&callbackUrl=${encodeURIComponent(requestedUrl)}`, req.url))
     }
 
     // Cleaner dashboard - require CLEANER role (or ADMIN, handled above)
     if (path.startsWith('/dashboard') && role !== 'CLEANER') {
-      return NextResponse.redirect(new URL('/login?error=cleaner_only&callbackUrl=/dashboard', req.url))
+      return NextResponse.redirect(new URL(`/login?error=cleaner_only&callbackUrl=${encodeURIComponent(requestedUrl)}`, req.url))
     }
 
     // Owner dashboard - require OWNER role (or ADMIN, handled above)
     if (path.startsWith('/owner/dashboard') && role !== 'OWNER') {
-      return NextResponse.redirect(new URL('/login?error=owner_only&callbackUrl=/owner/dashboard', req.url))
+      return NextResponse.redirect(new URL(`/login?error=owner_only&callbackUrl=${encodeURIComponent(requestedUrl)}`, req.url))
     }
 
     return NextResponse.next()

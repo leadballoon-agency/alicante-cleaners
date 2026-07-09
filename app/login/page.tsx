@@ -12,8 +12,14 @@ function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
-  const callbackUrl = searchParams.get('callbackUrl') || '/owner/dashboard'
+  const explicitCallbackUrl = searchParams.get('callbackUrl')
+  const callbackUrl = explicitCallbackUrl || '/owner/dashboard'
   const isAdminLogin = callbackUrl.includes('/admin')
+  // Only bounce through the smart post-login router when nobody asked for a
+  // specific page (e.g. a plain "Owner" sign-in). Explicit callback URLs —
+  // including deep links like /admin?tab=messages — are passed straight
+  // through untouched so they land exactly where requested.
+  const magicLinkCallbackUrl = explicitCallbackUrl || '/api/auth/post-login-redirect'
 
   const [step, setStep] = useState<Step>('select')
   const [isLoading, setIsLoading] = useState(false)
@@ -37,7 +43,7 @@ function LoginContent() {
       const result = await signIn('email', {
         email,
         redirect: false,
-        callbackUrl,
+        callbackUrl: magicLinkCallbackUrl,
       })
 
       if (result?.error) {
@@ -298,6 +304,15 @@ function LoginContent() {
                   </button>
                 )}
               </div>
+
+              {!isAdminLogin && (
+                <p className="text-center text-xs text-[#9B9B9B]">
+                  VillaCare team?{' '}
+                  <Link href="/login?callbackUrl=/admin" className="text-[#9B9B9B] underline hover:text-[#6B6B6B]">
+                    Log in with your email
+                  </Link>
+                </p>
+              )}
             </div>
           )}
 
