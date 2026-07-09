@@ -10,6 +10,7 @@ import ProfileTab from './tabs/profile'
 import PromoteTab from './tabs/promote'
 import SuccessTab from './tabs/success'
 import OwnerReviewModal from './components/owner-review-modal'
+import GetStartedCard from './components/GetStartedCard'
 import { SmartWidget, Screen } from '@/components/smart-widget'
 import { useLanguage } from '@/components/language-context'
 import { JobsTimeline } from './components/team-calendar'
@@ -338,17 +339,26 @@ function Dashboard() {
 
       {/* Tab content */}
       <main className="px-6 py-6 max-w-lg mx-auto">
-        {/* Show pending state for unverified cleaners */}
+        {/* Show pending state for unverified cleaners - except the Profile
+            tab, which stays reachable so they can act on the Get Started
+            checklist (photo/bio/areas/rate) while awaiting verification. */}
         {cleaner.status === 'PENDING' ? (
-          <PendingState cleaner={cleaner} />
+          activeTab === 'profile' ? (
+            <ProfileTab cleaner={cleaner} onUpdate={setCleaner} />
+          ) : (
+            <PendingState cleaner={cleaner} />
+          )
         ) : (
           <>
             {activeTab === 'home' && (
-              <JobsTimeline
-                currentCleanerId={cleaner.id}
-                currentCleanerName={cleaner.name}
-                currentCleanerPhoto={cleaner.photo}
-              />
+              <>
+                <GetStartedCard />
+                <JobsTimeline
+                  currentCleanerId={cleaner.id}
+                  currentCleanerName={cleaner.name}
+                  currentCleanerPhoto={cleaner.photo}
+                />
+              </>
             )}
             {activeTab === 'bookings' && (
               <BookingsTab
@@ -427,47 +437,9 @@ function PendingState({ cleaner }: { cleaner: Cleaner }) {
         </div>
       </div>
 
-      {/* What to do next */}
-      <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
-        <h3 className="font-medium text-[#1A1A1A] mb-4">What to do next</h3>
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-[#E8F5E9] rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-sm">&#128172;</span>
-            </div>
-            <div>
-              <p className="font-medium text-[#1A1A1A] text-sm">Chat with a Team Leader</p>
-              <p className="text-xs text-[#6B6B6B] mt-0.5">
-                Visit a team leader&apos;s profile and introduce yourself via the chat widget
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-[#E3F2FD] rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-sm">&#128100;</span>
-            </div>
-            <div>
-              <p className="font-medium text-[#1A1A1A] text-sm">Complete your profile</p>
-              <p className="text-xs text-[#6B6B6B] mt-0.5">
-                Add a photo and bio to make a good impression
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-[#F5F5F3] rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-sm">&#9200;</span>
-            </div>
-            <div>
-              <p className="font-medium text-[#1A1A1A] text-sm">Wait for verification</p>
-              <p className="text-xs text-[#6B6B6B] mt-0.5">
-                Team leaders review applications and will accept you when ready
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Get Started checklist - real, actionable steps replace the old
+          static "what to do next" list so PENDING cleaners can act now. */}
+      <GetStartedCard variant="pending" />
 
       {/* Profile preview */}
       <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
