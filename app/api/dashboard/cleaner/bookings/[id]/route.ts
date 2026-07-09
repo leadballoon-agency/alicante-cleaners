@@ -9,6 +9,7 @@ import {
   sendOwnerBookingDeclinedEmail,
   sendOwnerBookingCompletedEmail,
 } from '@/lib/emails/owner-booking-emails'
+import { formatMadridDate } from '@/lib/dates'
 
 // PATCH /api/dashboard/cleaner/bookings/[id] - Accept/decline/assign booking
 export async function PATCH(
@@ -205,7 +206,7 @@ export async function PATCH(
     const ownerPhone = updatedBooking.owner.user.phone
     if (ownerPhone) {
       const cleanerName = updatedBooking.cleaner.user.name || 'Your cleaner'
-      const formattedDate = updatedBooking.date.toLocaleDateString('en-GB', {
+      const formattedDate = formatMadridDate(updatedBooking.date, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -235,7 +236,7 @@ export async function PATCH(
     const ownerEmail = updatedBooking.owner.user.email
     if (ownerEmail) {
       const cleanerName = updatedBooking.cleaner.user.name || 'Your cleaner'
-      const formattedDate = updatedBooking.date.toLocaleDateString('en-GB', {
+      const formattedDate = formatMadridDate(updatedBooking.date, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -252,6 +253,8 @@ export async function PATCH(
           time: updatedBooking.time,
           address: updatedBooking.property.address,
           preferredLanguage,
+          startAt: updatedBooking.date,
+          hours: updatedBooking.hours,
         }).catch((err) => console.error('Failed to send owner booking-confirmed email:', err))
       } else if (newStatus === 'CANCELLED') {
         sendOwnerBookingDeclinedEmail({

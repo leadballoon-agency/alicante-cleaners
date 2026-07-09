@@ -1,3 +1,5 @@
+import { getMadridDateKey, formatMadridDate, combineMadridDateTime, buildGoogleCalendarLink } from '@/lib/dates'
+
 // Universal booking data shared between owner and cleaner dashboards
 export interface BookingCardData {
   id: string
@@ -85,25 +87,25 @@ export const getInitials = (name: string): string => {
     .slice(0, 2)
 }
 
-// Format date with relative labels
+// Format date with relative labels (always in Europe/Madrid — bookings are
+// physical events in Spain regardless of where the viewer is)
 export const formatDate = (dateStr: string, format: 'relative' | 'full' = 'relative'): string => {
   const date = new Date(dateStr)
   const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
 
   if (format === 'relative') {
-    if (date.toDateString() === today.toDateString()) return 'Today'
-    if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow'
+    if (getMadridDateKey(date) === getMadridDateKey(today)) return 'Today'
+    if (getMadridDateKey(date) === getMadridDateKey(tomorrow)) return 'Tomorrow'
 
     // Within next 7 days - show day name
     const daysAhead = Math.floor((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
     if (daysAhead > 0 && daysAhead < 7) {
-      return date.toLocaleDateString('en-GB', { weekday: 'long' })
+      return formatMadridDate(date, { weekday: 'long' })
     }
   }
 
-  return date.toLocaleDateString('en-GB', {
+  return formatMadridDate(date, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -111,15 +113,9 @@ export const formatDate = (dateStr: string, format: 'relative' | 'full' = 'relat
   })
 }
 
-// Check if booking is today
+// Check if booking is today (in Europe/Madrid)
 export const isToday = (dateStr: string): boolean => {
-  const date = new Date(dateStr)
-  const today = new Date()
-  return (
-    date.getFullYear() === today.getFullYear() &&
-    date.getMonth() === today.getMonth() &&
-    date.getDate() === today.getDate()
-  )
+  return getMadridDateKey(dateStr) === getMadridDateKey(new Date())
 }
 
 // Generate WhatsApp link
@@ -129,20 +125,21 @@ export const generateWhatsAppLink = (phone: string, message: string): string => 
   return `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
 }
 
-// Generate Google Calendar link
+// Generate Google Calendar link. `booking.date` is a plain `YYYY-MM-DD`
+// with no timezone attached, so it's combined with `time` as Europe/Madrid
+// wall-clock time (see lib/dates.ts) rather than via the previous
+// `new Date(\`${date}T${time}:00\`)`, which was parsed in the *viewer's*
+// local timezone — the same class of bug that shifted the stored booking
+// date in the first place.
 export const generateCalendarLink = (booking: BookingCardData): string => {
-  const startDate = new Date(`${booking.date}T${booking.time.split('-')[0].trim().padStart(5, '0')}:00`)
-  const endDate = new Date(startDate.getTime() + booking.hours * 60 * 60 * 1000)
+  const timeOnly = booking.time.split('-')[0].trim().padStart(5, '0')
+  const start = combineMadridDateTime(booking.date, timeOnly)
 
-  const formatCalDate = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, '').slice(0, 15) + 'Z'
-
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: `${booking.service} - ${booking.cleanerName}`,
-    dates: `${formatCalDate(startDate)}/${formatCalDate(endDate)}`,
+  return buildGoogleCalendarLink({
+    start,
+    hours: booking.hours,
+    title: `${booking.service} - ${booking.cleanerName}`,
     details: `Cleaning by ${booking.cleanerName}\n${booking.propertyName || booking.propertyAddress}`,
-    location: booking.propertyAddress
+    location: booking.propertyAddress,
   })
-
-  return `https://calendar.google.com/calendar/render?${params.toString()}`
 }

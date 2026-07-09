@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import CompletionChecklistModal from './CompletionChecklistModal'
+import { formatMadridDate, getMadridDateKey } from '@/lib/dates'
 
 export interface BookingPeekData {
   id: string
@@ -219,10 +220,10 @@ const generateWhatsAppLink = (phone: string, message: string): string => {
   return `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
 }
 
-// Format date nicely
+// Format date nicely (always in Europe/Madrid — bookings are physical
+// events in Spain regardless of where the cleaner is viewing from)
 const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('en-GB', {
+  return formatMadridDate(dateStr, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -230,18 +231,11 @@ const formatDate = (dateStr: string): string => {
   })
 }
 
-// Check if booking is today (handles various date formats)
+// Check if booking is today, in Europe/Madrid (not the viewer's browser
+// timezone — comparing raw getFullYear/getMonth/getDate is exactly the kind
+// of local-timezone comparison that caused the Monday/Tuesday date-shift bug)
 const isToday = (dateStr: string): boolean => {
-  // Parse the date string - handle both ISO and other formats
-  const date = new Date(dateStr)
-  const today = new Date()
-
-  // Compare year, month, and day to avoid timezone issues
-  return (
-    date.getFullYear() === today.getFullYear() &&
-    date.getMonth() === today.getMonth() &&
-    date.getDate() === today.getDate()
-  )
+  return getMadridDateKey(dateStr) === getMadridDateKey(new Date())
 }
 
 // Status badge colors

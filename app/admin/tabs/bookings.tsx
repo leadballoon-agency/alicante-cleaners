@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Booking } from '../page'
 import { BOOKING_STATUS_COLORS, BOOKING_STATUS_DOTS } from '@/lib/admin/card-types'
+import { formatMadridDate, formatMadridDateTime } from '@/lib/dates'
 
 type Props = {
   bookings: Booking[]
@@ -46,17 +47,17 @@ export default function BookingsTab({ bookings, onBookingUpdate }: Props) {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return formatMadridDate(date, {
       month: 'short',
       day: 'numeric',
     })
   }
 
   const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('en-US', {
+    return formatMadridDateTime(date, {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false,
+      hourCycle: 'h23',
     })
   }
 

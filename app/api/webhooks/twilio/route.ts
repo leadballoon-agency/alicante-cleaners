@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { sendWhatsAppMessage } from '@/lib/whatsapp'
 import { notifyStaffBookingResponse } from '@/lib/notifications/booking-notifications'
 import { sendOwnerBookingConfirmedEmail, sendOwnerBookingDeclinedEmail } from '@/lib/emails/owner-booking-emails'
+import { formatMadridDate } from '@/lib/dates'
 import twilio from 'twilio'
 
 // Reconstruct the public URL that Twilio signed (Vercel serverless fix)
@@ -218,7 +219,7 @@ export async function POST(request: NextRequest) {
           })
 
           const bookingList = pendingBookings.map(b => {
-            const dateStr = b.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+            const dateStr = formatMadridDate(b.date, { day: 'numeric', month: 'short' })
             return `• #${b.shortCode || '???'} - ${dateStr} at ${b.time}`
           }).join('\n')
 
@@ -236,7 +237,7 @@ export async function POST(request: NextRequest) {
         data: { status: 'CONFIRMED' },
       })
 
-      const formattedDate = pendingBooking.date.toLocaleDateString('en-GB', {
+      const formattedDate = formatMadridDate(pendingBooking.date, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -269,6 +270,8 @@ export async function POST(request: NextRequest) {
           time: pendingBooking.time,
           address: pendingBooking.property.address,
           preferredLanguage: pendingBooking.owner.user.preferredLanguage,
+          startAt: pendingBooking.date,
+          hours: pendingBooking.hours,
         }).catch((err) => console.error('Failed to send owner booking-confirmed email:', err))
       }
 
@@ -344,7 +347,7 @@ export async function POST(request: NextRequest) {
           })
 
           const bookingList = pendingBookings.map(b => {
-            const dateStr = b.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+            const dateStr = formatMadridDate(b.date, { day: 'numeric', month: 'short' })
             return `• #${b.shortCode || '???'} - ${dateStr} at ${b.time}`
           }).join('\n')
 
@@ -362,7 +365,7 @@ export async function POST(request: NextRequest) {
         data: { status: 'CANCELLED' },
       })
 
-      const formattedDate = pendingBooking.date.toLocaleDateString('en-GB', {
+      const formattedDate = formatMadridDate(pendingBooking.date, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',

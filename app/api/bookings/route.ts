@@ -8,6 +8,7 @@ import { sendOwnerBookingReceivedEmail } from '@/lib/emails/owner-booking-emails
 import { checkRateLimit, getClientIdentifier, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
 import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
 import { linkChatConversations } from '@/lib/nurturing/link-conversations'
+import { combineMadridDateTime, formatMadridDate } from '@/lib/dates'
 import { z } from 'zod'
 
 // Service definitions with hours - server is source of truth
@@ -24,7 +25,12 @@ const bookingSchema = z.object({
   bedrooms: z.number().min(1).max(20).optional(),
   specialInstructions: z.string().max(2000).optional().nullable(),
   serviceType: z.string().min(1).max(100), // Service type only - price calculated server-side
-  date: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
+  // Plain calendar day + time as picked by the user, with no timezone
+  // attached — the server combines these into the canonical UTC instant
+  // (see combineMadridDateTime in lib/dates.ts). Never accept a
+  // client-constructed Date/ISO string here; that's what caused the
+  // Monday/Tuesday date-shift bug.
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date (expected YYYY-MM-DD)'),
   time: z.string().regex(/^\d{1,2}:\d{2}$/, 'Invalid time format (HH:MM)'),
   guestPhone: z.string().max(20).optional().nullable(),
   guestEmail: z.string().email().max(255).optional().nullable(),
@@ -241,7 +247,9 @@ export async function POST(request: NextRequest) {
           price, // Server-calculated price
           hours, // Server-defined hours
           shortCode, // For WhatsApp reference
-          date: new Date(date),
+          // Canonical instant: the UTC moment this date+time represents in
+          // Europe/Madrid (constructed server-side — see lib/dates.ts).
+          date: combineMadridDateTime(date, time),
           time,
           notes: specialInstructions || null,
           status: 'PENDING',
@@ -262,8 +270,9 @@ export async function POST(request: NextRequest) {
 
     const { booking, owner, nurturingInfo } = result
 
-    // Format date for notifications
-    const formattedDate = new Date(date).toLocaleDateString('en-GB', {
+    // Format date for notifications (always in Europe/Madrid — bookings are
+    // physical events in Spain regardless of where the owner/server is)
+    const formattedDate = formatMadridDate(booking.date, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',

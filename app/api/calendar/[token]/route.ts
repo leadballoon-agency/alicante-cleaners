@@ -1,20 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-
-// Helper to format date for ICS (YYYYMMDDTHHMMSS)
-function formatICSDate(date: Date, time: string): string {
-  const [hours, minutes] = time.split(':').map(Number)
-  const d = new Date(date)
-  d.setHours(hours || 9, minutes || 0, 0, 0)
-
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hour = String(d.getHours()).padStart(2, '0')
-  const minute = String(d.getMinutes()).padStart(2, '0')
-
-  return `${year}${month}${day}T${hour}${minute}00`
-}
+import { toICSDateUTC } from '@/lib/dates'
 
 // Helper to escape ICS text
 function escapeICS(text: string): string {
@@ -63,14 +49,18 @@ export async function GET(
       return new NextResponse('Calendar not found', { status: 404 })
     }
 
-    // Build ICS content
+    // Build ICS content.
+    // `booking.date` is already the canonical UTC instant for this booking's
+    // Europe/Madrid date+time (see lib/dates.ts), so we format it directly
+    // as a UTC timestamp (trailing `Z`) — every calendar client renders a
+    // `Z` timestamp in the viewer's own local timezone, so this is correct
+    // regardless of where the cleaner's calendar app is set to. No need to
+    // re-derive hours from the separate `time` string (the previous
+    // approach, which used the server process's local timezone to set the
+    // hour and was a source of the same class of date-shift bug).
     const events = cleaner.bookings.map(booking => {
-      const startDate = formatICSDate(booking.date, booking.time)
-      // Calculate end time (add booking hours)
-      const endDate = formatICSDate(
-        new Date(new Date(booking.date).getTime() + booking.hours * 60 * 60 * 1000),
-        booking.time
-      )
+      const startDate = toICSDateUTC(booking.date)
+      const endDate = toICSDateUTC(new Date(booking.date.getTime() + booking.hours * 60 * 60 * 1000))
 
       const location = booking.property.address
       const summary = `${booking.service} - ${booking.property.name}`
@@ -87,7 +77,7 @@ export async function GET(
       return [
         'BEGIN:VEVENT',
         `UID:${booking.id}@alicantecleaners.com`,
-        `DTSTAMP:${formatICSDate(new Date(), '00:00')}Z`,
+        `DTSTAMP:${toICSDateUTC(new Date())}`,
         `DTSTART:${startDate}`,
         `DTEND:${endDate}`,
         `SUMMARY:${escapeICS(summary)}`,

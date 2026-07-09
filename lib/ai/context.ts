@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { formatMadridDate } from '@/lib/dates'
 
 export interface OwnerContext {
   name: string
@@ -110,14 +111,14 @@ export async function buildOwnerContext(userId: string): Promise<string> {
         bedrooms: p.bedrooms,
       })),
       upcomingBookings: owner.bookings.map(b => ({
-        date: b.date.toLocaleDateString(),
+        date: formatMadridDate(b.date),
         time: b.time,
         property: b.property.name,
         cleaner: b.cleaner.user.name || 'Cleaner',
         status: b.status,
       })),
       recentArrivalPreps: owner.arrivalPreps.map(a => ({
-        date: a.arrivalDate.toLocaleDateString(),
+        date: formatMadridDate(a.arrivalDate),
         property: a.property.name,
         extras: a.extras,
         status: a.status,
@@ -218,7 +219,7 @@ export async function buildCleanerContext(userId: string): Promise<string> {
       teamName: cleaner.ledTeam?.name || cleaner.memberOfTeam?.name || null,
       teamMemberCount: cleaner.ledTeam?.members.length || 0,
       upcomingBookings: cleaner.bookings.map(b => ({
-        date: b.date.toLocaleDateString(),
+        date: formatMadridDate(b.date),
         time: b.time,
         property: b.property.name,
         owner: b.owner.user.name || 'Owner',

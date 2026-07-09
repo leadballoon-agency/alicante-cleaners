@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import OwnerBookingCard, { OwnerBookingCardData } from './OwnerBookingCard'
 import NewBookingCard from './NewBookingCard'
+import { getMadridDateKey, formatMadridDate } from '@/lib/dates'
 
 interface Props {
   bookings: OwnerBookingCardData[]
@@ -27,62 +28,48 @@ interface DateGroup {
   bookings: OwnerBookingCardData[]
 }
 
-// Format date for grouping header
+// Format date for grouping header (always in Europe/Madrid — bookings are
+// physical events in Spain regardless of where the owner is viewing from)
 const formatDateHeader = (dateStr: string): string => {
   const date = new Date(dateStr)
   const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
 
-  // Reset times for comparison
-  today.setHours(0, 0, 0, 0)
-  tomorrow.setHours(0, 0, 0, 0)
-  const compareDate = new Date(date)
-  compareDate.setHours(0, 0, 0, 0)
-
-  if (compareDate.getTime() === today.getTime()) {
+  const dateKey = getMadridDateKey(date)
+  if (dateKey === getMadridDateKey(today)) {
     return 'Today'
   }
-  if (compareDate.getTime() === tomorrow.getTime()) {
+  if (dateKey === getMadridDateKey(tomorrow)) {
     return 'Tomorrow'
   }
 
   // If within next 7 days, show weekday
-  const daysUntil = Math.ceil((compareDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  const daysUntil = Math.round((new Date(`${dateKey}T00:00:00Z`).getTime() - new Date(`${getMadridDateKey(today)}T00:00:00Z`).getTime()) / (1000 * 60 * 60 * 24))
   if (daysUntil > 0 && daysUntil <= 7) {
-    return date.toLocaleDateString('en-GB', { weekday: 'long' })
+    return formatMadridDate(date, { weekday: 'long' })
   }
 
   // Otherwise show full date
-  return date.toLocaleDateString('en-GB', {
+  return formatMadridDate(date, {
     weekday: 'short',
     day: 'numeric',
     month: 'short'
   })
 }
 
-// Get date key for grouping (YYYY-MM-DD)
+// Get date key for grouping (YYYY-MM-DD, Europe/Madrid calendar day)
 const getDateKey = (dateStr: string): string => {
-  const date = new Date(dateStr)
-  return date.toISOString().split('T')[0]
+  return getMadridDateKey(new Date(dateStr))
 }
 
-// Check if date is in the past
+// Check if date is in the past (Europe/Madrid calendar day)
 const isDatePast = (dateStr: string): boolean => {
-  const date = new Date(dateStr)
-  const today = new Date()
-  date.setHours(0, 0, 0, 0)
-  today.setHours(0, 0, 0, 0)
-  return date < today
+  return getMadridDateKey(new Date(dateStr)) < getMadridDateKey(new Date())
 }
 
-// Check if date is today or future
+// Check if date is today or future (Europe/Madrid calendar day)
 const isDateUpcoming = (dateStr: string): boolean => {
-  const date = new Date(dateStr)
-  const today = new Date()
-  date.setHours(0, 0, 0, 0)
-  today.setHours(0, 0, 0, 0)
-  return date >= today
+  return getMadridDateKey(new Date(dateStr)) >= getMadridDateKey(new Date())
 }
 
 export default function OwnerJobsTimeline({

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { addDaysMadrid } from '@/lib/dates'
 
 // POST - Create a new booking based on an existing one (1-click rebook)
 export async function POST(
@@ -53,16 +54,16 @@ export async function POST(
       )
     }
 
-    // Calculate next available date (same day next week by default)
-    const originalDate = new Date(originalBooking.date)
-    const nextDate = new Date(originalDate)
-    nextDate.setDate(nextDate.getDate() + 7)
+    // Calculate next available date (same day next week by default).
+    // Shift by a Madrid calendar week rather than a raw 7*24h offset so the
+    // booking keeps the same Madrid wall-clock time across any DST change.
+    let nextDate = addDaysMadrid(originalBooking.date, 7)
 
     // If that date is in the past, use today + 7 days
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     if (nextDate < today) {
-      nextDate.setTime(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+      nextDate = addDaysMadrid(today, 7)
     }
 
     // Generate a short code for WhatsApp commands

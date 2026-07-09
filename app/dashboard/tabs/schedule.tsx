@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Booking, Cleaner } from '../page'
+import { formatMadridDate, getMadridDateKey } from '@/lib/dates'
 
 type Props = {
   bookings: Booking[]
@@ -25,17 +26,18 @@ export default function ScheduleTab({ bookings, cleaner, onCalendarTokenUpdate }
   })
 
   const formatDayName = (date: Date) => {
-    return date.toLocaleDateString('en-US', { weekday: 'short' })
+    return formatMadridDate(date, { weekday: 'short' })
   }
 
   const formatDayNumber = (date: Date) => {
     return date.getDate()
   }
 
+  // Compare by Europe/Madrid calendar day — bookings are physical events in
+  // Spain, so `bookingDate` (a real instant) must be compared against the
+  // Madrid day, not the cleaner's browser-local day.
   const isSameDay = (d1: Date, d2: Date) => {
-    return d1.getDate() === d2.getDate() &&
-      d1.getMonth() === d2.getMonth() &&
-      d1.getFullYear() === d2.getFullYear()
+    return getMadridDateKey(d1) === getMadridDateKey(d2)
   }
 
   // Get bookings for selected date
@@ -53,7 +55,7 @@ export default function ScheduleTab({ bookings, cleaner, onCalendarTokenUpdate }
   }
 
   const formatFullDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+    return formatMadridDate(date, {
       weekday: 'long',
       month: 'long',
       day: 'numeric',

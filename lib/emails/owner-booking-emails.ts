@@ -13,6 +13,7 @@
 
 import { getResend, EMAIL_FROM } from '@/lib/email'
 import { translateText, SUPPORTED_LANGUAGES, type LanguageCode } from '@/lib/translate'
+import { buildGoogleCalendarLink } from '@/lib/dates'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://alicantecleaners.com'
 
@@ -161,7 +162,10 @@ export async function sendOwnerBookingReceivedEmail(details: {
 
 /**
  * Booking confirmed — sent when the cleaner accepts the booking (whether via
- * the dashboard or by replying ACCEPT on WhatsApp).
+ * the dashboard or by replying ACCEPT on WhatsApp). This is the moment a
+ * booking is actually worth putting on a calendar (a PENDING request might
+ * still be declined), so this is the one email that includes an "Add to
+ * calendar" link — never the booking-received email.
  */
 export async function sendOwnerBookingConfirmedEmail(details: {
   to: string
@@ -172,6 +176,9 @@ export async function sendOwnerBookingConfirmedEmail(details: {
   time: string
   address: string
   preferredLanguage?: string | null
+  /** Canonical UTC instant of the booking (Booking.date) + duration, used to build the calendar link. */
+  startAt: Date
+  hours: number
 }): Promise<void> {
   try {
     const lang = resolveLang(details.preferredLanguage)
@@ -179,9 +186,10 @@ export async function sendOwnerBookingConfirmedEmail(details: {
     const subjectEn = `✅ ${details.cleanerName} confirmed your booking`
     const introEn = `Good news, ${details.ownerName}! ${details.cleanerName} has confirmed your booking.`
 
-    const [subject, intro] = await Promise.all([
+    const [subject, intro, addToCalendarLabel] = await Promise.all([
       localize(subjectEn, lang),
       localize(introEn, lang),
+      localize('Add to Calendar', lang),
     ])
 
     const body = `
@@ -196,11 +204,19 @@ export async function sendOwnerBookingConfirmedEmail(details: {
       ])}
     `
 
+    const calendarUrl = buildGoogleCalendarLink({
+      start: details.startAt,
+      hours: details.hours,
+      title: `${details.service} - ${details.cleanerName}`,
+      details: `Cleaning by ${details.cleanerName}\n${details.address}`,
+      location: details.address,
+    })
+
     await getResend().emails.send({
       from: EMAIL_FROM,
       to: details.to,
       subject,
-      html: renderShell(subject, body, '', FOOTNOTE_TEXT[lang]),
+      html: renderShell(subject, body, ctaButton(calendarUrl, `📅 ${addToCalendarLabel}`, '#C4785A'), FOOTNOTE_TEXT[lang]),
     })
 
     console.log('[EMAIL] Owner booking-confirmed email sent to:', details.to)

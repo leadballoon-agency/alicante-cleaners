@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { OwnerBookingCardData } from './OwnerBookingCard'
+import { formatMadridDate, buildGoogleCalendarLink } from '@/lib/dates'
 
 interface Props {
   booking: OwnerBookingCardData | null
@@ -19,10 +20,10 @@ interface Props {
   onRebook?: (bookingId: string) => void
 }
 
-// Format date nicely
+// Format date nicely (always in Europe/Madrid — bookings are physical
+// events in Spain regardless of where the owner is viewing from)
 const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('en-GB', {
+  return formatMadridDate(dateStr, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -78,23 +79,19 @@ const generateWhatsAppLink = (phone: string, message: string): string => {
   return `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
 }
 
-// Generate Google Calendar link
-const generateCalendarLink = (booking: OwnerBookingCardData): string => {
-  const startDate = new Date(`${booking.date}T${booking.time.split('-')[0].trim().padStart(5, '0')}:00`)
-  const endDate = new Date(startDate.getTime() + booking.hours * 60 * 60 * 1000)
-
-  const formatCalDate = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, '').slice(0, 15) + 'Z'
-
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: `${booking.service} - ${booking.cleanerName}`,
-    dates: `${formatCalDate(startDate)}/${formatCalDate(endDate)}`,
+// Generate Google Calendar link. `booking.date` (from the API) is already
+// the canonical UTC instant for this booking's Europe/Madrid date+time (see
+// lib/dates.ts) — use it directly rather than re-combining it with the
+// separate `time` string, which previously produced a malformed date string
+// (`"2026-07-14T06:00:00.000Z" + "T08:00:00"`) parsed as Invalid Date.
+const generateCalendarLink = (booking: OwnerBookingCardData): string =>
+  buildGoogleCalendarLink({
+    start: booking.date,
+    hours: booking.hours,
+    title: `${booking.service} - ${booking.cleanerName}`,
     details: `Cleaning by ${booking.cleanerName}\n${booking.propertyName || booking.propertyAddress}`,
-    location: booking.propertyAddress
+    location: booking.propertyAddress,
   })
-
-  return `https://calendar.google.com/calendar/render?${params.toString()}`
-}
 
 export default function OwnerBookingPeekModal({
   booking,

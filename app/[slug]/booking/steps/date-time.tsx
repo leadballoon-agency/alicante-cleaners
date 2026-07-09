@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { BookingData } from '../page'
 import { Loader2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { formatDateOnlyLocal } from '@/lib/dates'
 
 type Props = {
   data: BookingData
@@ -53,7 +54,15 @@ export default function DateTimePicker({ data, onUpdate, onNext, cleanerSlug }: 
     setSelectedTime('') // Reset selected time when date changes
 
     try {
-      const dateStr = date.toISOString().split('T')[0]
+      // Use the LOCAL calendar-day components of the clicked cell, not
+      // toISOString() — toISOString() converts the picker's local-midnight
+      // Date to UTC, which rolls back to the previous day for any
+      // positive-UTC-offset timezone (including Europe/Madrid's own +1/+2),
+      // so clicking "Tuesday 14" was silently querying availability for
+      // Monday 13. This is the same root cause as the booking date-shift
+      // bug (see lib/dates.ts) — fixed the same way, by never routing a
+      // calendar-day selection through a UTC instant.
+      const dateStr = formatDateOnlyLocal(date)
       const res = await fetch(`/api/cleaners/${cleanerSlug}/availability?date=${dateStr}`)
       if (res.ok) {
         const data = await res.json()

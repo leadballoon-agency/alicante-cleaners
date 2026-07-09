@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { JobCard, BookingCardData } from '@/components/job-card'
 import { useLanguage } from '@/components/language-context'
+import { getMadridDateKey, formatMadridDate, getMadridDateParts, combineMadridDateTime } from '@/lib/dates'
 
 interface BookingFromAPI {
   id: string
@@ -38,15 +39,16 @@ interface Props {
   currentCleanerPhoto?: string | null
 }
 
-// Format date header
+// Format date header (always in Europe/Madrid — bookings are physical
+// events in Spain regardless of where the cleaner is viewing from)
 const formatDateHeader = (dateStr: string, t: (key: string) => string, lang: string = 'en'): { day: string; weekday: string; isToday: boolean; isTomorrow: boolean } => {
   const date = new Date(dateStr)
   const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
 
-  const isToday = date.toDateString() === today.toDateString()
-  const isTomorrow = date.toDateString() === tomorrow.toDateString()
+  const dateKey = getMadridDateKey(date)
+  const isToday = dateKey === getMadridDateKey(today)
+  const isTomorrow = dateKey === getMadridDateKey(tomorrow)
 
   // Map language code to locale
   const localeMap: Record<string, string> = {
@@ -67,30 +69,29 @@ const formatDateHeader = (dateStr: string, t: (key: string) => string, lang: str
     weekday = t('dashboard.tomorrow')
   } else {
     // Show "Friday 9th" style for dates within 7 days, otherwise "Fri 9 Jan"
-    const daysAway = Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    const daysAway = Math.round((new Date(`${dateKey}T00:00:00Z`).getTime() - new Date(`${getMadridDateKey(today)}T00:00:00Z`).getTime()) / (1000 * 60 * 60 * 24))
     if (daysAway <= 7) {
-      weekday = date.toLocaleDateString(locale, { weekday: 'long' })
+      weekday = formatMadridDate(date, { weekday: 'long' }, locale)
     } else {
-      weekday = date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })
+      weekday = formatMadridDate(date, { weekday: 'short', day: 'numeric', month: 'short' }, locale)
     }
   }
 
   return {
-    day: date.getDate().toString(),
+    day: getMadridDateParts(date).day.toString(),
     weekday,
     isToday,
     isTomorrow
   }
 }
 
-// Normalize date to YYYY-MM-DD format (preserving local date)
+// Normalize date to YYYY-MM-DD format — Europe/Madrid calendar day, not the
+// viewer's browser-local date (the previous "preserving local date" comment
+// described exactly the pattern that caused the Monday/Tuesday date-shift
+// bug: local date components can land on a different calendar day than
+// Madrid's for the same instant).
 const normalizeDate = (dateStr: string): string => {
-  const date = new Date(dateStr)
-  // Use local date components to avoid timezone issues
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  return getMadridDateKey(new Date(dateStr))
 }
 
 // Group bookings by date
@@ -216,13 +217,17 @@ export default function JobsTimeline({
 
   // Convert to card data and filter
   const getDisplayBookings = (): BookingCardData[] => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    // Start of "today" in Europe/Madrid, not the viewer's browser-local midnight
+    const today = combineMadridDateTime(getMadridDateKey(new Date()), '00:00')
 
     return bookings
       .map(b => ({
         id: b.id,
-        date: b.date,
+        // Europe/Madrid calendar day (BookingCardData.date is documented as
+        // plain YYYY-MM-DD — passing the raw ISO instant here broke
+        // combineMadridDateTime() downstream in generateCalendarLink, which
+        // requires the plain-date-string shape).
+        date: getMadridDateKey(b.date),
         time: b.time,
         service: b.service,
         hours: b.hours,
@@ -351,7 +356,7 @@ export default function JobsTimeline({
                   }`}>
                     <span className="text-lg font-bold leading-none">{day}</span>
                     <span className="text-[10px] uppercase leading-none mt-0.5">
-                      {new Date(dateStr).toLocaleDateString('en-GB', { month: 'short' })}
+                      {formatMadridDate(dateStr, { month: 'short' })}
                     </span>
                   </div>
                   <div>
