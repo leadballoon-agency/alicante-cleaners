@@ -259,7 +259,7 @@ export default function HomePage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-[#1A1A1A]">Auto-translate</p>
-                <p className="text-xs text-[#6B6B6B]">7 languages</p>
+                <p className="text-xs text-[#6B6B6B]">Any language</p>
               </div>
             </div>
             <div className="flex items-center gap-3 justify-center">
@@ -292,8 +292,8 @@ export default function HomePage() {
               <p className="text-xs sm:text-sm text-white/70">AI agents live</p>
             </div>
             <div className="bg-white/10 rounded-xl p-4 text-center">
-              <p className="text-2xl sm:text-3xl font-bold text-white">7</p>
-              <p className="text-xs sm:text-sm text-white/70">Languages</p>
+              <p className="text-lg sm:text-xl font-bold text-white">Any language</p>
+              <p className="text-xs sm:text-sm text-white/70">Auto-translated</p>
             </div>
             <div className="bg-white/10 rounded-xl p-4 text-center">
               <p className="text-2xl sm:text-3xl font-bold text-[#C4785A]">Beta</p>
