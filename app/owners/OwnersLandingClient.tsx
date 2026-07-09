@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { PageTracker } from '@/components/analytics/page-tracker'
+import { CleanerSlider, type SliderCleaner } from '@/components/CleanerSlider'
+import { formatAreasSentence as formatAreasSentenceBase } from '@/lib/format-areas'
 
 export type CleanerCard = {
   id: string
@@ -416,12 +417,6 @@ const storyGradients = [
   'bg-gradient-to-br from-[#9a8fb0] to-[#5e5273]',
 ]
 
-const avatarGradients = [
-  'bg-gradient-to-br from-[#d8c3b4] to-[#b1907a]',
-  'bg-gradient-to-br from-[#c9b39e] to-[#a07d62]',
-  'bg-gradient-to-br from-[#bdb0a0] to-[#8f8273]',
-]
-
 function formatAreasList(areas: string[], max: number): string {
   if (areas.length === 0) return ''
   const shown = areas.slice(0, max)
@@ -430,10 +425,7 @@ function formatAreasList(areas: string[], max: number): string {
 }
 
 function formatAreasSentence(areas: string[], lang: Lang): string {
-  if (areas.length === 0) return ''
-  if (areas.length === 1) return areas[0]
-  const conjunction = lang === 'es' ? 'y' : 'and'
-  return `${areas.slice(0, -1).join(', ')} ${conjunction} ${areas[areas.length - 1]}`
+  return formatAreasSentenceBase(areas, lang === 'es' ? 'y' : 'and')
 }
 
 export function OwnersLandingClient({ cleaners, stats, areas }: Props) {
@@ -450,6 +442,23 @@ export function OwnersLandingClient({ cleaners, stats, areas }: Props) {
   const faqAreasAnswer = formatAreasSentence(areas, lang)
     ? `${formatAreasSentence(areas, lang)}.`
     : t.faq.areasFallback
+
+  const sliderCleaners: SliderCleaner[] = cleaners.map((cleaner) => ({
+    id: cleaner.id,
+    slug: cleaner.slug,
+    name: cleaner.name,
+    photo: cleaner.photo,
+    rating: cleaner.rating,
+    reviewCount: cleaner.reviewCount,
+    serviceAreas: cleaner.serviceAreas,
+    chips: [
+      {
+        label: cleaner.teamLeader ? t.cleaners.teamLeaderChip : t.cleaners.vettedChip,
+        className:
+          'inline-block text-[10.5px] bg-[#E8F5E9] text-[#2E7D32] px-1.5 py-0.5 rounded-full font-semibold',
+      },
+    ],
+  }))
 
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans">
@@ -654,42 +663,12 @@ export function OwnersLandingClient({ cleaners, stats, areas }: Props) {
           <h2 className="text-[22px] font-extrabold text-[#1A1A1A] mt-1 mb-1">{t.cleaners.heading}</h2>
           <p className="text-sm text-[#6B6B6B] mb-4">{cleanerAreasLine}</p>
 
-          {cleaners.length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {cleaners.map((cleaner, i) => (
-                <Link
-                  key={cleaner.id}
-                  href={`/${cleaner.slug}`}
-                  className="flex-none w-[158px] bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden shadow-[0_2px_14px_rgba(26,26,26,0.06)] hover:border-[#C4785A] transition-colors"
-                >
-                  <div className={`h-[120px] relative ${avatarGradients[i % avatarGradients.length]}`}>
-                    {cleaner.photo && (
-                      <Image src={cleaner.photo} alt={cleaner.name} fill className="object-cover" unoptimized />
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <div className="text-[15px] font-bold text-[#1A1A1A]">{cleaner.name}</div>
-                    <div className="text-[12.5px] text-[#C4785A] my-0.5">
-                      {cleaner.reviewCount > 0 ? (
-                        <>
-                          ★ {cleaner.rating.toFixed(1)} · {cleaner.reviewCount}{' '}
-                          {cleaner.reviewCount === 1 ? t.cleaners.review : t.cleaners.reviews}
-                        </>
-                      ) : (
-                        t.cleaners.newCleaner
-                      )}
-                    </div>
-                    <div className="text-[11.5px] text-[#9B9B9B] truncate">
-                      {cleaner.serviceAreas.slice(0, 2).join(' · ')}
-                    </div>
-                    <span className="inline-block text-[10.5px] bg-[#E8F5E9] text-[#2E7D32] px-1.5 py-0.5 rounded-full font-semibold mt-1.5">
-                      {cleaner.teamLeader ? t.cleaners.teamLeaderChip : t.cleaners.vettedChip}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : null}
+          <CleanerSlider
+            cleaners={sliderCleaners}
+            reviewsLabel={t.cleaners.reviews}
+            reviewLabel={t.cleaners.review}
+            newCleanerLabel={t.cleaners.newCleaner}
+          />
 
           <Link
             href="/"

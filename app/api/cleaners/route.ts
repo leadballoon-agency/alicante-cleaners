@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
       reviewCount: c.reviewCount,
       featured: c.featured,
       teamLeader: c.teamLeader,
+      createdAt: c.createdAt,
     }))
 
     // Get unique areas from all cleaners

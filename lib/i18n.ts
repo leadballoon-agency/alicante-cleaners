@@ -15,6 +15,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Header
     'nav.ourStory': 'Our story',
     'nav.joinAsCleaner': 'Join as cleaner',
+    'nav.forOwners': 'For villa owners',
     'nav.bookClean': 'Book a clean',
     'nav.login': 'Log in',
 
@@ -31,6 +32,12 @@ export const translations: Record<Language, Record<string, string>> = {
     'cleaner.from': 'From',
     'cleaner.viewProfile': 'View profile',
     'cleaner.featured': 'Featured',
+    'cleaner.new': 'New',
+    'cleaner.newOnPlatform': 'New on VillaCare',
+
+    // Featured cleaners slider
+    'featured.heading': 'Featured cleaners',
+    'featured.subheading': 'A few of our top-rated, newest professionals',
 
     // CTA
     'cta.cleanerTitle': 'Are you a cleaner in Alicante?',
@@ -263,6 +270,7 @@ export const translations: Record<Language, Record<string, string>> = {
   es: {
     'nav.ourStory': 'Nuestra historia',
     'nav.joinAsCleaner': 'Únete como limpiador',
+    'nav.forOwners': 'Para propietarios',
     'nav.bookClean': 'Reservar limpieza',
     'nav.login': 'Iniciar sesión',
 
@@ -276,6 +284,11 @@ export const translations: Record<Language, Record<string, string>> = {
     'cleaner.from': 'Desde',
     'cleaner.viewProfile': 'Ver perfil',
     'cleaner.featured': 'Destacado',
+    'cleaner.new': 'Nuevo',
+    'cleaner.newOnPlatform': 'Nuevo en VillaCare',
+
+    'featured.heading': 'Limpiadores destacados',
+    'featured.subheading': 'Algunos de nuestros profesionales mejor valorados y más nuevos',
 
     'cta.cleanerTitle': '¿Eres limpiador en Alicante?',
     'cta.cleanerSubtitle': 'Únete a nuestra red de profesionales de confianza y haz crecer tu negocio',
@@ -496,6 +509,7 @@ export const translations: Record<Language, Record<string, string>> = {
   de: {
     'nav.ourStory': 'Unsere Geschichte',
     'nav.joinAsCleaner': 'Als Reiniger beitreten',
+    'nav.forOwners': 'Für Villenbesitzer',
     'nav.bookClean': 'Reinigung buchen',
     'nav.login': 'Anmelden',
 
@@ -509,6 +523,11 @@ export const translations: Record<Language, Record<string, string>> = {
     'cleaner.from': 'Ab',
     'cleaner.viewProfile': 'Profil ansehen',
     'cleaner.featured': 'Empfohlen',
+    'cleaner.new': 'Neu',
+    'cleaner.newOnPlatform': 'Neu bei VillaCare',
+
+    'featured.heading': 'Empfohlene Reiniger',
+    'featured.subheading': 'Einige unserer bestbewerteten und neuesten Profis',
 
     'cta.cleanerTitle': 'Sind Sie Reiniger in Alicante?',
     'cta.cleanerSubtitle': 'Treten Sie unserem Netzwerk vertrauenswürdiger Profis bei und erweitern Sie Ihr Geschäft',
@@ -626,6 +645,7 @@ export const translations: Record<Language, Record<string, string>> = {
   fr: {
     'nav.ourStory': 'Notre histoire',
     'nav.joinAsCleaner': 'Rejoindre comme nettoyeur',
+    'nav.forOwners': 'Pour les propriétaires',
     'nav.bookClean': 'Réserver un nettoyage',
     'nav.login': 'Connexion',
 
@@ -639,6 +659,11 @@ export const translations: Record<Language, Record<string, string>> = {
     'cleaner.from': 'À partir de',
     'cleaner.viewProfile': 'Voir le profil',
     'cleaner.featured': 'En vedette',
+    'cleaner.new': 'Nouveau',
+    'cleaner.newOnPlatform': 'Nouveau sur VillaCare',
+
+    'featured.heading': 'Nettoyeurs à la une',
+    'featured.subheading': 'Quelques-uns de nos professionnels les mieux notés et les plus récents',
 
     'cta.cleanerTitle': 'Êtes-vous nettoyeur à Alicante?',
     'cta.cleanerSubtitle': 'Rejoignez notre réseau de professionnels de confiance et développez votre activité',
@@ -756,6 +781,7 @@ export const translations: Record<Language, Record<string, string>> = {
   nl: {
     'nav.ourStory': 'Ons verhaal',
     'nav.joinAsCleaner': 'Word schoonmaker',
+    'nav.forOwners': 'Voor villa-eigenaren',
     'nav.bookClean': 'Boek een schoonmaak',
     'nav.login': 'Inloggen',
 
@@ -769,6 +795,11 @@ export const translations: Record<Language, Record<string, string>> = {
     'cleaner.from': 'Vanaf',
     'cleaner.viewProfile': 'Bekijk profiel',
     'cleaner.featured': 'Uitgelicht',
+    'cleaner.new': 'Nieuw',
+    'cleaner.newOnPlatform': 'Nieuw op VillaCare',
+
+    'featured.heading': 'Uitgelichte schoonmakers',
+    'featured.subheading': 'Enkele van onze best beoordeelde en nieuwste professionals',
 
     'cta.cleanerTitle': 'Bent u schoonmaker in Alicante?',
     'cta.cleanerSubtitle': 'Word lid van ons netwerk van betrouwbare professionals en laat uw bedrijf groeien',
@@ -886,6 +917,7 @@ export const translations: Record<Language, Record<string, string>> = {
   it: {
     'nav.ourStory': 'La nostra storia',
     'nav.joinAsCleaner': 'Unisciti come pulitore',
+    'nav.forOwners': 'Per i proprietari di ville',
     'nav.bookClean': 'Prenota pulizia',
     'nav.login': 'Accedi',
 
@@ -899,6 +931,11 @@ export const translations: Record<Language, Record<string, string>> = {
     'cleaner.from': 'Da',
     'cleaner.viewProfile': 'Vedi profilo',
     'cleaner.featured': 'In evidenza',
+    'cleaner.new': 'Nuovo',
+    'cleaner.newOnPlatform': 'Nuovo su VillaCare',
+
+    'featured.heading': 'Addetti in evidenza',
+    'featured.subheading': 'Alcuni dei nostri professionisti più votati e più recenti',
 
     'cta.cleanerTitle': 'Sei un addetto alle pulizie ad Alicante?',
     'cta.cleanerSubtitle': 'Unisciti alla nostra rete di professionisti di fiducia e fai crescere la tua attività',
@@ -1016,6 +1053,7 @@ export const translations: Record<Language, Record<string, string>> = {
   pt: {
     'nav.ourStory': 'Nossa história',
     'nav.joinAsCleaner': 'Junte-se como limpador',
+    'nav.forOwners': 'Para proprietários de vilas',
     'nav.bookClean': 'Reservar limpeza',
     'nav.login': 'Entrar',
 
@@ -1029,6 +1067,11 @@ export const translations: Record<Language, Record<string, string>> = {
     'cleaner.from': 'A partir de',
     'cleaner.viewProfile': 'Ver perfil',
     'cleaner.featured': 'Destaque',
+    'cleaner.new': 'Novo',
+    'cleaner.newOnPlatform': 'Novo na VillaCare',
+
+    'featured.heading': 'Profissionais em destaque',
+    'featured.subheading': 'Alguns dos nossos profissionais mais bem avaliados e mais recentes',
 
     'cta.cleanerTitle': 'Você é um profissional de limpeza em Alicante?',
     'cta.cleanerSubtitle': 'Junte-se à nossa rede de profissionais de confiança e expanda seu negócio',
