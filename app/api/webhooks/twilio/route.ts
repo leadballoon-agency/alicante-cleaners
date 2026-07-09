@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { sendWhatsAppMessage } from '@/lib/whatsapp'
+import { notifyStaffBookingResponse } from '@/lib/notifications/booking-notifications'
 import twilio from 'twilio'
 
 // Reconstruct the public URL that Twilio signed (Vercel serverless fix)
@@ -255,6 +256,14 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Notify staff (web push)
+      notifyStaffBookingResponse({
+        bookingId: pendingBooking.id,
+        cleanerName: cleaner.user.name || 'A cleaner',
+        ownerName: pendingBooking.owner.user.name || 'the owner',
+        action: 'accepted',
+      })
+
     } else if (command === 'DECLINE' || command === 'NO') {
       // Find booking - by reference code if provided, otherwise most recent pending
       let pendingBooking
@@ -357,6 +366,14 @@ export async function POST(request: NextRequest) {
           `*Booking Declined* ❌\n\nUnfortunately, ${cleaner.user.name} is not available for ${formattedDate}.\n\nPlease try booking with another cleaner at villacare.app\n\n- VillaCare`
         )
       }
+
+      // Notify staff (web push)
+      notifyStaffBookingResponse({
+        bookingId: pendingBooking.id,
+        cleanerName: cleaner.user.name || 'A cleaner',
+        ownerName: pendingBooking.owner.user.name || 'the owner',
+        action: 'declined',
+      })
 
     } else if (command === 'HELP' || command === 'AYUDA') {
       await sendWhatsAppMessage(

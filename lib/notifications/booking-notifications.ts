@@ -9,6 +9,7 @@
  */
 
 import { db } from '@/lib/db'
+import { sendPushToStaff } from '@/lib/push'
 
 interface BookingDetails {
   id: string
@@ -136,7 +137,8 @@ export async function processBookingReminders() {
 
     // Send first reminder after 1 hour
     if (createdAt < oneHourAgo && !tracker.reminder1SentAt) {
-      await sendReminder(tracker.id, booking, cleaner, 1)
+      const hoursElapsed = Math.max(1, Math.round((now.getTime() - createdAt.getTime()) / (60 * 60 * 1000)))
+      await sendReminder(tracker.id, booking, cleaner, 1, hoursElapsed)
       continue
     }
   }
@@ -157,13 +159,24 @@ async function sendReminder(
     time: string
   },
   cleaner: { userId: string; user: { name: string | null } },
-  reminderNumber: 1 | 2
+  reminderNumber: 1 | 2,
+  hoursElapsed?: number
 ) {
   const dateStr = booking.date.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
   })
+
+  // Web push to staff devices (best-effort — doesn't block the reminder;
+  // the WhatsApp reminder to the cleaner is dead pending WABA reinstatement,
+  // this push is an additional channel, not a replacement)
+  sendPushToStaff({
+    title: '⏰ Booking response overdue',
+    body: `${cleaner.user.name || 'Cleaner'} hasn't responded to ${booking.owner.user.name || 'the owner'}'s booking (${hoursElapsed ?? reminderNumber}h)`,
+    url: '/admin?tab=bookings',
+    tag: `booking-overdue-${booking.id}`,
+  }).catch((err) => console.error('Failed to push staff booking reminder:', err))
 
   await db.notification.create({
     data: {
@@ -371,4 +384,25 @@ export async function onBookingConfirmed(bookingId: string) {
   await markBookingResponded(bookingId)
 
   console.log(`[Notification] Booking ${bookingId} confirmed`)
+}
+
+/**
+ * Notify staff (web push) when a cleaner accepts or declines a booking.
+ * Shared by both the dashboard PATCH action and the Twilio ACCEPT/DECLINE
+ * webhook path so both code paths get coverage from a single call.
+ * Fire-and-forget — never throws, never blocks the caller.
+ */
+export function notifyStaffBookingResponse(details: {
+  bookingId: string
+  cleanerName: string
+  ownerName: string
+  action: 'accepted' | 'declined'
+}) {
+  const emoji = details.action === 'accepted' ? '✅' : '❌'
+  sendPushToStaff({
+    title: `${emoji} Booking ${details.action}`,
+    body: `${details.cleanerName} ${details.action} ${details.ownerName}'s booking`,
+    url: '/admin?tab=bookings',
+    tag: `booking-response-${details.bookingId}`,
+  }).catch((err) => console.error('Failed to push staff booking response:', err))
 }
