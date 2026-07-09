@@ -82,9 +82,14 @@ export type Cleaner = {
   rating: number
   reviewCount: number
   teamLeader: boolean
-  // Only populated for PENDING cleaners — powers the profile-health strip
-  // on their triage card.
+  // Computed for every cleaner — powers the profile-health strip on PENDING
+  // triage cards (always shown) and on ACTIVE directory cards (shown only
+  // when the profile is still incomplete).
   profileHealth?: { score: number; missing: string[] } | null
+  // Vetting note — set at approval time or added/edited retroactively via
+  // the "Vouch" action on active cleaners.
+  vettedNote?: string | null
+  vettedByName?: string | null
 }
 
 export type Booking = {
@@ -291,6 +296,35 @@ function AdminDashboardContent() {
       }
     } catch (err) {
       console.error('Error approving cleaner:', err)
+    }
+  }
+
+  // Retroactive vouch (or edit/clear an existing one) on an ALREADY-ACTIVE
+  // cleaner — distinct from handleApproveCleaner, which only ever runs at
+  // PENDING → ACTIVE transition. Same PATCH endpoint, action: 'vouch', no
+  // status change. An empty note clears the vouch entirely.
+  const handleVouchCleaner = async (id: string, vettedNote: string) => {
+    try {
+      const response = await fetch(`/api/admin/cleaners/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'vouch', vettedNote }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setCleaners(prev => prev.map(c =>
+          c.id === id
+            ? { ...c, vettedNote: data.cleaner.vettedNote, vettedByName: data.cleaner.vettedByName }
+            : c
+        ))
+      } else {
+        const data = await response.json().catch(() => ({}))
+        alert(data.error || 'Could not save vetting note')
+      }
+    } catch (err) {
+      console.error('Error vouching for cleaner:', err)
+      alert('Could not save vetting note')
     }
   }
 
@@ -735,6 +769,7 @@ function AdminDashboardContent() {
             onLoginAs={handleLoginAs}
             onEdit={handleEditCleaner}
             onMessage={handleMessageCleaner}
+            onVouch={handleVouchCleaner}
           />
         )}
         {activeTab === 'owners' && (

@@ -206,11 +206,19 @@ model Cleaner {
   googleCalendarSyncedAt  DateTime?
   calendarSyncStatus      String?   @default("NOT_CONNECTED") // NOT_CONNECTED, PENDING_SETUP, SYNCING, SYNCED, ERROR
 
-  // Vetting note — a manager's vouch, captured at approval time and shown on
-  // the public profile as a trust signal distinct from customer reviews.
+  // Vetting note — a manager's vouch, captured at approval time (or added
+  // retroactively for already-active cleaners) and shown on the public
+  // profile as a trust signal distinct from customer reviews.
   vettedNote     String?   @db.Text
   vettedByName   String?
   vettedAt       DateTime?
+  // Auto-translated counterpart of vettedNote — managers write in whichever
+  // language they're comfortable in (usually Spanish), most owners read
+  // English. vettedNoteLang is the detected source language; vettedNoteTranslated
+  // is EN if the source was ES, ES if the source was EN, and EN for anything
+  // else. Both are null if detection/translation failed at save time.
+  vettedNoteLang       String?
+  vettedNoteTranslated String?   @db.Text
 
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt

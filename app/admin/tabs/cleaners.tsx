@@ -17,6 +17,7 @@ type Props = {
   onLoginAs: (id: string) => void
   onEdit: (id: string, data: { name?: string; phone?: string; email?: string }) => Promise<void>
   onMessage: (id: string) => void
+  onVouch: (id: string, vettedNote: string) => Promise<void>
 }
 
 type Filter = 'all' | 'active' | 'pending' | 'suspended'
@@ -51,12 +52,26 @@ function buildNudgeMessage(firstName: string): string {
   return `¡Hola ${firstName}! Gracias por tu solicitud en VillaCare 🙌 Para poder aprobarte, completa tu perfil: entra en https://alicantecleaners.com e inicia sesión — la guía paso a paso te lo pone fácil (foto + unas líneas sobre ti). ¡Avísame cuando esté listo!`
 }
 
-function whatsAppNudgeUrl(phone: string, firstName: string): string {
-  const digits = phoneDigitsOnly(phone)
-  return `https://wa.me/${digits}?text=${encodeURIComponent(buildNudgeMessage(firstName))}`
+// Nudge for already-APPROVED cleaners with an incomplete profile — the
+// motivator here is the homepage showcase, not approval (they're already in).
+function buildActiveNudgeMessage(firstName: string): string {
+  return `¡Hola ${firstName}! Tu perfil en VillaCare está casi listo 💪 Entra en https://alicantecleaners.com — la guía paso a paso te ayuda a completarlo (foto + unas líneas sobre ti). Los perfiles completos salen destacados en la portada ✨`
 }
 
-export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, onReactivate, onDelete, onToggleTeamLeader, onLoginAs, onEdit, onMessage }: Props) {
+function whatsAppUrl(phone: string, message: string): string {
+  const digits = phoneDigitsOnly(phone)
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
+}
+
+// A profile is "incomplete enough to flag" on an ACTIVE card when its health
+// score is below 90 or it's still missing a checklist item — complete
+// profiles stay clean with no strip.
+function needsHealthNudge(health: { score: number; missing: string[] } | null | undefined): boolean {
+  if (!health) return false
+  return health.score < 90 || health.missing.length > 0
+}
+
+export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, onReactivate, onDelete, onToggleTeamLeader, onLoginAs, onEdit, onMessage, onVouch }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<EditingCleaner>(null)
@@ -64,7 +79,10 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
   const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [deleteError, setDeleteError] = useState('')
-  const [vouching, setVouching] = useState<{ id: string; name: string } | null>(null)
+  // mode 'approve' -> PENDING → ACTIVE with an optional vouch (existing flow).
+  // mode 'vouch' -> retroactive vouch on an already-ACTIVE cleaner; no status
+  // change, and saving an empty note clears the vouch.
+  const [vouching, setVouching] = useState<{ id: string; name: string; mode: 'approve' | 'vouch' } | null>(null)
   const [vouchNote, setVouchNote] = useState('')
   const [vouchBusy, setVouchBusy] = useState(false)
 
@@ -128,7 +146,12 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
             <p className="text-[#6B6B6B]">No cleaners found</p>
           </div>
         ) : (
-          filteredCleaners.map((cleaner) => (
+          filteredCleaners.map((cleaner) => {
+            // ACTIVE cards only show the health strip/nudge when the profile
+            // is still incomplete — PENDING cards always show it (there's no
+            // "complete" bar to hide behind before approval).
+            const showActiveHealthNudge = cleaner.status === 'active' && needsHealthNudge(cleaner.profileHealth)
+            return (
             <div
               key={cleaner.id}
               className={`rounded-2xl p-4 border ${
@@ -165,9 +188,10 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
                 </div>
               </div>
 
-              {/* Profile-health strip — quick read on why this applicant isn't
-                  approval-ready yet, computed server-side (PENDING only). */}
-              {cleaner.status === 'pending' && cleaner.profileHealth && (
+              {/* Profile-health strip — quick read on why this cleaner isn't
+                  approval-ready (PENDING, always shown) or directory-ready
+                  (ACTIVE, only shown while the profile is still incomplete). */}
+              {(cleaner.status === 'pending' || showActiveHealthNudge) && cleaner.profileHealth && (
                 <div className="mb-3">
                   <div className="flex items-center gap-2 mb-1">
                     <div className="flex-1 h-1.5 rounded-full bg-[#F0E6E0] overflow-hidden">
@@ -247,7 +271,7 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
                   <>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => { setVouchNote(''); setVouching({ id: cleaner.id, name: cleaner.name }) }}
+                        onClick={() => { setVouchNote(''); setVouching({ id: cleaner.id, name: cleaner.name, mode: 'approve' }) }}
                         className="flex-1 py-2.5 bg-[#2E7D32] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
                       >
                         Approve
@@ -263,7 +287,7 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
                     <div className="flex gap-2">
                       {cleaner.phone && (
                         <a
-                          href={whatsAppNudgeUrl(cleaner.phone, cleaner.name.split(' ')[0] || cleaner.name)}
+                          href={whatsAppUrl(cleaner.phone, buildNudgeMessage(cleaner.name.split(' ')[0] || cleaner.name))}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex-1 py-2 bg-white border border-[#DEDEDE] text-[#2E7D32] rounded-xl text-sm font-medium text-center active:scale-[0.98] transition-transform"
@@ -322,6 +346,35 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
                       </button>
                     </div>
 
+                    {/* Vouch — founders/managers can retroactively vouch for
+                        an already-active cleaner (e.g. Mara), same modal as
+                        the approve-time vouch but no status change. Also
+                        shown here so it's easy to find even on complete
+                        profiles, unlike the health nudge below. */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setVouchNote(cleaner.vettedNote || '')
+                          setVouching({ id: cleaner.id, name: cleaner.name, mode: 'vouch' })
+                        }}
+                        className="flex-1 py-2 bg-white border border-[#C4785A]/40 text-[#C4785A] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                        title="Record why you trust this cleaner — shown on their public profile"
+                      >
+                        {cleaner.vettedNote ? '✓ Edit vetting note' : '🤝 Vouch'}
+                      </button>
+                      {cleaner.status === 'active' && showActiveHealthNudge && cleaner.phone && (
+                        <a
+                          href={whatsAppUrl(cleaner.phone, buildActiveNudgeMessage(cleaner.name.split(' ')[0] || cleaner.name))}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 py-2 bg-white border border-[#DEDEDE] text-[#2E7D32] rounded-xl text-sm font-medium text-center active:scale-[0.98] transition-transform"
+                          title="Send a WhatsApp nudge to help them complete their profile"
+                        >
+                          💬 WhatsApp
+                        </a>
+                      )}
+                    </div>
+
                     {/* Management: archive (reversible) vs delete (permanent) */}
                     <div className="flex gap-2">
                       {cleaner.status === 'suspended' ? (
@@ -353,7 +406,8 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
                 )}
               </div>
             </div>
-          ))
+            )
+          })
         )}
       </div>
 
@@ -498,8 +552,12 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
         </div>
       )}
 
-      {/* Vouch modal — shown before Approve. Optional note; empty note still
-          approves, it just skips recording a vouch. */}
+      {/* Vouch modal — shared by two entry points:
+          - mode 'approve': shown before Approve (PENDING → ACTIVE). Optional
+            note; empty note still approves, it just skips recording a vouch.
+          - mode 'vouch': retroactive vouch on an already-ACTIVE cleaner, no
+            status change. Prefilled when a note already exists; saving an
+            empty note clears it. */}
       {vouching && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
@@ -524,7 +582,9 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
               className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A] resize-none"
             />
             <p className="text-xs text-[#9B9B9B] mt-1.5">
-              Optional but encouraged — this becomes a trust signal on their profile, separate from customer reviews.
+              {vouching.mode === 'approve'
+                ? 'Optional but encouraged — this becomes a trust signal on their profile, separate from customer reviews.'
+                : 'Leave blank and save to remove an existing vouch. Auto-translated for owners reading in the other language.'}
             </p>
 
             <div className="flex gap-3 mt-5">
@@ -539,7 +599,11 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
                 onClick={async () => {
                   setVouchBusy(true)
                   try {
-                    await onApprove(vouching.id, vouchNote.trim())
+                    if (vouching.mode === 'approve') {
+                      await onApprove(vouching.id, vouchNote.trim())
+                    } else {
+                      await onVouch(vouching.id, vouchNote.trim())
+                    }
                     setVouching(null)
                     setVouchNote('')
                   } finally {
@@ -547,9 +611,13 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
                   }
                 }}
                 disabled={vouchBusy}
-                className="flex-1 py-3 rounded-xl bg-[#2E7D32] text-white font-medium disabled:opacity-50"
+                className={`flex-1 py-3 rounded-xl text-white font-medium disabled:opacity-50 ${
+                  vouching.mode === 'approve' ? 'bg-[#2E7D32]' : 'bg-[#C4785A]'
+                }`}
               >
-                {vouchBusy ? 'Approving...' : 'Approve'}
+                {vouchBusy
+                  ? (vouching.mode === 'approve' ? 'Approving...' : 'Saving...')
+                  : (vouching.mode === 'approve' ? 'Approve' : 'Save')}
               </button>
             </div>
           </div>
