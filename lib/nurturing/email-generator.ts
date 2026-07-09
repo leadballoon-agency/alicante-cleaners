@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import { NurturingEmailType, CleanerNurturingEmailType } from '@prisma/client'
+import { formatMadridDate } from '@/lib/dates'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -90,7 +91,7 @@ OWNER CONTEXT:
 - Days on platform: ${context.daysOnPlatform}
 - Properties added: ${context.propertyCount}
 - Bookings made: ${context.bookingCount}
-${context.lastBookingDate ? `- Last booking: ${context.lastBookingDate.toLocaleDateString()}` : ''}
+${context.lastBookingDate ? `- Last booking: ${formatMadridDate(context.lastBookingDate)}` : ''}
 ${context.chatHistory ? `- Previous chat interest: ${context.chatHistory}` : ''}
 ${context.cleanerInterest ? `- Showed interest in cleaner: ${context.cleanerInterest}` : ''}
 

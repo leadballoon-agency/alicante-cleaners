@@ -11,6 +11,7 @@
 import { db } from '@/lib/db'
 import { sendPushToStaff } from '@/lib/push'
 import { sendOwnerBookingDeclinedEmail } from '@/lib/emails/owner-booking-emails'
+import { formatMadridDate } from '@/lib/dates'
 
 interface BookingDetails {
   id: string
@@ -36,7 +37,7 @@ export async function onBookingCreated(booking: BookingDetails) {
   if (!cleaner) return
 
   // Format date for notification
-  const dateStr = booking.date.toLocaleDateString('en-US', {
+  const dateStr = formatMadridDate(booking.date, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -163,7 +164,7 @@ async function sendReminder(
   reminderNumber: 1 | 2,
   hoursElapsed?: number
 ) {
-  const dateStr = booking.date.toLocaleDateString('en-US', {
+  const dateStr = formatMadridDate(booking.date, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -223,7 +224,7 @@ async function escalateToTeam(
     } | null
   }
 ) {
-  const dateStr = booking.date.toLocaleDateString('en-US', {
+  const dateStr = formatMadridDate(booking.date, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -299,7 +300,7 @@ async function autoDeclineBooking(
     cleaner: { user: { name: string | null } }
   }
 ) {
-  const dateStr = booking.date.toLocaleDateString('en-US', {
+  const dateStr = formatMadridDate(booking.date, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -401,7 +402,7 @@ export async function onBookingConfirmed(bookingId: string) {
 
   if (!booking) return
 
-  const dateStr = booking.date.toLocaleDateString('en-US', {
+  const dateStr = formatMadridDate(booking.date, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',

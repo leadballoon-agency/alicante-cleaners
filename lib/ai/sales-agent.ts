@@ -17,6 +17,7 @@
 import { db } from '@/lib/db'
 import { getOpenAI } from './agents'
 import { salesAgentTools, executeTool, type ToolResult } from './sales-agent-tools'
+import { getMadridDateKey, formatMadridDate } from '@/lib/dates'
 
 export interface PreviousBooking {
   date: string
@@ -131,10 +132,12 @@ export async function buildSalesAgentContext(
     select: { date: true, time: true },
   })
 
-  // Process availability
+  // Process availability (Europe/Madrid calendar day — bookings are
+  // physical events in Spain, so "which day is this booking on" must be
+  // read in Madrid time, not the UTC day of the underlying instant)
   const busyDates = [
-    ...availability.filter(a => !a.isAvailable).map(a => a.date.toISOString().split('T')[0]),
-    ...bookings.map(b => b.date.toISOString().split('T')[0]),
+    ...availability.filter(a => !a.isAvailable).map(a => getMadridDateKey(a.date)),
+    ...bookings.map(b => getMadridDateKey(b.date)),
   ]
 
   // Find next available dates (excluding busy ones)
@@ -142,7 +145,7 @@ export async function buildSalesAgentContext(
   for (let i = 1; i <= 14 && nextAvailableDates.length < 5; i++) {
     const date = new Date(today)
     date.setDate(today.getDate() + i)
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getMadridDateKey(date)
     if (!busyDates.includes(dateStr)) {
       nextAvailableDates.push(dateStr)
     }
@@ -165,7 +168,7 @@ export async function buildSalesAgentContext(
     })
 
     previousBookingsWithCleaner = pastBookings.map(b => ({
-      date: b.date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }),
+      date: formatMadridDate(b.date, { month: 'short', year: 'numeric' }),
       service: b.service,
       rating: b.review?.rating ?? null,
     }))

@@ -10,6 +10,7 @@ import MessagesTab from './tabs/messages'
 import AccountTab from './tabs/account'
 import ReviewModal from './components/review-modal'
 import { ChatWidget } from '@/components/ai/chat-widget'
+import { formatMadridDate } from '@/lib/dates'
 
 type Tab = 'home' | 'bookings' | 'properties' | 'messages' | 'account'
 
@@ -201,7 +202,7 @@ export default function OwnerDashboard() {
   const handleReschedule = (bookingId: string) => {
     const booking = bookings.find(b => b.id === bookingId)
     if (booking) {
-      const message = `I need to reschedule my ${booking.service.toLowerCase()} at ${booking.property.name} (currently ${new Date(booking.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })} at ${booking.time}). Can you help me find a new time?`
+      const message = `I need to reschedule my ${booking.service.toLowerCase()} at ${booking.property.name} (currently ${formatMadridDate(booking.date, { weekday: 'long', day: 'numeric', month: 'short' })} at ${booking.time}). Can you help me find a new time?`
       handleOpenChat(message)
     }
   }
@@ -249,7 +250,7 @@ export default function OwnerDashboard() {
           setBookings(bookingsData.bookings)
         }
         // Show success with new booking details
-        const newDate = new Date(data.booking.date).toLocaleDateString('en-GB', {
+        const newDate = formatMadridDate(data.booking.date, {
           weekday: 'long',
           day: 'numeric',
           month: 'short'

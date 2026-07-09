@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react'
 import { BookingData } from '../page'
+import { formatDateOnlyLocal } from '@/lib/dates'
 
 type Props = {
   data: BookingData
@@ -48,7 +49,14 @@ export default function Payment({ data, cleaner, cleanerSlug, onUpdate, onNext }
           bedrooms: data.bedrooms,
           specialInstructions: data.specialInstructions,
           serviceType: data.service?.name, // Server calculates price
-          date: data.date?.toISOString(),
+          // Send the plain calendar day the user picked (YYYY-MM-DD) rather
+          // than a client-constructed ISO instant — the server combines this
+          // with `time` in Europe/Madrid to build the canonical UTC instant.
+          // (Root cause of the date-shift bug: toISOString() here used to
+          // convert the visitor's browser-local midnight to UTC, silently
+          // shifting the calendar day whenever their offset differed from
+          // Madrid's.)
+          date: data.date ? formatDateOnlyLocal(data.date) : undefined,
           time: data.time,
           guestPhone: phone.trim(),
           guestEmail: email.trim(),

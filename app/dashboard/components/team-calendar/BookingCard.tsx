@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import BookingPeekModal, { BookingPeekData } from './BookingPeekModal'
+import { formatMadridDate, getMadridDateKey } from '@/lib/dates'
 
 export interface BookingCardData {
   id: string
@@ -48,21 +49,21 @@ const getInitials = (name: string): string => {
     .slice(0, 2)
 }
 
-// Format date nicely
+// Format date nicely (always in Europe/Madrid — bookings are physical
+// events in Spain regardless of where the cleaner is viewing from)
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr)
   const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
 
-  if (date.toDateString() === today.toDateString()) {
+  if (getMadridDateKey(date) === getMadridDateKey(today)) {
     return 'Today'
   }
-  if (date.toDateString() === tomorrow.toDateString()) {
+  if (getMadridDateKey(date) === getMadridDateKey(tomorrow)) {
     return 'Tomorrow'
   }
 
-  return date.toLocaleDateString('en-GB', {
+  return formatMadridDate(date, {
     weekday: 'short',
     day: 'numeric',
     month: 'short'

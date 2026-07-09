@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Owner, Property, OwnerBooking } from '../page'
 import { JobsTimeline, BookingCardData } from '@/components/job-card'
+import { getMadridDateKey } from '@/lib/dates'
 
 type Props = {
   owner: Owner
@@ -70,7 +71,10 @@ export default function HomeTab({ owner, properties, bookings, onNavigate, onOwn
   const transformedBookings: BookingCardData[] = useMemo(() => {
     return bookings.map(booking => ({
       id: booking.id,
-      date: new Date(booking.date).toISOString().split('T')[0],
+      // Europe/Madrid calendar day, not the UTC day of the underlying
+      // instant — bookings are grouped/displayed by the day they happen in
+      // Spain, which can differ from the UTC day near midnight.
+      date: getMadridDateKey(booking.date),
       time: booking.time,
       service: booking.service,
       hours: booking.hours || 3,
