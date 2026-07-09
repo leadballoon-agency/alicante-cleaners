@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { sendWhatsAppMessage, sendBookingCompleted } from '@/lib/whatsapp'
+import { notifyStaffBookingResponse } from '@/lib/notifications/booking-notifications'
 
 // PATCH /api/dashboard/cleaner/bookings/[id] - Accept/decline/assign booking
 export async function PATCH(
@@ -182,6 +183,16 @@ export async function PATCH(
       await db.owner.update({
         where: { id: booking.ownerId },
         data: { totalBookings: { increment: 1 } },
+      })
+    }
+
+    // Notify staff (web push) when the cleaner accepts or declines
+    if (newStatus === 'CONFIRMED' || newStatus === 'CANCELLED') {
+      notifyStaffBookingResponse({
+        bookingId: updatedBooking.id,
+        cleanerName: updatedBooking.cleaner.user.name || 'A cleaner',
+        ownerName: updatedBooking.owner.user.name || 'the owner',
+        action: newStatus === 'CONFIRMED' ? 'accepted' : 'declined',
       })
     }
 

@@ -250,6 +250,14 @@ export async function notifyAdminNewBooking(details: {
   bookingId: string
 }): Promise<{ success: boolean; error?: string }> {
   try {
+    // Web push to staff devices (best-effort — never blocks the email)
+    sendPushToStaff({
+      title: '📅 New booking',
+      body: `${details.ownerName} booked ${details.service} with ${details.cleanerName} — ${details.date}`,
+      url: '/admin?tab=bookings',
+      tag: `booking-${details.bookingId}`,
+    }).catch(() => {})
+
     await getResend().emails.send({
       from: EMAIL_FROM,
       to: ADMIN_EMAILS,

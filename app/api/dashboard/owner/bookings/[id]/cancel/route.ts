@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { sendPushToStaff } from '@/lib/push'
 
 // POST /api/dashboard/owner/bookings/[id]/cancel - Cancel a booking
 export async function POST(
@@ -40,7 +41,10 @@ export async function POST(
       },
       include: {
         cleaner: {
-          select: { userId: true },
+          select: { userId: true, user: { select: { name: true } } },
+        },
+        owner: {
+          select: { user: { select: { name: true } } },
         },
       },
     })
@@ -65,6 +69,14 @@ export async function POST(
       where: { id: bookingId },
       data: { status: 'CANCELLED' },
     })
+
+    // Notify staff (web push) — best-effort, never blocks the response
+    sendPushToStaff({
+      title: '🚫 Booking cancelled',
+      body: `${booking.owner.user.name || 'An owner'} cancelled their ${booking.service} with ${booking.cleaner.user.name || 'their cleaner'}`,
+      url: '/admin?tab=bookings',
+      tag: `booking-cancelled-${booking.id}`,
+    }).catch((err) => console.error('Failed to push staff booking cancellation:', err))
 
     // TODO: Send notification to cleaner about cancellation
 

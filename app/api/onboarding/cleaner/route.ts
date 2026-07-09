@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { sendPushToStaff } from '@/lib/push'
 
 function generateSlug(name: string): string {
   return name
@@ -83,6 +84,14 @@ export async function POST(request: NextRequest) {
 
       return { user, cleaner }
     })
+
+    // Notify staff (web push) of the new pending application — best-effort
+    sendPushToStaff({
+      title: '🧹 New cleaner application',
+      body: `${name} — ${Array.isArray(serviceAreas) ? serviceAreas.join(', ') : serviceAreas}`,
+      url: '/admin?tab=cleaners',
+      tag: `cleaner-application-${result.cleaner.id}`,
+    }).catch((err) => console.error('Failed to push staff new cleaner application:', err))
 
     return NextResponse.json({
       success: true,
