@@ -161,6 +161,7 @@ export async function POST(request: NextRequest) {
         cleanerSlug: conversation.cleaner.slug,
         messageText: text,
         conversationId,
+        adminId: conversation.adminId,
       }).catch(err => {
         console.error('Failed to send admin notification:', err)
       })

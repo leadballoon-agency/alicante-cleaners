@@ -182,6 +182,7 @@ function AdminDashboardContent() {
   const tabFromUrl = searchParams.get('tab') as Tab | null
   const cardFromUrl = searchParams.get('card') // e.g., "booking-abc123"
   const searchFromUrl = searchParams.get('search') // e.g., "clara"
+  const conversationFromUrl = searchParams.get('conversation') // e.g., a Messages tab conversation id
   const validTabs: Tab[] = ['today', 'live', 'messages', 'cleaners', 'owners', 'bookings', 'reviews', 'feedback', 'support', 'audit', 'settings']
   const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'today'
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
@@ -678,7 +679,7 @@ function AdminDashboardContent() {
               onTabChange={(tab) => setActiveTab(tab as Tab)}
             />
           )}
-          {activeTab === 'messages' && <MessagesTab />}
+          {activeTab === 'messages' && <MessagesTab initialConversationId={conversationFromUrl} />}
           {activeTab === 'live' && (
             <LiveTab
               onTabChange={(tab) => setActiveTab(tab as Tab)}

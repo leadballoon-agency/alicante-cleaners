@@ -1,5 +1,5 @@
 import { Resend } from 'resend'
-import { sendPushToStaff } from '@/lib/push'
+import { sendPushToStaff, sendPushToUser } from '@/lib/push'
 
 // Lazy initialize Resend
 let resendClient: Resend | null = null
@@ -344,6 +344,7 @@ export async function notifyAdminNewMessage(details: {
   cleanerSlug: string
   messageText: string
   conversationId: string
+  adminId?: string | null
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const conversationUrl = `https://alicantecleaners.com/admin?tab=messages&conversation=${details.conversationId}`
@@ -353,13 +354,22 @@ export async function notifyAdminNewMessage(details: {
       ? details.messageText.substring(0, 200) + '...'
       : details.messageText
 
-    // Web push to staff devices (best-effort — never blocks the email)
-    sendPushToStaff({
+    // Web push (best-effort — never blocks the email). Conversations owned by
+    // a specific admin (conversation.adminId set) are private per-admin threads
+    // — push only that admin, not the whole staff, or teammates get a
+    // notification for a thread they can't see. Conversations with no owning
+    // admin (e.g. owner↔cleaner threads) keep the broadcast-to-staff behavior.
+    const pushPayload = {
       title: `💬 ${details.cleanerName}`,
       body: previewText,
       url: `/admin?tab=messages&conversation=${details.conversationId}`,
       tag: `msg-${details.conversationId}`,
-    }).catch(() => {})
+    }
+    if (details.adminId) {
+      sendPushToUser(details.adminId, pushPayload).catch(() => {})
+    } else {
+      sendPushToStaff(pushPayload).catch(() => {})
+    }
 
     await getResend().emails.send({
       from: EMAIL_FROM,
