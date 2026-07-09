@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { hasStaffAccess } from '@/lib/staff-access'
 import { db } from '@/lib/db'
 import { sendBookingConfirmation } from '@/lib/whatsapp'
+import { sendOwnerBookingConfirmedEmail } from '@/lib/emails/owner-booking-emails'
 
 // GET /api/admin/bookings - Get all bookings
 export async function GET() {
@@ -100,7 +101,7 @@ export async function PATCH(request: NextRequest) {
           include: { user: { select: { name: true, phone: true } } },
         },
         owner: {
-          include: { user: { select: { name: true, phone: true } } },
+          include: { user: { select: { name: true, phone: true, email: true, preferredLanguage: true } } },
         },
         property: { select: { address: true } },
       },
@@ -145,6 +146,28 @@ export async function PATCH(request: NextRequest) {
         service: booking.service,
         price: `€${Number(booking.price)}`,
       }).catch((err) => console.error('Failed to send confirmation:', err))
+    }
+
+    // Email notification to owner (additive to WhatsApp above — reliable
+    // fallback while the WABA is offline)
+    if (action === 'accept' && booking.owner.user.email) {
+      const formattedDate = new Date(booking.date).toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+
+      sendOwnerBookingConfirmedEmail({
+        to: booking.owner.user.email,
+        ownerName: booking.owner.user.name || 'there',
+        cleanerName: booking.cleaner.user.name || 'Your cleaner',
+        service: booking.service,
+        date: formattedDate,
+        time: booking.time,
+        address: booking.property.address,
+        preferredLanguage: booking.owner.user.preferredLanguage,
+      }).catch((err) => console.error('Failed to send owner booking-confirmed email:', err))
     }
 
     return NextResponse.json({

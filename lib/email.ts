@@ -1,9 +1,10 @@
 import { Resend } from 'resend'
 import { sendPushToStaff, sendPushToUser } from '@/lib/push'
 
-// Lazy initialize Resend
+// Lazy initialize Resend (shared across all transactional email modules —
+// see lib/emails/owner-booking-emails.ts for the owner booking lifecycle emails)
 let resendClient: Resend | null = null
-const getResend = () => {
+export const getResend = () => {
   if (!resendClient) {
     resendClient = new Resend(process.env.RESEND_API_KEY || 'dummy_key_for_build')
   }
@@ -15,7 +16,7 @@ const ADMIN_EMAILS = [
   'kerry@leadballoon.co.uk',
 ]
 
-const EMAIL_FROM = process.env.EMAIL_FROM || 'VillaCare <noreply@alicantecleaners.com>'
+export const EMAIL_FROM = process.env.EMAIL_FROM || 'VillaCare <noreply@alicantecleaners.com>'
 
 // Multi-language email content
 type SupportedLang = 'en' | 'es' | 'de' | 'fr' | 'nl' | 'pt' | 'it'
