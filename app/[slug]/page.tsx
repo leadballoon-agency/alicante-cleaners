@@ -37,6 +37,11 @@ type Cleaner = {
   areas: string[]
   hourlyRate: number
   bio: string
+  reviewsLink: string | null
+  vettedNote: string | null
+  vettedNoteLang: string | null
+  vettedNoteTranslated: string | null
+  vettedByName: string | null
   languages: string[]
   teamLeader: boolean
   teamName: string | null
@@ -46,10 +51,58 @@ type Cleaner = {
   reviews: Review[]
 }
 
+// vettedNoteTranslated is always the *counterpart* of vettedNoteLang (EN if
+// the manager wrote in ES, ES if they wrote in EN, EN for anything else) —
+// see buildVettingFields in app/api/admin/cleaners/[id]/route.ts. Pick
+// whichever version matches the viewer's active locale, falling back to the
+// original when no matching translation exists (translation failed at save
+// time, or the original was in a third language with no ES counterpart).
+function pickVettedNoteText(
+  vettedNote: string,
+  vettedNoteLang: string | null,
+  vettedNoteTranslated: string | null,
+  lang: string
+): string {
+  const wantLang = lang === 'es' ? 'es' : 'en'
+  if (vettedNoteLang === wantLang) return vettedNote
+  if (vettedNoteTranslated) {
+    const counterpartLang = vettedNoteLang === 'es' ? 'en' : vettedNoteLang === 'en' ? 'es' : 'en'
+    if (counterpartLang === wantLang) return vettedNoteTranslated
+  }
+  return vettedNote
+}
+
+// reviewsLink is collected at onboarding but only worth surfacing when it
+// points somewhere recognizable — an unvetted arbitrary URL isn't something
+// we want to send owners to from a trust-signal section.
+function getReviewsLinkMeta(url: string | null): { href: string; platform: 'google' | 'facebook' } | null {
+  if (!url) return null
+  let hostname: string
+  try {
+    hostname = new URL(url).hostname.toLowerCase()
+  } catch {
+    return null
+  }
+  const isGoogle =
+    hostname === 'google.com' ||
+    /(^|\.)google\.[a-z.]+$/i.test(hostname) ||
+    hostname === 'g.page' ||
+    hostname.endsWith('.g.page') ||
+    hostname === 'maps.app.goo.gl'
+  const isFacebook =
+    hostname === 'facebook.com' ||
+    hostname.endsWith('.facebook.com') ||
+    hostname === 'fb.com' ||
+    hostname.endsWith('.fb.com')
+  if (isGoogle) return { href: url, platform: 'google' }
+  if (isFacebook) return { href: url, platform: 'facebook' }
+  return null
+}
+
 export default function CleanerProfile() {
   const params = useParams()
   const slug = params.slug as string
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
 
   const [cleaner, setCleaner] = useState<Cleaner | null>(null)
   const [loading, setLoading] = useState(true)
@@ -277,6 +330,54 @@ export default function CleanerProfile() {
             <ServiceCard key={service.type} service={service} slug={slug} t={t} />
           ))}
         </div>
+
+        {/* Vetted-by-VillaCare — a manager's vouch captured at approval time.
+            Deliberately styled apart from star reviews: no rating, a
+            terracotta-tinted card with a checkmark, so it reads as a
+            platform trust signal rather than a customer testimonial. */}
+        {cleaner.vettedNote && (
+          <div className="mb-8">
+            <div className="bg-[#FFF8F5] border border-[#C4785A]/30 rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[#C4785A]">&#10003;</span>
+                <h2 className="text-sm font-semibold text-[#C4785A]">{t('profile.vettedBy')}</h2>
+              </div>
+              <p className="text-[#1A1A1A] mb-2">
+                &ldquo;{pickVettedNoteText(cleaner.vettedNote, cleaner.vettedNoteLang, cleaner.vettedNoteTranslated, lang)}&rdquo;
+              </p>
+              <p className="text-sm text-[#6B6B6B]">
+                &mdash; {cleaner.vettedByName || 'VillaCare'}{cleaner.vettedByName ? `, ${t('profile.vettedSuffix')}` : ''}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Dormant reviewsLink (Google/Facebook, collected at onboarding) —
+            only surfaced for allowlisted hosts, and styled as a clearly
+            external link so it never reads as a native VillaCare review. */}
+        {(() => {
+          const reviewsLinkMeta = getReviewsLinkMeta(cleaner.reviewsLink)
+          if (!reviewsLinkMeta) return null
+          const firstName = cleaner.name.split(' ')[0] || cleaner.name
+          const platformName = reviewsLinkMeta.platform === 'google' ? 'Google' : 'Facebook'
+          const label = lang === 'es'
+            ? `Ver las reseñas de ${firstName} en ${platformName}`
+            : `See ${firstName}'s reviews on ${platformName}`
+          return (
+            <div className="mb-8">
+              <a
+                href={reviewsLinkMeta.href}
+                target="_blank"
+                rel="noopener nofollow"
+                className="inline-flex items-center gap-1.5 text-sm text-[#6B6B6B] hover:text-[#C4785A] underline decoration-dotted underline-offset-4 transition-colors"
+              >
+                <span className="text-[#C4785A]">&#9733;</span>
+                {label}
+                <span aria-hidden="true">&#8594;</span>
+              </a>
+            </div>
+          )
+        })()}
 
         {/* Reviews Section */}
         {cleaner.reviews && cleaner.reviews.length > 0 && (

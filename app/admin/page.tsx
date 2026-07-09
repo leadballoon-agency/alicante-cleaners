@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import CleanersTab from './tabs/cleaners'
 import OwnersTab from './tabs/owners'
 import BookingsTab from './tabs/bookings'
@@ -82,6 +82,14 @@ export type Cleaner = {
   rating: number
   reviewCount: number
   teamLeader: boolean
+  // Computed for every cleaner — powers the profile-health strip on PENDING
+  // triage cards (always shown) and on ACTIVE directory cards (shown only
+  // when the profile is still incomplete).
+  profileHealth?: { score: number; missing: string[] } | null
+  // Vetting note — set at approval time or added/edited retroactively via
+  // the "Vouch" action on active cleaners.
+  vettedNote?: string | null
+  vettedByName?: string | null
 }
 
 export type Booking = {
@@ -169,6 +177,7 @@ const DEFAULT_STATS: Stats = {
 function AdminDashboardContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
+  const router = useRouter()
   // Founder-only surfaces (Audit, Settings, impersonation) are hidden from
   // platform MANAGERs — only full ADMINs see them.
   const isAdmin = session?.user?.staffLevel === 'ADMIN'
@@ -265,12 +274,14 @@ function AdminDashboardContent() {
     await fetchAdminData()
   }, [fetchAdminData])
 
-  const handleApproveCleaner = async (id: string) => {
+  // vettedNote is optional — the vouch modal allows approving with an empty
+  // note (no vouch recorded), per the triage kit spec.
+  const handleApproveCleaner = async (id: string, vettedNote?: string) => {
     try {
       const response = await fetch(`/api/admin/cleaners/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve' }),
+        body: JSON.stringify({ action: 'approve', vettedNote }),
       })
 
       if (response.ok) {
@@ -285,6 +296,61 @@ function AdminDashboardContent() {
       }
     } catch (err) {
       console.error('Error approving cleaner:', err)
+    }
+  }
+
+  // Retroactive vouch (or edit/clear an existing one) on an ALREADY-ACTIVE
+  // cleaner — distinct from handleApproveCleaner, which only ever runs at
+  // PENDING → ACTIVE transition. Same PATCH endpoint, action: 'vouch', no
+  // status change. An empty note clears the vouch entirely.
+  const handleVouchCleaner = async (id: string, vettedNote: string) => {
+    try {
+      const response = await fetch(`/api/admin/cleaners/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'vouch', vettedNote }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setCleaners(prev => prev.map(c =>
+          c.id === id
+            ? { ...c, vettedNote: data.cleaner.vettedNote, vettedByName: data.cleaner.vettedByName }
+            : c
+        ))
+      } else {
+        const data = await response.json().catch(() => ({}))
+        alert(data.error || 'Could not save vetting note')
+      }
+    } catch (err) {
+      console.error('Error vouching for cleaner:', err)
+      alert('Could not save vetting note')
+    }
+  }
+
+  // Opens (or creates) an admin↔cleaner conversation, then deep-links into
+  // the Messages tab. setActiveTab fires immediately so MessagesTab renders
+  // this render pass; router.push keeps the URL (and conversationFromUrl,
+  // which MessagesTab reads to auto-open the thread) in sync.
+  const handleMessageCleaner = async (id: string) => {
+    try {
+      const response = await fetch('/api/admin/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cleanerId: id }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setActiveTab('messages')
+        router.push(`/admin?tab=messages&conversation=${data.conversationId}`)
+      } else {
+        const data = await response.json().catch(() => ({}))
+        alert(data.error || 'Could not start conversation')
+      }
+    } catch (err) {
+      console.error('Error starting conversation with cleaner:', err)
+      alert('Could not start conversation')
     }
   }
 
@@ -702,6 +768,8 @@ function AdminDashboardContent() {
             onToggleTeamLeader={handleToggleTeamLeader}
             onLoginAs={handleLoginAs}
             onEdit={handleEditCleaner}
+            onMessage={handleMessageCleaner}
+            onVouch={handleVouchCleaner}
           />
         )}
         {activeTab === 'owners' && (
