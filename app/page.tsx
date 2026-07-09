@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
@@ -8,6 +8,7 @@ import ActivityFeed from '@/components/activity-feed'
 import LanguageSwitcher from '@/components/language-switcher'
 import { useLanguage } from '@/components/language-context'
 import { PageTracker } from '@/components/analytics/page-tracker'
+import { CleanerSlider, type SliderCleaner } from '@/components/CleanerSlider'
 
 type Cleaner = {
   id: string
@@ -21,6 +22,16 @@ type Cleaner = {
   reviewCount: number
   featured: boolean
   teamLeader: boolean
+  createdAt: string
+}
+
+const NEW_CLEANER_WINDOW_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
+const FEATURED_SLIDER_CAP = 8
+
+function isNewCleaner(createdAt: string): boolean {
+  const created = new Date(createdAt).getTime()
+  if (Number.isNaN(created)) return false
+  return Date.now() - created < NEW_CLEANER_WINDOW_MS
 }
 
 export default function HomePage() {
@@ -51,6 +62,53 @@ export default function HomePage() {
     }
   }
 
+  // "Featured cleaners" homepage showcase — a reward mechanic for cleaners
+  // who complete their profile (photo + get approved). Only cleaners with a
+  // photo are eligible; the API already returns `cleaners` ordered by
+  // featured desc / rating desc / reviewCount desc, so within each bucket
+  // below that relative order is preserved without needing to re-sort.
+  const featuredSliderCleaners = useMemo(() => {
+    const eligible = cleaners.filter(c => !!c.photo)
+    const featuredCleaners = eligible.filter(c => c.featured)
+    const newCleaners = eligible
+      .filter(c => !c.featured && isNewCleaner(c.createdAt))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    const rest = eligible.filter(c => !c.featured && !isNewCleaner(c.createdAt))
+
+    return [...featuredCleaners, ...newCleaners, ...rest].slice(0, FEATURED_SLIDER_CAP).map((c): SliderCleaner => {
+      const chips: SliderCleaner['chips'] = []
+      if (c.featured) {
+        chips.push({
+          label: `★ ${t('cleaner.featured')}`,
+          className: 'inline-block text-[10.5px] bg-[#FFF8F5] text-[#C4785A] px-1.5 py-0.5 rounded-full font-semibold',
+        })
+      }
+      if (chips.length < 2 && isNewCleaner(c.createdAt)) {
+        chips.push({
+          label: `✨ ${t('cleaner.new')}`,
+          className: 'inline-block text-[10.5px] bg-[#E3F2FD] text-[#1565C0] px-1.5 py-0.5 rounded-full font-semibold',
+        })
+      }
+      if (chips.length < 2 && c.teamLeader) {
+        chips.push({
+          label: 'Team Leader',
+          className: 'inline-block text-[10.5px] bg-[#C4785A] text-white px-1.5 py-0.5 rounded-full font-semibold',
+        })
+      }
+
+      return {
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        photo: c.photo,
+        rating: c.rating,
+        reviewCount: c.reviewCount,
+        serviceAreas: c.serviceAreas,
+        chips,
+      }
+    })
+  }, [cleaners, t])
+
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-safe">
       <PageTracker />
@@ -79,6 +137,12 @@ export default function HomePage() {
               className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors hidden sm:block"
             >
               {t('nav.joinAsCleaner')}
+            </Link>
+            <Link
+              href="/owners"
+              className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors hidden sm:block"
+            >
+              {t('nav.forOwners')}
             </Link>
             <Link
               href="/login"
@@ -238,6 +302,22 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Featured Cleaners Slider - showcase / reward mechanic for completed profiles */}
+      {featuredSliderCleaners.length > 0 && (
+        <section className="px-6 py-8 bg-white border-b border-[#EBEBEB]">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-lg font-semibold text-[#1A1A1A]">{t('featured.heading')}</h2>
+            <p className="text-sm text-[#6B6B6B] mb-4">{t('featured.subheading')}</p>
+            <CleanerSlider
+              cleaners={featuredSliderCleaners}
+              reviewsLabel="reviews"
+              reviewLabel="review"
+              newCleanerLabel={t('cleaner.newOnPlatform')}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Partners Grid */}
       <main className="px-6 py-8 max-w-5xl mx-auto">
@@ -903,6 +983,12 @@ export default function HomePage() {
                 className="block text-white/60 hover:text-white text-sm mt-3 transition-colors"
               >
                 See how it works →
+              </Link>
+              <Link
+                href="/owners"
+                className="block text-white/60 hover:text-white text-sm mt-1.5 transition-colors"
+              >
+                Why owners trust VillaCare →
               </Link>
             </div>
             {/* For Cleaners */}

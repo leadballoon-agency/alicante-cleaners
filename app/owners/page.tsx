@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { db } from '@/lib/db'
 import { SchemaScript } from '@/components/seo/schema-script'
 import { generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema'
+import { formatAreasSentence } from '@/lib/format-areas'
 import { OwnersLandingClient, type CleanerCard, type TrustStats } from './OwnersLandingClient'
 
 // Revalidate hourly so the trust bar / cleaner cards stay fresh without
@@ -43,7 +44,11 @@ export const metadata: Metadata = {
   },
 }
 
-const FAQS = [
+// Static Q&A shared by the visible FAQ accordion and the JSON-LD schema.
+// The "which areas do you cover?" question is appended after data fetch so
+// its answer always matches the live `areas` list (see OwnersLandingPage
+// below) — falling back to this list only when the query returns no areas.
+const STATIC_FAQS = [
   {
     question: 'Do I need to be in Spain?',
     answer: "No — most of our owners live abroad. Everything's arranged remotely, in your language.",
@@ -60,11 +65,11 @@ const FAQS = [
     question: 'What about my keys?',
     answer: 'Access details are encrypted and only shown to your cleaner around the time of the booking.',
   },
-  {
-    question: 'Which areas do you cover?',
-    answer: 'Alicante City, San Juan, Playa de San Juan, El Campello, Mutxamel, San Vicente and Jijona.',
-  },
 ]
+
+const AREAS_QUESTION = 'Which areas do you cover?'
+const AREAS_FALLBACK_ANSWER =
+  'Alicante City, San Juan, Playa de San Juan, El Campello, Mutxamel, San Vicente and Jijona.'
 
 async function getOwnerLandingData(): Promise<{ cleaners: CleanerCard[]; stats: TrustStats; areas: string[] }> {
   try {
@@ -123,7 +128,16 @@ async function getOwnerLandingData(): Promise<{ cleaners: CleanerCard[]; stats: 
 export default async function OwnersLandingPage() {
   const { cleaners, stats, areas } = await getOwnerLandingData()
 
-  const faqSchema = generateFAQSchema(FAQS)
+  const areasSentence = formatAreasSentence(areas, 'and')
+  const faqs = [
+    ...STATIC_FAQS,
+    {
+      question: AREAS_QUESTION,
+      answer: areasSentence ? `${areasSentence}.` : AREAS_FALLBACK_ANSWER,
+    },
+  ]
+
+  const faqSchema = generateFAQSchema(faqs)
   const breadcrumbSchema = generateBreadcrumbSchema([
     { name: 'Home', url: '/' },
     { name: 'For Villa Owners', url: '/owners' },
