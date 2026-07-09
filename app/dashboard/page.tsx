@@ -340,11 +340,14 @@ function Dashboard() {
       {/* Tab content */}
       <main className="px-6 py-6 max-w-lg mx-auto">
         {/* Show pending state for unverified cleaners - except the Profile
-            tab, which stays reachable so they can act on the Get Started
-            checklist (photo/bio/areas/rate) while awaiting verification. */}
+            tab (so they can act on the Get Started checklist while awaiting
+            verification) and the Messages tab (so managers can nudge them,
+            and they can reply, before they're approved). */}
         {cleaner.status === 'PENDING' ? (
           activeTab === 'profile' ? (
             <ProfileTab cleaner={cleaner} onUpdate={setCleaner} />
+          ) : activeTab === 'messages' ? (
+            <MessagesTab />
           ) : (
             <PendingState cleaner={cleaner} />
           )

@@ -8,7 +8,7 @@ import { getRelativeTime, CLEANER_STATUS_COLORS } from '@/lib/admin/card-types'
 
 type Props = {
   cleaners: Cleaner[]
-  onApprove: (id: string) => void
+  onApprove: (id: string, vettedNote?: string) => void
   onReject: (id: string) => void
   onArchive: (id: string) => void
   onReactivate: (id: string) => void
@@ -16,6 +16,7 @@ type Props = {
   onToggleTeamLeader: (id: string) => void
   onLoginAs: (id: string) => void
   onEdit: (id: string, data: { name?: string; phone?: string; email?: string }) => Promise<void>
+  onMessage: (id: string) => void
 }
 
 type Filter = 'all' | 'active' | 'pending' | 'suspended'
@@ -38,7 +39,24 @@ const LANG_LABELS: Record<string, string> = {
   es: 'Español', en: 'English', de: 'Deutsch', fr: 'Français', nl: 'Nederlands', it: 'Italiano', pt: 'Português',
 }
 
-export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, onReactivate, onDelete, onToggleTeamLeader, onLoginAs, onEdit }: Props) {
+// Strip everything but digits so a wa.me link works regardless of how the
+// phone was entered (+34 612 345 678, 34-612-345-678, etc).
+function phoneDigitsOnly(phone: string): string {
+  return phone.replace(/\D/g, '')
+}
+
+// Spanish-first nudge — these applicants are Spanish-first, and this is the
+// one thing standing between them and being approved.
+function buildNudgeMessage(firstName: string): string {
+  return `¡Hola ${firstName}! Gracias por tu solicitud en VillaCare 🙌 Para poder aprobarte, completa tu perfil: entra en https://alicantecleaners.com e inicia sesión — la guía paso a paso te lo pone fácil (foto + unas líneas sobre ti). ¡Avísame cuando esté listo!`
+}
+
+function whatsAppNudgeUrl(phone: string, firstName: string): string {
+  const digits = phoneDigitsOnly(phone)
+  return `https://wa.me/${digits}?text=${encodeURIComponent(buildNudgeMessage(firstName))}`
+}
+
+export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, onReactivate, onDelete, onToggleTeamLeader, onLoginAs, onEdit, onMessage }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<EditingCleaner>(null)
@@ -46,6 +64,9 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
   const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+  const [vouching, setVouching] = useState<{ id: string; name: string } | null>(null)
+  const [vouchNote, setVouchNote] = useState('')
+  const [vouchBusy, setVouchBusy] = useState(false)
 
   const filteredCleaners = cleaners
     .filter(c => filter === 'all' || c.status === filter)
@@ -144,6 +165,29 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
                 </div>
               </div>
 
+              {/* Profile-health strip — quick read on why this applicant isn't
+                  approval-ready yet, computed server-side (PENDING only). */}
+              {cleaner.status === 'pending' && cleaner.profileHealth && (
+                <div className="mb-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="flex-1 h-1.5 rounded-full bg-[#F0E6E0] overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-[#C4785A] transition-all"
+                        style={{ width: `${Math.max(4, cleaner.profileHealth.score)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-[#B59B8E] whitespace-nowrap">
+                      {cleaner.profileHealth.score}% ready
+                    </span>
+                  </div>
+                  {cleaner.profileHealth.missing.length > 0 && (
+                    <p className="text-xs text-[#B59B8E]">
+                      {cleaner.profileHealth.missing.join(' · ')}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Pending review info — what a manager needs to vet a new cleaner */}
               {cleaner.status === 'pending' && (
                 <div className="mb-3 space-y-2">
@@ -200,20 +244,43 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
               {/* Actions */}
               <div className="pt-2 border-t border-[#EBEBEB]/50 space-y-2">
                 {cleaner.status === 'pending' ? (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => onApprove(cleaner.id)}
-                      className="flex-1 py-2.5 bg-[#2E7D32] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => onReject(cleaner.id)}
-                      className="flex-1 py-2.5 bg-white border border-[#DEDEDE] text-[#6B6B6B] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
-                    >
-                      Reject
-                    </button>
-                  </div>
+                  <>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setVouchNote(''); setVouching({ id: cleaner.id, name: cleaner.name }) }}
+                        className="flex-1 py-2.5 bg-[#2E7D32] text-white rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => onReject(cleaner.id)}
+                        className="flex-1 py-2.5 bg-white border border-[#DEDEDE] text-[#6B6B6B] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                    {/* Nudge — help the applicant become approvable */}
+                    <div className="flex gap-2">
+                      {cleaner.phone && (
+                        <a
+                          href={whatsAppNudgeUrl(cleaner.phone, cleaner.name.split(' ')[0] || cleaner.name)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 py-2 bg-white border border-[#DEDEDE] text-[#2E7D32] rounded-xl text-sm font-medium text-center active:scale-[0.98] transition-transform"
+                          title="Send a WhatsApp nudge to help them complete their profile"
+                        >
+                          💬 WhatsApp
+                        </a>
+                      )}
+                      <button
+                        onClick={() => onMessage(cleaner.id)}
+                        className="flex-1 py-2 bg-white border border-[#DEDEDE] text-[#6B6B6B] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                        title="Message this cleaner in-app"
+                      >
+                        ✉️ Message
+                      </button>
+                    </div>
+                  </>
                 ) : (
                   <>
                     {/* Primary actions */}
@@ -425,6 +492,64 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
                 className="flex-1 py-3 rounded-xl bg-[#C62828] text-white font-medium disabled:opacity-50"
               >
                 {deleteBusy ? 'Deleting...' : 'Delete permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Vouch modal — shown before Approve. Optional note; empty note still
+          approves, it just skips recording a vouch. */}
+      {vouching && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-lg font-semibold text-[#1A1A1A]">Vouch for {vouching.name}</h2>
+              <button
+                onClick={() => setVouching(null)}
+                className="text-[#9B9B9B] hover:text-[#1A1A1A]"
+                disabled={vouchBusy}
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-sm text-[#6B6B6B] mb-3">
+              Why do you trust this cleaner? (shown on their public profile)
+            </p>
+            <textarea
+              value={vouchNote}
+              onChange={(e) => setVouchNote(e.target.value)}
+              rows={4}
+              placeholder="e.g. how you met them, who referred them, experience you know of"
+              className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A] resize-none"
+            />
+            <p className="text-xs text-[#9B9B9B] mt-1.5">
+              Optional but encouraged — this becomes a trust signal on their profile, separate from customer reviews.
+            </p>
+
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setVouching(null)}
+                disabled={vouchBusy}
+                className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setVouchBusy(true)
+                  try {
+                    await onApprove(vouching.id, vouchNote.trim())
+                    setVouching(null)
+                    setVouchNote('')
+                  } finally {
+                    setVouchBusy(false)
+                  }
+                }}
+                disabled={vouchBusy}
+                className="flex-1 py-3 rounded-xl bg-[#2E7D32] text-white font-medium disabled:opacity-50"
+              >
+                {vouchBusy ? 'Approving...' : 'Approve'}
               </button>
             </div>
           </div>

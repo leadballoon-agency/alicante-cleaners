@@ -23,7 +23,7 @@ export async function PATCH(
 
     const { id } = await params
     const body = await request.json()
-    const { action, name, phone, email } = body
+    const { action, name, phone, email, vettedNote } = body
 
     const cleaner = await db.cleaner.findUnique({
       where: { id },
@@ -149,9 +149,24 @@ export async function PATCH(
         )
     }
 
+    // Vetting note (vouch) — optional, only captured at approval time. An
+    // empty/missing note approves the cleaner without recording a vouch.
+    const hasVettedNote = action === 'approve' && typeof vettedNote === 'string' && vettedNote.trim().length > 0
+    const updateData: {
+      status: 'ACTIVE' | 'SUSPENDED' | 'PENDING'
+      vettedNote?: string
+      vettedByName?: string
+      vettedAt?: Date
+    } = { status: newStatus }
+    if (hasVettedNote) {
+      updateData.vettedNote = vettedNote.trim()
+      updateData.vettedByName = session.user.name || 'VillaCare'
+      updateData.vettedAt = new Date()
+    }
+
     const updatedCleaner = await db.cleaner.update({
       where: { id },
-      data: { status: newStatus },
+      data: updateData,
     })
 
     // Log audit event
@@ -165,6 +180,7 @@ export async function PATCH(
         cleanerName: cleaner.user.name,
         previousStatus: cleaner.status,
         newStatus: newStatus,
+        vettedNoteAdded: hasVettedNote,
       },
     })
 

@@ -206,6 +206,12 @@ model Cleaner {
   googleCalendarSyncedAt  DateTime?
   calendarSyncStatus      String?   @default("NOT_CONNECTED") // NOT_CONNECTED, PENDING_SETUP, SYNCING, SYNCED, ERROR
 
+  // Vetting note — a manager's vouch, captured at approval time and shown on
+  // the public profile as a trust signal distinct from customer reviews.
+  vettedNote     String?   @db.Text
+  vettedByName   String?
+  vettedAt       DateTime?
+
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 

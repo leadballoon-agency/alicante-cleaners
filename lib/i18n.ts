@@ -87,6 +87,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'profile.photoProof': 'Photo proof',
     'profile.myTeam': 'My Team',
     'profile.teamCoverage': 'Need coverage? My team members can step in when I\'m unavailable.',
+    'profile.vettedBy': 'Vetted by VillaCare',
+    'profile.vettedSuffix': 'VillaCare',
 
     // How it works
     'howItWorks.title': 'How it works',
@@ -332,6 +334,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'profile.photoProof': 'Fotos de prueba',
     'profile.myTeam': 'Mi Equipo',
     'profile.teamCoverage': '¿Necesitas cobertura? Mis compañeros de equipo pueden ayudar cuando no estoy disponible.',
+    'profile.vettedBy': 'Verificado por VillaCare',
+    'profile.vettedSuffix': 'VillaCare',
 
     'howItWorks.title': 'Cómo funciona',
     'howItWorks.step1Title': 'Elige tu limpiador',

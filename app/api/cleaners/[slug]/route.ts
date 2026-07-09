@@ -166,6 +166,8 @@ export async function GET(
       languages: cleaner.languages || ['es'],
       hourlyRate: Number(cleaner.hourlyRate),
       bio: cleaner.bio,
+      vettedNote: cleaner.vettedNote || null,
+      vettedByName: cleaner.vettedByName || null,
       teamLeader: cleaner.teamLeader || false,
       teamName: cleaner.ledTeam?.name || null,
       teamMembers,

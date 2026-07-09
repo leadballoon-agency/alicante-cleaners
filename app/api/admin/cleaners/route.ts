@@ -3,6 +3,34 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { hasStaffAccess } from '@/lib/staff-access'
 import { db } from '@/lib/db'
+import { getProfileHealth } from '@/lib/ai/success-agent-tools'
+
+// Short, card-friendly labels for what's blocking a pending cleaner from
+// looking approval-ready. Deliberately narrower than the full Success Coach
+// checklist (skips reviews/languages — not meaningful before a cleaner has
+// ever worked a job).
+async function computePendingHealth(cleanerIds: string[]) {
+  const entries = await Promise.all(
+    cleanerIds.map(async (id) => {
+      try {
+        const health = await getProfileHealth(id)
+        const missing: string[] = []
+        if (!health.photo.has) missing.push('No photo')
+        if (health.bio.quality === 'poor') missing.push('Bio too short')
+        else if (health.bio.quality === 'ok') missing.push('Bio could be longer')
+        if (health.areas.count === 0) missing.push('No areas set')
+        else if (health.areas.count < 3) missing.push('Needs more areas')
+        if (health.rate.value === 0) missing.push('No rate set')
+        if (!health.calendar.synced) missing.push('No calendar')
+        return [id, { score: health.score, missing }] as const
+      } catch (err) {
+        console.error(`Error computing profile health for ${id}:`, err)
+        return [id, null] as const
+      }
+    })
+  )
+  return Object.fromEntries(entries) as Record<string, { score: number; missing: string[] } | null>
+}
 
 // GET /api/admin/cleaners - Get all cleaners
 export async function GET() {
@@ -31,6 +59,11 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     })
 
+    // Profile health is only meaningful (and only computed) for PENDING
+    // cleaners — it powers the triage strip on their admin card.
+    const pendingIds = cleaners.filter(c => c.status === 'PENDING').map(c => c.id)
+    const healthByCleanerId = pendingIds.length > 0 ? await computePendingHealth(pendingIds) : {}
+
     const formattedCleaners = cleaners.map(c => ({
       id: c.id,
       userId: c.userId, // User ID — used to grant staff access (PLATFORM_MANAGER_IDS)
@@ -50,6 +83,7 @@ export async function GET() {
       reviewCount: c.reviewCount,
       teamLeader: c.teamLeader || false,
       lastLoginAt: c.user.lastLoginAt,
+      profileHealth: healthByCleanerId[c.id] || null,
     }))
 
     return NextResponse.json({ cleaners: formattedCleaners })

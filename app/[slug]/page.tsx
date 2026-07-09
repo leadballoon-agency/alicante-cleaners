@@ -37,6 +37,8 @@ type Cleaner = {
   areas: string[]
   hourlyRate: number
   bio: string
+  vettedNote: string | null
+  vettedByName: string | null
   languages: string[]
   teamLeader: boolean
   teamName: string | null
@@ -277,6 +279,25 @@ export default function CleanerProfile() {
             <ServiceCard key={service.type} service={service} slug={slug} t={t} />
           ))}
         </div>
+
+        {/* Vetted-by-VillaCare — a manager's vouch captured at approval time.
+            Deliberately styled apart from star reviews: no rating, a
+            terracotta-tinted card with a checkmark, so it reads as a
+            platform trust signal rather than a customer testimonial. */}
+        {cleaner.vettedNote && (
+          <div className="mb-8">
+            <div className="bg-[#FFF8F5] border border-[#C4785A]/30 rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[#C4785A]">&#10003;</span>
+                <h2 className="text-sm font-semibold text-[#C4785A]">{t('profile.vettedBy')}</h2>
+              </div>
+              <p className="text-[#1A1A1A] mb-2">&ldquo;{cleaner.vettedNote}&rdquo;</p>
+              <p className="text-sm text-[#6B6B6B]">
+                &mdash; {cleaner.vettedByName || 'VillaCare'}{cleaner.vettedByName ? `, ${t('profile.vettedSuffix')}` : ''}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Reviews Section */}
         {cleaner.reviews && cleaner.reviews.length > 0 && (
