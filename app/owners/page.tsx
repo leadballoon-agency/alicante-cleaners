@@ -3,7 +3,7 @@ import { db } from '@/lib/db'
 import { SchemaScript } from '@/components/seo/schema-script'
 import { generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema'
 import { formatAreasSentence } from '@/lib/format-areas'
-import { OwnersLandingClient, type CleanerCard, type TrustStats } from './OwnersLandingClient'
+import { OwnersLandingClient, type CleanerCard, type TrustStats, type OwnerReview } from './OwnersLandingClient'
 
 // Revalidate hourly so the trust bar / cleaner cards stay fresh without
 // hitting the database on every request (this is a paid-ads landing page).
@@ -71,7 +71,12 @@ const AREAS_QUESTION = 'Which areas do you cover?'
 const AREAS_FALLBACK_ANSWER =
   'Alicante City, San Juan, Playa de San Juan, El Campello, Mutxamel, San Vicente and Jijona.'
 
-async function getOwnerLandingData(): Promise<{ cleaners: CleanerCard[]; stats: TrustStats; areas: string[] }> {
+async function getOwnerLandingData(): Promise<{
+  cleaners: CleanerCard[]
+  stats: TrustStats
+  areas: string[]
+  reviews: OwnerReview[]
+}> {
   try {
     const activeCleaners = await db.cleaner.findMany({
       where: { status: 'ACTIVE' },
@@ -114,19 +119,52 @@ async function getOwnerLandingData(): Promise<{ cleaners: CleanerCard[]; stats: 
       totalReviews,
     }
 
-    return { cleaners, stats, areas }
+    // Real, admin-approved owner reviews only — this is paid-ads real estate,
+    // so we never fall back to invented testimonials here. If none are
+    // approved yet, the client hides the reviews section entirely.
+    const approvedReviews = await db.review.findMany({
+      where: { approved: true },
+      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+      take: 2,
+      include: {
+        owner: { include: { user: { select: { name: true } } } },
+        booking: { include: { property: { select: { address: true } } } },
+      },
+    })
+
+    const reviews: OwnerReview[] = approvedReviews
+      .filter((r) => r.rating > 0 && r.text.trim().length > 0)
+      .map((r) => {
+        const address = r.booking?.property?.address || ''
+        const parts = address
+          .split(',')
+          .map((p) => p.trim())
+          .filter(Boolean)
+        const location = parts.length > 1 ? parts[parts.length - 1] : 'Alicante'
+
+        return {
+          id: r.id,
+          rating: r.rating,
+          text: r.text,
+          authorName: r.owner.user.name || 'Villa Owner',
+          location,
+        }
+      })
+
+    return { cleaners, stats, areas, reviews }
   } catch (error) {
     console.error('Error loading owners landing data:', error)
     return {
       cleaners: [],
       stats: { vettedCleaners: 0, areasCovered: 0, avgRating: null, totalReviews: 0 },
       areas: [],
+      reviews: [],
     }
   }
 }
 
 export default async function OwnersLandingPage() {
-  const { cleaners, stats, areas } = await getOwnerLandingData()
+  const { cleaners, stats, areas, reviews } = await getOwnerLandingData()
 
   const areasSentence = formatAreasSentence(areas, 'and')
   const faqs = [
@@ -146,7 +184,7 @@ export default async function OwnersLandingPage() {
   return (
     <>
       <SchemaScript schema={[faqSchema, breadcrumbSchema]} />
-      <OwnersLandingClient cleaners={cleaners} stats={stats} areas={areas} />
+      <OwnersLandingClient cleaners={cleaners} stats={stats} areas={areas} reviews={reviews} />
     </>
   )
 }
