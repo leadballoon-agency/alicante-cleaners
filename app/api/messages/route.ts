@@ -14,7 +14,11 @@ import { z } from 'zod'
 
 // Zod schema for message validation
 const messageSchema = z.object({
-  conversationId: z.string().uuid('Invalid conversation ID'),
+  // Conversation ids are Prisma cuids (e.g. "cmqs5lbk1…"), NOT UUIDs. The
+  // previous .uuid() check rejected every real id with a 400, silently
+  // breaking all owner/cleaner in-app sends since it was added (the admin
+  // dashboard was unaffected — it sends via /api/admin/messages/[id]).
+  conversationId: z.string().cuid('Invalid conversation ID'),
   text: z.string().min(1, 'Message cannot be empty').max(5000, 'Message too long'),
 })
 
