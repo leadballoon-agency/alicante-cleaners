@@ -34,6 +34,11 @@ type CleanerInfo = {
 
 interface PublicChatWidgetProps {
   cleaner: CleanerInfo
+  // Tailwind `bottom-*` class for the floating trigger/modal position.
+  // The booking flow has a full-width sticky "Continue" button at the
+  // bottom of each step, so it passes a taller offset here to keep the
+  // chat bubble from sitting on top of it on small viewports.
+  bottomOffsetClassName?: string
 }
 
 // Generate or retrieve session ID for conversation tracking
@@ -47,7 +52,7 @@ function getSessionId(): string {
   return sessionId
 }
 
-export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
+export function PublicChatWidget({ cleaner, bottomOffsetClassName = 'bottom-6' }: PublicChatWidgetProps) {
   const searchParams = useSearchParams()
   const applicantId = searchParams.get('applicant')
   const source = searchParams.get('source') // Track where visitor came from (e.g., homepage-translation-cta)
@@ -201,7 +206,7 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
       {/* Chat Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-50 ${
+        className={`fixed ${bottomOffsetClassName} right-6 z-50 ${
           isApplicant ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-[#C4785A] hover:bg-[#B56A4F]'
         } text-white rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 ${
           isOpen ? 'hidden' : 'flex'

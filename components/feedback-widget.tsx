@@ -167,11 +167,17 @@ export default function FeedbackWidget() {
   const isDashboardPage = pathname?.startsWith('/dashboard') ?? false
   const isOwnerDashboardPage = pathname?.startsWith('/owner/dashboard') ?? false
 
-  // Cleaner profiles are single-segment paths like /clara, /maria that aren't known routes
-  const isCleanerProfilePage = (() => {
+  // Cleaner profiles are single-segment paths like /clara, /maria that aren't
+  // known routes, and their booking flow (/clara/booking) is a second segment
+  // under the same slug. Both already show the cleaner's own AI assistant
+  // (components/ai/public-chat-widget.tsx), so this generic widget stays
+  // hidden there to avoid a jarring persona switch / two competing bubbles.
+  const isCleanerProfileOrBookingPage = (() => {
     if (!pathname) return false
     const segments = pathname.split('/').filter(Boolean)
-    if (segments.length !== 1) return false
+    const isProfileSegment = segments.length === 1
+    const isBookingSegment = segments.length === 2 && segments[1] === 'booking'
+    if (!isProfileSegment && !isBookingSegment) return false
     const knownRoots = ['about', 'login', 'join', 'dashboard', 'owner', 'admin', 'onboarding', 'privacy', 'terms', 'guide', 'onboard', 'features']
     return !knownRoots.includes(segments[0])
   })()
@@ -413,8 +419,8 @@ ${t.askServices}`
     }
   }
 
-  // Don't render on admin/onboarding/dashboard/owner dashboard/cleaner profile pages or until mounted
-  if (!mounted || isAdminPage || isOnboardingPage || isDashboardPage || isOwnerDashboardPage || isCleanerProfilePage) return null
+  // Don't render on admin/onboarding/dashboard/owner dashboard/cleaner profile (or booking) pages or until mounted
+  if (!mounted || isAdminPage || isOnboardingPage || isDashboardPage || isOwnerDashboardPage || isCleanerProfileOrBookingPage) return null
 
   return (
     <>

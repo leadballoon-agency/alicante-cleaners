@@ -8,6 +8,7 @@ import PropertyDetails from './steps/property-details'
 import Payment from './steps/payment'
 import Confirmation from './steps/confirmation'
 import { pushDataLayerEvent } from '@/lib/analytics/datalayer'
+import { PublicChatWidget } from '@/components/ai/public-chat-widget'
 
 type Cleaner = {
   id: string
@@ -15,6 +16,8 @@ type Cleaner = {
   name: string
   photo: string | null
   hourlyRate: number
+  areas: string[]
+  teamLeader?: boolean
   services: { type: string; name: string; price: number; hours: number }[]
 }
 
@@ -202,6 +205,23 @@ export default function BookingPage() {
           />
         )}
       </main>
+
+      {/* Keep the cleaner's own AI assistant available through checkout —
+          the generic support widget is suppressed on this route (see
+          components/feedback-widget.tsx) so there isn't a persona switch
+          right when intent is highest. Raised above bottom-6 so the bubble
+          clears each step's full-width "Continue" button on mobile. */}
+      <PublicChatWidget
+        cleaner={{
+          id: cleaner.id,
+          slug: cleaner.slug,
+          name: cleaner.name,
+          hourlyRate: cleaner.hourlyRate,
+          serviceAreas: cleaner.areas,
+          teamLeader: cleaner.teamLeader,
+        }}
+        bottomOffsetClassName="bottom-24"
+      />
     </div>
   )
 }
