@@ -9,6 +9,7 @@ import { db } from './db'
 import { verifyCode, normalizePhone } from './otp'
 import { triggerWelcomeEmail } from './nurturing/send-email'
 import { linkChatConversations } from './nurturing/link-conversations'
+import { runSideEffects } from './side-effects'
 import { computeStaffLevel, hasStaffAccess } from './staff-access'
 import { logAudit } from './audit'
 
@@ -114,8 +115,16 @@ export const authOptions: NextAuthOptions = {
 
           // Trigger welcome email and link chat conversations for new owner
           if (user.owner) {
-            triggerWelcomeEmail(user.owner.id).catch(console.error)
-            linkChatConversations(user.id, user.email, phone).catch(console.error)
+            await runSideEffects([
+              {
+                label: `nurturing:trigger-welcome-email:${user.owner.id}`,
+                promise: triggerWelcomeEmail(user.owner.id),
+              },
+              {
+                label: `nurturing:link-chat-conversations:${user.id}`,
+                promise: linkChatConversations(user.id, user.email, phone),
+              },
+            ])
           }
         } else if (user.role !== 'OWNER' && user.role !== 'ADMIN') {
           // Phone belongs to a cleaner, not an owner
@@ -278,8 +287,16 @@ export const authOptions: NextAuthOptions = {
             })
 
             // Trigger welcome email and link chat conversations for new owner
-            triggerWelcomeEmail(owner.id).catch(console.error)
-            linkChatConversations(user.id, dbUser.email, dbUser.phone).catch(console.error)
+            await runSideEffects([
+              {
+                label: `nurturing:trigger-welcome-email:${owner.id}`,
+                promise: triggerWelcomeEmail(owner.id),
+              },
+              {
+                label: `nurturing:link-chat-conversations:${user.id}`,
+                promise: linkChatConversations(user.id, dbUser.email, dbUser.phone),
+              },
+            ])
           }
         }
       }

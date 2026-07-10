@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
 import { linkChatConversations } from '@/lib/nurturing/link-conversations'
+import { runSideEffects } from '@/lib/side-effects'
 
 // GET /api/dashboard/owner - Get owner profile + stats
 export async function GET() {
@@ -85,8 +86,16 @@ export async function GET() {
       })
 
       // Trigger welcome email and link chat conversations for new owner
-      triggerWelcomeEmail(owner.id).catch(console.error)
-      linkChatConversations(session.user.id, user.email, user.phone).catch(console.error)
+      await runSideEffects([
+        {
+          label: `nurturing:trigger-welcome-email:${owner.id}`,
+          promise: triggerWelcomeEmail(owner.id),
+        },
+        {
+          label: `nurturing:link-chat-conversations:${session.user.id}`,
+          promise: linkChatConversations(session.user.id, user.email, user.phone),
+        },
+      ])
     }
 
     // Get referral count by counting users who were referred by this owner

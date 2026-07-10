@@ -166,9 +166,20 @@ IMPORTANT RULES:
       where: { conversationId: conversation.id },
     })
 
-    // Generate first summary at 4 messages, then update every 4 messages
+    // Generate first summary at 4 messages, then update every 4 messages.
+    //
+    // INTENTIONAL EXCEPTION to the "await every side effect" rule used
+    // elsewhere in this codebase (see lib/side-effects.ts): this calls
+    // OpenAI to summarize the conversation, a multi-second operation, not a
+    // sub-second one like the notification side effects fixed elsewhere.
+    // It's a nice-to-have enrichment for the team leader's review view, not
+    // something the chat response's correctness depends on, so blocking the
+    // chat reply on it would be a real UX regression for a background
+    // enrichment task. Same theoretical "may not finish before the function
+    // freezes" risk as any other floated promise here; the correct fix is a
+    // queue/cron/waitUntil-based dispatch, left as a known follow-up rather
+    // than trading away chat responsiveness.
     if (messageCount >= 4 && messageCount % 4 === 0) {
-      // Generate summary in background (don't wait for it)
       generateConversationSummary(conversation.id, teamLeader.user.name || 'Team Leader').catch(console.error)
     }
 

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { addDaysMadrid } from '@/lib/dates'
 import { onBookingCreated } from '@/lib/notifications/booking-notifications'
+import { runSideEffects } from '@/lib/side-effects'
 
 // POST - Create a new booking based on an existing one (1-click rebook)
 export async function POST(
@@ -104,16 +105,21 @@ export async function POST(
     // cleaner still has to confirm, so arm the same 1h/2h/6h reminder chain
     // (this path used to leave it unarmed - a rebooked job could sit
     // unconfirmed forever with no reminder or escalation).
-    onBookingCreated({
-      id: newBooking.id,
-      cleanerId: newBooking.cleanerId,
-      ownerName: owner.user.name || 'Villa Owner',
-      propertyName: newBooking.property.name,
-      service: newBooking.service,
-      date: newBooking.date,
-      time: newBooking.time,
-      price: Number(newBooking.price),
-    }).catch((err) => console.error('Failed to arm booking reminder chain (rebook):', err))
+    await runSideEffects([
+      {
+        label: `booking-reminder-chain:rebook:${newBooking.id}`,
+        promise: onBookingCreated({
+          id: newBooking.id,
+          cleanerId: newBooking.cleanerId,
+          ownerName: owner.user.name || 'Villa Owner',
+          propertyName: newBooking.property.name,
+          service: newBooking.service,
+          date: newBooking.date,
+          time: newBooking.time,
+          price: Number(newBooking.price),
+        }),
+      },
+    ])
 
     return NextResponse.json({
       success: true,

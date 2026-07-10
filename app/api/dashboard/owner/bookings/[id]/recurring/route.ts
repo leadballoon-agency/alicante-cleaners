@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { RecurringFrequency, RecurringStatus } from '@prisma/client'
 import { addDaysMadrid, addMonthsMadrid } from '@/lib/dates'
 import { onBookingCreated } from '@/lib/notifications/booking-notifications'
+import { runSideEffects, type SideEffect } from '@/lib/side-effects'
 
 // POST - Make a booking recurring (creates future instances)
 export async function POST(
@@ -123,8 +124,9 @@ export async function POST(
     // of them - this path used to leave them unarmed. The original booking
     // being made recurring is already CONFIRMED/COMPLETED (checked above),
     // so it does not need a tracker.
-    for (const created of createdBookings) {
-      onBookingCreated({
+    const sideEffects: SideEffect[] = createdBookings.map((created) => ({
+      label: `booking-reminder-chain:recurring:${created.id}`,
+      promise: onBookingCreated({
         id: created.id,
         cleanerId: created.cleanerId,
         ownerName: owner.user.name || 'Villa Owner',
@@ -133,8 +135,10 @@ export async function POST(
         date: created.date,
         time: created.time,
         price: Number(created.price),
-      }).catch((err) => console.error('Failed to arm booking reminder chain (recurring):', err))
-    }
+      }),
+    }))
+
+    await runSideEffects(sideEffects)
 
     return NextResponse.json({
       success: true,

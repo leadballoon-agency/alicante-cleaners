@@ -10,6 +10,7 @@ import {
   sendOwnerBookingCompletedEmail,
 } from '@/lib/emails/owner-booking-emails'
 import { formatMadridDate } from '@/lib/dates'
+import { runSideEffects, type SideEffect } from '@/lib/side-effects'
 
 // PATCH /api/dashboard/cleaner/bookings/[id] - Accept/decline/assign booking
 export async function PATCH(
@@ -192,13 +193,18 @@ export async function PATCH(
       })
     }
 
+    const sideEffects: SideEffect[] = []
+
     // Notify staff (web push) when the cleaner accepts or declines
     if (newStatus === 'CONFIRMED' || newStatus === 'CANCELLED') {
-      notifyStaffBookingResponse({
-        bookingId: updatedBooking.id,
-        cleanerName: updatedBooking.cleaner.user.name || 'A cleaner',
-        ownerName: updatedBooking.owner.user.name || 'the owner',
-        action: newStatus === 'CONFIRMED' ? 'accepted' : 'declined',
+      sideEffects.push({
+        label: `push:staff-booking-response:${updatedBooking.id}`,
+        promise: notifyStaffBookingResponse({
+          bookingId: updatedBooking.id,
+          cleanerName: updatedBooking.cleaner.user.name || 'A cleaner',
+          ownerName: updatedBooking.owner.user.name || 'the owner',
+          action: newStatus === 'CONFIRMED' ? 'accepted' : 'declined',
+        }),
       })
     }
 
@@ -213,21 +219,30 @@ export async function PATCH(
       })
 
       if (newStatus === 'CONFIRMED') {
-        sendWhatsAppMessage(
-          ownerPhone,
-          `*Booking Confirmed!* ✅\n\n${cleanerName} has accepted your booking for ${formattedDate} at ${updatedBooking.time}.\n\nAddress: ${updatedBooking.property.address}\n\n- VillaCare`
-        ).catch((err) => console.error('Failed to notify owner of confirmation:', err))
+        sideEffects.push({
+          label: `whatsapp:owner-booking-confirmed:${updatedBooking.id}`,
+          promise: sendWhatsAppMessage(
+            ownerPhone,
+            `*Booking Confirmed!* ✅\n\n${cleanerName} has accepted your booking for ${formattedDate} at ${updatedBooking.time}.\n\nAddress: ${updatedBooking.property.address}\n\n- VillaCare`
+          ),
+        })
       } else if (newStatus === 'CANCELLED') {
-        sendWhatsAppMessage(
-          ownerPhone,
-          `*Booking Declined* ❌\n\nUnfortunately, ${cleanerName} is not available for ${formattedDate}.\n\nPlease try booking with another cleaner at villacare.app\n\n- VillaCare`
-        ).catch((err) => console.error('Failed to notify owner of cancellation:', err))
+        sideEffects.push({
+          label: `whatsapp:owner-booking-cancelled:${updatedBooking.id}`,
+          promise: sendWhatsAppMessage(
+            ownerPhone,
+            `*Booking Declined* ❌\n\nUnfortunately, ${cleanerName} is not available for ${formattedDate}.\n\nPlease try booking with another cleaner at villacare.app\n\n- VillaCare`
+          ),
+        })
       } else if (newStatus === 'COMPLETED') {
         const reviewLink = `${process.env.NEXT_PUBLIC_APP_URL}/owner/dashboard?tab=bookings&review=${updatedBooking.id}`
-        sendBookingCompleted(ownerPhone, {
-          cleanerName,
-          reviewLink,
-        }).catch((err) => console.error('Failed to notify owner of completion:', err))
+        sideEffects.push({
+          label: `whatsapp:owner-booking-completed:${updatedBooking.id}`,
+          promise: sendBookingCompleted(ownerPhone, {
+            cleanerName,
+            reviewLink,
+          }),
+        })
       }
     }
 
@@ -244,27 +259,33 @@ export async function PATCH(
       const preferredLanguage = updatedBooking.owner.user.preferredLanguage
 
       if (newStatus === 'CONFIRMED') {
-        sendOwnerBookingConfirmedEmail({
-          to: ownerEmail,
-          ownerName: updatedBooking.owner.user.name || 'there',
-          cleanerName,
-          service: updatedBooking.service,
-          date: formattedDate,
-          time: updatedBooking.time,
-          address: updatedBooking.property.address,
-          preferredLanguage,
-          startAt: updatedBooking.date,
-          hours: updatedBooking.hours,
-        }).catch((err) => console.error('Failed to send owner booking-confirmed email:', err))
+        sideEffects.push({
+          label: `email:owner-booking-confirmed:${updatedBooking.id}`,
+          promise: sendOwnerBookingConfirmedEmail({
+            to: ownerEmail,
+            ownerName: updatedBooking.owner.user.name || 'there',
+            cleanerName,
+            service: updatedBooking.service,
+            date: formattedDate,
+            time: updatedBooking.time,
+            address: updatedBooking.property.address,
+            preferredLanguage,
+            startAt: updatedBooking.date,
+            hours: updatedBooking.hours,
+          }),
+        })
       } else if (newStatus === 'CANCELLED') {
-        sendOwnerBookingDeclinedEmail({
-          to: ownerEmail,
-          ownerName: updatedBooking.owner.user.name || 'there',
-          cleanerName,
-          date: formattedDate,
-          reason: 'declined',
-          preferredLanguage,
-        }).catch((err) => console.error('Failed to send owner booking-declined email:', err))
+        sideEffects.push({
+          label: `email:owner-booking-declined:${updatedBooking.id}`,
+          promise: sendOwnerBookingDeclinedEmail({
+            to: ownerEmail,
+            ownerName: updatedBooking.owner.user.name || 'there',
+            cleanerName,
+            date: formattedDate,
+            reason: 'declined',
+            preferredLanguage,
+          }),
+        })
       } else if (newStatus === 'COMPLETED') {
         // Guard against double-emailing: if the cleaner already logged a
         // COMPLETED event via the checklist flow (app/api/dashboard/cleaner/bookings/[id]/events),
@@ -278,16 +299,21 @@ export async function PATCH(
 
         if (!existingCompletionEvent) {
           const reviewLink = `${process.env.NEXT_PUBLIC_APP_URL}/owner/dashboard?tab=bookings&review=${updatedBooking.id}`
-          sendOwnerBookingCompletedEmail({
-            to: ownerEmail,
-            ownerName: updatedBooking.owner.user.name || 'there',
-            cleanerName,
-            reviewLink,
-            preferredLanguage,
-          }).catch((err) => console.error('Failed to send owner booking-completed email:', err))
+          sideEffects.push({
+            label: `email:owner-booking-completed:${updatedBooking.id}`,
+            promise: sendOwnerBookingCompletedEmail({
+              to: ownerEmail,
+              ownerName: updatedBooking.owner.user.name || 'there',
+              cleanerName,
+              reviewLink,
+              preferredLanguage,
+            }),
+          })
         }
       }
     }
+
+    await runSideEffects(sideEffects)
 
     return NextResponse.json({
       success: true,

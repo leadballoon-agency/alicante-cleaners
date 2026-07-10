@@ -14,6 +14,7 @@ import { onBookingCreated } from '@/lib/notifications/booking-notifications'
 import { encryptAccessNotes } from '@/lib/encryption'
 import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
 import { linkChatConversations } from '@/lib/nurturing/link-conversations'
+import { runSideEffects } from '@/lib/side-effects'
 
 function generateReferralCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -169,17 +170,22 @@ export async function POST(
       },
     })
 
-    // Create notification for cleaner (async - don't block response)
-    onBookingCreated({
-      id: booking.id,
-      cleanerId: onboarding.cleanerId,
-      ownerName: onboarding.visitorName,
-      propertyName: propertyName,
-      service: onboarding.serviceType,
-      date: onboarding.preferredDate,
-      time: onboarding.preferredTime,
-      price: Number(onboarding.servicePrice),
-    }).catch(err => console.error('Failed to create booking notification:', err))
+    // Create notification for cleaner
+    await runSideEffects([
+      {
+        label: `booking-reminder-chain:onboarding:${booking.id}`,
+        promise: onBookingCreated({
+          id: booking.id,
+          cleanerId: onboarding.cleanerId,
+          ownerName: onboarding.visitorName,
+          propertyName: propertyName,
+          service: onboarding.serviceType,
+          date: onboarding.preferredDate,
+          time: onboarding.preferredTime,
+          price: Number(onboarding.servicePrice),
+        }),
+      },
+    ])
 
     // Create a session for the user (auto sign-in)
     const sessionToken = crypto.randomUUID()
@@ -205,8 +211,16 @@ export async function POST(
 
     // Trigger welcome email and link chat conversations for new owner
     if (isNewOwner) {
-      triggerWelcomeEmail(owner.id).catch(console.error)
-      linkChatConversations(user.id, email, onboarding.visitorPhone).catch(console.error)
+      await runSideEffects([
+        {
+          label: `nurturing:trigger-welcome-email:${owner.id}`,
+          promise: triggerWelcomeEmail(owner.id),
+        },
+        {
+          label: `nurturing:link-chat-conversations:${user.id}`,
+          promise: linkChatConversations(user.id, email, onboarding.visitorPhone),
+        },
+      ])
     }
 
     return NextResponse.json({

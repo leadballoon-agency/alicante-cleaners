@@ -430,7 +430,12 @@ export async function onBookingConfirmed(bookingId: string) {
  * Notify staff (web push) when a cleaner accepts or declines a booking.
  * Shared by both the dashboard PATCH action and the Twilio ACCEPT/DECLINE
  * webhook path so both code paths get coverage from a single call.
- * Fire-and-forget — never throws, never blocks the caller.
+ *
+ * Returns the underlying promise so callers can await it (via
+ * `lib/side-effects.ts#runSideEffects`) before returning their HTTP
+ * response — on Vercel's serverless runtime, un-awaited promises never
+ * finish once the response is sent. This never throws: rejections are
+ * left for the caller's Promise.allSettled handling to log.
  */
 export function notifyStaffBookingResponse(details: {
   bookingId: string
@@ -439,10 +444,10 @@ export function notifyStaffBookingResponse(details: {
   action: 'accepted' | 'declined'
 }) {
   const emoji = details.action === 'accepted' ? '✅' : '❌'
-  sendPushToStaff({
+  return sendPushToStaff({
     title: `${emoji} Booking ${details.action}`,
     body: `${details.cleanerName} ${details.action} ${details.ownerName}'s booking`,
     url: '/admin?tab=bookings',
     tag: `booking-response-${details.bookingId}`,
-  }).catch((err) => console.error('Failed to push staff booking response:', err))
+  })
 }

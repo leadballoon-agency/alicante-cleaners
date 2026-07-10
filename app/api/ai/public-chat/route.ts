@@ -17,6 +17,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { ChatCompletionTool } from 'openai/resources/chat/completions'
 import { createBookingCore, BookingCreationError } from '@/lib/bookings/create-booking'
 import { getMadridDateKey, formatMadridDate } from '@/lib/dates'
+import { runSideEffects } from '@/lib/side-effects'
 
 // Easter egg: Alan & Amanda can be summoned!
 let anthropic: Anthropic | null = null
@@ -525,31 +526,36 @@ NOTE: This visitor is already logged in as ${sessionUser.name || 'a VillaCare me
       const textBlock = easterEggResponse.content.find(b => b.type === 'text')
       const easterEggContent = textBlock && 'text' in textBlock ? textBlock.text : ''
 
-      // Store messages in conversation (async)
+      // Store messages in conversation
       if (conversation) {
-        Promise.all([
-          db.publicChatMessage.create({
-            data: {
-              conversationId: conversation.id,
-              role: 'user',
-              content: message,
-            },
-          }),
-          db.publicChatMessage.create({
-            data: {
-              conversationId: conversation.id,
-              role: 'assistant',
-              content: `🎭 ${easterEggCharacter === 'alan' ? 'Alan' : 'Amanda'}: ${easterEggContent}`,
-            },
-          }),
-          db.publicChatConversation.update({
-            where: { id: conversation.id },
-            data: {
-              messageCount: { increment: 2 },
-              lastMessageAt: new Date(),
-            },
-          }),
-        ]).catch(err => console.error('Failed to store easter egg messages:', err))
+        await runSideEffects([
+          {
+            label: `store-easter-egg-messages:${conversation.id}`,
+            promise: Promise.all([
+              db.publicChatMessage.create({
+                data: {
+                  conversationId: conversation.id,
+                  role: 'user',
+                  content: message,
+                },
+              }),
+              db.publicChatMessage.create({
+                data: {
+                  conversationId: conversation.id,
+                  role: 'assistant',
+                  content: `🎭 ${easterEggCharacter === 'alan' ? 'Alan' : 'Amanda'}: ${easterEggContent}`,
+                },
+              }),
+              db.publicChatConversation.update({
+                where: { id: conversation.id },
+                data: {
+                  messageCount: { increment: 2 },
+                  lastMessageAt: new Date(),
+                },
+              }),
+            ]),
+          },
+        ])
       }
 
       // Log usage
@@ -760,34 +766,39 @@ NOTE: This visitor is already logged in as ${sessionUser.name || 'a VillaCare me
     const finalContent = assistantMessage?.content ||
       'Sorry, I had trouble responding. Please try again.'
 
-    // Store messages in conversation (async, don't block response)
+    // Store messages in conversation
     if (conversation) {
-      Promise.all([
-        // Store user message
-        db.publicChatMessage.create({
-          data: {
-            conversationId: conversation.id,
-            role: 'user',
-            content: message,
-          },
-        }),
-        // Store assistant response
-        db.publicChatMessage.create({
-          data: {
-            conversationId: conversation.id,
-            role: 'assistant',
-            content: finalContent,
-          },
-        }),
-        // Update conversation stats
-        db.publicChatConversation.update({
-          where: { id: conversation.id },
-          data: {
-            messageCount: { increment: 2 },
-            lastMessageAt: new Date(),
-          },
-        }),
-      ]).catch(err => console.error('Failed to store chat messages:', err))
+      await runSideEffects([
+        {
+          label: `store-chat-messages:${conversation.id}`,
+          promise: Promise.all([
+            // Store user message
+            db.publicChatMessage.create({
+              data: {
+                conversationId: conversation.id,
+                role: 'user',
+                content: message,
+              },
+            }),
+            // Store assistant response
+            db.publicChatMessage.create({
+              data: {
+                conversationId: conversation.id,
+                role: 'assistant',
+                content: finalContent,
+              },
+            }),
+            // Update conversation stats
+            db.publicChatConversation.update({
+              where: { id: conversation.id },
+              data: {
+                messageCount: { increment: 2 },
+                lastMessageAt: new Date(),
+              },
+            }),
+          ]),
+        },
+      ])
     }
 
     // Log usage

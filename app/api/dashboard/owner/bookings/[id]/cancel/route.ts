@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { sendPushToStaff } from '@/lib/push'
+import { runSideEffects } from '@/lib/side-effects'
 
 // POST /api/dashboard/owner/bookings/[id]/cancel - Cancel a booking
 export async function POST(
@@ -70,13 +71,19 @@ export async function POST(
       data: { status: 'CANCELLED' },
     })
 
-    // Notify staff (web push) — best-effort, never blocks the response
-    sendPushToStaff({
-      title: '🚫 Booking cancelled',
-      body: `${booking.owner.user.name || 'An owner'} cancelled their ${booking.service} with ${booking.cleaner.user.name || 'their cleaner'}`,
-      url: '/admin?tab=bookings',
-      tag: `booking-cancelled-${booking.id}`,
-    }).catch((err) => console.error('Failed to push staff booking cancellation:', err))
+    // Notify staff (web push) — awaited so it completes before the
+    // serverless function's response freezes execution.
+    await runSideEffects([
+      {
+        label: `push:staff-booking-cancelled:${booking.id}`,
+        promise: sendPushToStaff({
+          title: '🚫 Booking cancelled',
+          body: `${booking.owner.user.name || 'An owner'} cancelled their ${booking.service} with ${booking.cleaner.user.name || 'their cleaner'}`,
+          url: '/admin?tab=bookings',
+          tag: `booking-cancelled-${booking.id}`,
+        }),
+      },
+    ])
 
     // TODO: Send notification to cleaner about cancellation
 

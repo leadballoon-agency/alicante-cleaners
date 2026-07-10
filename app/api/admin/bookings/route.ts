@@ -6,6 +6,7 @@ import { db } from '@/lib/db'
 import { sendBookingConfirmation } from '@/lib/whatsapp'
 import { sendOwnerBookingConfirmedEmail, sendOwnerBookingDeclinedEmail } from '@/lib/emails/owner-booking-emails'
 import { formatMadridDate } from '@/lib/dates'
+import { runSideEffects, type SideEffect } from '@/lib/side-effects'
 
 // GET /api/admin/bookings - Get all bookings
 export async function GET() {
@@ -130,6 +131,8 @@ export async function PATCH(request: NextRequest) {
       data: { status: newStatus },
     })
 
+    const sideEffects: SideEffect[] = []
+
     // If accepted, send confirmation to owner via WhatsApp
     if (action === 'accept' && booking.owner.user.phone) {
       const formattedDate = formatMadridDate(booking.date, {
@@ -139,14 +142,17 @@ export async function PATCH(request: NextRequest) {
         year: 'numeric',
       })
 
-      sendBookingConfirmation(booking.owner.user.phone, {
-        cleanerName: booking.cleaner.user.name || 'Your cleaner',
-        date: formattedDate,
-        time: booking.time,
-        address: booking.property.address,
-        service: booking.service,
-        price: `€${Number(booking.price)}`,
-      }).catch((err) => console.error('Failed to send confirmation:', err))
+      sideEffects.push({
+        label: `whatsapp:booking-confirmed:${bookingId}`,
+        promise: sendBookingConfirmation(booking.owner.user.phone, {
+          cleanerName: booking.cleaner.user.name || 'Your cleaner',
+          date: formattedDate,
+          time: booking.time,
+          address: booking.property.address,
+          service: booking.service,
+          price: `€${Number(booking.price)}`,
+        }),
+      })
     }
 
     // Email notification to owner (additive to WhatsApp above — reliable
@@ -159,18 +165,21 @@ export async function PATCH(request: NextRequest) {
         year: 'numeric',
       })
 
-      sendOwnerBookingConfirmedEmail({
-        to: booking.owner.user.email,
-        ownerName: booking.owner.user.name || 'there',
-        cleanerName: booking.cleaner.user.name || 'Your cleaner',
-        service: booking.service,
-        date: formattedDate,
-        time: booking.time,
-        address: booking.property.address,
-        preferredLanguage: booking.owner.user.preferredLanguage,
-        startAt: booking.date,
-        hours: booking.hours,
-      }).catch((err) => console.error('Failed to send owner booking-confirmed email:', err))
+      sideEffects.push({
+        label: `email:owner-booking-confirmed:${bookingId}`,
+        promise: sendOwnerBookingConfirmedEmail({
+          to: booking.owner.user.email,
+          ownerName: booking.owner.user.name || 'there',
+          cleanerName: booking.cleaner.user.name || 'Your cleaner',
+          service: booking.service,
+          date: formattedDate,
+          time: booking.time,
+          address: booking.property.address,
+          preferredLanguage: booking.owner.user.preferredLanguage,
+          startAt: booking.date,
+          hours: booking.hours,
+        }),
+      })
     }
 
     // If declined, email the owner too - mirrors the accept path above.
@@ -186,15 +195,20 @@ export async function PATCH(request: NextRequest) {
         year: 'numeric',
       })
 
-      sendOwnerBookingDeclinedEmail({
-        to: booking.owner.user.email,
-        ownerName: booking.owner.user.name || 'there',
-        cleanerName: booking.cleaner.user.name || 'Your cleaner',
-        date: formattedDate,
-        reason: 'declined',
-        preferredLanguage: booking.owner.user.preferredLanguage,
-      }).catch((err) => console.error('Failed to send owner booking-declined email:', err))
+      sideEffects.push({
+        label: `email:owner-booking-declined:${bookingId}`,
+        promise: sendOwnerBookingDeclinedEmail({
+          to: booking.owner.user.email,
+          ownerName: booking.owner.user.name || 'there',
+          cleanerName: booking.cleaner.user.name || 'Your cleaner',
+          date: formattedDate,
+          reason: 'declined',
+          preferredLanguage: booking.owner.user.preferredLanguage,
+        }),
+      })
     }
+
+    await runSideEffects(sideEffects)
 
     return NextResponse.json({
       success: true,
