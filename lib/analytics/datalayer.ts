@@ -30,7 +30,13 @@ declare global {
 export function pushDataLayerEvent(event: string, params?: Record<string, unknown>): void {
   try {
     if (typeof window === 'undefined') return
-    if (!Array.isArray(window.dataLayer)) return
+
+    // Create the queue if GTM hasn't yet (standard GTM pattern): GTM replays
+    // any events already queued when its snippet loads. Without this, events
+    // pushed during the race between page mount and GTM's script load (e.g.
+    // lead_view_booking on the booking page's first paint) are silently lost
+    // — confirmed live on production.
+    window.dataLayer = window.dataLayer || []
 
     window.dataLayer.push({
       event,
