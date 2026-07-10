@@ -1,8 +1,10 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { BookingData } from '../page'
+import { pushDataLayerEvent } from '@/lib/analytics/datalayer'
 
 type Props = {
   data: BookingData
@@ -14,6 +16,21 @@ type Props = {
 }
 
 export default function Confirmation({ data, cleaner, slug }: Props) {
+  // Fire once when the success screen mounts - this component only renders
+  // after the booking has actually been created (see steps/payment.tsx).
+  const hasFiredBookingCreated = useRef(false)
+  useEffect(() => {
+    if (hasFiredBookingCreated.current) return
+    hasFiredBookingCreated.current = true
+    pushDataLayerEvent('booking_created', {
+      service: data.service?.name,
+      value: data.service?.price,
+      currency: 'EUR',
+      cleaner_slug: slug,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const formatDate = (date: Date | null) => {
     if (!date) return ''
     return date.toLocaleDateString('en-US', {

@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import DateTimePicker from './steps/date-time'
 import PropertyDetails from './steps/property-details'
 import Payment from './steps/payment'
 import Confirmation from './steps/confirmation'
+import { pushDataLayerEvent } from '@/lib/analytics/datalayer'
 
 type Cleaner = {
   id: string
@@ -77,6 +78,14 @@ export default function BookingPage() {
 
     fetchCleaner()
   }, [slug, serviceType])
+
+  // Fire once per mount: visitor has entered the booking flow (step 1 view).
+  const hasFiredLeadView = useRef(false)
+  useEffect(() => {
+    if (hasFiredLeadView.current) return
+    hasFiredLeadView.current = true
+    pushDataLayerEvent('lead_view_booking', { cleaner_slug: slug })
+  }, [slug])
 
   if (loading) {
     return (
