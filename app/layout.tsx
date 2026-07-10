@@ -22,6 +22,14 @@ export const metadata: Metadata = {
   },
   description: "Your villa, ready when you are. Vetted cleaners, photo proof, auto-translation. No passwords, no apps, no hassle.",
   metadataBase: new URL("https://alicantecleaners.com"),
+  verification: {
+    // Meta (Facebook) Business Manager domain verification for
+    // alicantecleaners.com — required for ad link editing and web-event
+    // configuration on the domain.
+    other: {
+      "facebook-domain-verification": "rlgwaguvaz6w3ekczq7wnhptckwr6p",
+    },
+  },
   openGraph: {
     title: "VillaCare | Trusted Villa Cleaning in Alicante",
     description: "Your villa, ready when you are. Vetted cleaners, photo proof, auto-translation. No passwords, no apps, no hassle.",
