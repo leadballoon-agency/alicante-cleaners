@@ -7,6 +7,8 @@
 
 import { db } from '@/lib/db'
 import { RecurringStatus } from '@prisma/client'
+import { addDaysMadrid, addMonthsMadrid } from '@/lib/dates'
+import { onBookingCreated } from '@/lib/notifications/booking-notifications'
 
 interface GenerationResult {
   seriesProcessed: number
@@ -41,7 +43,7 @@ export async function generateRecurringBookings(
       include: {
         property: true,
         cleaner: true,
-        owner: true,
+        owner: { include: { user: { select: { name: true } } } },
       },
     })
 
@@ -91,7 +93,7 @@ export async function generateRecurringBookings(
         for (const date of futureDates) {
           const shortCode = Math.floor(1000 + Math.random() * 9000).toString()
 
-          await db.booking.create({
+          const created = await db.booking.create({
             data: {
               cleanerId: parent.cleanerId,
               ownerId: parent.ownerId,
@@ -110,6 +112,22 @@ export async function generateRecurringBookings(
               recurringParentId: parent.id,
             },
           })
+
+          // Each materialized instance is PENDING and needs a cleaner
+          // response, so arm the same 1h/2h/6h reminder chain used
+          // everywhere else a booking is created - this cron used to leave
+          // auto-generated recurring instances with no reminder/escalation
+          // coverage at all.
+          onBookingCreated({
+            id: created.id,
+            cleanerId: created.cleanerId,
+            ownerName: parent.owner.user.name || 'Villa Owner',
+            propertyName: parent.property.name,
+            service: created.service,
+            date: created.date,
+            time: created.time,
+            price: Number(created.price),
+          }).catch((err) => console.error('Failed to arm booking reminder chain (recurring cron):', err))
 
           result.bookingsCreated++
         }
@@ -174,31 +192,30 @@ export async function getRecurringSeriesInfo(bookingId: string) {
   }
 }
 
-// Helper function to calculate future dates
+// Helper function to calculate future dates. Shifts by whole Europe/Madrid
+// calendar days/months while preserving the original Madrid wall-clock time
+// (see lib/dates.ts) — NOT `date.setDate(date.getDate() + n)`, which shifts
+// by 24h wall-clock in whatever timezone the process happens to run in
+// (UTC on Vercel) and can drift the local Madrid time across DST changes.
 function calculateFutureDates(
   startDate: Date,
   frequency: string,
   count: number
 ): Date[] {
   const dates: Date[] = []
-  const baseDate = new Date(startDate)
 
   for (let i = 1; i <= count; i++) {
-    const nextDate = new Date(baseDate)
-
     switch (frequency) {
       case 'WEEKLY':
-        nextDate.setDate(baseDate.getDate() + i * 7)
+        dates.push(addDaysMadrid(startDate, i * 7))
         break
       case 'FORTNIGHTLY':
-        nextDate.setDate(baseDate.getDate() + i * 14)
+        dates.push(addDaysMadrid(startDate, i * 14))
         break
       case 'MONTHLY':
-        nextDate.setMonth(baseDate.getMonth() + i)
+        dates.push(addMonthsMadrid(startDate, i))
         break
     }
-
-    dates.push(nextDate)
   }
 
   return dates

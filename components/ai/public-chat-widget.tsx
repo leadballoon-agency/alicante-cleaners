@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { formatMadridDate } from '@/lib/dates'
 
 type BookingSummary = {
   service: string
@@ -265,7 +266,7 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
                         <p className="text-sm font-medium text-[#1A1A1A]">{msg.booking.service}</p>
                         <p className="text-xs text-[#6B6B6B]">{msg.booking.property.name}</p>
                         <p className="text-xs text-[#6B6B6B]">
-                          {new Date(msg.booking.date).toLocaleDateString('en-GB', {
+                          {formatMadridDate(msg.booking.date, {
                             weekday: 'long',
                             day: 'numeric',
                             month: 'long',

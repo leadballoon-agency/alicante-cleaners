@@ -21,6 +21,7 @@ import {
   AdminAlertAction,
   CardPriority,
 } from './card-types'
+import { getMadridDateKey } from '@/lib/dates'
 
 // ============================================
 // Test Account Detection
@@ -131,7 +132,9 @@ export function transformBookingToCard(booking: ApiBooking): BookingAdminCardDat
       service: booking.service,
       price,
       hours: booking.hours,
-      date: typeof booking.date === 'string' ? booking.date : booking.date.toISOString().split('T')[0],
+      // Europe/Madrid calendar day, not the UTC day of the underlying
+      // instant (bookings are physical events in Spain).
+      date: typeof booking.date === 'string' ? booking.date : getMadridDateKey(booking.date),
       time: booking.time,
       notes: booking.notes || undefined,
       shortCode: booking.shortCode || undefined,

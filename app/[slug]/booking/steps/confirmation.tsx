@@ -23,30 +23,6 @@ export default function Confirmation({ data, cleaner, slug }: Props) {
     })
   }
 
-  const handleAddToCalendar = () => {
-    if (!data.date || !data.time) return
-
-    const [hours, minutes] = data.time.split(':').map(Number)
-    const startDate = new Date(data.date)
-    startDate.setHours(hours, minutes, 0, 0)
-
-    const endDate = new Date(startDate)
-    endDate.setHours(endDate.getHours() + (data.service?.hours || 3))
-
-    const formatForCalendar = (date: Date) => {
-      return date.toISOString().replace(/-|:|\.\d{3}/g, '').slice(0, 15) + 'Z'
-    }
-
-    const title = encodeURIComponent(`Villa cleaning - ${cleaner.name}`)
-    const details = encodeURIComponent(`${data.service?.name}\n${data.propertyAddress}`)
-    const location = encodeURIComponent(data.propertyAddress)
-
-    // Google Calendar link
-    const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatForCalendar(startDate)}/${formatForCalendar(endDate)}&details=${details}&location=${location}`
-
-    window.open(googleUrl, '_blank')
-  }
-
   return (
     <div className="text-center">
       <div className="text-6xl mb-6">✅</div>
@@ -156,12 +132,13 @@ export default function Confirmation({ data, cleaner, slug }: Props) {
 
       {/* Actions */}
       <div className="space-y-3">
-        <button
-          onClick={handleAddToCalendar}
-          className="w-full bg-[#1A1A1A] text-white py-3.5 rounded-xl font-medium text-base active:scale-[0.98] transition-all"
-        >
-          Add to calendar
-        </button>
+        {/* This booking is always PENDING here (fresh off creation) — a
+            request that hasn't been confirmed yet isn't worth putting on a
+            calendar. The confirmation email sent once the cleaner accepts
+            includes the "Add to calendar" link instead. */}
+        <div className="w-full bg-[#F5F5F3] text-[#6B6B6B] py-3.5 px-4 rounded-xl text-sm text-center">
+          We&apos;ll email you when {cleaner.name.split(' ')[0]} confirms — you can add it to your calendar then.
+        </div>
 
         <Link
           href="/owner/dashboard"

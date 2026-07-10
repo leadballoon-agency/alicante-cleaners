@@ -20,6 +20,8 @@ import { notifyAdminNewBooking } from '@/lib/email'
 import { sendOwnerBookingReceivedEmail } from '@/lib/emails/owner-booking-emails'
 import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
 import { linkChatConversations } from '@/lib/nurturing/link-conversations'
+import { onBookingCreated } from '@/lib/notifications/booking-notifications'
+import { combineMadridDateTime, formatMadridDate } from '@/lib/dates'
 import type { Prisma } from '@prisma/client'
 
 // Service definitions with hours - server is source of truth for pricing
@@ -61,7 +63,7 @@ export interface CreateBookingCoreParams {
   propertyId: string
   propertyAddress: string
   serviceType: string // must be a key of SERVICE_DEFINITIONS
-  date: string // parseable date string
+  date: string // plain calendar day, 'YYYY-MM-DD', no timezone attached
   time: string // HH:MM
   notes?: string | null
   createdByAI?: boolean
@@ -143,7 +145,12 @@ export async function createBookingCore(params: CreateBookingCoreParams): Promis
         price,
         hours,
         shortCode,
-        date: new Date(params.date),
+        // Canonical instant: the UTC moment this date+time represents in
+        // Europe/Madrid (constructed server-side — see lib/dates.ts). This
+        // is the ONLY place a booking's `date` should be constructed;
+        // never `new Date(params.date)` (that's the date-shift bug PR #25
+        // fixed — see lib/dates.ts header comment).
+        date: combineMadridDateTime(params.date, params.time),
         time: params.time,
         notes: params.notes || null,
         status: 'PENDING',
@@ -162,7 +169,11 @@ export async function createBookingCore(params: CreateBookingCoreParams): Promis
 
   const { booking, owner } = result
 
-  const formattedDate = new Date(params.date).toLocaleDateString('en-GB', {
+  // Format for notifications always in Europe/Madrid (bookings are physical
+  // events in Spain regardless of where the owner/server is) — reuse the
+  // canonical instant stored on the booking, never re-derive from the raw
+  // input strings.
+  const formattedDate = formatMadridDate(booking.date, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -225,6 +236,22 @@ export async function createBookingCore(params: CreateBookingCoreParams): Promis
     price: `€${price}`,
     bookingId: booking.id,
   }).catch((err) => console.error('Failed to notify admins:', err))
+
+  // Arm the reminder/escalation chain: creates the BookingResponseTracker +
+  // cleaner in-app notification so the 1h/2h/6h reminder-escalation cron
+  // (lib/notifications/booking-notifications.ts) knows to chase this
+  // PENDING booking. Every caller of createBookingCore creates a booking
+  // that needs a cleaner response, so this always fires here.
+  onBookingCreated({
+    id: booking.id,
+    cleanerId: params.cleaner.id,
+    ownerName: owner?.user.name || params.guestName || 'Villa Owner',
+    propertyName: booking.property.name,
+    service: params.serviceType,
+    date: booking.date,
+    time: params.time,
+    price,
+  }).catch((err) => console.error('Failed to arm booking reminder chain:', err))
 
   // Trigger welcome email for new owners
   if (params.nurturingInfo) {

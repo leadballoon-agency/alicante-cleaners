@@ -13,7 +13,12 @@ const bookingSchema = z.object({
   bedrooms: z.number().min(1).max(20).optional(),
   specialInstructions: z.string().max(2000).optional().nullable(),
   serviceType: z.string().min(1).max(100), // Service type only - price calculated server-side
-  date: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
+  // Plain calendar day + time as picked by the user, with no timezone
+  // attached — the server combines these into the canonical UTC instant
+  // (see combineMadridDateTime in lib/dates.ts, invoked inside
+  // createBookingCore). Never accept a client-constructed Date/ISO string
+  // here; that's what caused the Monday/Tuesday date-shift bug.
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date (expected YYYY-MM-DD)'),
   time: z.string().regex(/^\d{1,2}:\d{2}$/, 'Invalid time format (HH:MM)'),
   guestPhone: z.string().max(20).optional().nullable(),
   guestEmail: z.string().email().max(255).optional().nullable(),
@@ -194,7 +199,10 @@ export async function POST(request: NextRequest) {
     const { ownerId, propertyId, nurturingInfo } = resolved
 
     // Create the booking + fire the full notification chain (shared with the
-    // session-aware AI assistant's create_booking tool - see lib/bookings/create-booking.ts)
+    // session-aware AI assistant's create_booking tool - see
+    // lib/bookings/create-booking.ts). `date`/`time` are passed through as
+    // the raw YYYY-MM-DD / HH:MM strings the visitor picked; the core
+    // combines them into the canonical Europe/Madrid UTC instant.
     const { booking } = await createBookingCore({
       cleaner,
       ownerId,

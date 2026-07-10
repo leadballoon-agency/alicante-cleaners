@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Booking, InternalComment, TeamInfo, TeamMember } from '../page'
+import { formatMadridDate } from '@/lib/dates'
 
 type Props = {
   bookings: Booking[]
@@ -91,7 +92,7 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return formatMadridDate(date, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',

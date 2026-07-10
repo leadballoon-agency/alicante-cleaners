@@ -4,7 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { hasStaffAccess } from '@/lib/staff-access'
 import { db } from '@/lib/db'
 import { sendBookingConfirmation } from '@/lib/whatsapp'
-import { sendOwnerBookingConfirmedEmail } from '@/lib/emails/owner-booking-emails'
+import { sendOwnerBookingConfirmedEmail, sendOwnerBookingDeclinedEmail } from '@/lib/emails/owner-booking-emails'
+import { formatMadridDate } from '@/lib/dates'
 
 // GET /api/admin/bookings - Get all bookings
 export async function GET() {
@@ -131,7 +132,7 @@ export async function PATCH(request: NextRequest) {
 
     // If accepted, send confirmation to owner via WhatsApp
     if (action === 'accept' && booking.owner.user.phone) {
-      const formattedDate = new Date(booking.date).toLocaleDateString('en-GB', {
+      const formattedDate = formatMadridDate(booking.date, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -151,7 +152,7 @@ export async function PATCH(request: NextRequest) {
     // Email notification to owner (additive to WhatsApp above — reliable
     // fallback while the WABA is offline)
     if (action === 'accept' && booking.owner.user.email) {
-      const formattedDate = new Date(booking.date).toLocaleDateString('en-GB', {
+      const formattedDate = formatMadridDate(booking.date, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -167,7 +168,32 @@ export async function PATCH(request: NextRequest) {
         time: booking.time,
         address: booking.property.address,
         preferredLanguage: booking.owner.user.preferredLanguage,
+        startAt: booking.date,
+        hours: booking.hours,
       }).catch((err) => console.error('Failed to send owner booking-confirmed email:', err))
+    }
+
+    // If declined, email the owner too - mirrors the accept path above.
+    // This used to be the only booking-status-change action with no email
+    // at all (the auto-decline-after-6h path already emailed via
+    // sendOwnerBookingDeclinedEmail in booking-notifications.ts; manual
+    // admin decline did not).
+    if (action === 'decline' && booking.owner.user.email) {
+      const formattedDate = formatMadridDate(booking.date, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+
+      sendOwnerBookingDeclinedEmail({
+        to: booking.owner.user.email,
+        ownerName: booking.owner.user.name || 'there',
+        cleanerName: booking.cleaner.user.name || 'Your cleaner',
+        date: formattedDate,
+        reason: 'declined',
+        preferredLanguage: booking.owner.user.preferredLanguage,
+      }).catch((err) => console.error('Failed to send owner booking-declined email:', err))
     }
 
     return NextResponse.json({

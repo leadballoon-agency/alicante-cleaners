@@ -16,6 +16,7 @@ import { getOpenAI } from '@/lib/ai/agents'
 import Anthropic from '@anthropic-ai/sdk'
 import type { ChatCompletionTool } from 'openai/resources/chat/completions'
 import { createBookingCore, BookingCreationError } from '@/lib/bookings/create-booking'
+import { getMadridDateKey, formatMadridDate } from '@/lib/dates'
 
 // Easter egg: Alan & Amanda can be summoned!
 let anthropic: Anthropic | null = null
@@ -321,14 +322,17 @@ export async function POST(request: Request) {
       select: { date: true },
     })
 
-    const busyDates = bookings.map(b => b.date.toISOString().split('T')[0])
+    // Madrid calendar-day keys — bookings are physical events in Spain, so
+    // "which day is this" must be read in Europe/Madrid, never derived via
+    // toISOString() (that reads the UTC day, which can be off by one).
+    const busyDates = bookings.map(b => getMadridDateKey(b.date))
 
     // Find next available dates
     const availableDates: string[] = []
     for (let i = 1; i <= 14 && availableDates.length < 5; i++) {
       const date = new Date(today)
       date.setDate(today.getDate() + i)
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = getMadridDateKey(date)
       if (!busyDates.includes(dateStr)) {
         availableDates.push(dateStr)
       }
@@ -413,7 +417,7 @@ If someone says they're "just testing", "trying out the chat", "seeing how this 
       const propertyList = ownerProfile.properties
         .map(p => `- propertyId: ${p.id} | "${p.name}" (${p.bedrooms} bed, ${p.bathrooms} bath) - ${p.address}`)
         .join('\n')
-      const todayStr = today.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      const todayStr = formatMadridDate(today, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
       returningOwnerSystemPrompt = `You are the AI assistant for ${cleaner.user.name}, a professional villa cleaner in Alicante, Spain.
 
@@ -604,11 +608,18 @@ NOTE: This visitor is already logged in as ${sessionUser.name || 'a VillaCare me
               throw new BookingCreationError('Invalid time format.', 400)
             }
 
-            const parsedDate = new Date(args.date)
-            const startOfToday = new Date()
-            startOfToday.setHours(0, 0, 0, 0)
-            if (isNaN(parsedDate.getTime()) || parsedDate < startOfToday) {
-              throw new BookingCreationError('That date is invalid or in the past - please pick a future date.', 400)
+            // Compare as plain YYYY-MM-DD calendar-day keys in Europe/Madrid
+            // - never `new Date(args.date) < new Date()`, which compares
+            // instants in whatever timezone the server process happens to
+            // run in (UTC on Vercel) and can reject/accept the wrong day
+            // near midnight in Spain (the same class of bug PR #25 fixed
+            // for the booking date itself).
+            if (typeof args.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(args.date)) {
+              throw new BookingCreationError('That date is invalid - please pick a future date.', 400)
+            }
+            const todayKey = getMadridDateKey(new Date())
+            if (args.date < todayKey) {
+              throw new BookingCreationError('That date is in the past - please pick a future date.', 400)
             }
 
             const { booking } = await createBookingCore({
@@ -638,7 +649,7 @@ NOTE: This visitor is already logged in as ${sessionUser.name || 'a VillaCare me
               { role: 'assistant' as const, content: assistantMessage.content || '' },
               {
                 role: 'user' as const,
-                content: `[System: Booking created successfully! Service: ${booking.service}, Property: ${booking.property.name}, Date: ${new Date(booking.date).toLocaleDateString()}, Time: ${booking.time}, Price: €${booking.price}. Tell them their booking request has been sent to ${cleaner.user.name} and they'll get a confirmation once it's accepted - no need to do anything else.]`,
+                content: `[System: Booking created successfully! Service: ${booking.service}, Property: ${booking.property.name}, Date: ${formatMadridDate(booking.date)}, Time: ${booking.time}, Price: €${booking.price}. Tell them their booking request has been sent to ${cleaner.user.name} and they'll get a confirmation once it's accepted - no need to do anything else.]`,
               },
             ]
 

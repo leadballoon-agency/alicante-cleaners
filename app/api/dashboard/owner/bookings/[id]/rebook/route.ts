@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { addDaysMadrid } from '@/lib/dates'
+import { onBookingCreated } from '@/lib/notifications/booking-notifications'
 
 // POST - Create a new booking based on an existing one (1-click rebook)
 export async function POST(
@@ -19,6 +21,7 @@ export async function POST(
     // Get the owner
     const owner = await db.owner.findFirst({
       where: { user: { email: session.user.email } },
+      include: { user: { select: { name: true } } },
     })
 
     if (!owner) {
@@ -53,16 +56,16 @@ export async function POST(
       )
     }
 
-    // Calculate next available date (same day next week by default)
-    const originalDate = new Date(originalBooking.date)
-    const nextDate = new Date(originalDate)
-    nextDate.setDate(nextDate.getDate() + 7)
+    // Calculate next available date (same day next week by default).
+    // Shift by a Madrid calendar week rather than a raw 7*24h offset so the
+    // booking keeps the same Madrid wall-clock time across any DST change.
+    let nextDate = addDaysMadrid(originalBooking.date, 7)
 
     // If that date is in the past, use today + 7 days
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     if (nextDate < today) {
-      nextDate.setTime(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+      nextDate = addDaysMadrid(today, 7)
     }
 
     // Generate a short code for WhatsApp commands
@@ -96,6 +99,21 @@ export async function POST(
     })
 
     // TODO: Send WhatsApp notification to cleaner about new booking request
+
+    // Rebooked bookings start PENDING just like any other booking - the
+    // cleaner still has to confirm, so arm the same 1h/2h/6h reminder chain
+    // (this path used to leave it unarmed - a rebooked job could sit
+    // unconfirmed forever with no reminder or escalation).
+    onBookingCreated({
+      id: newBooking.id,
+      cleanerId: newBooking.cleanerId,
+      ownerName: owner.user.name || 'Villa Owner',
+      propertyName: newBooking.property.name,
+      service: newBooking.service,
+      date: newBooking.date,
+      time: newBooking.time,
+      price: Number(newBooking.price),
+    }).catch((err) => console.error('Failed to arm booking reminder chain (rebook):', err))
 
     return NextResponse.json({
       success: true,

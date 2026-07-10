@@ -13,6 +13,7 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { BookingEventType } from '@prisma/client'
 import { sendCompletionEmail } from '@/lib/email'
+import { formatMadridDate } from '@/lib/dates'
 
 export async function POST(
   request: Request,
@@ -130,7 +131,7 @@ export async function POST(
         propertyName,
         propertyAddress: booking.property.address,
         service: booking.service,
-        date: booking.date.toLocaleDateString('en-GB', {
+        date: formatMadridDate(booking.date, {
           weekday: 'long',
           day: 'numeric',
           month: 'long'

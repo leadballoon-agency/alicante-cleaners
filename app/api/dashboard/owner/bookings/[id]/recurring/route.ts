@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { RecurringFrequency, RecurringStatus } from '@prisma/client'
+import { addDaysMadrid, addMonthsMadrid } from '@/lib/dates'
+import { onBookingCreated } from '@/lib/notifications/booking-notifications'
 
 // POST - Make a booking recurring (creates future instances)
 export async function POST(
@@ -32,6 +34,7 @@ export async function POST(
     // Get the owner
     const owner = await db.owner.findFirst({
       where: { user: { email: session.user.email } },
+      include: { user: { select: { name: true } } },
     })
 
     if (!owner) {
@@ -114,6 +117,24 @@ export async function POST(
         })
       })
     )
+
+    // Each future instance is created PENDING (the cleaner still has to
+    // confirm every occurrence), so arm the 1h/2h/6h reminder chain for all
+    // of them - this path used to leave them unarmed. The original booking
+    // being made recurring is already CONFIRMED/COMPLETED (checked above),
+    // so it does not need a tracker.
+    for (const created of createdBookings) {
+      onBookingCreated({
+        id: created.id,
+        cleanerId: created.cleanerId,
+        ownerName: owner.user.name || 'Villa Owner',
+        propertyName: booking.property.name,
+        service: created.service,
+        date: created.date,
+        time: created.time,
+        price: Number(created.price),
+      }).catch((err) => console.error('Failed to arm booking reminder chain (recurring):', err))
+    }
 
     return NextResponse.json({
       success: true,
@@ -302,31 +323,30 @@ export async function DELETE(
   }
 }
 
-// Helper function to calculate future dates
+// Helper function to calculate future dates. Shifts by whole Europe/Madrid
+// calendar days/months while preserving the original Madrid wall-clock time
+// (see lib/dates.ts) — NOT `date.setDate(date.getDate() + n)`, which shifts
+// by 24h wall-clock in whatever timezone the process happens to run in
+// (UTC on Vercel) and can drift the local Madrid time across DST changes.
 function calculateFutureDates(
   startDate: Date,
   frequency: string,
   count: number
 ): Date[] {
   const dates: Date[] = []
-  const baseDate = new Date(startDate)
 
   for (let i = 1; i <= count; i++) {
-    const nextDate = new Date(baseDate)
-
     switch (frequency) {
       case 'WEEKLY':
-        nextDate.setDate(baseDate.getDate() + i * 7)
+        dates.push(addDaysMadrid(startDate, i * 7))
         break
       case 'FORTNIGHTLY':
-        nextDate.setDate(baseDate.getDate() + i * 14)
+        dates.push(addDaysMadrid(startDate, i * 14))
         break
       case 'MONTHLY':
-        nextDate.setMonth(baseDate.getMonth() + i)
+        dates.push(addMonthsMadrid(startDate, i))
         break
     }
-
-    dates.push(nextDate)
   }
 
   return dates

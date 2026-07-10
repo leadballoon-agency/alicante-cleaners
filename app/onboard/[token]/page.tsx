@@ -3,6 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { formatMadridDate } from '@/lib/dates'
 
 type OnboardingData = {
   id: string
@@ -132,7 +133,7 @@ export default function OnboardingPage() {
     )
   }
 
-  const formattedDate = new Date(data.preferredDate).toLocaleDateString('en-US', {
+  const formattedDate = formatMadridDate(data.preferredDate, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',

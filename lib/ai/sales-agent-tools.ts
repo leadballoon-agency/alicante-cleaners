@@ -12,6 +12,7 @@
 import { db } from '@/lib/db'
 import { ChatCompletionTool } from 'openai/resources/chat/completions'
 import type { SalesAgentContext } from './sales-agent'
+import { combineMadridDateTime } from '@/lib/dates'
 
 /**
  * Tool definitions for OpenAI function calling
@@ -292,8 +293,11 @@ async function createBooking(
     }
   }
 
-  // Verify availability one more time
-  const bookingDate = new Date(params.date)
+  // Verify availability one more time. `params.date`/`params.time` are the
+  // plain "YYYY-MM-DD"/"HH:MM" strings the AI tool call captured — combine
+  // them as Europe/Madrid wall-clock time (see lib/dates.ts) to get the
+  // canonical UTC instant, the same convention used by the booking API.
+  const bookingDate = combineMadridDateTime(params.date, params.time)
   const existingBooking = await db.booking.findFirst({
     where: {
       cleanerId: context.cleanerId,
