@@ -2,21 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { notifyCleanerNewBooking, sendBookingConfirmation } from '@/lib/whatsapp'
-import { notifyAdminNewBooking } from '@/lib/email'
-import { sendOwnerBookingReceivedEmail } from '@/lib/emails/owner-booking-emails'
 import { checkRateLimit, getClientIdentifier, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
-import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
-import { linkChatConversations } from '@/lib/nurturing/link-conversations'
-import { combineMadridDateTime, formatMadridDate } from '@/lib/dates'
+import { createBookingCore, resolveServicePrice, BookingCreationError, SERVICE_DEFINITIONS } from '@/lib/bookings/create-booking'
 import { z } from 'zod'
-
-// Service definitions with hours - server is source of truth
-const SERVICE_DEFINITIONS: Record<string, { hours: number; name: string }> = {
-  'Regular Clean': { hours: 3, name: 'Regular Clean' },
-  'Deep Clean': { hours: 5, name: 'Deep Clean' },
-  'Arrival Prep': { hours: 4, name: 'Arrival Prep' },
-}
 
 // Zod schema for booking validation
 const bookingSchema = z.object({
@@ -27,35 +15,15 @@ const bookingSchema = z.object({
   serviceType: z.string().min(1).max(100), // Service type only - price calculated server-side
   // Plain calendar day + time as picked by the user, with no timezone
   // attached — the server combines these into the canonical UTC instant
-  // (see combineMadridDateTime in lib/dates.ts). Never accept a
-  // client-constructed Date/ISO string here; that's what caused the
-  // Monday/Tuesday date-shift bug.
+  // (see combineMadridDateTime in lib/dates.ts, invoked inside
+  // createBookingCore). Never accept a client-constructed Date/ISO string
+  // here; that's what caused the Monday/Tuesday date-shift bug.
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date (expected YYYY-MM-DD)'),
   time: z.string().regex(/^\d{1,2}:\d{2}$/, 'Invalid time format (HH:MM)'),
   guestPhone: z.string().max(20).optional().nullable(),
   guestEmail: z.string().email().max(255).optional().nullable(),
   guestName: z.string().max(100).optional().nullable(),
 })
-
-// Generate a unique 4-digit short code for WhatsApp reference
-async function generateShortCode(): Promise<string> {
-  const maxAttempts = 10
-  for (let i = 0; i < maxAttempts; i++) {
-    // Generate 4-digit code (1000-9999)
-    const code = Math.floor(1000 + Math.random() * 9000).toString()
-
-    // Check if already exists
-    const existing = await db.booking.findFirst({
-      where: { shortCode: code },
-    })
-
-    if (!existing) {
-      return code
-    }
-  }
-  // Fallback to longer code if all attempts fail
-  return Math.floor(100000 + Math.random() * 900000).toString()
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -109,33 +77,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Server-side pricing authority - calculate from cleaner's hourly rate
-    const serviceDef = SERVICE_DEFINITIONS[serviceType]
-    if (!serviceDef) {
+    // Server-side pricing authority - calculate from cleaner's hourly rate.
+    // Validate up front (before any owner/property writes) same as before the refactor.
+    try {
+      resolveServicePrice(cleaner.hourlyRate, serviceType)
+    } catch {
       return NextResponse.json(
         { error: 'Invalid service type', validTypes: Object.keys(SERVICE_DEFINITIONS) },
         { status: 400 }
       )
     }
 
-    const hours = serviceDef.hours
-    const price = Number(cleaner.hourlyRate) * hours
-
     // Check if user is logged in
     const session = await getServerSession(authOptions)
 
-    // Use transaction for atomic creation
-    const result = await db.$transaction(async (tx) => {
-      // Re-check cleaner is still ACTIVE inside transaction (race condition guard)
-      const freshCleaner = await tx.cleaner.findUnique({
-        where: { id: cleaner.id },
-        select: { status: true },
-      })
-
-      if (!freshCleaner || freshCleaner.status !== 'ACTIVE') {
-        throw new Error('Cleaner is no longer available')
-      }
-
+    // Resolve WHO the booking is for: find-or-create the Owner + Property.
+    // This is the only part that differs between callers of createBookingCore
+    // (guest vs. session), so it stays here rather than in the shared core.
+    const resolved = await db.$transaction(async (tx) => {
       let ownerId: string
       let propertyId: string
       let nurturingInfo: { ownerId: string; userId: string; email: string | null; phone: string | null } | null = null
@@ -234,166 +193,46 @@ export async function POST(request: NextRequest) {
         propertyId = property.id
       }
 
-      // Generate unique short code for WhatsApp reference
-      const shortCode = await generateShortCode()
-
-      // Create the booking
-      const booking = await tx.booking.create({
-        data: {
-          cleanerId: cleaner.id,
-          ownerId,
-          propertyId,
-          service: serviceType,
-          price, // Server-calculated price
-          hours, // Server-defined hours
-          shortCode, // For WhatsApp reference
-          // Canonical instant: the UTC moment this date+time represents in
-          // Europe/Madrid (constructed server-side — see lib/dates.ts).
-          date: combineMadridDateTime(date, time),
-          time,
-          notes: specialInstructions || null,
-          status: 'PENDING',
-        },
-        include: {
-          property: true,
-        },
-      })
-
-      // Get owner for notifications
-      const owner = await tx.owner.findUnique({
-        where: { id: ownerId },
-        include: { user: { select: { name: true, phone: true, email: true, preferredLanguage: true } } },
-      })
-
-      return { booking, owner, ownerId, nurturingInfo }
+      return { ownerId, propertyId, nurturingInfo }
     })
 
-    const { booking, owner, nurturingInfo } = result
+    const { ownerId, propertyId, nurturingInfo } = resolved
 
-    // Format date for notifications (always in Europe/Madrid — bookings are
-    // physical events in Spain regardless of where the owner/server is)
-    const formattedDate = formatMadridDate(booking.date, {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
-
-    // Send WhatsApp notification to cleaner (outside transaction)
-    const cleanerPhone = cleaner.user.phone
-    if (cleanerPhone) {
-      notifyCleanerNewBooking(cleanerPhone, {
-        ownerName: owner?.user.name || guestName || 'Villa Owner',
-        date: formattedDate,
-        time,
-        address: propertyAddress,
-        service: serviceType,
-        price: `€${price}`,
-        shortCode: booking.shortCode || undefined,
-      }).catch((err) => console.error('Failed to notify cleaner:', err))
-    }
-
-    // Send WhatsApp confirmation to owner (if they have a phone)
-    const ownerPhone = guestPhone || (session?.user as { phone?: string })?.phone
-    if (ownerPhone) {
-      sendBookingConfirmation(ownerPhone, {
-        cleanerName: cleaner.user.name || 'Your cleaner',
-        date: formattedDate,
-        time,
-        address: propertyAddress,
-        service: serviceType,
-        price: `€${price}`,
-      }).catch((err) => console.error('Failed to confirm to owner:', err))
-    }
-
-    // Send booking-received email to owner (additive to WhatsApp above —
-    // reliable fallback while the WABA is offline). Guest bookings always
-    // have an email (required by the schema below); logged-in owners use
-    // their canonical db email.
-    const recipientEmail = owner?.user.email || guestEmail || session?.user?.email
-    if (recipientEmail) {
-      sendOwnerBookingReceivedEmail({
-        to: recipientEmail,
-        ownerName: owner?.user.name || guestName || 'there',
-        cleanerName: cleaner.user.name || 'your cleaner',
-        service: serviceType,
-        date: formattedDate,
-        time,
-        address: propertyAddress,
-        price: `€${price}`,
-        preferredLanguage: owner?.user.preferredLanguage,
-      }).catch((err) => console.error('Failed to send owner booking-received email:', err))
-    }
-
-    // Send email notification to admins
-    notifyAdminNewBooking({
-      ownerName: owner?.user.name || guestName || 'Guest',
-      ownerEmail: guestEmail || session?.user?.email || 'Unknown',
-      cleanerName: cleaner.user.name || 'Cleaner',
-      service: serviceType,
-      date: formattedDate,
+    // Create the booking + fire the full notification chain (shared with the
+    // session-aware AI assistant's create_booking tool - see
+    // lib/bookings/create-booking.ts). `date`/`time` are passed through as
+    // the raw YYYY-MM-DD / HH:MM strings the visitor picked; the core
+    // combines them into the canonical Europe/Madrid UTC instant.
+    const { booking } = await createBookingCore({
+      cleaner,
+      ownerId,
+      propertyId,
+      propertyAddress,
+      serviceType,
+      date,
       time,
-      address: propertyAddress,
-      price: `€${price}`,
-      bookingId: booking.id,
-    }).catch((err) => console.error('Failed to notify admins:', err))
-
-    // Trigger welcome email for new owners
-    if (nurturingInfo) {
-      triggerWelcomeEmail(nurturingInfo.ownerId).catch(console.error)
-      linkChatConversations(nurturingInfo.userId, nurturingInfo.email, nurturingInfo.phone).catch(console.error)
-    }
-
-    // Track onboarding progress: mark first booking
-    const ownerData = await db.owner.findUnique({
-      where: { id: result.ownerId },
-      select: {
-        firstBookingAt: true,
-        profileCompletedAt: true,
-        firstPropertyAddedAt: true,
-      },
+      notes: specialInstructions,
+      nurturingInfo,
+      guestName,
+      guestEmail,
+      guestPhone,
+      sessionEmail: session?.user?.email,
     })
-
-    if (ownerData && !ownerData.firstBookingAt) {
-      const onboardingUpdates: { firstBookingAt: Date; onboardingCompletedAt?: Date } = {
-        firstBookingAt: new Date(),
-      }
-
-      // Check if all onboarding steps are now complete
-      if (ownerData.profileCompletedAt && ownerData.firstPropertyAddedAt) {
-        onboardingUpdates.onboardingCompletedAt = new Date()
-      }
-
-      await db.owner.update({
-        where: { id: result.ownerId },
-        data: onboardingUpdates,
-      })
-    }
 
     return NextResponse.json({
       success: true,
-      booking: {
-        id: booking.id,
-        shortCode: booking.shortCode,
-        status: booking.status,
-        service: booking.service,
-        price: Number(booking.price),
-        hours: booking.hours,
-        date: booking.date,
-        time: booking.time,
-        cleaner: {
-          name: cleaner.user.name,
-          phone: cleaner.user.phone,
-        },
-        property: {
-          name: booking.property.name,
-          address: booking.property.address,
-        },
-      },
+      booking,
       message: 'Booking created successfully. The cleaner will confirm shortly.',
     })
   } catch (error) {
     console.error('Error creating booking:', error)
+
+    if (error instanceof BookingCreationError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      )
+    }
 
     // Handle specific errors
     if (error instanceof Error) {
@@ -401,12 +240,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: error.message },
           { status: 400 }
-        )
-      }
-      if (error.message === 'Cleaner is no longer available') {
-        return NextResponse.json(
-          { error: 'This cleaner is no longer available. Please try another cleaner.' },
-          { status: 409 }
         )
       }
     }
