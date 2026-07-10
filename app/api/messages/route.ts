@@ -9,6 +9,7 @@ import {
 } from '@/lib/translate'
 import { checkRateLimit, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
 import { notifyAdminNewMessage } from '@/lib/email'
+import { runSideEffects } from '@/lib/side-effects'
 import { z } from 'zod'
 
 // Zod schema for message validation
@@ -138,9 +139,20 @@ export async function POST(request: NextRequest) {
       data: { updatedAt: new Date() },
     })
 
-    // Trigger AI response for owner messages (async - don't block response)
+    // Trigger AI response for owner messages.
+    // INTENTIONAL EXCEPTION to the "await every side effect" rule used
+    // elsewhere in this codebase (see lib/side-effects.ts): this call
+    // triggers a *separate* serverless invocation that runs a full Claude
+    // completion (multi-second, not sub-second like the notification side
+    // effects fixed elsewhere). Awaiting it here would turn a fast
+    // message-send response into a multi-second wait for the owner, which
+    // defeats the purpose of the async design. This still has the same
+    // theoretical "may not complete before the function freezes" risk as
+    // every other floated promise in this codebase, but fixing it properly
+    // needs a queue/waitUntil-based dispatch rather than a blocking await -
+    // left as a known follow-up rather than papered over with a latency
+    // regression.
     if (role === 'OWNER') {
-      // Fire and forget - AI will respond asynchronously
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
       fetch(`${baseUrl}/api/ai/sales-agent/respond`, {
         method: 'POST',
@@ -154,17 +166,22 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Notify admins when cleaner sends a message (async - don't block response)
+    // Notify admins when cleaner sends a message — sub-second email/push,
+    // awaited before the response so it isn't dropped when this serverless
+    // function freezes on return.
     if (role === 'CLEANER') {
-      notifyAdminNewMessage({
-        cleanerName: conversation.cleaner.user.name || 'Cleaner',
-        cleanerSlug: conversation.cleaner.slug,
-        messageText: text,
-        conversationId,
-        adminId: conversation.adminId,
-      }).catch(err => {
-        console.error('Failed to send admin notification:', err)
-      })
+      await runSideEffects([
+        {
+          label: `notify-admin-new-message:${conversationId}`,
+          promise: notifyAdminNewMessage({
+            cleanerName: conversation.cleaner.user.name || 'Cleaner',
+            cleanerSlug: conversation.cleaner.slug,
+            messageText: text,
+            conversationId,
+            adminId: conversation.adminId,
+          }),
+        },
+      ])
     }
 
     return NextResponse.json({

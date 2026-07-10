@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { triggerPostReviewEmail } from '@/lib/nurturing/send-email'
+import { runSideEffects } from '@/lib/side-effects'
 
 // POST /api/dashboard/owner/bookings/[id]/review - Review cleaner (owner reviews cleaner)
 export async function POST(
@@ -114,7 +115,12 @@ export async function POST(
         where: { id: booking.cleanerId },
         select: { user: { select: { name: true } } },
       })
-      triggerPostReviewEmail(owner.id, cleaner?.user.name || 'your cleaner')
+      await runSideEffects([
+        {
+          label: `nurturing:trigger-post-review-email:${owner.id}`,
+          promise: triggerPostReviewEmail(owner.id, cleaner?.user.name || 'your cleaner'),
+        },
+      ])
     }
 
     return NextResponse.json({

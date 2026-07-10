@@ -5,6 +5,7 @@ import { hasStaffAccess } from '@/lib/staff-access'
 import { db } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
 import { triggerCleanerWelcomeEmail } from '@/lib/nurturing/send-email'
+import { runSideEffects } from '@/lib/side-effects'
 import { detectLanguage, translateText, type LanguageCode } from '@/lib/translate'
 
 type VettingFields = {
@@ -271,7 +272,12 @@ export async function PATCH(
 
     // Send welcome email when cleaner is approved (only if previously PENDING)
     if (action === 'approve' && cleaner.status === 'PENDING') {
-      triggerCleanerWelcomeEmail(cleaner.id).catch(console.error)
+      await runSideEffects([
+        {
+          label: `nurturing:trigger-cleaner-welcome-email:${cleaner.id}`,
+          promise: triggerCleanerWelcomeEmail(cleaner.id),
+        },
+      ])
     }
 
     return NextResponse.json({

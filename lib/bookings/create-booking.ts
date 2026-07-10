@@ -22,6 +22,7 @@ import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
 import { linkChatConversations } from '@/lib/nurturing/link-conversations'
 import { onBookingCreated } from '@/lib/notifications/booking-notifications'
 import { combineMadridDateTime, formatMadridDate } from '@/lib/dates'
+import { runSideEffects, type SideEffect } from '@/lib/side-effects'
 import type { Prisma } from '@prisma/client'
 
 // Service definitions with hours - server is source of truth for pricing
@@ -180,88 +181,121 @@ export async function createBookingCore(params: CreateBookingCoreParams): Promis
     year: 'numeric',
   })
 
+  // Every notification below is fired here and awaited together (via
+  // runSideEffects) before this function returns. On Vercel's serverless
+  // runtime, the calling route handler's response freezes execution the
+  // instant it's sent — any promise still in flight and not awaited
+  // somewhere up the call chain never completes. Since createBookingCore's
+  // callers immediately `return NextResponse.json(...)` after `await`ing
+  // this function, everything that must actually run has to be awaited
+  // in here.
+  const sideEffects: SideEffect[] = []
+
   // Send WhatsApp notification to cleaner (outside transaction)
   const cleanerPhone = params.cleaner.user.phone
   if (cleanerPhone) {
-    notifyCleanerNewBooking(cleanerPhone, {
-      ownerName: owner?.user.name || params.guestName || 'Villa Owner',
-      date: formattedDate,
-      time: params.time,
-      address: params.propertyAddress,
-      service: params.serviceType,
-      price: `€${price}`,
-      shortCode: booking.shortCode || undefined,
-    }).catch((err) => console.error('Failed to notify cleaner:', err))
+    sideEffects.push({
+      label: `whatsapp:notify-cleaner-new-booking:${booking.id}`,
+      promise: notifyCleanerNewBooking(cleanerPhone, {
+        ownerName: owner?.user.name || params.guestName || 'Villa Owner',
+        date: formattedDate,
+        time: params.time,
+        address: params.propertyAddress,
+        service: params.serviceType,
+        price: `€${price}`,
+        shortCode: booking.shortCode || undefined,
+      }),
+    })
   }
 
   // Send WhatsApp confirmation to owner (if they have a phone)
   const ownerPhone = params.guestPhone || owner?.user.phone
   if (ownerPhone) {
-    sendBookingConfirmation(ownerPhone, {
-      cleanerName: params.cleaner.user.name || 'Your cleaner',
-      date: formattedDate,
-      time: params.time,
-      address: params.propertyAddress,
-      service: params.serviceType,
-      price: `€${price}`,
-    }).catch((err) => console.error('Failed to confirm to owner:', err))
+    sideEffects.push({
+      label: `whatsapp:confirm-to-owner:${booking.id}`,
+      promise: sendBookingConfirmation(ownerPhone, {
+        cleanerName: params.cleaner.user.name || 'Your cleaner',
+        date: formattedDate,
+        time: params.time,
+        address: params.propertyAddress,
+        service: params.serviceType,
+        price: `€${price}`,
+      }),
+    })
   }
 
   // Send booking-received email to owner (additive to WhatsApp above —
   // reliable fallback while the WABA is offline).
   const recipientEmail = owner?.user.email || params.guestEmail || params.sessionEmail
   if (recipientEmail) {
-    sendOwnerBookingReceivedEmail({
-      to: recipientEmail,
-      ownerName: owner?.user.name || params.guestName || 'there',
-      cleanerName: params.cleaner.user.name || 'your cleaner',
+    sideEffects.push({
+      label: `email:owner-booking-received:${booking.id}`,
+      promise: sendOwnerBookingReceivedEmail({
+        to: recipientEmail,
+        ownerName: owner?.user.name || params.guestName || 'there',
+        cleanerName: params.cleaner.user.name || 'your cleaner',
+        service: params.serviceType,
+        date: formattedDate,
+        time: params.time,
+        address: params.propertyAddress,
+        price: `€${price}`,
+        preferredLanguage: owner?.user.preferredLanguage,
+      }),
+    })
+  }
+
+  // Send email notification to admins
+  sideEffects.push({
+    label: `email:notify-admin-new-booking:${booking.id}`,
+    promise: notifyAdminNewBooking({
+      ownerName: owner?.user.name || params.guestName || 'Guest',
+      ownerEmail: params.guestEmail || params.sessionEmail || 'Unknown',
+      cleanerName: params.cleaner.user.name || 'Cleaner',
       service: params.serviceType,
       date: formattedDate,
       time: params.time,
       address: params.propertyAddress,
       price: `€${price}`,
-      preferredLanguage: owner?.user.preferredLanguage,
-    }).catch((err) => console.error('Failed to send owner booking-received email:', err))
-  }
-
-  // Send email notification to admins
-  notifyAdminNewBooking({
-    ownerName: owner?.user.name || params.guestName || 'Guest',
-    ownerEmail: params.guestEmail || params.sessionEmail || 'Unknown',
-    cleanerName: params.cleaner.user.name || 'Cleaner',
-    service: params.serviceType,
-    date: formattedDate,
-    time: params.time,
-    address: params.propertyAddress,
-    price: `€${price}`,
-    bookingId: booking.id,
-  }).catch((err) => console.error('Failed to notify admins:', err))
+      bookingId: booking.id,
+    }),
+  })
 
   // Arm the reminder/escalation chain: creates the BookingResponseTracker +
   // cleaner in-app notification so the 1h/2h/6h reminder-escalation cron
   // (lib/notifications/booking-notifications.ts) knows to chase this
   // PENDING booking. Every caller of createBookingCore creates a booking
   // that needs a cleaner response, so this always fires here.
-  onBookingCreated({
-    id: booking.id,
-    cleanerId: params.cleaner.id,
-    ownerName: owner?.user.name || params.guestName || 'Villa Owner',
-    propertyName: booking.property.name,
-    service: params.serviceType,
-    date: booking.date,
-    time: params.time,
-    price,
-  }).catch((err) => console.error('Failed to arm booking reminder chain:', err))
+  sideEffects.push({
+    label: `booking-reminder-chain:${booking.id}`,
+    promise: onBookingCreated({
+      id: booking.id,
+      cleanerId: params.cleaner.id,
+      ownerName: owner?.user.name || params.guestName || 'Villa Owner',
+      propertyName: booking.property.name,
+      service: params.serviceType,
+      date: booking.date,
+      time: params.time,
+      price,
+    }),
+  })
 
   // Trigger welcome email for new owners
   if (params.nurturingInfo) {
-    triggerWelcomeEmail(params.nurturingInfo.ownerId).catch(console.error)
-    linkChatConversations(
-      params.nurturingInfo.userId,
-      params.nurturingInfo.email,
-      params.nurturingInfo.phone
-    ).catch(console.error)
+    sideEffects.push({
+      label: `nurturing:trigger-welcome-email:${params.nurturingInfo.ownerId}`,
+      promise: triggerWelcomeEmail(params.nurturingInfo.ownerId),
+    })
+    sideEffects.push({
+      label: `nurturing:link-chat-conversations:${params.nurturingInfo.userId}`,
+      promise: linkChatConversations(
+        params.nurturingInfo.userId,
+        params.nurturingInfo.email,
+        params.nurturingInfo.phone
+      ),
+    })
   }
+
+  await runSideEffects(sideEffects)
 
   // Track onboarding progress: mark first booking
   const ownerData = await db.owner.findUnique({

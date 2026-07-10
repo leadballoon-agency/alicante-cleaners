@@ -9,6 +9,7 @@ import { db } from '@/lib/db'
 import { RecurringStatus } from '@prisma/client'
 import { addDaysMadrid, addMonthsMadrid } from '@/lib/dates'
 import { onBookingCreated } from '@/lib/notifications/booking-notifications'
+import { runSideEffects, type SideEffect } from '@/lib/side-effects'
 
 interface GenerationResult {
   seriesProcessed: number
@@ -30,6 +31,11 @@ export async function generateRecurringBookings(
     bookingsCreated: 0,
     errors: [],
   }
+
+  // Reminder-chain side effects for every materialized instance, collected
+  // and awaited together at the end so the caller (the daily cron route)
+  // doesn't return before they've completed.
+  const sideEffects: SideEffect[] = []
 
   try {
     // Find all unique active recurring series (by groupId)
@@ -118,16 +124,19 @@ export async function generateRecurringBookings(
           // everywhere else a booking is created - this cron used to leave
           // auto-generated recurring instances with no reminder/escalation
           // coverage at all.
-          onBookingCreated({
-            id: created.id,
-            cleanerId: created.cleanerId,
-            ownerName: parent.owner.user.name || 'Villa Owner',
-            propertyName: parent.property.name,
-            service: created.service,
-            date: created.date,
-            time: created.time,
-            price: Number(created.price),
-          }).catch((err) => console.error('Failed to arm booking reminder chain (recurring cron):', err))
+          sideEffects.push({
+            label: `booking-reminder-chain:recurring-cron:${created.id}`,
+            promise: onBookingCreated({
+              id: created.id,
+              cleanerId: created.cleanerId,
+              ownerName: parent.owner.user.name || 'Villa Owner',
+              propertyName: parent.property.name,
+              service: created.service,
+              date: created.date,
+              time: created.time,
+              price: Number(created.price),
+            }),
+          })
 
           result.bookingsCreated++
         }
@@ -142,6 +151,8 @@ export async function generateRecurringBookings(
   } catch (error) {
     result.errors.push(`Global error: ${String(error)}`)
   }
+
+  await runSideEffects(sideEffects)
 
   return result
 }

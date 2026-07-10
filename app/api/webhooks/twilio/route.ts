@@ -4,6 +4,7 @@ import { sendWhatsAppMessage } from '@/lib/whatsapp'
 import { notifyStaffBookingResponse } from '@/lib/notifications/booking-notifications'
 import { sendOwnerBookingConfirmedEmail, sendOwnerBookingDeclinedEmail } from '@/lib/emails/owner-booking-emails'
 import { formatMadridDate } from '@/lib/dates'
+import { runSideEffects, type SideEffect } from '@/lib/side-effects'
 import twilio from 'twilio'
 
 // Reconstruct the public URL that Twilio signed (Vercel serverless fix)
@@ -151,6 +152,11 @@ export async function POST(request: NextRequest) {
     const command = parts[0]
     const refCode = parts[1] || null
 
+    // Side effects (owner email, staff push) that must complete before this
+    // serverless function returns its response — collected here and awaited
+    // via runSideEffects() right before the final return.
+    const sideEffects: SideEffect[] = []
+
     // Handle ACCEPT or DECLINE commands
     if (command === 'ACCEPT' || command === 'YES' || command === 'SI' || command === 'SÍ') {
       // Find booking - by reference code if provided, otherwise most recent pending
@@ -261,26 +267,32 @@ export async function POST(request: NextRequest) {
       // Email notification to owner (additive to WhatsApp above — reliable
       // fallback while the WABA is offline)
       if (pendingBooking.owner.user.email) {
-        sendOwnerBookingConfirmedEmail({
-          to: pendingBooking.owner.user.email,
-          ownerName: pendingBooking.owner.user.name || 'there',
-          cleanerName: cleaner.user.name || 'Your cleaner',
-          service: pendingBooking.service,
-          date: formattedDate,
-          time: pendingBooking.time,
-          address: pendingBooking.property.address,
-          preferredLanguage: pendingBooking.owner.user.preferredLanguage,
-          startAt: pendingBooking.date,
-          hours: pendingBooking.hours,
-        }).catch((err) => console.error('Failed to send owner booking-confirmed email:', err))
+        sideEffects.push({
+          label: `email:owner-booking-confirmed:${pendingBooking.id}`,
+          promise: sendOwnerBookingConfirmedEmail({
+            to: pendingBooking.owner.user.email,
+            ownerName: pendingBooking.owner.user.name || 'there',
+            cleanerName: cleaner.user.name || 'Your cleaner',
+            service: pendingBooking.service,
+            date: formattedDate,
+            time: pendingBooking.time,
+            address: pendingBooking.property.address,
+            preferredLanguage: pendingBooking.owner.user.preferredLanguage,
+            startAt: pendingBooking.date,
+            hours: pendingBooking.hours,
+          }),
+        })
       }
 
       // Notify staff (web push)
-      notifyStaffBookingResponse({
-        bookingId: pendingBooking.id,
-        cleanerName: cleaner.user.name || 'A cleaner',
-        ownerName: pendingBooking.owner.user.name || 'the owner',
-        action: 'accepted',
+      sideEffects.push({
+        label: `push:staff-booking-response:${pendingBooking.id}`,
+        promise: notifyStaffBookingResponse({
+          bookingId: pendingBooking.id,
+          cleanerName: cleaner.user.name || 'A cleaner',
+          ownerName: pendingBooking.owner.user.name || 'the owner',
+          action: 'accepted',
+        }),
       })
 
     } else if (command === 'DECLINE' || command === 'NO') {
@@ -389,22 +401,28 @@ export async function POST(request: NextRequest) {
       // Email notification to owner (additive to WhatsApp above — reliable
       // fallback while the WABA is offline)
       if (pendingBooking.owner.user.email) {
-        sendOwnerBookingDeclinedEmail({
-          to: pendingBooking.owner.user.email,
-          ownerName: pendingBooking.owner.user.name || 'there',
-          cleanerName: cleaner.user.name || 'Your cleaner',
-          date: formattedDate,
-          reason: 'declined',
-          preferredLanguage: pendingBooking.owner.user.preferredLanguage,
-        }).catch((err) => console.error('Failed to send owner booking-declined email:', err))
+        sideEffects.push({
+          label: `email:owner-booking-declined:${pendingBooking.id}`,
+          promise: sendOwnerBookingDeclinedEmail({
+            to: pendingBooking.owner.user.email,
+            ownerName: pendingBooking.owner.user.name || 'there',
+            cleanerName: cleaner.user.name || 'Your cleaner',
+            date: formattedDate,
+            reason: 'declined',
+            preferredLanguage: pendingBooking.owner.user.preferredLanguage,
+          }),
+        })
       }
 
       // Notify staff (web push)
-      notifyStaffBookingResponse({
-        bookingId: pendingBooking.id,
-        cleanerName: cleaner.user.name || 'A cleaner',
-        ownerName: pendingBooking.owner.user.name || 'the owner',
-        action: 'declined',
+      sideEffects.push({
+        label: `push:staff-booking-response:${pendingBooking.id}`,
+        promise: notifyStaffBookingResponse({
+          bookingId: pendingBooking.id,
+          cleanerName: cleaner.user.name || 'A cleaner',
+          ownerName: pendingBooking.owner.user.name || 'the owner',
+          action: 'declined',
+        }),
       })
 
     } else if (command === 'HELP' || command === 'AYUDA') {
@@ -416,6 +434,10 @@ export async function POST(request: NextRequest) {
       // Unknown command - could forward to support or just acknowledge
       console.log(`Unknown command from ${phone}: ${body}`)
     }
+
+    // Ensure owner email + staff push side effects complete before this
+    // serverless function freezes on response.
+    await runSideEffects(sideEffects)
 
     // Always return 200 to acknowledge receipt
     return new NextResponse('OK', { status: 200 })
