@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { formatMadridDate } from '@/lib/dates'
+import { pushDataLayerEvent } from '@/lib/analytics/datalayer'
 
 type BookingSummary = {
   service: string
@@ -97,6 +98,11 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
   const handleSend = async () => {
     if (!input.trim() || sending) return
 
+    // Whether this is the very first message the visitor has sent in this
+    // widget session (welcome message is assistant-authored, so no prior
+    // 'user' message means this is it).
+    const isFirstUserMessage = !messages.some(m => m.role === 'user')
+
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -108,6 +114,10 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
     setInput('')
     setSending(true)
     setHasInteracted(true)
+
+    if (isFirstUserMessage) {
+      pushDataLayerEvent('chat_started', { cleaner_slug: cleaner.slug })
+    }
 
     try {
       // Use different API endpoint for applicants vs regular visitors
@@ -146,6 +156,20 @@ export function PublicChatWidget({ cleaner }: PublicChatWidgetProps) {
       }
 
       setMessages(prev => [...prev, assistantMessage])
+
+      if (data.bookingCreated && data.booking) {
+        pushDataLayerEvent('booking_created', {
+          service: data.booking.service,
+          value: data.booking.price,
+          currency: 'EUR',
+          cleaner_slug: cleaner.slug,
+          source: 'ai_assistant',
+        })
+      }
+
+      if (data.magicLinkCreated) {
+        pushDataLayerEvent('magic_link_created', { cleaner_slug: cleaner.slug })
+      }
     } catch (error) {
       console.error('Chat error:', error)
       const errorMessage: Message = {
