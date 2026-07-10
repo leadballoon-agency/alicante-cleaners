@@ -24,12 +24,23 @@ export type TrustStats = {
   totalReviews: number
 }
 
+// Real, admin-approved reviews only (see app/owners/page.tsx). Never a
+// fabricated fallback — if this is empty, the reviews section is hidden.
+export type OwnerReview = {
+  id: string
+  rating: number
+  text: string
+  authorName: string
+  location: string
+}
+
 type Lang = 'en' | 'es'
 
 type Props = {
   cleaners: CleanerCard[]
   stats: TrustStats
   areas: string[]
+  reviews: OwnerReview[]
 }
 
 const translations = {
@@ -40,8 +51,8 @@ const translations = {
       titlePre: "Come home to a villa that's been",
       titleEm: 'loved while you were away.',
       sub: 'Vetted, reviewed local cleaners who treat your home like their own — booked in minutes, in any language.',
-      videoQuote: 'Why I stopped worrying about my villa.',
-      videoName: 'Sarah · Villa owner in Jávea, lives in Manchester',
+      videoQuote: 'The story of coming home to a cared-for villa.',
+      videoName: 'A real VillaCare story',
       ctaFind: 'Find your cleaner →',
       ctaHow: 'See how it works',
       trustMicro: 'Real reviews from real owners · No platform fees',
@@ -111,8 +122,9 @@ const translations = {
       sub: 'Not stock photos. Not actors. The owners and cleaners who make VillaCare.',
       cards: [
         {
-          name: 'Sarah · Remote owner',
-          quote: 'I sleep easy now — even 2,000km away.',
+          name: 'Mara · Cleaner',
+          quote:
+            "I came for a bit of extra income. VillaCare brought me steady bookings — and owners who trust me completely.",
         },
         {
           name: 'Mark & Kerry · Founders',
@@ -169,19 +181,6 @@ const translations = {
     reviews: {
       eyebrow: 'From owners like you',
       heading: 'Worth every star.',
-      items: [
-        {
-          quote:
-            "She left our villa spotless before our family arrived. I finally relax knowing it's handled.",
-          by: 'A remote owner',
-          location: 'Jávea',
-        },
-        {
-          quote: 'Punctual, thorough and so friendly. Booking on WhatsApp in English made it effortless.',
-          by: 'A resident owner',
-          location: 'San Juan',
-        },
-      ],
     },
     faq: {
       heading: 'Questions, answered.',
@@ -227,8 +226,8 @@ const translations = {
       titlePre: 'Vuelve a una villa que ha sido',
       titleEm: 'cuidada mientras no estabas.',
       sub: 'Limpiadores locales verificados y valorados que cuidan tu casa como si fuera suya — reserva en minutos, en cualquier idioma.',
-      videoQuote: 'Por qué dejé de preocuparme por mi villa.',
-      videoName: 'Sarah · Propietaria de villa en Jávea, vive en Manchester',
+      videoQuote: 'La historia de volver a una villa cuidada.',
+      videoName: 'Una historia real de VillaCare',
       ctaFind: 'Encuentra tu limpiador →',
       ctaHow: 'Ver cómo funciona',
       trustMicro: 'Reseñas reales de propietarios reales · Sin comisiones de plataforma',
@@ -298,8 +297,9 @@ const translations = {
       sub: 'No son fotos de stock. No son actores. Los propietarios y limpiadores que hacen VillaCare.',
       cards: [
         {
-          name: 'Sarah · Propietaria a distancia',
-          quote: 'Ahora duermo tranquila, incluso a 2.000 km de distancia.',
+          name: 'Mara · Limpiadora',
+          quote:
+            'Empecé buscando un ingreso extra. VillaCare me trajo reservas constantes — y propietarios que confían en mí por completo.',
         },
         {
           name: 'Mark y Kerry · Fundadores',
@@ -358,19 +358,6 @@ const translations = {
     reviews: {
       eyebrow: 'De propietarios como tú',
       heading: 'Vale cada estrella.',
-      items: [
-        {
-          quote:
-            'Dejó nuestra villa impecable antes de que llegara la familia. Por fin puedo relajarme sabiendo que está todo solucionado.',
-          by: 'Una propietaria a distancia',
-          location: 'Jávea',
-        },
-        {
-          quote: 'Puntual, minuciosa y muy amable. Reservar por WhatsApp en inglés lo hizo facilísimo.',
-          by: 'Una propietaria residente',
-          location: 'San Juan',
-        },
-      ],
     },
     faq: {
       heading: 'Preguntas resueltas.',
@@ -428,7 +415,12 @@ function formatAreasSentence(areas: string[], lang: Lang): string {
   return formatAreasSentenceBase(areas, lang === 'es' ? 'y' : 'and')
 }
 
-export function OwnersLandingClient({ cleaners, stats, areas }: Props) {
+function starString(rating: number): string {
+  const filled = Math.max(0, Math.min(5, Math.round(rating)))
+  return '★'.repeat(filled) + '☆'.repeat(5 - filled)
+}
+
+export function OwnersLandingClient({ cleaners, stats, areas, reviews }: Props) {
   const [lang, setLang] = useState<Lang>('en')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const t = translations[lang]
@@ -679,27 +671,29 @@ export function OwnersLandingClient({ cleaners, stats, areas }: Props) {
         </div>
       </section>
 
-      {/* REVIEWS */}
-      <section className="px-6 py-9 max-w-xl mx-auto">
-        <span className="block text-center text-xs font-bold tracking-[0.08em] uppercase text-[#C4785A]">
-          {t.reviews.eyebrow}
-        </span>
-        <h2 className="text-[22px] font-extrabold text-[#1A1A1A] text-center mt-2 mb-4">{t.reviews.heading}</h2>
-        <div className="space-y-3">
-          {t.reviews.items.map((review) => (
-            <div
-              key={review.by}
-              className="bg-white border border-[#EBEBEB] rounded-2xl p-4 shadow-[0_2px_14px_rgba(26,26,26,0.06)]"
-            >
-              <div className="text-[#C4785A] text-sm mb-2 tracking-widest">★★★★★</div>
-              <p className="text-[14.5px] italic text-[#1A1A1A] mb-2.5">&ldquo;{review.quote}&rdquo;</p>
-              <div className="text-[13px] font-bold text-[#1A1A1A]">
-                {review.by} <span className="text-[#9B9B9B] font-normal">· {review.location}</span>
+      {/* REVIEWS — real, admin-approved reviews only. Hidden entirely when none exist. */}
+      {reviews.length > 0 && (
+        <section className="px-6 py-9 max-w-xl mx-auto">
+          <span className="block text-center text-xs font-bold tracking-[0.08em] uppercase text-[#C4785A]">
+            {t.reviews.eyebrow}
+          </span>
+          <h2 className="text-[22px] font-extrabold text-[#1A1A1A] text-center mt-2 mb-4">{t.reviews.heading}</h2>
+          <div className="space-y-3">
+            {reviews.map((review) => (
+              <div
+                key={review.id}
+                className="bg-white border border-[#EBEBEB] rounded-2xl p-4 shadow-[0_2px_14px_rgba(26,26,26,0.06)]"
+              >
+                <div className="text-[#C4785A] text-sm mb-2 tracking-widest">{starString(review.rating)}</div>
+                <p className="text-[14.5px] italic text-[#1A1A1A] mb-2.5">&ldquo;{review.text}&rdquo;</p>
+                <div className="text-[13px] font-bold text-[#1A1A1A]">
+                  {review.authorName} <span className="text-[#9B9B9B] font-normal">· {review.location}</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* FAQ */}
       <section className="px-6 py-9 bg-[#F5F5F3]">
