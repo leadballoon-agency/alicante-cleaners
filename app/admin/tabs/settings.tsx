@@ -10,6 +10,7 @@ export type PlatformSettings = {
   googleAnalyticsId?: string | null
   ga4PropertyId?: string | null
   convertBoxScriptId?: string | null
+  approvalWhatsApp?: string | null
   customHeadScripts?: string | null
   customBodyScripts?: string | null
   updatedAt: Date
@@ -28,6 +29,7 @@ export default function SettingsTab({ settings, onUpdate }: Props) {
   const [googleAnalyticsId, setGoogleAnalyticsId] = useState('')
   const [ga4PropertyId, setGa4PropertyId] = useState('')
   const [convertBoxScriptId, setConvertBoxScriptId] = useState('')
+  const [approvalWhatsApp, setApprovalWhatsApp] = useState('')
   const [customHeadScripts, setCustomHeadScripts] = useState('')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -49,6 +51,7 @@ export default function SettingsTab({ settings, onUpdate }: Props) {
       setGoogleAnalyticsId(settings.googleAnalyticsId || '')
       setGa4PropertyId(settings.ga4PropertyId || '')
       setConvertBoxScriptId(settings.convertBoxScriptId || '')
+      setApprovalWhatsApp(settings.approvalWhatsApp || '')
       setCustomHeadScripts(settings.customHeadScripts || '')
     }
   }, [settings])
@@ -69,6 +72,7 @@ export default function SettingsTab({ settings, onUpdate }: Props) {
           googleAnalyticsId: googleAnalyticsId || null,
           ga4PropertyId: ga4PropertyId || null,
           convertBoxScriptId: convertBoxScriptId || null,
+          approvalWhatsApp: approvalWhatsApp || null,
           customHeadScripts: customHeadScripts || null,
         }),
       })
@@ -96,6 +100,7 @@ export default function SettingsTab({ settings, onUpdate }: Props) {
     googleAnalyticsId !== (settings.googleAnalyticsId || '') ||
     ga4PropertyId !== (settings.ga4PropertyId || '') ||
     convertBoxScriptId !== (settings.convertBoxScriptId || '') ||
+    approvalWhatsApp !== (settings.approvalWhatsApp || '') ||
     customHeadScripts !== (settings.customHeadScripts || '')
   ) : (
     // If no settings loaded yet, allow save if any field has a value
@@ -104,6 +109,7 @@ export default function SettingsTab({ settings, onUpdate }: Props) {
     googleAnalyticsId !== '' ||
     ga4PropertyId !== '' ||
     convertBoxScriptId !== '' ||
+    approvalWhatsApp !== '' ||
     customHeadScripts !== ''
   )
 
@@ -507,6 +513,31 @@ export default function SettingsTab({ settings, onUpdate }: Props) {
                   {testResult.message}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Cleaner Approval Requests */}
+          <div className="bg-white rounded-2xl p-6 border border-[#EBEBEB]">
+            <h3 className="font-semibold text-[#1A1A1A] mb-4">Cleaner Approval Requests</h3>
+            <p className="text-sm text-[#6B6B6B] mb-6">
+              When a PENDING cleaner finishes their profile, they see a button to send a WhatsApp
+              message requesting approval. Set the staff number (Spanish-speaking) that receives
+              these requests. This is a plain wa.me link - no Twilio template required.
+            </p>
+            <div>
+              <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                Approval Request WhatsApp Number
+              </label>
+              <input
+                type="tel"
+                value={approvalWhatsApp}
+                onChange={(e) => setApprovalWhatsApp(e.target.value)}
+                placeholder="+34612345678"
+                className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none"
+              />
+              <p className="text-xs text-[#9B9B9B] mt-2">
+                E.164 format with country code. Leave empty to hide the approval button on cleaner dashboards.
+              </p>
             </div>
           </div>
 

@@ -770,6 +770,7 @@ function AdminDashboardContent() {
             onEdit={handleEditCleaner}
             onMessage={handleMessageCleaner}
             onVouch={handleVouchCleaner}
+            initialSearch={searchFromUrl || undefined}
           />
         )}
         {activeTab === 'owners' && (

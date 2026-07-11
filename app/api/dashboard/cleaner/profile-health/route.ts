@@ -28,7 +28,11 @@ export async function GET() {
 
     const cleaner = await db.cleaner.findUnique({
       where: { userId: session.user.id },
-      select: { id: true },
+      select: {
+        id: true,
+        status: true,
+        user: { select: { name: true, phone: true } },
+      },
     })
 
     if (!cleaner) {
@@ -40,7 +44,18 @@ export async function GET() {
 
     const health = await getProfileHealth(cleaner.id)
 
-    return NextResponse.json({ health })
+    const settings = await db.platformSettings.findUnique({
+      where: { id: 'default' },
+      select: { approvalWhatsApp: true },
+    })
+
+    const approval = {
+      whatsApp: settings?.approvalWhatsApp || null,
+      cleanerName: cleaner.user.name || cleaner.user.phone || 'Cleaner',
+      status: cleaner.status,
+    }
+
+    return NextResponse.json({ health, approval })
   } catch (error) {
     console.error('Error fetching profile health:', error)
     return NextResponse.json(

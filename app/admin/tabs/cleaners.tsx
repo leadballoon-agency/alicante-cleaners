@@ -18,6 +18,10 @@ type Props = {
   onEdit: (id: string, data: { name?: string; phone?: string; email?: string }) => Promise<void>
   onMessage: (id: string) => void
   onVouch: (id: string, vettedNote: string) => Promise<void>
+  // Seeds the search box from a deep link, e.g. /admin?tab=cleaners&search=Maria
+  // (used by the cleaner-side "request approval" WhatsApp link so staff land
+  // on this tab with the right cleaner already filtered).
+  initialSearch?: string
 }
 
 type Filter = 'all' | 'active' | 'pending' | 'suspended'
@@ -71,9 +75,9 @@ function needsHealthNudge(health: { score: number; missing: string[] } | null | 
   return health.score < 90 || health.missing.length > 0
 }
 
-export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, onReactivate, onDelete, onToggleTeamLeader, onLoginAs, onEdit, onMessage, onVouch }: Props) {
+export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, onReactivate, onDelete, onToggleTeamLeader, onLoginAs, onEdit, onMessage, onVouch, initialSearch }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initialSearch || '')
   const [editing, setEditing] = useState<EditingCleaner>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null)
