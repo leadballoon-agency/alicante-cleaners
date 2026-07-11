@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { Fragment, useEffect, useState, useCallback } from 'react'
+import { formatMessageClock, formatDaySeparator, messageDayKey } from '@/lib/message-time'
 
 type Convo = {
   id: string
@@ -88,9 +89,27 @@ export default function MessagesTab({ initialConversationId }: { initialConversa
         <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-2.5">
           {!thread && <div className="text-center text-[#A89E95] text-sm py-8">Loading…</div>}
           {thread?.messages.length === 0 && <div className="text-center text-[#A89E95] text-sm py-8">No messages yet — say hello 👋</div>}
-          {thread?.messages.map((m) => (
-            <div key={m.id} className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-[14.5px] leading-snug ${m.mine ? 'self-end bg-[#C4785A] text-white rounded-br-md' : 'self-start bg-white border border-[#EFE8E1] text-[#1A1A1A] rounded-bl-md'}`}>{m.text}</div>
-          ))}
+          {thread?.messages.map((m, i) => {
+            const prev = thread.messages[i - 1]
+            const showDateSeparator = !prev || messageDayKey(m.at) !== messageDayKey(prev.at)
+            return (
+              <Fragment key={m.id}>
+                {showDateSeparator && (
+                  <div className="self-center my-1">
+                    <span className="text-[11px] text-[#A89E95] bg-[#FAF7F3] px-3 py-1 rounded-full">
+                      {formatDaySeparator(m.at, 'en')}
+                    </span>
+                  </div>
+                )}
+                <div className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-[14.5px] leading-snug ${m.mine ? 'self-end bg-[#C4785A] text-white rounded-br-md' : 'self-start bg-white border border-[#EFE8E1] text-[#1A1A1A] rounded-bl-md'}`}>
+                  <div>{m.text}</div>
+                  <div className={`text-[10px] mt-1 text-right ${m.mine ? 'text-white/60' : 'text-[#A89E95]'}`}>
+                    {formatMessageClock(m.at, 'en')}
+                  </div>
+                </div>
+              </Fragment>
+            )
+          })}
         </div>
         <div className="pt-2 border-t border-[#EFE8E1]">
           <div className="text-[11px] text-[#A89E95] mb-1.5">Write in your own language — it’s auto-translated for {thread?.cleaner.name || 'them'}.</div>

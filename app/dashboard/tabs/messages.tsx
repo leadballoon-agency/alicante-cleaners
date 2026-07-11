@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { formatMessageClock, formatDaySeparator, messageDayKey } from '@/lib/message-time'
 
 type Message = {
   id: string
@@ -453,13 +454,23 @@ export default function MessagesTab() {
             </p>
           </div>
         ) : (
-          messages.map((msg) => {
+          messages.map((msg, index) => {
             const isAdminMessage = msg.senderRole === 'ADMIN'
+            const prevMsg = messages[index - 1]
+            const showDateSeparator =
+              !prevMsg || messageDayKey(msg.createdAt) !== messageDayKey(prevMsg.createdAt)
             return (
-            <div
-              key={msg.id}
-              className={`flex ${msg.isMine ? 'justify-end' : 'justify-start'}`}
-            >
+            <React.Fragment key={msg.id}>
+              {showDateSeparator && (
+                <div className="flex justify-center py-1">
+                  <span className="text-[11px] text-[#9B9B9B] bg-[#F5F5F3] px-3 py-1 rounded-full">
+                    {formatDaySeparator(msg.createdAt, 'es')}
+                  </span>
+                </div>
+              )}
+              <div
+                className={`flex ${msg.isMine ? 'justify-end' : 'justify-start'}`}
+              >
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
                   msg.isMine
@@ -538,14 +549,15 @@ export default function MessagesTab() {
                 )}
 
                 <p
-                  className={`text-xs mt-1 ${
+                  className={`text-[10px] mt-1 text-right ${
                     msg.isMine ? 'text-white/60' : isAdminMessage ? 'text-[#C4785A]/60' : 'text-[#9B9B9B]'
                   }`}
                 >
-                  {formatTime(msg.createdAt)}
+                  {formatMessageClock(msg.createdAt, 'es')}
                 </p>
               </div>
-            </div>
+              </div>
+            </React.Fragment>
           )})
         )}
         <div ref={messagesEndRef} />
