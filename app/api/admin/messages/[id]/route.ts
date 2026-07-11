@@ -29,6 +29,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const messages = await db.message.findMany({
       where: { conversationId: id },
       orderBy: { createdAt: 'asc' },
+      include: { reactions: true },
     })
 
     // Mark the cleaner's messages as read now the manager is viewing
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         text: m.senderRole === 'CLEANER' ? (m.translatedText || m.originalText) : m.originalText,
         mine: m.senderRole !== 'CLEANER',
         at: m.createdAt,
+        reactions: m.reactions.map((r) => ({ emoji: r.emoji, mine: r.userId === me })),
       })),
     })
   } catch (error) {

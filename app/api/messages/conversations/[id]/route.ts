@@ -44,6 +44,7 @@ export async function GET(
         },
         messages: {
           orderBy: { createdAt: 'asc' },
+          include: { reactions: true },
         },
       },
     })
@@ -130,6 +131,10 @@ export async function GET(
         isRead: msg.isRead,
         isAIGenerated: msg.isAIGenerated,
         createdAt: msg.createdAt,
+        reactions: msg.reactions.map((r) => ({
+          emoji: r.emoji,
+          mine: r.userId === userId,
+        })),
       }
     })
 

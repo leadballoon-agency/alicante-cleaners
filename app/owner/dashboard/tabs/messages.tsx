@@ -3,6 +3,7 @@
 import { Fragment, useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { formatMessageClock, formatDaySeparator, messageDayKey } from '@/lib/message-time'
+import { REACTION_EMOJIS, groupReactions, type MessageReactionView } from '@/lib/message-reactions'
 
 type Message = {
   id: string
@@ -16,6 +17,9 @@ type Message = {
   isRead: boolean
   isAIGenerated?: boolean
   createdAt: string
+  // Optional: not every code path that builds a Message includes it
+  // (untyped res.json() shapes) — always default to [] before use.
+  reactions?: MessageReactionView[]
 }
 
 type Conversation = {
@@ -62,6 +66,7 @@ export default function MessagesTab() {
   const [sending, setSending] = useState(false)
   const [showOriginal, setShowOriginal] = useState<Record<string, boolean>>({})
   const [copied, setCopied] = useState<string | null>(null)
+  const [openReactionPicker, setOpenReactionPicker] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const copyToClipboard = async (text: string, messageId: string) => {
@@ -155,6 +160,41 @@ export default function MessagesTab() {
       ...prev,
       [messageId]: !prev[messageId],
     }))
+  }
+
+  const handleReact = async (messageId: string, emoji: (typeof REACTION_EMOJIS)[number]) => {
+    setOpenReactionPicker(null)
+    const target = messages.find((m) => m.id === messageId)
+    if (!target) return
+    // `reactions` may be missing on messages built by untyped code paths
+    // (e.g. res.json() shapes), so default defensively.
+    const mine = (target.reactions ?? []).find((r) => r.mine)
+    const removing = mine?.emoji === emoji
+    const nextEmoji = removing ? null : emoji
+
+    const prevMessages = messages
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId) return m
+        const others = (m.reactions ?? []).filter((r) => !r.mine)
+        return {
+          ...m,
+          reactions: nextEmoji ? [...others, { emoji: nextEmoji, mine: true }] : others,
+        }
+      })
+    )
+
+    try {
+      const res = await fetch(`/api/messages/${messageId}/reaction`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji: nextEmoji }),
+      })
+      if (!res.ok) throw new Error('Failed to update reaction')
+    } catch (error) {
+      console.error('Error updating reaction:', error)
+      setMessages(prevMessages)
+    }
   }
 
   const formatTime = (dateString: string) => {
@@ -307,7 +347,10 @@ export default function MessagesTab() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+      <div
+        className="flex-1 overflow-y-auto space-y-3 mb-4"
+        onClick={() => setOpenReactionPicker(null)}
+      >
         {messages.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-[#6B6B6B] text-sm">
@@ -319,6 +362,9 @@ export default function MessagesTab() {
             const prevMsg = messages[index - 1]
             const showDateSeparator =
               !prevMsg || messageDayKey(msg.createdAt) !== messageDayKey(prevMsg.createdAt)
+            // Defensive: messages appended from untyped res.json() paths may
+            // lack `reactions` — never crash the tab over a missing array.
+            const reactions = msg.reactions ?? []
             return (
             <Fragment key={msg.id}>
               {showDateSeparator && (
@@ -331,12 +377,18 @@ export default function MessagesTab() {
               <div
                 className={`flex ${msg.isMine ? 'justify-end' : 'justify-start'}`}
               >
+              <div className={`relative max-w-[80%] ${reactions.length > 0 ? 'mb-3' : ''}`}>
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                onClick={(e) => {
+                  if (msg.isMine) return
+                  e.stopPropagation()
+                  setOpenReactionPicker((prev) => (prev === msg.id ? null : msg.id))
+                }}
+                className={`rounded-2xl px-4 py-2.5 ${
                   msg.isMine
                     ? 'bg-[#C4785A] text-white rounded-br-md'
                     : 'bg-white border border-[#EBEBEB] text-[#1A1A1A] rounded-bl-md'
-                }`}
+                } ${!msg.isMine ? 'cursor-pointer active:scale-[0.99] transition-transform' : ''}`}
               >
                 {/* AI Badge for AI-generated messages */}
                 {!msg.isMine && msg.isAIGenerated && (
@@ -352,7 +404,10 @@ export default function MessagesTab() {
                 {/* Show translation toggle for received messages */}
                 {!msg.isMine && msg.translatedText && msg.originalText !== msg.translatedText && (
                   <button
-                    onClick={() => toggleShowOriginal(msg.id)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleShowOriginal(msg.id)
+                    }}
                     className="text-xs text-[#9B9B9B] hover:text-[#6B6B6B] mt-1 flex items-center gap-1"
                   >
                     <span>🌐</span>
@@ -365,7 +420,10 @@ export default function MessagesTab() {
                   <div className="text-xs text-[#9B9B9B] mt-2 pt-2 border-t border-[#EBEBEB]">
                     <p>Original ({LANGUAGE_NAMES[msg.originalLang] || msg.originalLang}): {msg.originalText}</p>
                     <button
-                      onClick={() => copyToClipboard(msg.originalText, `${msg.id}-orig`)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        copyToClipboard(msg.originalText, `${msg.id}-orig`)
+                      }}
                       className="text-[#C4785A] hover:text-[#A66048] mt-1 flex items-center gap-1"
                     >
                       {copied === `${msg.id}-orig` ? (
@@ -404,6 +462,43 @@ export default function MessagesTab() {
                 >
                   {formatMessageClock(msg.createdAt, 'en')}
                 </p>
+              </div>
+
+              {/* Reaction picker - incoming messages only, one open at a time */}
+              {openReactionPicker === msg.id && !msg.isMine && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute left-0 -bottom-9 flex items-center gap-0.5 bg-white border border-[#EBEBEB] rounded-full px-1.5 py-1 shadow-md z-20"
+                >
+                  {REACTION_EMOJIS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => handleReact(msg.id, emoji)}
+                      aria-label={`React with ${emoji}`}
+                      className="w-7 h-7 flex items-center justify-center text-base leading-none rounded-full active:scale-90 transition-transform"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Reaction chips - shown on any bubble that has reactions */}
+              {reactions.length > 0 && (
+                <div className={`absolute -bottom-3 flex gap-1 ${msg.isMine ? 'right-2' : 'left-2'}`}>
+                  {groupReactions(reactions).map(({ emoji, count, mine }) => (
+                    <span
+                      key={emoji}
+                      className={`inline-flex items-center gap-0.5 bg-white border rounded-full px-1.5 py-0.5 text-[11px] leading-none shadow-sm ${
+                        mine ? 'border-[#C4785A]' : 'border-[#EBEBEB]'
+                      }`}
+                    >
+                      <span>{emoji}</span>
+                      {count > 1 && <span className="text-[#6B6B6B]">{count}</span>}
+                    </span>
+                  ))}
+                </div>
+              )}
               </div>
               </div>
             </Fragment>

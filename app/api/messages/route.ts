@@ -200,6 +200,7 @@ export async function POST(request: NextRequest) {
         senderRole: message.senderRole,
         isRead: false,
         createdAt: message.createdAt,
+        reactions: [],
       },
     })
   } catch (error) {
