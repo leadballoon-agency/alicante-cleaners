@@ -10,7 +10,9 @@ type Convo = {
   lastMessage: { text: string; at: string; fromCleaner: boolean } | null
   unread: number
 }
-type ThreadMsg = { id: string; text: string; mine: boolean; at: string; reactions: MessageReactionView[] }
+// `reactions` optional: setThread(await r.json()) is untyped, so never
+// assume the field exists — always default to [] before use.
+type ThreadMsg = { id: string; text: string; mine: boolean; at: string; reactions?: MessageReactionView[] }
 type Thread = { cleaner: { id: string; name: string; image: string | null }; messages: ThreadMsg[] }
 type CleanerLite = { id: string; name: string; status: string }
 
@@ -83,7 +85,7 @@ export default function MessagesTab({ initialConversationId }: { initialConversa
     setOpenReactionPicker(null)
     const target = thread?.messages.find((m) => m.id === messageId)
     if (!target) return
-    const mine = target.reactions.find((r) => r.mine)
+    const mine = (target.reactions ?? []).find((r) => r.mine)
     const removing = mine?.emoji === emoji
     const nextEmoji = removing ? null : emoji
 
@@ -92,7 +94,7 @@ export default function MessagesTab({ initialConversationId }: { initialConversa
       ...t,
       messages: t.messages.map((m) => {
         if (m.id !== messageId) return m
-        const others = m.reactions.filter((r) => !r.mine)
+        const others = (m.reactions ?? []).filter((r) => !r.mine)
         return { ...m, reactions: nextEmoji ? [...others, { emoji: nextEmoji, mine: true }] : others }
       }),
     } : t)
@@ -128,6 +130,7 @@ export default function MessagesTab({ initialConversationId }: { initialConversa
           {thread?.messages.map((m, i) => {
             const prev = thread.messages[i - 1]
             const showDateSeparator = !prev || messageDayKey(m.at) !== messageDayKey(prev.at)
+            const reactions = m.reactions ?? []
             return (
               <Fragment key={m.id}>
                 {showDateSeparator && (
@@ -137,7 +140,7 @@ export default function MessagesTab({ initialConversationId }: { initialConversa
                     </span>
                   </div>
                 )}
-                <div className={`relative max-w-[82%] ${m.mine ? 'self-end' : 'self-start'} ${m.reactions.length > 0 ? 'mb-3' : ''}`}>
+                <div className={`relative max-w-[82%] ${m.mine ? 'self-end' : 'self-start'} ${reactions.length > 0 ? 'mb-3' : ''}`}>
                   <div
                     onClick={(e) => {
                       if (m.mine) return
@@ -172,9 +175,9 @@ export default function MessagesTab({ initialConversationId }: { initialConversa
                   )}
 
                   {/* Reaction chips - shown on any bubble that has reactions */}
-                  {m.reactions.length > 0 && (
+                  {reactions.length > 0 && (
                     <div className={`absolute -bottom-3 flex gap-1 ${m.mine ? 'right-2' : 'left-2'}`}>
-                      {groupReactions(m.reactions).map(({ emoji, count, mine }) => (
+                      {groupReactions(reactions).map(({ emoji, count, mine }) => (
                         <span
                           key={emoji}
                           className={`inline-flex items-center gap-0.5 bg-white border rounded-full px-1.5 py-0.5 text-[11px] leading-none shadow-sm ${

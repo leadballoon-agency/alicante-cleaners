@@ -17,7 +17,9 @@ type Message = {
   isRead: boolean
   isAIGenerated?: boolean
   createdAt: string
-  reactions: MessageReactionView[]
+  // Optional: not every code path that builds a Message includes it
+  // (untyped res.json() shapes) — always default to [] before use.
+  reactions?: MessageReactionView[]
 }
 
 type Conversation = {
@@ -164,7 +166,9 @@ export default function MessagesTab() {
     setOpenReactionPicker(null)
     const target = messages.find((m) => m.id === messageId)
     if (!target) return
-    const mine = target.reactions.find((r) => r.mine)
+    // `reactions` may be missing on messages built by untyped code paths
+    // (e.g. res.json() shapes), so default defensively.
+    const mine = (target.reactions ?? []).find((r) => r.mine)
     const removing = mine?.emoji === emoji
     const nextEmoji = removing ? null : emoji
 
@@ -172,7 +176,7 @@ export default function MessagesTab() {
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id !== messageId) return m
-        const others = m.reactions.filter((r) => !r.mine)
+        const others = (m.reactions ?? []).filter((r) => !r.mine)
         return {
           ...m,
           reactions: nextEmoji ? [...others, { emoji: nextEmoji, mine: true }] : others,
@@ -358,6 +362,9 @@ export default function MessagesTab() {
             const prevMsg = messages[index - 1]
             const showDateSeparator =
               !prevMsg || messageDayKey(msg.createdAt) !== messageDayKey(prevMsg.createdAt)
+            // Defensive: messages appended from untyped res.json() paths may
+            // lack `reactions` — never crash the tab over a missing array.
+            const reactions = msg.reactions ?? []
             return (
             <Fragment key={msg.id}>
               {showDateSeparator && (
@@ -370,7 +377,7 @@ export default function MessagesTab() {
               <div
                 className={`flex ${msg.isMine ? 'justify-end' : 'justify-start'}`}
               >
-              <div className={`relative max-w-[80%] ${msg.reactions.length > 0 ? 'mb-3' : ''}`}>
+              <div className={`relative max-w-[80%] ${reactions.length > 0 ? 'mb-3' : ''}`}>
               <div
                 onClick={(e) => {
                   if (msg.isMine) return
@@ -477,9 +484,9 @@ export default function MessagesTab() {
               )}
 
               {/* Reaction chips - shown on any bubble that has reactions */}
-              {msg.reactions.length > 0 && (
+              {reactions.length > 0 && (
                 <div className={`absolute -bottom-3 flex gap-1 ${msg.isMine ? 'right-2' : 'left-2'}`}>
-                  {groupReactions(msg.reactions).map(({ emoji, count, mine }) => (
+                  {groupReactions(reactions).map(({ emoji, count, mine }) => (
                     <span
                       key={emoji}
                       className={`inline-flex items-center gap-0.5 bg-white border rounded-full px-1.5 py-0.5 text-[11px] leading-none shadow-sm ${
