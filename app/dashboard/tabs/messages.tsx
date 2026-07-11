@@ -134,7 +134,7 @@ function renderMessageText(text: string): React.ReactNode {
   })
 }
 
-export default function MessagesTab() {
+export default function MessagesTab({ initialConversationId }: { initialConversationId?: string | null } = {}) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<ConversationDetail | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -145,6 +145,7 @@ export default function MessagesTab() {
   const [copied, setCopied] = useState<string | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
   const [openReactionPicker, setOpenReactionPicker] = useState<string | null>(null)
+  const [autoOpenedConversation, setAutoOpenedConversation] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
 
@@ -162,6 +163,20 @@ export default function MessagesTab() {
   useEffect(() => {
     fetchConversations()
   }, [])
+
+  // Deep-link support: /dashboard?tab=messages&conversation=<id> (from a
+  // push notification click-through) auto-opens that thread once the
+  // conversation list has loaded — mirrors the admin side
+  // (app/admin/tabs/messages.tsx `initialConversationId`). Only opens it if
+  // it's actually one of this cleaner's conversations; otherwise falls back
+  // to the list.
+  useEffect(() => {
+    if (!initialConversationId || autoOpenedConversation) return
+    if (conversations.some((c) => c.id === initialConversationId)) {
+      setAutoOpenedConversation(true)
+      handleSelectConversation(initialConversationId)
+    }
+  }, [conversations, initialConversationId, autoOpenedConversation])
 
   // Scroll to bottom when messages change
   useEffect(() => {

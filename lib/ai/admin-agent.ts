@@ -3,6 +3,8 @@ import { db } from '@/lib/db'
 import { Prisma } from '@prisma/client'
 import { loadKnowledge } from './knowledge'
 import { createFeedbackIssue } from '@/lib/feedback-issue'
+import { triggerCleanerApprovalEffects } from '@/lib/notifications/cleaner-approval'
+import { runSideEffects } from '@/lib/side-effects'
 
 // Lazy initialization
 let anthropic: Anthropic | null = null
@@ -646,11 +648,33 @@ async function handleQueryReviews(params: {
 }
 
 async function handleApproveCleaner(params: { cleaner_id: string }) {
+  // Fetch the previous status first — the manual admin route
+  // (app/api/admin/cleaners/[id]/route.ts) only fires the welcome
+  // email/push when the cleaner was previously PENDING, so this AI tool
+  // needs the same guard for consistent behavior between both paths.
+  const existing = await db.cleaner.findUnique({
+    where: { id: params.cleaner_id },
+    select: { status: true },
+  })
+
   const cleaner = await db.cleaner.update({
     where: { id: params.cleaner_id },
     data: { status: 'ACTIVE' },
     include: { user: { select: { name: true } } },
   })
+
+  // Fire the same welcome email + approval push as the manual admin route.
+  // Bug fix: this tool previously fired NO side effects at all on approval
+  // — cleaners approved via the AI agent never got a welcome email or a
+  // push notification, unlike cleaners approved via the admin dashboard.
+  if (existing?.status === 'PENDING') {
+    await runSideEffects([
+      {
+        label: `cleaner-approved:${cleaner.id}`,
+        promise: triggerCleanerApprovalEffects(cleaner.id),
+      },
+    ])
+  }
 
   return {
     success: true,

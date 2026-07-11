@@ -9,6 +9,7 @@ import {
 } from '@/lib/translate'
 import { checkRateLimit, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
 import { notifyAdminNewMessage } from '@/lib/email'
+import { sendPushToUser, cleanerPushText } from '@/lib/push'
 import { runSideEffects } from '@/lib/side-effects'
 import { z } from 'zod'
 
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
       include: {
         owner: {
           include: {
-            user: { select: { id: true, preferredLanguage: true } },
+            user: { select: { id: true, name: true, preferredLanguage: true } },
           },
         },
         cleaner: {
@@ -168,6 +169,24 @@ export async function POST(request: NextRequest) {
       }).catch(err => {
         console.error('Failed to trigger AI response:', err)
       })
+
+      // Push notification to the cleaner — sub-second, awaited before the
+      // response so it isn't dropped when this serverless function freezes
+      // on return (unlike the AI trigger above, which is intentionally not
+      // awaited — see comment above).
+      await runSideEffects([
+        {
+          label: `push:cleaner-new-message:${conversationId}`,
+          promise: sendPushToUser(conversation.cleaner.user.id, {
+            ...cleanerPushText(
+              'newMessage',
+              conversation.cleaner.user.preferredLanguage,
+              conversation.owner?.user.name || undefined
+            ),
+            url: `/dashboard?tab=messages&conversation=${conversationId}`,
+          }),
+        },
+      ])
     }
 
     // Notify admins when cleaner sends a message — sub-second email/push,

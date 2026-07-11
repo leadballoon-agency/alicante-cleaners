@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { hasStaffAccess } from '@/lib/staff-access'
 import { db } from '@/lib/db'
 import { detectAndTranslate, SUPPORTED_LANGUAGES, type LanguageCode } from '@/lib/translate'
+import { sendPushToUser, cleanerPushText } from '@/lib/push'
+import { runSideEffects } from '@/lib/side-effects'
 import { z } from 'zod'
 
 const sendSchema = z.object({ text: z.string().min(1).max(5000) })
@@ -115,6 +117,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
     await db.conversation.update({ where: { id }, data: { updatedAt: new Date() } })
+
+    // Push notification to the cleaner — this admin/manager → cleaner path
+    // previously fired nothing to the cleaner's device at all (unlike the
+    // owner → cleaner path in app/api/messages/route.ts). Awaited so it
+    // completes before this serverless function's response freezes execution.
+    await runSideEffects([
+      {
+        label: `push:cleaner-new-admin-message:${id}`,
+        promise: sendPushToUser(conversation.cleaner.userId, {
+          ...cleanerPushText('newMessage', conversation.cleaner.user.preferredLanguage, 'VillaCare'),
+          url: `/dashboard?tab=messages&conversation=${id}`,
+        }),
+      },
+    ])
 
     return NextResponse.json({ ok: true })
   } catch (error) {

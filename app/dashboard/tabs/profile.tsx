@@ -7,6 +7,8 @@ import { signOut } from 'next-auth/react'
 import { Cleaner } from '../page'
 import LanguageSelector from '@/components/language-selector'
 import { useToast } from '@/components/ui/toast'
+import { useLanguage } from '@/components/language-context'
+import EnableNotifications from '@/components/push/EnableNotifications'
 
 type TeamService = {
   id: string
@@ -40,6 +42,7 @@ type PhoneStep = 'initial' | 'verify'
 
 export default function ProfileTab({ cleaner, onUpdate }: Props) {
   const { showToast } = useToast()
+  const { t } = useLanguage()
   const bookingUrl = `alicantecleaners.com/${cleaner.slug}`
 
   const [editMode, setEditMode] = useState<EditMode>(null)
@@ -351,7 +354,6 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
     { icon: '📍', label: 'Service areas', action: () => setEditMode('areas') },
     { icon: '📅', label: 'Calendar sync', href: '/dashboard/availability' },
     { icon: '💳', label: 'Payment settings', href: '#', disabled: true },
-    { icon: '🔔', label: 'Notifications', href: '#', disabled: true },
     { icon: '⚙️', label: 'Account settings', href: '/dashboard/account' },
   ]
 
@@ -557,6 +559,19 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
         label="Preferred Language"
         description="Messages from owners will be translated to this language"
       />
+
+      {/* Notifications */}
+      <div className="bg-white rounded-2xl border border-[#EBEBEB] p-4">
+        <h3 className="font-medium text-[#1A1A1A] mb-1">{t('push.profile.title')}</h3>
+        <p className="text-xs text-[#6B6B6B] mb-3">{t('push.profile.subtitle')}</p>
+        <EnableNotifications
+          title={t('push.prompt.title')}
+          description={t('push.enable.description')}
+          enableLabel={t('push.enable.button')}
+          grantedText={t('push.enable.granted')}
+          deniedText={t('push.enable.denied')}
+        />
+      </div>
 
       {/* Menu items */}
       <div className="bg-white rounded-2xl border border-[#EBEBEB] divide-y divide-[#EBEBEB]">

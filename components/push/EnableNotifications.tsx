@@ -47,7 +47,25 @@ async function ensureSubscription() {
 
 type Status = 'idle' | 'granted' | 'working' | 'denied' | 'error' | 'ios-install' | 'unsupported' | 'unconfigured'
 
-export default function EnableNotifications() {
+type Props = {
+  // String-override props so non-admin mounts (cleaner dashboard) can show
+  // localized copy via the shared lib/i18n.ts `t()` pattern, while the
+  // admin mount (app/admin/tabs/today.tsx) keeps rendering exactly as
+  // before by relying on these defaults.
+  title?: string
+  description?: string
+  enableLabel?: string
+  grantedText?: string
+  deniedText?: string
+}
+
+export default function EnableNotifications({
+  title = '🔔 Turn on notifications',
+  description = 'Get alerted on this device for new messages and bookings.',
+  enableLabel = 'Enable',
+  grantedText = 'Notificaciones activadas en este dispositivo',
+  deniedText = 'Notifications are blocked — enable them in your browser/site settings, then try again.',
+}: Props = {}) {
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
 
@@ -114,7 +132,7 @@ export default function EnableNotifications() {
   if (status === 'granted') {
     return (
       <div className="bg-[#E8F5E9] border border-[#2E7D32]/30 rounded-xl p-3 text-sm text-[#2E7D32] flex items-center gap-2">
-        <span>🔔</span> Notificaciones activadas en este dispositivo
+        <span>🔔</span> {grantedText}
       </div>
     )
   }
@@ -132,19 +150,19 @@ export default function EnableNotifications() {
     <div className="bg-white border border-[#EBEBEB] rounded-xl p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="font-medium text-[#1A1A1A] text-sm">🔔 Turn on notifications</p>
-          <p className="text-xs text-[#6B6B6B]">Get alerted on this device for new messages and bookings.</p>
+          <p className="font-medium text-[#1A1A1A] text-sm">{title}</p>
+          <p className="text-xs text-[#6B6B6B]">{description}</p>
         </div>
         <button
           onClick={enable}
           disabled={status === 'working'}
           className="bg-[#C4785A] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#B56A4F] disabled:opacity-50 flex-shrink-0"
         >
-          {status === 'working' ? '...' : 'Enable'}
+          {status === 'working' ? '...' : enableLabel}
         </button>
       </div>
       {status === 'denied' && (
-        <p className="text-xs text-[#C75050] mt-2">Notifications are blocked — enable them in your browser/site settings, then try again.</p>
+        <p className="text-xs text-[#C75050] mt-2">{deniedText}</p>
       )}
       {status === 'error' && <p className="text-xs text-[#C75050] mt-2">{error}</p>}
     </div>

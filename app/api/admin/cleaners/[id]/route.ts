@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { hasStaffAccess } from '@/lib/staff-access'
 import { db } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
-import { triggerCleanerWelcomeEmail } from '@/lib/nurturing/send-email'
+import { triggerCleanerApprovalEffects } from '@/lib/notifications/cleaner-approval'
 import { runSideEffects } from '@/lib/side-effects'
 import { detectLanguage, translateText, type LanguageCode } from '@/lib/translate'
 
@@ -270,12 +270,14 @@ export async function PATCH(
       },
     })
 
-    // Send welcome email when cleaner is approved (only if previously PENDING)
+    // Send welcome email + approval push when cleaner is approved (only if
+    // previously PENDING) — shared with the AI admin agent's approve_cleaner
+    // tool (lib/ai/admin-agent.ts) via lib/notifications/cleaner-approval.ts.
     if (action === 'approve' && cleaner.status === 'PENDING') {
       await runSideEffects([
         {
-          label: `nurturing:trigger-cleaner-welcome-email:${cleaner.id}`,
-          promise: triggerCleanerWelcomeEmail(cleaner.id),
+          label: `cleaner-approved:${cleaner.id}`,
+          promise: triggerCleanerApprovalEffects(cleaner.id),
         },
       ])
     }

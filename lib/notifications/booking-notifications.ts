@@ -9,7 +9,7 @@
  */
 
 import { db } from '@/lib/db'
-import { sendPushToStaff } from '@/lib/push'
+import { sendPushToStaff, sendPushToUser, cleanerPushText } from '@/lib/push'
 import { sendOwnerBookingDeclinedEmail } from '@/lib/emails/owner-booking-emails'
 import { formatMadridDate } from '@/lib/dates'
 
@@ -70,6 +70,20 @@ export async function onBookingCreated(booking: BookingDetails) {
       cleanerId: booking.cleanerId,
     },
   })
+
+  // Web push to the cleaner's device — WhatsApp booking notifications are
+  // dead pending WABA reinstatement, so this is currently their only
+  // real-time channel. Awaited: onBookingCreated is always invoked as a
+  // `promise:` entry inside the caller's runSideEffects([...]) call, so this
+  // must finish before that Promise resolves (see lib/side-effects.ts).
+  const isEnglish = cleaner.user.preferredLanguage === 'en'
+  const summary = isEnglish
+    ? `${booking.service} on ${dateStr} at ${booking.time}`
+    : `${booking.service} el ${dateStr} a las ${booking.time}`
+  await sendPushToUser(
+    cleaner.userId,
+    cleanerPushText('newBooking', cleaner.user.preferredLanguage, summary)
+  )
 
   console.log(`[Notification] New booking request created for cleaner ${cleaner.user.name}`)
 }
@@ -160,7 +174,7 @@ async function sendReminder(
     date: Date
     time: string
   },
-  cleaner: { userId: string; user: { name: string | null } },
+  cleaner: { userId: string; user: { name: string | null; preferredLanguage: string } },
   reminderNumber: 1 | 2,
   hoursElapsed?: number
 ) {
@@ -179,6 +193,15 @@ async function sendReminder(
     url: '/admin?tab=bookings',
     tag: `booking-overdue-${booking.id}`,
   }).catch((err) => console.error('Failed to push staff booking reminder:', err))
+
+  // Web push to the cleaner too — this is a new, additional channel (the
+  // WhatsApp reminder to the cleaner is dead pending WABA reinstatement).
+  // Awaited: processBookingReminders() (the cron entry point) awaits this
+  // whole call chain, so this must finish before the cron route responds.
+  await sendPushToUser(
+    cleaner.userId,
+    cleanerPushText('bookingOverdue', cleaner.user.preferredLanguage)
+  )
 
   await db.notification.create({
     data: {
@@ -293,11 +316,11 @@ async function autoDeclineBooking(
   booking: {
     id: string
     cleanerId: string
-    owner: { user: { name: string | null; email: string | null; preferredLanguage: string } }
+    owner: { userId: string; user: { name: string | null; email: string | null; preferredLanguage: string } }
     property: { name: string }
     service: string
     date: Date
-    cleaner: { user: { name: string | null } }
+    cleaner: { userId: string; user: { name: string | null } }
   }
 ) {
   const dateStr = formatMadridDate(booking.date, {
@@ -336,32 +359,44 @@ async function autoDeclineBooking(
 
   // Notify owner with apology and alternatives
   // Note: In production, this would trigger an AI message with alternative cleaner suggestions
-  const ownerUser = await db.owner.findFirst({
-    where: { id: booking.id },
-    include: { user: true },
-  })
-
-  if (ownerUser) {
-    await db.notification.create({
-      data: {
-        userId: ownerUser.userId,
-        type: 'BOOKING_AUTO_DECLINED',
-        title: 'Booking Not Confirmed',
-        message: `Unfortunately, ${booking.cleaner.user.name} wasn't able to confirm your booking in time. We're finding alternative cleaners for you.`,
-        data: {
-          bookingId: booking.id,
-          originalCleanerId: booking.cleanerId,
-          suggestAlternatives: true,
-        },
-        actionUrl: `/owner/dashboard?find-alternative=${booking.id}`,
-      },
-    })
-  }
-
-  // Notify cleaner about missed booking
+  //
+  // Bug fix: this used to do `db.owner.findFirst({ where: { id: booking.id } })`
+  // — looking up an Owner row by the BOOKING's id, which can never match (a
+  // Booking id is never an Owner id), so `ownerUser` was always null and this
+  // notification silently never fired. `booking.owner` is already loaded
+  // (with its `userId`) by the caller (processBookingReminders' tracker
+  // query includes `owner: { include: { user: true } }`), so the extra query
+  // wasn't even necessary — evidence: Notification rows are always queried
+  // by `userId` (see @@index([userId, read, createdAt]) on the Notification
+  // model, and every other `db.notification.create` in this file writes a
+  // User id such as `cleaner.userId` / `booking.owner.userId`), confirming
+  // `userId` here must be the owner's User id, i.e. `booking.owner.userId`.
   await db.notification.create({
     data: {
-      userId: booking.cleaner.user.name ? booking.cleanerId : '',
+      userId: booking.owner.userId,
+      type: 'BOOKING_AUTO_DECLINED',
+      title: 'Booking Not Confirmed',
+      message: `Unfortunately, ${booking.cleaner.user.name} wasn't able to confirm your booking in time. We're finding alternative cleaners for you.`,
+      data: {
+        bookingId: booking.id,
+        originalCleanerId: booking.cleanerId,
+        suggestAlternatives: true,
+      },
+      actionUrl: `/owner/dashboard?find-alternative=${booking.id}`,
+    },
+  })
+
+  // Notify cleaner about missed booking
+  //
+  // Bug fix: this used to write `userId: booking.cleanerId` (a Cleaner id)
+  // guarded by a nonsensical `booking.cleaner.user.name ? … : ''` ternary.
+  // Notification.userId must be a User id (see evidence above), and
+  // `cleaner.userId` is what every other notification in this file uses
+  // for the same cleaner (e.g. onBookingCreated, sendReminder), so this
+  // notification could never have rendered for the cleaner before.
+  await db.notification.create({
+    data: {
+      userId: booking.cleaner.userId,
       type: 'BOOKING_AUTO_DECLINED',
       title: 'Booking Auto-Declined',
       message: `The booking from ${booking.owner.user.name} was automatically declined due to no response. Please respond to bookings within 6 hours.`,

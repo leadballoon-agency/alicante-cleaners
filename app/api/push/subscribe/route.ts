@@ -3,12 +3,31 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { hasStaffAccess } from '@/lib/staff-access'
 import { db } from '@/lib/db'
+import { PushAudience } from '@prisma/client'
 
-// POST /api/push/subscribe — save a web-push subscription for the current staff user
+// POST /api/push/subscribe — save a web-push subscription for the current
+// user. Audience (STAFF vs CLEANER) is computed server-side — never trust
+// the client — so a staff-only broadcast (sendPushToStaff) can never leak
+// to a cleaner's device just because they also subscribed.
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id || !hasStaffAccess(session.user.staffLevel, 'MANAGER')) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  let audience: PushAudience
+  if (hasStaffAccess(session.user.staffLevel, 'MANAGER')) {
+    audience = 'STAFF'
+  } else {
+    const cleaner = await db.cleaner.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    })
+    if (!cleaner) {
+      // Owners aren't in scope for push yet.
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    audience = 'CLEANER'
   }
 
   try {
@@ -21,12 +40,14 @@ export async function POST(request: NextRequest) {
       where: { endpoint },
       update: {
         userId: session.user.id,
+        audience,
         p256dh: keys.p256dh,
         auth: keys.auth,
         userAgent: userAgent || null,
       },
       create: {
         userId: session.user.id,
+        audience,
         endpoint,
         p256dh: keys.p256dh,
         auth: keys.auth,
