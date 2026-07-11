@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendVerificationCode, sendVerificationCodeWithFallback, verifyCode, normalizePhone } from '@/lib/otp'
 import { checkRateLimitStrict, getClientIdentifier, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
+import { mintPhoneVerifiedToken } from '@/lib/auto-login-token'
 import { db } from '@/lib/db'
 import { z } from 'zod'
 
@@ -131,10 +132,19 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Mint a single-use, phone-bound proof of this successful OTP check.
+      // The cleaner-onboarding completion API (POST /api/onboarding/cleaner)
+      // REQUIRES it - Twilio Verify codes are single-use, so this token is
+      // the only durable evidence the caller really passed OTP for this
+      // phone. Minted unconditionally (harmless for other callers of this
+      // endpoint); enforced only at onboarding account creation.
+      const phoneVerificationToken = await mintPhoneVerifiedToken(normalizedPhone)
+
       return NextResponse.json({
         success: true,
         verified: true,
         phone: normalizedPhone,
+        phoneVerificationToken,
       })
     }
 

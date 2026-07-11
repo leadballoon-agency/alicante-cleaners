@@ -447,6 +447,11 @@ function PendingState({ cleaner }: { cleaner: Cleaner }) {
         </div>
       </div>
 
+      {/* Push prompt - PENDING cleaners are exactly who the approval push
+          notifies, so nudge them to enable it here too, not just once
+          they're ACTIVE. */}
+      <CleanerPushPromptCard />
+
       {/* Get Started checklist - real, actionable steps replace the old
           static "what to do next" list so PENDING cleaners can act now. */}
       <GetStartedCard variant="pending" />

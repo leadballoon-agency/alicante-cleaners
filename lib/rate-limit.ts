@@ -11,6 +11,9 @@ export const RATE_LIMITS = {
   otp: { maxRequests: 5, windowMs: 15 * 60 * 1000 },    // 5 per 15 minutes
   // Auth: Prevent credential stuffing
   auth: { maxRequests: 10, windowMs: 15 * 60 * 1000 },  // 10 per 15 minutes
+  // Account creation (cleaner onboarding): conservative - nobody legitimately
+  // creates more than a couple of accounts from one IP in an hour
+  signup: { maxRequests: 5, windowMs: 60 * 60 * 1000 }, // 5 per hour
   // Bookings: Prevent spam
   booking: { maxRequests: 10, windowMs: 60 * 1000 },    // 10 per minute
   // Messages: Prevent spam

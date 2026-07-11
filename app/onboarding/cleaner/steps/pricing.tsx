@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, FormEvent } from 'react'
+import { signIn } from 'next-auth/react'
 import { OnboardingData } from '../page'
 
 type Props = {
@@ -37,12 +38,14 @@ export default function Pricing({ data, onUpdate, onBack, onNext }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: data.phone,
+          phoneVerificationToken: data.phoneVerificationToken,
           name: data.name,
           photoUrl: data.photoUrl,
           bio: data.bio,
           reviewsLink: data.reviewsLink,
           serviceAreas: data.serviceAreas,
           hourlyRate: rate,
+          email: data.email,
         }),
       })
 
@@ -51,6 +54,19 @@ export default function Pricing({ data, onUpdate, onBack, onNext }: Props) {
       if (!response.ok) {
         setError(result.error || 'Something went wrong. Please try again.')
         return
+      }
+
+      // Sign the cleaner in immediately using the single-use token minted by
+      // the API above, so she lands in her dashboard already authenticated
+      // once onboarding finishes - instead of hitting a second phone OTP.
+      // Best-effort: if this fails, onboarding still continues and she can
+      // sign in manually with OTP afterwards (same as before this existed).
+      if (result.autoLoginToken) {
+        try {
+          await signIn('cleaner-auto-login', { token: result.autoLoginToken, redirect: false })
+        } catch {
+          // Non-fatal - see comment above.
+        }
       }
 
       onUpdate({ hourlyRate: rate, slug: result.cleaner.slug, cleanerId: result.cleaner.id })
