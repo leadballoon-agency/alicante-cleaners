@@ -1098,6 +1098,7 @@ model CleanerNurturingCampaign {
   id        String                    @id @default(cuid())
   cleanerId String
   emailType CleanerNurturingEmailType
+  channel   String                    @default("EMAIL") // "EMAIL" | "PUSH"
 
   // Email content (AI-generated)
   subject   String
@@ -1112,7 +1113,7 @@ model CleanerNurturingCampaign {
   clickedAt DateTime?
 
   // Result
-  messageId String?                   // Resend message ID
+  messageId String?                   // Resend message ID (null for PUSH)
   error     String?                   // If send failed
 
   cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
