@@ -4,6 +4,7 @@ import { NurturingEmailType, CleanerNurturingEmailType, Owner, User, Property, B
 import { generateNurturingEmail, getCTAUrl, getCTAText, OwnerContext, generateCleanerNurturingEmail, getCleanerCTAUrl, getCleanerCTAText, CleanerContext } from './email-generator'
 import { parseNameFromEmail } from './name-extraction'
 import { logAudit } from '@/lib/audit'
+import { sendCleanerNurturingPush } from './push-nudges'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -497,7 +498,12 @@ export async function triggerSuccessCoachIntro(cleanerId: string): Promise<void>
     // Only send after first completed job
     const completedCount = cleaner.bookings?.length || 0
     if (completedCount === 1) {
-      await sendCleanerNurturingEmail(cleaner, 'SUCCESS_COACH_INTRO')
+      const result = await sendCleanerNurturingEmail(cleaner, 'SUCCESS_COACH_INTRO')
+      if (result.error === 'Cleaner has no email') {
+        // Phone-only cleaner — fall back to push (this type is event-triggered,
+        // so it's outside the daily cron's one-push-per-run cap).
+        await sendCleanerNurturingPush(cleaner, 'SUCCESS_COACH_INTRO')
+      }
     }
   } catch (error) {
     console.error('[Cleaner Nurturing] Error triggering success coach intro:', error)

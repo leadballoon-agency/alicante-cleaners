@@ -111,9 +111,10 @@ export async function GET(request: NextRequest) {
         teamOpportunities: cleanerNurturingResult.teamOpportunities,
         promoteTips: cleanerNurturingResult.promoteTips,
         reactivations: cleanerNurturingResult.reactivations,
+        pushSent: cleanerNurturingResult.pushSent,
         errors: cleanerNurturingResult.errors.length,
       }
-      console.log(`[Cron] Cleaner nurturing: ${cleanerNurturingResult.profileTips} profile tips, ${cleanerNurturingResult.calendarGuides} calendar guides, ${cleanerNurturingResult.bookingTips} booking tips, ${cleanerNurturingResult.teamOpportunities} team opportunities, ${cleanerNurturingResult.reactivations} reactivations`)
+      console.log(`[Cron] Cleaner nurturing: ${cleanerNurturingResult.profileTips} profile tips, ${cleanerNurturingResult.calendarGuides} calendar guides, ${cleanerNurturingResult.bookingTips} booking tips, ${cleanerNurturingResult.teamOpportunities} team opportunities, ${cleanerNurturingResult.reactivations} reactivations, ${cleanerNurturingResult.pushSent} push fallbacks`)
       if (cleanerNurturingResult.errors.length > 0) {
         console.warn('[Cron] Cleaner nurturing errors:', cleanerNurturingResult.errors)
       }
