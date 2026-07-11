@@ -38,6 +38,7 @@ export default function Pricing({ data, onUpdate, onBack, onNext }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: data.phone,
+          phoneVerificationToken: data.phoneVerificationToken,
           name: data.name,
           photoUrl: data.photoUrl,
           bio: data.bio,

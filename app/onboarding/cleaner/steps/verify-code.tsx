@@ -1,14 +1,16 @@
 'use client'
 
 import { useState, useRef, KeyboardEvent, FormEvent } from 'react'
+import { OnboardingData } from '../page'
 
 type Props = {
   phone: string
+  onUpdate: (data: Partial<OnboardingData>) => void
   onBack: () => void
   onNext: () => void
 }
 
-export default function VerifyCode({ phone, onBack, onNext }: Props) {
+export default function VerifyCode({ phone, onUpdate, onBack, onNext }: Props) {
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -63,6 +65,10 @@ export default function VerifyCode({ phone, onBack, onNext }: Props) {
         return
       }
 
+      // Carry the single-use phone-verified token through the remaining
+      // steps - the completion API requires it as proof this phone really
+      // passed OTP (see POST /api/onboarding/cleaner).
+      onUpdate({ phoneVerificationToken: result.phoneVerificationToken || '' })
       onNext()
     } catch {
       setError('Something went wrong. Please try again.')

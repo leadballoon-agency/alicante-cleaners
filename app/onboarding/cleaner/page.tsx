@@ -14,6 +14,10 @@ import { OnboardingChatWidget } from '@/components/ai/onboarding-chat-widget'
 
 export type OnboardingData = {
   phone: string
+  // Single-use proof that this phone passed OTP - minted by the verify step
+  // (POST /api/auth/otp) and required by the completion API. Empty until
+  // step 2 succeeds.
+  phoneVerificationToken: string
   name: string
   photoUrl: string | null
   bio: string
@@ -35,6 +39,7 @@ function CleanerOnboardingContent() {
   const [step, setStep] = useState(initialStep)
   const [data, setData] = useState<OnboardingData>({
     phone: '',
+    phoneVerificationToken: '',
     name: '',
     photoUrl: null,
     bio: '',
@@ -86,6 +91,7 @@ function CleanerOnboardingContent() {
         {step === 2 && (
           <VerifyCode
             phone={data.phone}
+            onUpdate={updateData}
             onBack={prevStep}
             onNext={nextStep}
           />

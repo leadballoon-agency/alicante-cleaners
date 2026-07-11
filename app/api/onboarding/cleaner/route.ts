@@ -2,9 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { sendPushToStaff } from '@/lib/push'
 import { runSideEffects } from '@/lib/side-effects'
-import { mintAutoLoginToken } from '@/lib/auto-login-token'
+import { mintAutoLoginToken, consumePhoneVerifiedToken } from '@/lib/auto-login-token'
+import { normalizePhone } from '@/lib/otp'
+import { checkRateLimit, getClientIdentifier, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// Mirrors the dev OTP bypass guard in lib/otp.ts: in local development with
+// the explicit flag set, the "[Dev] Skip phone verification" button skips
+// the OTP step entirely, so there is no phone-verified token to present. A
+// token that IS supplied is always validated strictly, even in dev.
+const allowDevBypass =
+  process.env.ALLOW_DEV_OTP_BYPASS === 'true' && process.env.NODE_ENV === 'development'
 
 function generateSlug(name: string): string {
   return name
@@ -15,6 +24,18 @@ function generateSlug(name: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit account creation by IP - conservative, nobody legitimately
+    // signs up more than a handful of cleaner accounts from one IP per hour.
+    const clientId = getClientIdentifier(request)
+    const rateLimit = await checkRateLimit(clientId, 'signup', RATE_LIMITS.signup)
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
+    }
+
     const {
       phone,
       name,
@@ -24,6 +45,7 @@ export async function POST(request: NextRequest) {
       serviceAreas,
       hourlyRate,
       email,
+      phoneVerificationToken,
     } = await request.json()
 
     // Validation
@@ -34,9 +56,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Normalize once and use everywhere below (token check, duplicate check,
+    // user creation) so formatting differences can't cause mismatches.
+    const normalizedPhone = normalizePhone(phone)
+
+    // Require proof that the caller actually passed OTP for this phone. The
+    // token was minted by POST /api/auth/otp (action=verify) on success and
+    // is single-use, hashed at rest, and bound to the normalized phone.
+    // Without this check anyone could create an account - with phoneVerified
+    // stamped and (via autoLoginToken below) a live session - for any unused
+    // phone number they don't own.
+    if (phoneVerificationToken) {
+      const verifiedPhone = await consumePhoneVerifiedToken(phoneVerificationToken)
+      if (!verifiedPhone || verifiedPhone !== normalizedPhone) {
+        return NextResponse.json(
+          { error: 'Phone verification expired or invalid. Please verify your phone again.' },
+          { status: 403 }
+        )
+      }
+    } else if (allowDevBypass) {
+      // Dev-only: the "[Dev] Skip phone verification" button never runs the
+      // OTP step, so no token exists. Same guard as lib/otp.ts.
+      console.log(`[DEV BYPASS] Accepting onboarding for ${normalizedPhone} without phone-verified token`)
+    } else {
+      return NextResponse.json(
+        { error: 'Phone verification required. Please verify your phone again.' },
+        { status: 403 }
+      )
+    }
+
     // Check if phone already exists
     const existingUser = await db.user.findUnique({
-      where: { phone },
+      where: { phone: normalizedPhone },
     })
 
     if (existingUser) {
@@ -83,7 +134,7 @@ export async function POST(request: NextRequest) {
       db.$transaction(async (tx) => {
         const user = await tx.user.create({
           data: {
-            phone,
+            phone: normalizedPhone,
             name,
             email: emailToUse,
             image: photoUrl || null,
