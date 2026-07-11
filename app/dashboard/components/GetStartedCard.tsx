@@ -22,7 +22,7 @@ interface ApprovalInfo {
   status?: string
 }
 
-type StepKey = 'photo' | 'bio' | 'areas' | 'rate' | 'calendar'
+type StepKey = 'photo' | 'bio' | 'areas' | 'rate' | 'calendar' | 'notifications'
 
 interface Step {
   key: StepKey
@@ -68,6 +68,22 @@ export default function GetStartedCard({ variant = 'active' }: { variant?: 'acti
   const [health, setHealth] = useState<ProfileHealth | null>(null)
   const [approval, setApproval] = useState<ApprovalInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  // Notification permission is a browser API, not a server-side profile
+  // field - checked client-only so it never affects SSR output. This is
+  // purely an informational 6th checklist row: it must NOT feed into
+  // getProfileHealth's score, isProfileReady's approval gate, or the
+  // allDone/score>=90 hide condition below, all of which stay keyed to the
+  // original five steps.
+  const [notifications, setNotifications] = useState<{ supported: boolean; granted: boolean }>({
+    supported: false,
+    granted: false,
+  })
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotifications({ supported: true, granted: Notification.permission === 'granted' })
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -109,6 +125,22 @@ export default function GetStartedCard({ variant = 'active' }: { variant?: 'acti
   const steps = buildSteps(health)
   const allStepsDone = steps.every((s) => s.done)
   const calendarStep = steps.find((s) => s.key === 'calendar')
+
+  // Purely informational 6th row appended for display only - never part of
+  // `steps` above, so it can't affect allStepsDone, isProfileReady, or the
+  // hide condition below. Hidden entirely on browsers without the
+  // Notification API.
+  const displaySteps: Step[] = notifications.supported
+    ? [
+        ...steps,
+        {
+          key: 'notifications',
+          icon: '\u{1F514}',
+          href: '/dashboard?tab=profile',
+          done: notifications.granted,
+        },
+      ]
+    : steps
 
   // PENDING-only: once the four profile-quality steps are done (calendar
   // sync excluded - a Google OAuth step must never gate a human approval
@@ -189,7 +221,7 @@ export default function GetStartedCard({ variant = 'active' }: { variant?: 'acti
 
       {/* Steps */}
       <div className="space-y-2">
-        {steps.map((step) => (
+        {displaySteps.map((step) => (
           <a
             key={step.key}
             href={step.href}

@@ -37,7 +37,7 @@ export default function Success({ data }: Props) {
         You&apos;re all set, {data.name.split(' ')[0]}!
       </h1>
       <p className="text-[#6B6B6B] mb-8">
-        Your booking page is live and ready for clients
+        Your booking page is created — it goes live as soon as you&apos;re approved
       </p>
 
       {/* Preview card */}

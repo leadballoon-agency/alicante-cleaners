@@ -18,6 +18,7 @@ export type OnboardingData = {
   photoUrl: string | null
   bio: string
   reviewsLink: string
+  email: string
   serviceAreas: string[]
   hourlyRate: number
   slug: string
@@ -38,6 +39,7 @@ function CleanerOnboardingContent() {
     photoUrl: null,
     bio: '',
     reviewsLink: '',
+    email: '',
     serviceAreas: [],
     hourlyRate: 18,
     slug: '',
@@ -94,6 +96,7 @@ function CleanerOnboardingContent() {
             photoUrl={data.photoUrl}
             bio={data.bio}
             reviewsLink={data.reviewsLink}
+            email={data.email}
             onUpdate={updateData}
             onBack={prevStep}
             onNext={nextStep}

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { sendPushToStaff } from '@/lib/push'
 import { runSideEffects } from '@/lib/side-effects'
+import { mintAutoLoginToken } from '@/lib/auto-login-token'
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function generateSlug(name: string): string {
   return name
@@ -20,6 +23,7 @@ export async function POST(request: NextRequest) {
       reviewsLink,
       serviceAreas,
       hourlyRate,
+      email,
     } = await request.json()
 
     // Validation
@@ -42,6 +46,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Email is optional (used for nurturing emails - see
+    // lib/nurturing/send-email.ts) and must never block signup. Ignore it
+    // entirely if it's malformed or already claimed by another account
+    // rather than failing the whole request over an optional field.
+    let normalizedEmail: string | null = null
+    if (typeof email === 'string' && email.trim()) {
+      const candidate = email.trim().toLowerCase()
+      if (EMAIL_REGEX.test(candidate)) {
+        const emailTaken = await db.user.findUnique({ where: { email: candidate } })
+        if (!emailTaken) {
+          normalizedEmail = candidate
+        } else {
+          console.log(`[onboarding] Email ${candidate} already in use - creating cleaner account without it`)
+        }
+      }
+    }
+
     // Generate unique slug
     let slug = generateSlug(name)
     let slugAttempts = 0
@@ -54,37 +75,66 @@ export async function POST(request: NextRequest) {
       slugAttempts++
     }
 
-    // Create user and cleaner in a transaction
-    const result = await db.$transaction(async (tx) => {
-      // Create user
-      const user = await tx.user.create({
-        data: {
-          phone,
-          name,
-          image: photoUrl || null,
-          role: 'CLEANER',
-          phoneVerified: new Date(),
-        },
+    // Create user and cleaner in a transaction. Wrapped in a helper so we
+    // can retry once without the email if a race lets someone else claim it
+    // between the check above and this insert - an optional field must
+    // never fail the whole signup.
+    const createUserAndCleaner = (emailToUse: string | null) =>
+      db.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            phone,
+            name,
+            email: emailToUse,
+            image: photoUrl || null,
+            role: 'CLEANER',
+            phoneVerified: new Date(),
+          },
+        })
+
+        // Create cleaner profile (PENDING until verified by Team Leader)
+        const cleaner = await tx.cleaner.create({
+          data: {
+            userId: user.id,
+            slug,
+            bio: bio || null,
+            reviewsLink: reviewsLink || null,
+            serviceAreas,
+            hourlyRate,
+            status: 'PENDING', // Must be verified by Team Leader to become ACTIVE
+            rating: 5.0,
+            reviewCount: 0,
+            totalBookings: 0,
+          },
+        })
+
+        return { user, cleaner }
       })
 
-      // Create cleaner profile (PENDING until verified by Team Leader)
-      const cleaner = await tx.cleaner.create({
-        data: {
-          userId: user.id,
-          slug,
-          bio: bio || null,
-          reviewsLink: reviewsLink || null,
-          serviceAreas,
-          hourlyRate,
-          status: 'PENDING', // Must be verified by Team Leader to become ACTIVE
-          rating: 5.0,
-          reviewCount: 0,
-          totalBookings: 0,
-        },
-      })
+    let result
+    try {
+      result = await createUserAndCleaner(normalizedEmail)
+    } catch (err) {
+      const isEmailConflict =
+        normalizedEmail &&
+        err &&
+        typeof err === 'object' &&
+        'code' in err &&
+        (err as { code?: string }).code === 'P2002' &&
+        (err as { meta?: { target?: string[] } }).meta?.target?.includes('email')
 
-      return { user, cleaner }
-    })
+      if (!isEmailConflict) {
+        throw err
+      }
+
+      console.log(`[onboarding] Email ${normalizedEmail} conflicted at creation time - retrying without it`)
+      result = await createUserAndCleaner(null)
+    }
+
+    // Mint a single-use auto-login token so the client can sign this cleaner
+    // in immediately (see lib/auto-login-token.ts) instead of forcing a
+    // second phone OTP right after this one.
+    const autoLoginToken = await mintAutoLoginToken(result.user.id)
 
     // Notify staff (web push) of the new pending application
     await runSideEffects([
@@ -108,6 +158,7 @@ export async function POST(request: NextRequest) {
         status: result.cleaner.status, // PENDING - needs team verification
       },
       userId: result.user.id,
+      autoLoginToken,
     })
   } catch (error) {
     console.error('Error creating cleaner:', error)

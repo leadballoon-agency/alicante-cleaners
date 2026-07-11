@@ -7,6 +7,7 @@ import { Resend } from 'resend'
 import { cookies } from 'next/headers'
 import { db } from './db'
 import { verifyCode, normalizePhone } from './otp'
+import { consumeAutoLoginToken } from './auto-login-token'
 import { triggerWelcomeEmail } from './nurturing/send-email'
 import { linkChatConversations } from './nurturing/link-conversations'
 import { runSideEffects } from './side-effects'
@@ -171,6 +172,46 @@ export const authOptions: NextAuthOptions = {
           include: { cleaner: true },
         })
 
+        if (!user || user.role !== 'CLEANER') {
+          return null
+        }
+
+        return {
+          id: user.id,
+          email: user.email ?? undefined,
+          name: user.name ?? undefined,
+          phone: user.phone ?? undefined,
+          image: user.image ?? undefined,
+          role: user.role,
+        }
+      },
+    }),
+
+    // Auto-login for freshly onboarded cleaners
+    // Single-use token minted by POST /api/onboarding/cleaner right after the
+    // User+Cleaner rows are created (see lib/auto-login-token.ts). This lets
+    // a cleaner land in her dashboard signed in immediately after completing
+    // onboarding, instead of hitting a second phone OTP a few minutes later.
+    // We can't just replay the OTP through the `cleaner-login` provider
+    // above - Twilio Verify codes are single-use and were already consumed
+    // by the onboarding phone-verify step.
+    CredentialsProvider({
+      id: 'cleaner-auto-login',
+      name: 'Cleaner Auto Login',
+      credentials: {
+        token: { label: 'Token', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.token) {
+          return null
+        }
+
+        const userId = await consumeAutoLoginToken(credentials.token)
+        if (!userId) {
+          return null
+        }
+
+        const user = await db.user.findUnique({ where: { id: userId } })
         if (!user || user.role !== 'CLEANER') {
           return null
         }

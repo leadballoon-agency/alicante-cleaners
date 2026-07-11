@@ -97,7 +97,10 @@ function LoginContent() {
     setFormError(null)
 
     const providerId = loginType === 'owner' ? 'owner-phone-login' : 'cleaner-login'
-    const redirectPath = loginType === 'owner' ? '/owner/dashboard' : '/dashboard'
+    // Honor an explicit callbackUrl (e.g. a deep link from a push
+    // notification or a booking message) the same way the magic-link path
+    // already does; otherwise fall back to each role's default dashboard.
+    const redirectPath = explicitCallbackUrl || (loginType === 'owner' ? '/owner/dashboard' : '/dashboard')
 
     const result = await signIn(providerId, {
       phone,

@@ -4,22 +4,27 @@ import { useState, FormEvent, useRef } from 'react'
 import Image from 'next/image'
 import { OnboardingData } from '../page'
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 type Props = {
   name: string
   photoUrl: string | null
   bio: string
   reviewsLink: string
+  email: string
   onUpdate: (data: Partial<OnboardingData>) => void
   onBack: () => void
   onNext: () => void
 }
 
-export default function NamePhoto({ name, photoUrl, bio, reviewsLink, onUpdate, onBack, onNext }: Props) {
+export default function NamePhoto({ name, photoUrl, bio, reviewsLink, email, onUpdate, onBack, onNext }: Props) {
   const [value, setValue] = useState(name)
   const [photo, setPhoto] = useState<string | null>(photoUrl)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [bioValue, setBioValue] = useState(bio)
   const [reviewsLinkValue, setReviewsLinkValue] = useState(reviewsLink)
+  const [emailValue, setEmailValue] = useState(email)
+  const [emailError, setEmailError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -79,22 +84,40 @@ export default function NamePhoto({ name, photoUrl, bio, reviewsLink, onUpdate, 
 
     if (!value.trim()) return
 
+    const trimmedEmail = emailValue.trim()
+    if (trimmedEmail && !EMAIL_REGEX.test(trimmedEmail)) {
+      setEmailError('Please enter a valid email address, or leave it blank')
+      return
+    }
+    setEmailError(null)
+
     setLoading(true)
     setUploadError(null)
 
-    // Upload photo to storage if a new file was selected
+    // Upload photo to storage if a new file was selected. uploadPhoto() only
+    // returns null when the upload actually failed (it already set
+    // uploadError itself) - checking that return value directly (rather
+    // than the uploadError state, which wouldn't reflect this call until the
+    // next render) is what makes this reliably stop here instead of quietly
+    // continuing with an unoptimized data: URL as the "photo".
     let finalPhotoUrl = photo
     if (photoFile) {
       const uploadedUrl = await uploadPhoto()
       if (uploadedUrl) {
         finalPhotoUrl = uploadedUrl
-      } else if (uploadError) {
+      } else {
         setLoading(false)
-        return // Stop if upload failed
+        return // Stop if upload failed - error already shown via uploadError state
       }
     }
 
-    onUpdate({ name: value.trim(), photoUrl: finalPhotoUrl, bio: bioValue.trim(), reviewsLink: reviewsLinkValue.trim() })
+    onUpdate({
+      name: value.trim(),
+      photoUrl: finalPhotoUrl,
+      bio: bioValue.trim(),
+      reviewsLink: reviewsLinkValue.trim(),
+      email: trimmedEmail,
+    })
     setLoading(false)
     onNext()
   }
@@ -164,6 +187,29 @@ export default function NamePhoto({ name, photoUrl, bio, reviewsLink, onUpdate, 
           <p className="text-[#9B9B9B] text-xs mt-1.5">
             This is how clients will see you
           </p>
+        </div>
+
+        {/* Email input */}
+        <div>
+          <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+            Email <span className="text-[#9B9B9B] font-normal">(optional)</span>
+          </label>
+          <input
+            type="email"
+            value={emailValue}
+            onChange={(e) => {
+              setEmailValue(e.target.value)
+              setEmailError(null)
+            }}
+            placeholder="clara@example.com"
+            className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
+          />
+          <p className="text-[#9B9B9B] text-xs mt-1.5">
+            For booking summaries and tips — you can always add it later
+          </p>
+          {emailError && (
+            <p className="text-[#C75050] text-xs mt-1.5">{emailError}</p>
+          )}
         </div>
 
         {/* Bio input */}

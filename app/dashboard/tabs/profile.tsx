@@ -270,12 +270,17 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
       const updates: Record<string, unknown> = {}
 
       if (editMode === 'profile') {
-        // Upload photo first if one was selected
+        // Upload photo first if one was selected. If it fails, stop here
+        // instead of silently saving name/bio and telling the user
+        // everything worked - uploadPhoto() already showed the specific
+        // error via showToast, so just leave the modal open to retry.
         if (photoFile) {
           const photoUrl = await uploadPhoto()
-          if (photoUrl) {
-            updates.photo = photoUrl
+          if (!photoUrl) {
+            setSaving(false)
+            return
           }
+          updates.photo = photoUrl
         }
         updates.name = name.trim()
         updates.bio = bio.trim()
