@@ -1137,15 +1137,27 @@ model TranslationCache {
   @@unique([sourceHash, targetLang])
 }
 
-// Web Push (PWA) subscriptions — used to notify staff/admins on their phone
+// Who a push subscription is for — used to keep staff-only broadcasts
+// (sendPushToStaff) from reaching cleaner devices now that cleaners can
+// also subscribe. Defaults to STAFF so existing rows (all created via the
+// staff-gated subscribe endpoint before cleaners could subscribe) are
+// grandfathered in correctly.
+enum PushAudience {
+  STAFF
+  CLEANER
+}
+
+// Web Push (PWA) subscriptions — used to notify staff/admins and, now,
+// cleaners on their phone
 model PushSubscription {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   userId    String
-  endpoint  String   @unique
+  audience  PushAudience @default(STAFF)
+  endpoint  String       @unique
   p256dh    String
   auth      String
   userAgent String?
-  createdAt DateTime @default(now())
+  createdAt DateTime     @default(now())
 
   @@index([userId])
 }

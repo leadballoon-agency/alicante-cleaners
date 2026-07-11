@@ -11,6 +11,7 @@ import PromoteTab from './tabs/promote'
 import SuccessTab from './tabs/success'
 import OwnerReviewModal from './components/owner-review-modal'
 import GetStartedCard from './components/GetStartedCard'
+import CleanerPushPromptCard from '@/components/push/CleanerPushPromptCard'
 import { SmartWidget, Screen } from '@/components/smart-widget'
 import { useLanguage } from '@/components/language-context'
 import { JobsTimeline } from './components/team-calendar'
@@ -104,6 +105,11 @@ function Dashboard() {
   const { t, setLang } = useLanguage()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab') as Tab | null
+  // Deep-link support for /dashboard?tab=messages&conversation=<id> (used by
+  // push notification click-through) — mirrors the admin side
+  // (app/admin/page.tsx `conversationFromUrl` + app/admin/tabs/messages.tsx
+  // `initialConversationId`, shipped in PR #19).
+  const conversationFromUrl = searchParams.get('conversation')
   const [activeTab, setActiveTab] = useState<Tab>(
     tabParam && ['home', 'bookings', 'messages', 'team', 'profile', 'promote', 'success'].includes(tabParam)
       ? tabParam
@@ -347,7 +353,7 @@ function Dashboard() {
           activeTab === 'profile' ? (
             <ProfileTab cleaner={cleaner} onUpdate={setCleaner} />
           ) : activeTab === 'messages' ? (
-            <MessagesTab />
+            <MessagesTab initialConversationId={conversationFromUrl} />
           ) : (
             <PendingState cleaner={cleaner} />
           )
@@ -355,6 +361,7 @@ function Dashboard() {
           <>
             {activeTab === 'home' && (
               <>
+                <CleanerPushPromptCard />
                 <GetStartedCard />
                 <JobsTimeline
                   currentCleanerId={cleaner.id}
@@ -373,7 +380,7 @@ function Dashboard() {
                 onBookingAction={handleBookingAction}
               />
             )}
-            {activeTab === 'messages' && <MessagesTab />}
+            {activeTab === 'messages' && <MessagesTab initialConversationId={conversationFromUrl} />}
             {activeTab === 'team' && <TeamTab />}
             {activeTab === 'profile' && (
               <ProfileTab cleaner={cleaner} onUpdate={setCleaner} />

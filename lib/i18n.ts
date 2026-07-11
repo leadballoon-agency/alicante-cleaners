@@ -270,6 +270,17 @@ export const translations: Record<Language, Record<string, string>> = {
     'getStarted.approval.title': 'Your profile is ready!',
     'getStarted.approval.subtitle': 'Send a WhatsApp to request approval',
     'getStarted.approval.button': 'Request approval on WhatsApp',
+
+    // Web push notifications (cleaner dashboard)
+    'push.prompt.title': '🔔 Turn on notifications',
+    'push.prompt.body': 'Get notified instantly about new bookings and messages.',
+    'push.prompt.dismiss': 'Not now',
+    'push.profile.title': 'Notifications',
+    'push.profile.subtitle': 'Get alerted on this device for new bookings and messages.',
+    'push.enable.description': 'Get alerted on this device for new bookings and messages.',
+    'push.enable.button': 'Enable',
+    'push.enable.granted': 'Notifications enabled on this device',
+    'push.enable.denied': 'Notifications are blocked — enable them in your browser/site settings, then try again.',
   },
 
   es: {
@@ -514,6 +525,17 @@ export const translations: Record<Language, Record<string, string>> = {
     'getStarted.approval.title': '¡Tu perfil está listo!',
     'getStarted.approval.subtitle': 'Envía un WhatsApp para solicitar tu aprobación',
     'getStarted.approval.button': 'Solicitar aprobación por WhatsApp',
+
+    // Web push notifications (cleaner dashboard)
+    'push.prompt.title': '🔔 Activa las notificaciones',
+    'push.prompt.body': 'Recibe avisos al instante sobre nuevas reservas y mensajes.',
+    'push.prompt.dismiss': 'Ahora no',
+    'push.profile.title': 'Notificaciones',
+    'push.profile.subtitle': 'Recibe avisos en este dispositivo sobre nuevas reservas y mensajes.',
+    'push.enable.description': 'Recibe avisos en este dispositivo sobre nuevas reservas y mensajes.',
+    'push.enable.button': 'Activar',
+    'push.enable.granted': 'Notificaciones activadas en este dispositivo',
+    'push.enable.denied': 'Las notificaciones están bloqueadas — actívalas en la configuración de tu navegador/sitio e inténtalo de nuevo.',
   },
 
   de: {

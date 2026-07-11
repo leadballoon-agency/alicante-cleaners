@@ -21,7 +21,7 @@ self.addEventListener('push', function (event) {
     body: data.body || '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
-    data: { url: data.url || '/admin' },
+    data: { url: data.url || '/' },
     tag: data.tag || undefined,
     renotify: !!data.tag,
   }
@@ -31,7 +31,7 @@ self.addEventListener('push', function (event) {
 
 self.addEventListener('notificationclick', function (event) {
   event.notification.close()
-  const url = (event.notification.data && event.notification.data.url) || '/admin'
+  const url = (event.notification.data && event.notification.data.url) || '/'
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {

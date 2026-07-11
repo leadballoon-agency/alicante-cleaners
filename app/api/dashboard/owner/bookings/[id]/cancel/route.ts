@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { sendPushToStaff } from '@/lib/push'
+import { sendPushToStaff, sendPushToUser, cleanerPushText } from '@/lib/push'
 import { runSideEffects } from '@/lib/side-effects'
+import { formatMadridDate } from '@/lib/dates'
 
 // POST /api/dashboard/owner/bookings/[id]/cancel - Cancel a booking
 export async function POST(
@@ -42,7 +43,7 @@ export async function POST(
       },
       include: {
         cleaner: {
-          select: { userId: true, user: { select: { name: true } } },
+          select: { userId: true, user: { select: { name: true, preferredLanguage: true } } },
         },
         owner: {
           select: { user: { select: { name: true } } },
@@ -71,8 +72,17 @@ export async function POST(
       data: { status: 'CANCELLED' },
     })
 
-    // Notify staff (web push) — awaited so it completes before the
-    // serverless function's response freezes execution.
+    // Notify staff and the cleaner (web push) — awaited so both complete
+    // before the serverless function's response freezes execution.
+    const dateStr = formatMadridDate(booking.date, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    })
+    const isEnglish = booking.cleaner.user.preferredLanguage === 'en'
+    const cancelSummary = isEnglish
+      ? `${booking.owner.user.name || 'An owner'} cancelled their ${booking.service} on ${dateStr}`
+      : `${booking.owner.user.name || 'Un propietario'} canceló su ${booking.service} el ${dateStr}`
     await runSideEffects([
       {
         label: `push:staff-booking-cancelled:${booking.id}`,
@@ -83,9 +93,14 @@ export async function POST(
           tag: `booking-cancelled-${booking.id}`,
         }),
       },
+      {
+        label: `push:cleaner-booking-cancelled:${booking.id}`,
+        promise: sendPushToUser(
+          booking.cleaner.userId,
+          cleanerPushText('bookingCancelled', booking.cleaner.user.preferredLanguage, cancelSummary)
+        ),
+      },
     ])
-
-    // TODO: Send notification to cleaner about cancellation
 
     return NextResponse.json({
       success: true,
