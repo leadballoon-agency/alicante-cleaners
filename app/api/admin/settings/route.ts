@@ -43,6 +43,7 @@ export async function GET() {
         googleAnalyticsId: settings.googleAnalyticsId,
         ga4PropertyId: settings.ga4PropertyId,
         convertBoxScriptId: settings.convertBoxScriptId,
+        approvalWhatsApp: settings.approvalWhatsApp,
         customHeadScripts: settings.customHeadScripts,
         customBodyScripts: settings.customBodyScripts,
         updatedAt: settings.updatedAt,
@@ -80,6 +81,7 @@ export async function PATCH(request: Request) {
       googleAnalyticsId,
       ga4PropertyId,
       convertBoxScriptId,
+      approvalWhatsApp,
       customHeadScripts,
     } = body
 
@@ -118,6 +120,7 @@ export async function PATCH(request: Request) {
         ...(googleAnalyticsId !== undefined && { googleAnalyticsId }),
         ...(ga4PropertyId !== undefined && { ga4PropertyId }),
         ...(convertBoxScriptId !== undefined && { convertBoxScriptId }),
+        ...(approvalWhatsApp !== undefined && { approvalWhatsApp }),
         ...(customHeadScripts !== undefined && { customHeadScripts }),
       },
     })
@@ -131,6 +134,7 @@ export async function PATCH(request: Request) {
         googleAnalyticsId: settings.googleAnalyticsId,
         ga4PropertyId: settings.ga4PropertyId,
         convertBoxScriptId: settings.convertBoxScriptId,
+        approvalWhatsApp: settings.approvalWhatsApp,
         customHeadScripts: settings.customHeadScripts,
         updatedAt: settings.updatedAt,
       },

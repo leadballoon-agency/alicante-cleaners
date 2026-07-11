@@ -267,6 +267,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'getStarted.guide.getStarted': 'Getting Started Guide',
     'getStarted.guide.profile': 'Profile Guide',
     'getStarted.allDone': "You're all set! Your profile is looking great.",
+    'getStarted.approval.title': 'Your profile is ready!',
+    'getStarted.approval.subtitle': 'Send a WhatsApp to request approval',
+    'getStarted.approval.button': 'Request approval on WhatsApp',
   },
 
   es: {
@@ -508,6 +511,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'getStarted.guide.getStarted': 'Guía de Inicio',
     'getStarted.guide.profile': 'Guía de Perfil',
     'getStarted.allDone': '¡Todo listo! Tu perfil tiene muy buena pinta.',
+    'getStarted.approval.title': '¡Tu perfil está listo!',
+    'getStarted.approval.subtitle': 'Envía un WhatsApp para solicitar tu aprobación',
+    'getStarted.approval.button': 'Solicitar aprobación por WhatsApp',
   },
 
   de: {

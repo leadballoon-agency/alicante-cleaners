@@ -886,6 +886,7 @@ model PlatformSettings {
   googleAnalyticsId        String?  // Google Analytics 4 ID for tracking (e.g., "G-XXXXXXXXXX")
   ga4PropertyId            String?  // GA4 Property ID for API access (e.g., "123456789")
   convertBoxScriptId       String?  // ConvertBox script ID
+  approvalWhatsApp         String?  // E.164 staff WhatsApp number for cleaner approval requests (e.g. "+34612345678")
   customHeadScripts        String?  @db.Text // Custom scripts for <head> (JSON array of script objects)
   customBodyScripts        String?  @db.Text // Custom scripts for end of <body> (JSON array)
 
