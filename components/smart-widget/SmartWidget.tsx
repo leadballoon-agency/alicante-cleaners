@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import NavigationMenu from './NavigationMenu'
 import QuickActionMenu from './QuickActionMenu'
 
@@ -19,6 +19,12 @@ interface SmartWidgetProps {
 }
 
 const LONG_PRESS_MS = 500
+
+// Hold-progress ring geometry (sits ~4px outside the button's edge)
+const RING_SIZE = 64
+const RING_STROKE = 3
+const RING_RADIUS = (RING_SIZE - RING_STROKE * 2) / 2
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 
 // Get the icon for current screen context (returns string for emoji, null for custom render)
 const getScreenIcon = (screen: Screen): string | null => {
@@ -81,11 +87,40 @@ export default function SmartWidget({
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false)
   const [isPressed, setIsPressed] = useState(false)
+  const [holding, setHolding] = useState(false)
+  const [noRingTransition, setNoRingTransition] = useState(false)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const pressTimer = useRef<NodeJS.Timeout | null>(null)
   const didLongPress = useRef(false)
 
+  // Respect prefers-reduced-motion for the hold-progress ring
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setPrefersReducedMotion(mq.matches)
+    const handleChange = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches)
+    mq.addEventListener('change', handleChange)
+    return () => mq.removeEventListener('change', handleChange)
+  }, [])
+
+  // Once we force an instant (transition-less) reset, re-arm the transition
+  // on the next frame so the next hold animates normally again.
+  useEffect(() => {
+    if (!noRingTransition) return
+    const id = requestAnimationFrame(() => setNoRingTransition(false))
+    return () => cancelAnimationFrame(id)
+  }, [noRingTransition])
+
+  // Instantly snap the ring back to empty (no reverse animation) whenever a
+  // press interaction ends, regardless of how it ended.
+  const resetRing = useCallback(() => {
+    setNoRingTransition(true)
+    setHolding(false)
+  }, [])
+
   const handlePressStart = useCallback(() => {
     setIsPressed(true)
+    setNoRingTransition(false)
+    setHolding(true)
     didLongPress.current = false
 
     pressTimer.current = setTimeout(() => {
@@ -96,8 +131,9 @@ export default function SmartWidget({
       }
       setIsMenuOpen(true)
       setIsPressed(false)
+      resetRing()
     }, LONG_PRESS_MS)
-  }, [])
+  }, [resetRing])
 
   const handlePressEnd = useCallback(() => {
     setIsPressed(false)
@@ -111,7 +147,8 @@ export default function SmartWidget({
     if (!didLongPress.current && !isMenuOpen) {
       setIsQuickActionOpen(true)
     }
-  }, [isMenuOpen])
+    resetRing()
+  }, [isMenuOpen, resetRing])
 
   const handlePressCancel = useCallback(() => {
     setIsPressed(false)
@@ -119,11 +156,20 @@ export default function SmartWidget({
       clearTimeout(pressTimer.current)
       pressTimer.current = null
     }
-  }, [])
+    resetRing()
+  }, [resetRing])
 
   const handleNavigate = (screen: Screen) => {
     setIsMenuOpen(false)
     onNavigate(screen)
+  }
+
+  // Tapping the "hold for full menu" hint in QuickActionMenu opens the
+  // NavigationMenu directly - the same transition the long-press success
+  // path triggers.
+  const handleOpenFullMenuFromHint = () => {
+    setIsQuickActionOpen(false)
+    setIsMenuOpen(true)
   }
 
   const handleQuickActionSelect = (action: string) => {
@@ -158,6 +204,35 @@ export default function SmartWidget({
 
   return (
     <>
+      {/* Hold-progress ring - fills over LONG_PRESS_MS while the button is held */}
+      {!prefersReducedMotion && (
+        <svg
+          className={`fixed bottom-5 right-5 z-40 w-16 h-16 pointer-events-none ${
+            holding ? 'opacity-100' : 'opacity-0'
+          }`}
+          viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+          aria-hidden="true"
+        >
+          <circle
+            cx={RING_SIZE / 2}
+            cy={RING_SIZE / 2}
+            r={RING_RADIUS}
+            fill="none"
+            stroke="#C4785A"
+            strokeWidth={RING_STROKE}
+            strokeLinecap="round"
+            strokeDasharray={RING_CIRCUMFERENCE}
+            strokeDashoffset={holding ? 0 : RING_CIRCUMFERENCE}
+            transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+            style={{
+              transition: noRingTransition
+                ? 'none'
+                : `stroke-dashoffset ${LONG_PRESS_MS}ms linear`,
+            }}
+          />
+        </svg>
+      )}
+
       {/* Smart Widget Button */}
       <button
         onTouchStart={handlePressStart}
@@ -209,6 +284,7 @@ export default function SmartWidget({
         onClose={() => setIsQuickActionOpen(false)}
         currentScreen={currentScreen}
         onSelect={handleQuickActionSelect}
+        onOpenFullMenu={handleOpenFullMenuFromHint}
         language={language}
       />
     </>
