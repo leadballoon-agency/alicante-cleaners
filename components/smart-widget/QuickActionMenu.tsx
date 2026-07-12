@@ -8,6 +8,7 @@ interface QuickActionMenuProps {
   onClose: () => void
   currentScreen: Screen
   onSelect: (action: string) => void
+  onOpenFullMenu: () => void
   language?: string
 }
 
@@ -32,6 +33,7 @@ const translations = {
     syncCalendar: 'Sync Calendar',
     shareProfile: 'Share Profile',
     viewStats: 'View Stats',
+    holdHint: 'Hold for the full menu',
   },
   es: {
     myBookings: 'Mis Reservas',
@@ -47,6 +49,7 @@ const translations = {
     syncCalendar: 'Sincronizar Calendario',
     shareProfile: 'Compartir Perfil',
     viewStats: 'Ver Estadísticas',
+    holdHint: 'Mantén pulsado para el menú completo',
   },
 }
 
@@ -92,6 +95,7 @@ export default function QuickActionMenu({
   onClose,
   currentScreen,
   onSelect,
+  onOpenFullMenu,
   language = 'en',
 }: QuickActionMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
@@ -163,9 +167,41 @@ export default function QuickActionMenu({
           </button>
         ))}
 
+        {/* Hint: the full menu is also reachable by holding the button - and by tapping here */}
+        <button
+          onClick={onOpenFullMenu}
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-left border-t border-[#EBEBEB] hover:bg-[#F5F5F3] active:bg-[#EBEBEB] transition-colors"
+        >
+          <span className="text-sm leading-none hint-icon-pulse">☰</span>
+          <span className="text-xs text-[#9B9B9B]">{t.holdHint}</span>
+        </button>
+
         {/* Pointer arrow */}
         <div className="absolute -bottom-2 right-6 w-4 h-4 bg-white border-r border-b border-[#EBEBEB] transform rotate-45" />
       </div>
+
+      <style jsx>{`
+        @keyframes hint-icon-pulse {
+          0%,
+          100% {
+            transform: scale(1);
+            opacity: 0.6;
+          }
+          50% {
+            transform: scale(1.15);
+            opacity: 1;
+          }
+        }
+        .hint-icon-pulse {
+          display: inline-block;
+          animation: hint-icon-pulse 1.6s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hint-icon-pulse {
+            animation: none;
+          }
+        }
+      `}</style>
     </>
   )
 }
