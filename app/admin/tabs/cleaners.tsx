@@ -418,8 +418,8 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
       {/* Edit Modal */}
       {editing && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85dvh] flex flex-col">
+            <div className="flex items-center justify-between p-6 pb-0 mb-6 flex-shrink-0">
               <h2 className="text-xl font-semibold text-[#1A1A1A]">Edit Cleaner</h2>
               <button
                 onClick={() => setEditing(null)}
@@ -429,7 +429,7 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
                   Name
@@ -473,7 +473,7 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-3 p-6 pt-4 border-t border-[#EBEBEB] flex-shrink-0">
               <button
                 onClick={() => setEditing(null)}
                 className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
@@ -509,23 +509,25 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
       {/* Delete confirmation — permanent, so require an explicit confirm */}
       {deleting && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-[#FFEBEE] flex items-center justify-center flex-shrink-0 text-lg">⚠️</div>
-              <div>
-                <h2 className="text-lg font-semibold text-[#1A1A1A]">Delete {deleting.name}?</h2>
-                <p className="text-sm text-[#6B6B6B] mt-1">
-                  This permanently removes their profile and account. This <strong>cannot be undone</strong>.
-                  If you only want to take them off the active list, use <strong>Archive</strong> instead.
-                </p>
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85dvh] flex flex-col">
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-[#FFEBEE] flex items-center justify-center flex-shrink-0 text-lg">⚠️</div>
+                <div>
+                  <h2 className="text-lg font-semibold text-[#1A1A1A]">Delete {deleting.name}?</h2>
+                  <p className="text-sm text-[#6B6B6B] mt-1">
+                    This permanently removes their profile and account. This <strong>cannot be undone</strong>.
+                    If you only want to take them off the active list, use <strong>Archive</strong> instead.
+                  </p>
+                </div>
               </div>
+
+              {deleteError && (
+                <p className="text-sm text-[#C62828] bg-[#FFEBEE] rounded-xl p-3">{deleteError}</p>
+              )}
             </div>
 
-            {deleteError && (
-              <p className="text-sm text-[#C62828] bg-[#FFEBEE] rounded-xl p-3 mb-3">{deleteError}</p>
-            )}
-
-            <div className="flex gap-3 mt-2">
+            <div className="flex gap-3 p-6 pt-4 border-t border-[#EBEBEB] flex-shrink-0">
               <button
                 onClick={() => { setDeleting(null); setDeleteError('') }}
                 disabled={deleteBusy}
@@ -564,34 +566,36 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
             empty note clears it. */}
       {vouching && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-lg font-semibold text-[#1A1A1A]">Vouch for {vouching.name}</h2>
-              <button
-                onClick={() => setVouching(null)}
-                className="text-[#9B9B9B] hover:text-[#1A1A1A]"
-                disabled={vouchBusy}
-              >
-                ✕
-              </button>
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85dvh] flex flex-col">
+            <div className="flex-1 overflow-y-auto p-6 pb-4">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">Vouch for {vouching.name}</h2>
+                <button
+                  onClick={() => setVouching(null)}
+                  className="text-[#9B9B9B] hover:text-[#1A1A1A]"
+                  disabled={vouchBusy}
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-sm text-[#6B6B6B] mb-3">
+                Why do you trust this cleaner? (shown on their public profile)
+              </p>
+              <textarea
+                value={vouchNote}
+                onChange={(e) => setVouchNote(e.target.value)}
+                rows={4}
+                placeholder="e.g. how you met them, who referred them, experience you know of"
+                className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A] resize-none"
+              />
+              <p className="text-xs text-[#9B9B9B] mt-1.5">
+                {vouching.mode === 'approve'
+                  ? 'Optional but encouraged — this becomes a trust signal on their profile, separate from customer reviews.'
+                  : 'Leave blank and save to remove an existing vouch. Auto-translated for owners reading in the other language.'}
+              </p>
             </div>
-            <p className="text-sm text-[#6B6B6B] mb-3">
-              Why do you trust this cleaner? (shown on their public profile)
-            </p>
-            <textarea
-              value={vouchNote}
-              onChange={(e) => setVouchNote(e.target.value)}
-              rows={4}
-              placeholder="e.g. how you met them, who referred them, experience you know of"
-              className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A] resize-none"
-            />
-            <p className="text-xs text-[#9B9B9B] mt-1.5">
-              {vouching.mode === 'approve'
-                ? 'Optional but encouraged — this becomes a trust signal on their profile, separate from customer reviews.'
-                : 'Leave blank and save to remove an existing vouch. Auto-translated for owners reading in the other language.'}
-            </p>
 
-            <div className="flex gap-3 mt-5">
+            <div className="flex gap-3 p-6 pt-4 border-t border-[#EBEBEB] flex-shrink-0">
               <button
                 onClick={() => setVouching(null)}
                 disabled={vouchBusy}

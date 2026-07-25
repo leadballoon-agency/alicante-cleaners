@@ -115,10 +115,17 @@ export default function PullToRefresh({ onRefresh, children }: Props) {
         </div>
       </div>
 
-      {/* Content with transform */}
+      {/* Content with transform. IMPORTANT: only apply a real transform while
+          actively pulling — a CSS transform (even `translateY(0px)`) turns
+          this div into a containing block for any `position: fixed`
+          descendant, so every full-screen modal rendered inside an admin tab
+          (approve/vouch/edit/delete, etc.) would anchor to the height of the
+          scrollable page instead of the viewport, forcing a scroll to the
+          very bottom of the page to reach it. `transform: none` at rest
+          keeps `fixed` modals correctly pinned to the viewport. */}
       <div
         style={{
-          transform: `translateY(${pullDistance}px)`,
+          transform: pullDistance === 0 ? 'none' : `translateY(${pullDistance}px)`,
           transition: pullDistance === 0 ? 'transform 0.2s ease-out' : 'none'
         }}
       >

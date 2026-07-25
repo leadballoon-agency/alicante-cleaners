@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { randomBytes } from 'crypto'
+import { hasStaffAccess } from '@/lib/staff-access'
 
 // GET /api/dashboard/cleaner - Get cleaner profile + stats
 export async function GET() {
@@ -63,6 +64,16 @@ export async function GET() {
       if (owner) {
         return NextResponse.json(
           { error: 'Owner user', role: 'OWNER', redirect: '/owner/dashboard' },
+          { status: 403 }
+        )
+      }
+
+      // Staff (MANAGER/ADMIN via env allowlist) with no cleaner profile — e.g.
+      // a dispatcher account created for platform ops rather than cleaning
+      // jobs. Send them to /admin instead of the bare 404 error card.
+      if (hasStaffAccess(session.user.staffLevel, 'MANAGER')) {
+        return NextResponse.json(
+          { error: 'Staff user', role: 'ADMIN', redirect: '/admin' },
           { status: 403 }
         )
       }
