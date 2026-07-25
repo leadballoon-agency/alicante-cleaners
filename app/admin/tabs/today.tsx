@@ -2,12 +2,35 @@
 
 import { useEffect, useState } from 'react'
 import EnableNotifications from '@/components/push/EnableNotifications'
+import { getRelativeTime } from '@/lib/audit-utils'
 
 type Action = { key: string; lever: string; icon: string; title: string; sub: string; count: number }
 type TodayData = {
   manager: string
   pulse: { activeCleaners: number; averageRating: number; bookingsThisWeek: number; areasCovered: number; totalAreas: number }
   actions: Action[]
+  cron?: { lastRunAt: string | null }
+}
+
+const CRON_STALE_AFTER_MS = 26 * 60 * 60 * 1000 // 26h — cron runs daily at 8am UTC, so 26h is a generous miss threshold
+
+function CronHeartbeat({ lastRunAt }: { lastRunAt: string | null | undefined }) {
+  const runDate = lastRunAt ? new Date(lastRunAt) : null
+
+  if (runDate && Date.now() - runDate.getTime() <= CRON_STALE_AFTER_MS) {
+    return (
+      <div className="mt-3 inline-flex items-center gap-1.5 bg-[#E6F2EC] text-[#2E7D5B] text-[12.5px] font-medium px-3 py-1.5 rounded-full">
+        <span>Daily tasks ✓</span>
+        <span className="text-[#2E7D5B]/70">{getRelativeTime(runDate)}</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-3 inline-flex items-center gap-1.5 bg-[#FFEBEE] text-[#C75050] text-[12.5px] font-semibold px-3 py-1.5 rounded-full">
+      <span>⚠️ Daily tasks: last ran {runDate ? getRelativeTime(runDate) : 'never'}</span>
+    </div>
+  )
 }
 
 // Which tab each action sends the manager to
@@ -87,6 +110,7 @@ export default function TodayTab({
         {greetingWord()}, {firstName} <span aria-hidden>🌅</span>
       </h1>
       <p className="text-[#7C7269] text-[14.5px] leading-relaxed mt-2">{summary}</p>
+      <CronHeartbeat lastRunAt={data.cron?.lastRunAt} />
 
       {/* Flywheel pulse */}
       <div className="grid grid-cols-4 gap-2 mt-5">

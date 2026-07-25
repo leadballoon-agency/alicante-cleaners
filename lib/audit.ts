@@ -13,7 +13,7 @@ import { Prisma } from '@prisma/client'
 export type { AuditAction, TargetType }
 
 interface AuditLogParams {
-  userId: string
+  userId: string | null
   action: AuditAction
   target?: string
   targetType?: TargetType
@@ -31,6 +31,10 @@ interface AuditLogParams {
  *   targetType: 'CLEANER',
  *   details: { reason: 'Profile complete' }
  * })
+ *
+ * Pass `userId: null` for system/cron-initiated events with no human actor
+ * (e.g. automated nurturing emails) — the action string itself should make
+ * the automated nature clear (e.g. 'SEND_NURTURING_EMAIL').
  */
 export async function logAudit({
   userId,

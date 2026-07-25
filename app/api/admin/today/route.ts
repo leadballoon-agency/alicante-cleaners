@@ -27,7 +27,7 @@ export async function GET() {
     const now = new Date()
     const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-    const [activeCleaners, pendingCleaners, approvedReviews, bookingsThisWeek, pendingBookings, completedNoReview, coverageCleaners] =
+    const [activeCleaners, pendingCleaners, approvedReviews, bookingsThisWeek, pendingBookings, completedNoReview, coverageCleaners, platformSettings] =
       await Promise.all([
         db.cleaner.count({ where: { status: 'ACTIVE' } }),
         db.cleaner.count({ where: { status: 'PENDING' } }),
@@ -36,6 +36,7 @@ export async function GET() {
         db.booking.count({ where: { status: 'PENDING' } }),
         db.booking.count({ where: { status: 'COMPLETED', review: null } }),
         db.cleaner.findMany({ where: { status: 'ACTIVE' }, select: { serviceAreas: true } }),
+        db.platformSettings.findUnique({ where: { id: 'default' }, select: { lastCronRunAt: true } }),
       ])
 
     const averageRating = approvedReviews.length
@@ -85,6 +86,7 @@ export async function GET() {
       manager: session.user.name || 'there',
       pulse: { activeCleaners, averageRating, bookingsThisWeek, areasCovered, totalAreas: AREAS.length },
       actions,
+      cron: { lastRunAt: platformSettings?.lastCronRunAt ?? null },
     })
   } catch (error) {
     console.error('Error building today view:', error)
