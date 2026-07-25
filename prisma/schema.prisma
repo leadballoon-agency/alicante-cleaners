@@ -890,6 +890,8 @@ model PlatformSettings {
   customHeadScripts        String?  @db.Text // Custom scripts for <head> (JSON array of script objects)
   customBodyScripts        String?  @db.Text // Custom scripts for end of <body> (JSON array)
 
+  lastCronRunAt            DateTime? // Heartbeat: last time /api/cron/daily-tasks completed successfully
+
   updatedAt                DateTime @updatedAt
 }
 
@@ -967,7 +969,7 @@ model PageView {
 
 model AuditLog {
   id        String   @id @default(cuid())
-  userId    String   // User who performed the action
+  userId    String?  // User who performed the action. Null = system/cron-initiated (no human actor)
   action    String   // LOGIN, IMPERSONATE, APPROVE_CLEANER, REJECT_CLEANER, etc.
   target    String?  // ID of affected resource (cleaner ID, review ID, etc.)
   targetType String? // Type of target: CLEANER, OWNER, REVIEW, BOOKING
@@ -976,7 +978,7 @@ model AuditLog {
   userAgent String?  // Browser/device info
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([action])

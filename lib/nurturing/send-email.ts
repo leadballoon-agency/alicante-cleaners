@@ -135,9 +135,11 @@ export async function sendNurturingEmail(
       })
     }
 
-    // Log to audit
+    // Log to audit. userId is null — cron-initiated send, no human actor.
+    // (Previously passed the string 'SYSTEM', which isn't a real User id and
+    // violated the AuditLog_userId_fkey constraint on every send.)
     await logAudit({
-      userId: 'SYSTEM',
+      userId: null,
       action: 'SEND_NURTURING_EMAIL',
       target: owner.id,
       targetType: 'OWNER',
@@ -395,9 +397,9 @@ export async function sendCleanerNurturingEmail(
       },
     })
 
-    // Log to audit
+    // Log to audit. userId is null — cron-initiated send, no human actor.
     await logAudit({
-      userId: 'SYSTEM',
+      userId: null,
       action: 'SEND_CLEANER_NURTURING_EMAIL',
       target: cleaner.id,
       targetType: 'CLEANER',

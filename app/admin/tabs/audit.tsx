@@ -5,7 +5,7 @@ import { formatAuditAction, getRelativeTime } from '@/lib/audit-utils'
 
 type AuditLog = {
   id: string
-  userId: string
+  userId: string | null
   action: string
   target: string | null
   targetType: string | null
@@ -18,7 +18,7 @@ type AuditLog = {
     name: string | null
     email: string | null
     role: string
-  }
+  } | null
 }
 
 type Pagination = {
@@ -202,7 +202,7 @@ export default function AuditTab() {
                         {formatAuditAction(log.action)}
                       </p>
                       <p className="text-sm text-[#6B6B6B]">
-                        by {log.user.name || log.user.email || 'Unknown'}
+                        by {log.user?.name || log.user?.email || (log.userId ? 'Unknown' : 'System')}
                       </p>
                     </div>
                     <span className="text-xs text-[#9B9B9B] whitespace-nowrap">

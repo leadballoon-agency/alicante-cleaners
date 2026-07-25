@@ -25,12 +25,17 @@ export async function GET(request: NextRequest) {
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
 
-    // In production, require either Vercel's cron header or a secret
+    // In production, require the Vercel cron header, a valid secret, or Vercel's
+    // cron user-agent. Belt-and-braces: the x-vercel-cron header alone proved
+    // unreliable in practice — this cron 401'd for six months because of it.
+    // Vercel's cron dispatcher sends User-Agent: vercel-cron/1.0, which is a
+    // second, independent signal that this is a real scheduled invocation.
     if (process.env.NODE_ENV === 'production') {
       const isVercelCron = request.headers.get('x-vercel-cron') === '1'
+      const isVercelCronUserAgent = request.headers.get('user-agent')?.startsWith('vercel-cron/') ?? false
       const isValidSecret = cronSecret && authHeader === `Bearer ${cronSecret}`
 
-      if (!isVercelCron && !isValidSecret) {
+      if (!isVercelCron && !isVercelCronUserAgent && !isValidSecret) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
     }
@@ -139,6 +144,18 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       console.error('[Cron] Recurring bookings failed:', error)
       results.recurringBookings = { success: false, error: String(error) }
+    }
+
+    // Heartbeat: record that the cron completed, for the admin Today cockpit
+    // to surface a "last ran" status. Never let this failure fail the cron.
+    try {
+      await db.platformSettings.upsert({
+        where: { id: 'default' },
+        update: { lastCronRunAt: new Date() },
+        create: { id: 'default', lastCronRunAt: new Date() },
+      })
+    } catch (error) {
+      console.error('[Cron] Failed to record heartbeat:', error)
     }
 
     return NextResponse.json({

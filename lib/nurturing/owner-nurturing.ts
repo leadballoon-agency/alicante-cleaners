@@ -1,6 +1,12 @@
 import { db } from '@/lib/db'
 import { sendNurturingEmail } from './send-email'
 
+// Outcomes that are expected/routine, not failures — never counted as errors.
+const EXPECTED_SKIPS = new Set(['Owner has no email', 'Admin email excluded from nurturing'])
+function isExpectedSkip(error: string | undefined): boolean {
+  return !!error && EXPECTED_SKIPS.has(error)
+}
+
 interface NurturingResults {
   profileNudges: number
   propertyNudges: number
@@ -57,6 +63,8 @@ export async function processOwnerNurturing(): Promise<NurturingResults> {
       const result = await sendNurturingEmail(owner, 'PROFILE_INCOMPLETE')
       if (result.success) {
         results.profileNudges++
+      } else if (isExpectedSkip(result.error)) {
+        console.log(`[Nurturing] Skipping profile nudge for ${owner.id}: ${result.error}`)
       } else if (result.error !== 'Email already sent') {
         results.errors.push(`Profile nudge to ${owner.user.email}: ${result.error}`)
       }
@@ -91,6 +99,8 @@ export async function processOwnerNurturing(): Promise<NurturingResults> {
       const result = await sendNurturingEmail(owner, 'ADD_PROPERTY_NUDGE')
       if (result.success) {
         results.propertyNudges++
+      } else if (isExpectedSkip(result.error)) {
+        console.log(`[Nurturing] Skipping property nudge for ${owner.id}: ${result.error}`)
       } else if (result.error !== 'Email already sent') {
         results.errors.push(`Property nudge to ${owner.user.email}: ${result.error}`)
       }
@@ -125,6 +135,8 @@ export async function processOwnerNurturing(): Promise<NurturingResults> {
       const result = await sendNurturingEmail(owner, 'FIRST_BOOKING_PROMPT')
       if (result.success) {
         results.bookingPrompts++
+      } else if (isExpectedSkip(result.error)) {
+        console.log(`[Nurturing] Skipping booking prompt for ${owner.id}: ${result.error}`)
       } else if (result.error !== 'Email already sent') {
         results.errors.push(`Booking prompt to ${owner.user.email}: ${result.error}`)
       }
@@ -164,6 +176,8 @@ export async function processOwnerNurturing(): Promise<NurturingResults> {
       const result = await sendNurturingEmail(owner, 'RE_ENGAGEMENT')
       if (result.success) {
         results.reEngagements++
+      } else if (isExpectedSkip(result.error)) {
+        console.log(`[Nurturing] Skipping re-engagement for ${owner.id}: ${result.error}`)
       } else if (result.error !== 'Email already sent') {
         results.errors.push(`Re-engagement to ${owner.user.email}: ${result.error}`)
       }
