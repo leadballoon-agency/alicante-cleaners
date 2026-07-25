@@ -344,6 +344,9 @@ export interface CleanerContext {
   teamLeader: boolean
   teamId: string | null
   daysOnPlatform: number
+  // True when the cleaner's status is still PENDING (not yet approved).
+  // Only PROFILE_TIPS is sent to PENDING cleaners — see cleaner-nurturing.ts §1.
+  isPending?: boolean
 }
 
 /**
@@ -356,16 +359,29 @@ export async function generateCleanerNurturingEmail(
   const template = CLEANER_EMAIL_TEMPLATES[emailType]
   const displayName = context.name || 'there'
 
+  // PROFILE_TIPS is the only campaign sent to PENDING cleaners (see
+  // cleaner-nurturing.ts §1). For them the motivation isn't "more bookings" —
+  // it's that a complete profile unlocks the "Request approval on WhatsApp"
+  // button on her dashboard, which is the actual next step to get approved.
+  const isPendingProfileTips = emailType === 'PROFILE_TIPS' && context.isPending
+  const goal = isPendingProfileTips
+    ? 'Guide the still-pending cleaner to complete her profile (photo, 100+ character bio, 3+ service areas) so the "Request approval on WhatsApp" button unlocks on her dashboard, letting her get approved and start receiving bookings'
+    : template.goal
+  const tone = isPendingProfileTips
+    ? 'Helpful, coaching, emphasize that finishing her profile is the one thing standing between her and approval'
+    : template.tone
+
   const prompt = `Generate a personalized email for a VillaCare cleaner (villa cleaning platform in Alicante, Spain).
 
 EMAIL TYPE: ${emailType}
-GOAL: ${template.goal}
-TONE: ${template.tone}
+GOAL: ${goal}
+TONE: ${tone}
 CTA BUTTON TEXT: "${template.cta}"
 MAX BODY LENGTH: ${template.maxLength} words
 
 CLEANER CONTEXT:
 - Name: ${displayName}
+- Approval status: ${context.isPending ? 'PENDING — not yet approved' : 'ACTIVE — approved'}
 - Days on platform: ${context.daysOnPlatform}
 - Profile slug: ${context.slug}
 - Has photo: ${context.photoUrl ? 'Yes' : 'No'}
@@ -394,6 +410,7 @@ REQUIREMENTS:
     - Booking guide: alicantecleaners.com/join/booking-guide (for booking-related emails)
     - Team guide: alicantecleaners.com/join/team-guide (for team-related emails)
     - Growth guide: alicantecleaners.com/join/expand-guide (for profile/growth emails)
+${isPendingProfileTips ? '11. She is NOT yet approved — do NOT talk about getting "more bookings" or promoting her profile. The single call to action is finishing her profile so the WhatsApp approval-request button appears on her dashboard.' : ''}
 
 Return JSON: { "subject": "...", "body": "..." }`
 
@@ -409,24 +426,26 @@ Return JSON: { "subject": "...", "body": "..." }`
     const result = JSON.parse(response.choices[0]?.message?.content || '{}')
 
     return {
-      subject: result.subject || getDefaultCleanerSubject(emailType, displayName),
+      subject: result.subject || getDefaultCleanerSubject(emailType, displayName, context.isPending),
       body: result.body || getDefaultCleanerBody(emailType, displayName, context),
     }
   } catch (error) {
     console.error('[Cleaner Email Generator] AI error:', error)
     return {
-      subject: getDefaultCleanerSubject(emailType, displayName),
+      subject: getDefaultCleanerSubject(emailType, displayName, context.isPending),
       body: getDefaultCleanerBody(emailType, displayName, context),
     }
   }
 }
 
-function getDefaultCleanerSubject(emailType: CleanerNurturingEmailType, name: string): string {
+function getDefaultCleanerSubject(emailType: CleanerNurturingEmailType, name: string, isPending?: boolean): string {
   switch (emailType) {
     case 'CLEANER_WELCOME':
       return `Welcome to VillaCare, ${name}!`
     case 'PROFILE_TIPS':
-      return `${name}, boost your profile to get more bookings`
+      return isPending
+        ? `${name}, finish your profile to request approval`
+        : `${name}, boost your profile to get more bookings`
     case 'CALENDAR_SYNC_GUIDE':
       return `${name}, connect your calendar for easier scheduling`
     case 'FIRST_BOOKING_GUIDE':
@@ -470,6 +489,18 @@ Villa owners are looking for reliable cleaners like you. Complete your profile t
 The VillaCare Team`
 
     case 'PROFILE_TIPS':
+      if (context.isPending) {
+        return `Hi ${name},
+
+You're almost there! Finishing your profile is the last step before you can request approval:
+
+${!context.photoUrl ? '📷 **Add a professional photo** - Owners want to see who they\'re welcoming into their home\n' : ''}${!context.bio || context.bio.length < 100 ? '✍️ **Write a compelling bio** (100+ characters) - Share your experience and why owners should choose you\n' : ''}${context.serviceAreaCount < 3 ? '📍 **Add 3+ service areas** - Show where you can work\n' : ''}
+Once your photo, bio, and areas are complete, the **"Request approval on WhatsApp"** button unlocks on your dashboard - tap it to get approved and start receiving bookings.
+
+📚 **Need help?** Check out our guide to growing your business: alicantecleaners.com/join/expand-guide
+
+The VillaCare Team`
+      }
       return `Hi ${name},
 
 Cleaners with complete profiles get up to 3x more booking requests. Here are some quick wins:

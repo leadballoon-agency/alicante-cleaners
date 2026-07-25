@@ -20,7 +20,7 @@ interface CleanerNurturingResults {
  * anyone rescheduling this cron must reconsider the push nudge timing too.
  *
  * Email sequence timing:
- * - PROFILE_TIPS: 24h after signup if profile incomplete
+ * - PROFILE_TIPS: 24h after signup if profile incomplete (ACTIVE + PENDING — see §1)
  * - CALENDAR_SYNC_GUIDE: 48h after signup if calendar not connected
  * - BOOKING_MANAGEMENT_TIPS: 1 week after first completed booking
  * - TEAM_OPPORTUNITY: 2 weeks after signup if not on a team
@@ -60,10 +60,18 @@ export async function processCleanerNurturing(): Promise<CleanerNurturingResults
   const threeWeeksAgo = new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000)
 
   // 1. Profile Tips: 24h+ since signup, profile incomplete (no bio or no photo)
+  //
+  // Deliberately the ONE campaign that also reaches PENDING cleaners. A PENDING
+  // cleaner's blocker IS profile completion (photo, 100+ char bio, 3+ areas) —
+  // finishing it unlocks the "Request approval on WhatsApp" button on her
+  // dashboard (PR #37), so the nudge is directly actionable pre-approval.
+  // Every other campaign here stays ACTIVE-only: CALENDAR_SYNC_GUIDE
+  // deliberately doesn't gate approval, and the rest (booking tips, team,
+  // promote, reactivation) are meaningless before she's even approved.
   try {
     const needsProfileTips = await db.cleaner.findMany({
       where: {
-        status: 'ACTIVE', // Only active cleaners
+        status: { in: ['ACTIVE', 'PENDING'] },
         createdAt: { lte: oneDayAgo },
         OR: [
           { bio: null },
