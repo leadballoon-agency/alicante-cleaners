@@ -18,10 +18,20 @@ export type CleanerNurturingPushType =
   | 'SUCCESS_COACH_INTRO'
   | 'CLEANER_REACTIVATION'
 
-const NURTURING_PUSH_COPY: Record<CleanerNurturingPushType, { es: PushPayload; en: PushPayload }> = {
+const NURTURING_PUSH_COPY: Record<CleanerNurturingPushType, {
+  es: PushPayload
+  en: PushPayload
+  // PROFILE_TIPS-only: shown instead of es/en when the cleaner is still
+  // PENDING — her motivation isn't "more bookings" yet, it's getting approved.
+  pending?: { es: PushPayload; en: PushPayload }
+}> = {
   PROFILE_TIPS: {
     es: { title: 'Tu perfil está casi listo 📸', body: 'Añade tu foto y consigue 3x más reservas', url: '/dashboard' },
     en: { title: 'Your profile is almost ready 📸', body: 'Add your photo and get 3x more bookings', url: '/dashboard' },
+    pending: {
+      es: { title: 'Tu perfil está casi listo 📸', body: 'Complétalo para poder solicitar tu aprobación', url: '/dashboard' },
+      en: { title: 'Your profile is almost ready 📸', body: 'Complete it to request your approval', url: '/dashboard' },
+    },
   },
   CALENDAR_SYNC_GUIDE: {
     es: { title: 'Conecta tu calendario 📅', body: 'Evita dobles reservas — se sincroniza solo', url: '/dashboard/availability' },
@@ -37,9 +47,17 @@ const NURTURING_PUSH_COPY: Record<CleanerNurturingPushType, { es: PushPayload; e
   },
 }
 
-function nurturingPushText(type: CleanerNurturingPushType, preferredLanguage: string | null | undefined): PushPayload {
+function nurturingPushText(
+  type: CleanerNurturingPushType,
+  preferredLanguage: string | null | undefined,
+  isPending: boolean
+): PushPayload {
   const lang = preferredLanguage === 'en' ? 'en' : 'es'
-  return NURTURING_PUSH_COPY[type][lang]
+  const copy = NURTURING_PUSH_COPY[type]
+  if (isPending && copy.pending) {
+    return copy.pending[lang]
+  }
+  return copy[lang]
 }
 
 type CleanerWithUser = Cleaner & { user: User }
@@ -66,7 +84,7 @@ export async function sendCleanerNurturingPush(
     return { success: false, error: 'No push subscription' }
   }
 
-  const payload = nurturingPushText(pushType, cleaner.user.preferredLanguage)
+  const payload = nurturingPushText(pushType, cleaner.user.preferredLanguage, cleaner.status === 'PENDING')
 
   // sendPushToUser is best-effort and never throws — a cleaner with a dead
   // subscription still gets her campaign row written below (same once-ever

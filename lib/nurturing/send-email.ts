@@ -365,6 +365,7 @@ export async function sendCleanerNurturingEmail(
       daysOnPlatform: Math.floor(
         (Date.now() - cleaner.createdAt.getTime()) / (24 * 60 * 60 * 1000)
       ),
+      isPending: cleaner.status === 'PENDING',
     }
 
     // Generate personalized email
