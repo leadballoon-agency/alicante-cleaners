@@ -91,6 +91,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'profile.teamCoverage': 'Need coverage? My team members can step in when I\'m unavailable.',
     'profile.vettedBy': 'Vetted by VillaCare',
     'profile.vettedSuffix': 'VillaCare',
+    'profile.verifiedBadge': '✓ Verified by VillaCare',
+    'profile.newToPlatform': 'New to the platform',
 
     // How it works
     'howItWorks.title': 'How it works',
@@ -547,6 +549,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'profile.teamCoverage': '¿Necesitas cobertura? Mis compañeros de equipo pueden ayudar cuando no estoy disponible.',
     'profile.vettedBy': 'Verificado por VillaCare',
     'profile.vettedSuffix': 'VillaCare',
+    'profile.verifiedBadge': '✓ Verificada por VillaCare',
+    'profile.newToPlatform': 'Nueva en la plataforma',
 
     'howItWorks.title': 'Cómo funciona',
     'howItWorks.step1Title': 'Elige tu limpiador',

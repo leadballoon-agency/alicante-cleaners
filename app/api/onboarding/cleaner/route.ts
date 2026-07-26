@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
             serviceAreas,
             hourlyRate,
             status: 'PENDING', // Must be verified by Team Leader to become ACTIVE
-            rating: 5.0,
+            rating: null, // No reviews yet — honest null, not a fabricated 5.0
             reviewCount: 0,
             totalBookings: 0,
           },
