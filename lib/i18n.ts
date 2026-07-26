@@ -251,6 +251,17 @@ export const translations: Record<Language, Record<string, string>> = {
     'team.applicantRejected': 'Applicant rejected',
     'team.failedRejectApplicant': 'Failed to reject applicant',
 
+    // Promote tab — invite existing (off-platform) clients
+    'promote.invite.title': 'Invite your regular clients',
+    'promote.invite.body': "Already cleaning for clients outside VillaCare? Invite them to book with you through the platform — no commission, nothing changes for them — and every completed clean earns you a verified review.",
+    'promote.invite.benefit.reviews': 'Verified reviews build your public profile',
+    'promote.invite.benefit.reminders': 'Your clients get reminders and a booking history',
+    'promote.invite.benefit.noChange': "Nothing changes about price or schedule",
+    'promote.invite.shareButton': 'Send invitation on WhatsApp',
+    'promote.invite.copyButton': 'Copy Message',
+    'promote.invite.copied': 'Copied!',
+    'promote.invite.message': "Hi! I'm now managing my cleanings with VillaCare. Could you do me a favor? Book your next clean (your usual one) through my page — it's free, no commissions, and everything stays organized: {profileUrl}. After the clean you'll be able to leave me a review ⭐ Thank you!",
+
     // Get Started card (Home tab + Pending state)
     'getStarted.title': 'Get Started',
     'getStarted.subtitle': 'Finish these steps to start getting bookings',
@@ -702,6 +713,17 @@ export const translations: Record<Language, Record<string, string>> = {
     'team.failedAcceptApplicant': 'Error al aceptar solicitante',
     'team.applicantRejected': 'Solicitante rechazado',
     'team.failedRejectApplicant': 'Error al rechazar solicitante',
+
+    // Promote tab — invita a clientas existentes (fuera de la plataforma)
+    'promote.invite.title': 'Invita a tus clientas de siempre',
+    'promote.invite.body': '¿Ya limpias para clientas fuera de VillaCare? Invítalas a reservar contigo por la plataforma — sin comisiones, nada cambia para ellas — y cada limpieza completada te deja una reseña verificada.',
+    'promote.invite.benefit.reviews': 'Las reseñas verificadas mejoran tu perfil público',
+    'promote.invite.benefit.reminders': 'Tus clientas reciben recordatorios e historial de reservas',
+    'promote.invite.benefit.noChange': 'Nada cambia sobre el precio o el horario',
+    'promote.invite.shareButton': 'Enviar invitación por WhatsApp',
+    'promote.invite.copyButton': 'Copiar Mensaje',
+    'promote.invite.copied': '¡Copiado!',
+    'promote.invite.message': '¡Hola! Ahora gestiono mis limpiezas con VillaCare. ¿Me harías un favor? Reserva tu próxima limpieza (la de siempre) desde mi página — es gratis, sin comisiones, y todo queda organizado: {profileUrl}. Después de la limpieza podrás dejarme una reseña ⭐ ¡Gracias!',
 
     // Get Started card (Home tab + Pending state)
     'getStarted.title': 'Primeros Pasos',
