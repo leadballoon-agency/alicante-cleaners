@@ -67,6 +67,28 @@ function whatsAppUrl(phone: string, message: string): string {
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
 }
 
+// Copy to clipboard helper — same shape as app/admin/tabs/owners.tsx.
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    return false
+  }
+}
+
+// wa.me "share" link (no recipient phone — opens the picker) for a manager
+// to recommend a cleaner's profile to a prospective owner. Admin UI stays
+// English, but the outgoing message is Spanish: the people receiving this
+// share are Spanish-market villa owners, not the admin.
+function buildShareMessage(name: string, slug: string): string {
+  return `Te recomiendo a ${name} para la limpieza de tu villa — perfil verificado en VillaCare: https://www.alicantecleaners.com/${slug}`
+}
+
+function shareWhatsAppUrl(name: string, slug: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(buildShareMessage(name, slug))}`
+}
+
 // A profile is "incomplete enough to flag" on an ACTIVE card when its health
 // score is below 90 or it's still missing a checklist item — complete
 // profiles stay clean with no strip.
@@ -89,6 +111,9 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
   const [vouching, setVouching] = useState<{ id: string; name: string; mode: 'approve' | 'vouch' } | null>(null)
   const [vouchNote, setVouchNote] = useState('')
   const [vouchBusy, setVouchBusy] = useState(false)
+  // One-tap profile sharing — WhatsApp share or copy-link for an ACTIVE cleaner.
+  const [sharing, setSharing] = useState<{ id: string; name: string; slug: string } | null>(null)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const filteredCleaners = cleaners
     .filter(c => filter === 'all' || c.status === filter)
@@ -366,6 +391,15 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
                       >
                         {cleaner.vettedNote ? '✓ Edit vetting note' : '🤝 Vouch'}
                       </button>
+                      {cleaner.status === 'active' && (
+                        <button
+                          onClick={() => { setLinkCopied(false); setSharing({ id: cleaner.id, name: cleaner.name, slug: cleaner.slug }) }}
+                          className="flex-1 py-2 bg-white border border-[#DEDEDE] text-[#1A1A1A] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+                          title="Share this cleaner's profile with a prospective owner"
+                        >
+                          🔗 Share
+                        </button>
+                      )}
                       {cleaner.status === 'active' && showActiveHealthNudge && cleaner.phone && (
                         <a
                           href={whatsAppUrl(cleaner.phone, buildActiveNudgeMessage(cleaner.name.split(' ')[0] || cleaner.name))}
@@ -626,6 +660,50 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
                 {vouchBusy
                   ? (vouching.mode === 'approve' ? 'Approving...' : 'Saving...')
                   : (vouching.mode === 'approve' ? 'Approve' : 'Save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share modal — two ways for a manager to hand a prospective owner
+          this cleaner's public profile. WhatsApp opens the share picker
+          (no recipient phone) with a Spanish-language recommendation, since
+          the recipients are Spanish-market villa owners even though this
+          admin panel's UI stays English. */}
+      {sharing && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85dvh] flex flex-col">
+            <div className="flex items-center justify-between p-6 pb-4">
+              <h2 className="text-lg font-semibold text-[#1A1A1A]">Share {sharing.name}&rsquo;s profile</h2>
+              <button
+                onClick={() => setSharing(null)}
+                className="text-[#9B9B9B] hover:text-[#1A1A1A]"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="px-6 pb-6 space-y-2">
+              <a
+                href={shareWhatsAppUrl(sharing.name, sharing.slug)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setSharing(null)}
+                className="w-full py-3 bg-[#2E7D32] text-white rounded-xl text-sm font-medium text-center block active:scale-[0.98] transition-transform"
+              >
+                💬 WhatsApp
+              </a>
+              <button
+                onClick={async () => {
+                  const success = await copyToClipboard(`https://www.alicantecleaners.com/${sharing.slug}`)
+                  if (success) {
+                    setLinkCopied(true)
+                    setTimeout(() => setLinkCopied(false), 2000)
+                  }
+                }}
+                className="w-full py-3 bg-white border border-[#DEDEDE] text-[#1A1A1A] rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
+              >
+                {linkCopied ? '✓ Copied!' : '📋 Copiar enlace'}
               </button>
             </div>
           </div>

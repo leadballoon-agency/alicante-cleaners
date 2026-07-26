@@ -243,12 +243,26 @@ export async function GET(
               >
                 {reviewCount > 0 ? (
                   <>
-                    <span style={{ fontSize: 32, color: '#C4785A' }}>★</span>
+                    {/* Drawn star — the "★" glyph isn't in the embedded
+                        satori font, so it rendered as a tofu box on share
+                        cards. An inline SVG path always renders. */}
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      style={{ display: 'flex' }}
+                    >
+                      <path
+                        d="M12 1.5l3.09 6.26 6.91 1.01-5 4.87 1.18 6.88L12 17.27l-6.18 3.25 1.18-6.88-5-4.87 6.91-1.01L12 1.5z"
+                        fill="#C4785A"
+                      />
+                    </svg>
                     <span
                       style={{
                         fontSize: 32,
                         fontWeight: 600,
                         color: '#FFFFFF',
+                        marginLeft: 4,
                       }}
                     >
                       {rating.toFixed(1)}
@@ -257,6 +271,7 @@ export async function GET(
                       style={{
                         fontSize: 24,
                         color: '#9B9B9B',
+                        marginLeft: 8,
                       }}
                     >
                       ({reviewCount} reviews)
