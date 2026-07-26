@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
 import { linkChatConversations } from '@/lib/nurturing/link-conversations'
 import { runSideEffects } from '@/lib/side-effects'
+import { resolveReferredByFromCookie } from '@/lib/referrals'
 
 // GET /api/dashboard/owner - Get owner profile + stats
 export async function GET() {
@@ -65,6 +66,7 @@ export async function GET() {
         data: {
           userId: session.user.id,
           referralCode,
+          referredBy: (await resolveReferredByFromCookie(session.user.id)) ?? undefined,
           trusted: false,
         },
         include: {

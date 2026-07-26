@@ -19,6 +19,21 @@ function getSessionId(): string {
   return sessionId
 }
 
+// Advocacy loop: read `?ref=` straight off the current URL, client-side only
+// — never from server-rendered searchParams. Pages like /{slug} are ISR
+// (revalidate = 3600) and never read searchParams server-side, so a
+// `?ref=` param can't bust the cache or change the server-rendered HTML;
+// it's purely a client-side signal picked up after hydration. Cheap format
+// check here; the real validation (does this code belong to an owner)
+// happens server-side at consumption time — see lib/referrals.ts.
+function getRefParam(): string | null {
+  if (typeof window === 'undefined') return null
+
+  const value = new URLSearchParams(window.location.search).get('ref')
+  if (!value || !/^[A-Za-z0-9_-]{1,64}$/.test(value)) return null
+  return value
+}
+
 export function PageTracker({ cleanerSlug }: Props) {
   const pathname = usePathname()
   const lastTracked = useRef<string>('')
@@ -38,6 +53,7 @@ export function PageTracker({ cleanerSlug }: Props) {
             cleanerSlug,
             referrer: document.referrer || null,
             sessionId: getSessionId(),
+            ref: getRefParam(),
           }),
         })
       } catch (error) {

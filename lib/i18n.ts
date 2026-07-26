@@ -262,6 +262,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'promote.invite.copied': 'Copied!',
     'promote.invite.message': "Hi! I'm now managing my cleanings with VillaCare. Could you do me a favor? Book your next clean (your usual one) through my page — it's free, no commissions, and everything stays organized: {profileUrl}. After the clean you'll be able to leave me a review ⭐ Thank you!",
 
+    // Promote tab — advocacy loop read-out
+    'promote.inviteViews': '{count} visits from your invitations',
+
     // Get Started card (Home tab + Pending state)
     'getStarted.title': 'Get Started',
     'getStarted.subtitle': 'Finish these steps to start getting bookings',
@@ -724,6 +727,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'promote.invite.copyButton': 'Copiar Mensaje',
     'promote.invite.copied': '¡Copiado!',
     'promote.invite.message': '¡Hola! Ahora gestiono mis limpiezas con VillaCare. ¿Me harías un favor? Reserva tu próxima limpieza (la de siempre) desde mi página — es gratis, sin comisiones, y todo queda organizado: {profileUrl}. Después de la limpieza podrás dejarme una reseña ⭐ ¡Gracias!',
+
+    // Promote tab — advocacy loop read-out
+    'promote.inviteViews': '{count} visitas desde tus invitaciones',
 
     // Get Started card (Home tab + Pending state)
     'getStarted.title': 'Primeros Pasos',

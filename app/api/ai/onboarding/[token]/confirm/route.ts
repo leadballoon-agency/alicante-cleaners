@@ -15,6 +15,7 @@ import { encryptAccessNotes } from '@/lib/encryption'
 import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
 import { linkChatConversations } from '@/lib/nurturing/link-conversations'
 import { runSideEffects } from '@/lib/side-effects'
+import { resolveReferredByFromCookie } from '@/lib/referrals'
 
 function generateReferralCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -106,6 +107,7 @@ export async function POST(
         data: {
           userId: user.id,
           referralCode: generateReferralCode(),
+          referredBy: (await resolveReferredByFromCookie(user.id)) ?? undefined,
           ownerType: onboarding.ownerType, // Set from AI conversation
         },
       })
@@ -116,6 +118,7 @@ export async function POST(
         data: {
           userId: user.id,
           referralCode: generateReferralCode(),
+          referredBy: (await resolveReferredByFromCookie(user.id)) ?? undefined,
           ownerType: onboarding.ownerType, // Set from AI conversation
         },
       })

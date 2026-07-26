@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { checkRateLimit, getClientIdentifier, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
 import { createBookingCore, resolveServicePrice, BookingCreationError, SERVICE_DEFINITIONS } from '@/lib/bookings/create-booking'
+import { resolveReferredByFromCookie } from '@/lib/referrals'
 import { z } from 'zod'
 
 // Zod schema for booking validation
@@ -106,10 +107,12 @@ export async function POST(request: NextRequest) {
         })
 
         if (!owner) {
+          const referredBy = await resolveReferredByFromCookie(session.user.id)
           owner = await tx.owner.create({
             data: {
               userId: session.user.id,
               referralCode: generateReferralCode(session.user.name || 'USER'),
+              referredBy: referredBy ?? undefined,
               trusted: false,
             },
           })
@@ -167,10 +170,12 @@ export async function POST(request: NextRequest) {
         })
 
         if (!owner) {
+          const referredBy = await resolveReferredByFromCookie(user.id)
           owner = await tx.owner.create({
             data: {
               userId: user.id,
               referralCode: generateReferralCode(user.name || 'USER'),
+              referredBy: referredBy ?? undefined,
               trusted: false,
             },
           })

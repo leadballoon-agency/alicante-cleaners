@@ -94,6 +94,7 @@ export default function OwnerDashboard() {
     bookingId: string
     cleanerId: string
     cleanerName: string
+    cleanerSlug: string
   } | null>(null)
   const [recurringModal, setRecurringModal] = useState<{
     bookingId: string
@@ -135,8 +136,8 @@ export default function OwnerDashboard() {
     fetchDashboardData()
   }, [fetchDashboardData])
 
-  const handleLeaveReview = (bookingId: string, cleanerId: string, cleanerName: string) => {
-    setReviewModal({ bookingId, cleanerId, cleanerName })
+  const handleLeaveReview = (bookingId: string, cleanerId: string, cleanerName: string, cleanerSlug: string) => {
+    setReviewModal({ bookingId, cleanerId, cleanerName, cleanerSlug })
   }
 
   const handleSubmitReview = async (review: {
@@ -445,7 +446,7 @@ export default function OwnerDashboard() {
             onReview={(bookingId) => {
               const booking = bookings.find(b => b.id === bookingId)
               if (booking) {
-                handleLeaveReview(bookingId, booking.cleaner.id, booking.cleaner.name)
+                handleLeaveReview(bookingId, booking.cleaner.id, booking.cleaner.name, booking.cleaner.slug)
               }
             }}
             onAddAccess={handleAddAccess}
@@ -494,6 +495,8 @@ export default function OwnerDashboard() {
           bookingId={reviewModal.bookingId}
           cleanerId={reviewModal.cleanerId}
           cleanerName={reviewModal.cleanerName}
+          cleanerSlug={reviewModal.cleanerSlug}
+          ownerReferralCode={owner.referralCode}
           onClose={() => setReviewModal(null)}
           onSubmit={handleSubmitReview}
         />

@@ -8,7 +8,7 @@ import { getMadridDateKey } from '@/lib/dates'
 
 type Props = {
   bookings: OwnerBooking[]
-  onLeaveReview?: (bookingId: string, cleanerId: string, cleanerName: string) => void
+  onLeaveReview?: (bookingId: string, cleanerId: string, cleanerName: string, cleanerSlug: string) => void
   onMessage?: (cleanerId: string, cleanerName: string, propertyId?: string) => void
   onOpenChat?: (initialMessage?: string) => void
 }
@@ -73,7 +73,7 @@ export default function BookingsTab({ bookings, onLeaveReview, onMessage, onOpen
   const handleReview = (bookingId: string) => {
     const booking = bookings.find(b => b.id === bookingId)
     if (booking && onLeaveReview) {
-      onLeaveReview(bookingId, booking.cleaner.id, booking.cleaner.name)
+      onLeaveReview(bookingId, booking.cleaner.id, booking.cleaner.name, booking.cleaner.slug)
     }
   }
 

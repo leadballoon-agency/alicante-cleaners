@@ -9,9 +9,10 @@ import { useLanguage } from '@/components/language-context'
 type Props = {
   cleaner: Cleaner
   bookings: Booking[]
+  inviteViews?: number
 }
 
-export default function PromoteTab({ cleaner, bookings }: Props) {
+export default function PromoteTab({ cleaner, bookings, inviteViews = 0 }: Props) {
   const { t } = useLanguage()
   const [copied, setCopied] = useState(false)
   const [whatsappCopied, setWhatsappCopied] = useState(false)
@@ -43,14 +44,18 @@ export default function PromoteTab({ cleaner, bookings }: Props) {
   const totalEarnings = bookings.reduce((sum, b) => sum + b.price, 0)
 
   const profileUrl = `https://alicantecleaners.com/${cleaner.slug}`
+  // Advocacy loop: every share action below hands out a ref-tagged link so
+  // visits from a cleaner's own promotion can be attributed in the admin
+  // "visits by share source" read-out and the invite-views stat below.
+  const shareProfileUrl = `${profileUrl}?ref=cleaner-share`
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(profileUrl)
+    navigator.clipboard.writeText(shareProfileUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const whatsappMessage = `Hi! I'm ${cleaner.name}, a professional cleaner in Alicante. You can book my services here: ${profileUrl}`
+  const whatsappMessage = `Hi! I'm ${cleaner.name}, a professional cleaner in Alicante. You can book my services here: ${shareProfileUrl}`
 
   const handleCopyWhatsApp = () => {
     navigator.clipboard.writeText(whatsappMessage)
@@ -63,7 +68,7 @@ export default function PromoteTab({ cleaner, bookings }: Props) {
     window.open(`https://wa.me/?text=${encoded}`, '_blank')
   }
 
-  const inviteMessage = t('promote.invite.message').replace('{profileUrl}', profileUrl)
+  const inviteMessage = t('promote.invite.message').replace('{profileUrl}', shareProfileUrl)
 
   const handleCopyInvite = () => {
     navigator.clipboard.writeText(inviteMessage)
@@ -225,6 +230,15 @@ export default function PromoteTab({ cleaner, bookings }: Props) {
             <p className="text-xs text-[#6B6B6B] truncate">alicantecleaners.com/{cleaner.slug}</p>
           </div>
         </div>
+
+        {/* Advocacy loop: visits attributed to this cleaner's own share links */}
+        {inviteViews > 0 && (
+          <div className="px-5 pb-5">
+            <p className="text-xs text-[#C4785A] font-medium text-center">
+              {t('promote.inviteViews').replace('{count}', String(inviteViews))}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* WhatsApp Share */}

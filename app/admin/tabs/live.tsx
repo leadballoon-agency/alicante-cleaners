@@ -9,6 +9,7 @@ type Analytics = {
   todayViews: number
   topPages: { path: string; views: number; name?: string }[]
   topCleaners: { slug: string; name: string; views: number }[]
+  topRefs?: { ref: string; views: number }[]
 }
 
 type GA4Realtime = {
@@ -66,6 +67,18 @@ type DateGroup = {
   isYesterday: boolean
   items: AdminFeedItem[]
 }
+
+// Advocacy loop: a PageView.ref is either a static share-surface tag or an
+// owner's own referralCode. Give the known tags a readable label; unknown
+// values (referral codes) render as-is so a manager can still recognize
+// them (owners see their own code in their dashboard).
+const REF_LABELS: Record<string, string> = {
+  'cleaner-share': 'Cleaner’s own share links',
+  'admin-share': 'Admin one-tap share',
+  'review-email': 'Post-review email',
+}
+
+const refLabel = (ref: string): string => REF_LABELS[ref] || ref
 
 // Get date key for grouping (YYYY-MM-DD)
 const getDateKey = (timestamp: Date | string): string => {
@@ -509,6 +522,19 @@ export default function LiveTab({
                     <div key={cleaner.slug} className="flex items-center justify-between text-sm">
                       <span className="text-[#1A1A1A]">{idx + 1}. {cleaner.name}</span>
                       <span className="text-[#9B9B9B]">{cleaner.views}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {analytics.topRefs && analytics.topRefs.length > 0 && (
+              <div className="pt-3 border-t border-[#F5F5F3]">
+                <p className="text-xs text-[#9B9B9B] mb-2">Visits by Share Source (30 days)</p>
+                <div className="space-y-1">
+                  {analytics.topRefs.map((r) => (
+                    <div key={r.ref} className="flex items-center justify-between text-sm">
+                      <span className="text-[#1A1A1A] font-mono truncate max-w-[70%]">{refLabel(r.ref)}</span>
+                      <span className="text-[#9B9B9B]">{r.views}</span>
                     </div>
                   ))}
                 </div>

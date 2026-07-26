@@ -17,6 +17,7 @@ export async function GET() {
     const now = new Date()
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
     // Get page view stats
     const [totalViews, todayViews, topPagesRaw, topCleanersRaw] = await Promise.all([
@@ -52,6 +53,28 @@ export async function GET() {
       }),
     ])
 
+    // Advocacy loop: visits by share source (last 30 days) — a `ref` is
+    // either a static share-surface tag ("cleaner-share", "admin-share",
+    // "review-email") or an owner's own referralCode. Kept out of the
+    // Promise.all and given its own try/catch: PageView.ref is an additive
+    // column applied via a separate `prisma db push` at merge time, not in
+    // this deploy — if this route ships first, the rest of this
+    // already-working analytics payload must still load.
+    type RefGroup = { ref: string | null; _count: { ref: number } }
+    const topRefsRaw: RefGroup[] = await db.pageView.groupBy({
+      by: ['ref'],
+      where: {
+        createdAt: { gte: monthAgo },
+        ref: { not: null },
+      },
+      _count: { ref: true },
+      orderBy: { _count: { ref: 'desc' } },
+      take: 8,
+    }).catch((error) => {
+      console.error('Error fetching topRefs (PageView.ref may not exist yet):', error)
+      return [] as RefGroup[]
+    })
+
     // Get cleaner names for top cleaners
     const cleanerSlugs = topCleanersRaw
       .map(c => c.cleanerSlug)
@@ -80,11 +103,20 @@ export async function GET() {
         views: c._count.cleanerSlug,
       }))
 
+    // Format visits by share source
+    const topRefs = topRefsRaw
+      .filter(r => r.ref !== null)
+      .map(r => ({
+        ref: r.ref!,
+        views: r._count.ref,
+      }))
+
     return NextResponse.json({
       totalViews,
       todayViews,
       topPages,
       topCleaners,
+      topRefs,
       period: '7 days',
     })
   } catch (error) {
