@@ -41,10 +41,18 @@ export const authOptions: NextAuthOptions = {
           // human ever sees it, which silently consumes NextAuth's one-time
           // callback URL and leaves the real recipient with a "link expired"
           // error. Point the email at a wrapper page instead - scanners GET
-          // an inert page (the token inside `u` is never touched), and only
-          // an actual human click fires the real callback URL below.
+          // an inert page (the tokenized URL is never touched), and only an
+          // actual human click fires the real callback URL below.
+          //
+          // The tokenized URL rides in the FRAGMENT (#u=...), NOT a query
+          // param. Fragments never leave the browser: they aren't sent to
+          // the server (so never hit server/CDN logs) and don't appear in
+          // GA4/GTM's default page_location. A query param on a rendered
+          // page would have leaked the one-time token into analytics -
+          // something the old direct-to-API-route links never did, since no
+          // scripts run on an API route.
           const original = new URL(url)
-          const wrappedUrl = `${original.origin}/login/confirm?u=${encodeURIComponent(url)}`
+          const wrappedUrl = `${original.origin}/login/confirm#u=${encodeURIComponent(url)}`
 
           await getResend().emails.send({
             from: process.env.EMAIL_FROM || 'VillaCare <noreply@alicantecleaners.com>',

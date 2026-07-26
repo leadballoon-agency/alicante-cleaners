@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useLanguage } from '@/components/language-context'
@@ -13,26 +12,47 @@ import { useLanguage } from '@/components/language-context'
 // ATP, Proofpoint, etc.) GET every link in an inbound message before a human
 // ever opens it - which consumes the single-use token and leaves the real
 // recipient with an expired-link error. Scanners land here and get an inert
-// page; the token in `u` is never fetched, redirected to, or otherwise
+// page; the tokenized URL is never fetched, redirected to, or otherwise
 // touched until a human clicks the button below.
 //
+// The tokenized URL arrives in the FRAGMENT (#u=<urlencoded url>), not a
+// query param. Fragments never leave the browser: they aren't sent to the
+// server (so they can't land in server/CDN logs) and they don't appear in
+// GA4/GTM's default page_location. A query param on a rendered page would
+// have leaked the one-time token into analytics - something the old
+// direct-to-API-route links never did, since no scripts run on an API route.
+//
 // Hard requirements (do not relax without re-reviewing the security
-// tradeoff): no auto-redirect, no logging/persisting of `u`, and strict
-// validation that `u` is really NextAuth's own callback URL - otherwise this
+// tradeoff): no auto-redirect, no logging/persisting of the URL, and strict
+// validation that it is really NextAuth's own callback URL - otherwise this
 // page would become an open redirect.
 function ConfirmContent() {
   const { t } = useLanguage()
-  const searchParams = useSearchParams()
-  // Captured exactly once, on first render - not re-read from searchParams
-  // inside the effect below. That matters: the effect scrubs `u` out of the
-  // browser's URL via replaceState, and re-reading searchParams after that
-  // (e.g. on React 18 Strict Mode's dev-only double effect invocation) would
-  // see the now-empty URL and flip a valid link to "invalid".
-  const [rawUrl] = useState(() => searchParams.get('u'))
   const [targetUrl, setTargetUrl] = useState<string | null>(null)
   const [invalid, setInvalid] = useState(false)
+  // Ref (not state) guard: React 18 Strict Mode re-runs this effect a second
+  // time BEFORE the first run's setState lands, so a state-based guard can't
+  // stop the re-run - it would re-read the (now scrubbed, empty) hash and
+  // flip a valid link to "invalid". A ref is visible immediately.
+  const processed = useRef(false)
 
   useEffect(() => {
+    if (processed.current) return
+    processed.current = true
+
+    // Read the fragment directly from the browser (fragments are
+    // client-only; the server never sees them). Format: #u=<urlencoded url>.
+    const hash = window.location.hash
+    const rawUrl = hash.startsWith('#u=')
+      ? (() => {
+          try {
+            return decodeURIComponent(hash.slice(3))
+          } catch {
+            return null
+          }
+        })()
+      : null
+
     const isSafe = (() => {
       if (!rawUrl) return false
       try {
@@ -44,19 +64,17 @@ function ConfirmContent() {
       }
     })()
 
-    if (isSafe) {
+    if (isSafe && rawUrl) {
       setTargetUrl(rawUrl)
     } else {
       setInvalid(true)
     }
 
-    // Scrub the token out of the visible URL and browser history as early as
-    // possible. We can't guarantee no analytics/script tag reads
-    // location.href before this runs, but this closes the window as tightly
-    // as we can from a client component, and means the token doesn't linger
-    // in history if the tab is left open or bookmarked.
+    // Defense in depth: scrub the fragment out of the visible URL and
+    // browser history once read, so the token doesn't linger if the tab is
+    // left open, bookmarked, or the URL is copied.
     window.history.replaceState({}, '', '/login/confirm')
-  }, [rawUrl])
+  }, [])
 
   const handleConfirm = () => {
     if (targetUrl) {
@@ -128,13 +146,5 @@ function ConfirmContent() {
 }
 
 export default function ConfirmPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#C4785A] border-t-transparent rounded-full animate-spin" />
-      </div>
-    }>
-      <ConfirmContent />
-    </Suspense>
-  )
+  return <ConfirmContent />
 }
