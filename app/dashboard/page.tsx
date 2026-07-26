@@ -20,12 +20,13 @@ type Tab = 'home' | 'bookings' | 'messages' | 'team' | 'profile' | 'promote' | '
 
 // Wrapper component to handle Suspense boundary for useSearchParams
 export default function DashboardPage() {
+  const { t } = useLanguage()
   return (
     <Suspense fallback={
       <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] flex items-center justify-center">
         <div className="text-center">
           <span className="w-8 h-8 border-2 border-[#1A1A1A]/20 border-t-[#1A1A1A] rounded-full animate-spin inline-block" />
-          <p className="text-[#6B6B6B] mt-3">Loading dashboard...</p>
+          <p className="text-[#6B6B6B] mt-3">{t('dashboard.loadingDashboard')}</p>
         </div>
       </div>
     }>
@@ -280,7 +281,7 @@ function Dashboard() {
       <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] flex items-center justify-center">
         <div className="text-center">
           <span className="w-8 h-8 border-2 border-[#1A1A1A]/20 border-t-[#1A1A1A] rounded-full animate-spin inline-block" />
-          <p className="text-[#6B6B6B] mt-3">Loading dashboard...</p>
+          <p className="text-[#6B6B6B] mt-3">{t('dashboard.loadingDashboard')}</p>
         </div>
       </div>
     )
@@ -292,29 +293,29 @@ function Dashboard() {
         <div className="text-center max-w-sm">
           <p className="text-4xl mb-4">🧹</p>
           <h1 className="text-xl font-semibold text-[#1A1A1A] mb-2">
-            Cleaner Dashboard
+            {t('dashboard.errorTitle')}
           </h1>
           <p className="text-[#6B6B6B] mb-6">
-            This dashboard is for cleaners. If you&apos;re looking for a different dashboard, use the links below.
+            {t('dashboard.errorDesc')}
           </p>
           <div className="space-y-3">
             <a
               href="/admin"
               className="block w-full bg-[#1A1A1A] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#333] transition-colors"
             >
-              Go to Admin Dashboard
+              {t('dashboard.goToAdmin')}
             </a>
             <a
               href="/owner/dashboard"
               className="block w-full bg-white text-[#1A1A1A] px-6 py-3 rounded-xl font-medium border border-[#DEDEDE] hover:border-[#1A1A1A] transition-colors"
             >
-              Go to Owner Dashboard
+              {t('dashboard.goToOwner')}
             </a>
             <a
               href="/"
               className="block text-sm text-[#6B6B6B] hover:text-[#1A1A1A] mt-4"
             >
-              ← Back to Home
+              {t('dashboard.backToHome')}
             </a>
           </div>
         </div>
@@ -432,6 +433,7 @@ function Dashboard() {
 
 // Pending state for unverified cleaners
 function PendingState({ cleaner }: { cleaner: Cleaner }) {
+  const { t } = useLanguage()
   return (
     <div className="space-y-6">
       {/* Status Banner */}
@@ -439,9 +441,9 @@ function PendingState({ cleaner }: { cleaner: Cleaner }) {
         <div className="flex items-start gap-3">
           <span className="text-3xl">&#9203;</span>
           <div>
-            <h2 className="text-lg font-semibold text-[#1A1A1A] mb-1">Application Pending</h2>
+            <h2 className="text-lg font-semibold text-[#1A1A1A] mb-1">{t('dashboard.pending.title')}</h2>
             <p className="text-sm text-[#6B6B6B]">
-              Your profile is awaiting verification by a team leader. Once verified, you&apos;ll be able to accept bookings.
+              {t('dashboard.pending.desc')}
             </p>
           </div>
         </div>
@@ -458,17 +460,17 @@ function PendingState({ cleaner }: { cleaner: Cleaner }) {
 
       {/* Profile preview */}
       <div className="bg-white rounded-2xl p-5 border border-[#EBEBEB]">
-        <h3 className="font-medium text-[#1A1A1A] mb-4">Your Profile</h3>
+        <h3 className="font-medium text-[#1A1A1A] mb-4">{t('dashboard.pending.yourProfile')}</h3>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-[#6B6B6B]">Hourly Rate</span>
+            <span className="text-sm text-[#6B6B6B]">{t('dashboard.pending.hourlyRate')}</span>
             <span className="text-sm font-medium text-[#1A1A1A]">&euro;{cleaner.hourlyRate}/hr</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-[#6B6B6B]">Service Areas</span>
+            <span className="text-sm text-[#6B6B6B]">{t('dashboard.pending.serviceAreas')}</span>
             <span className="text-sm font-medium text-[#1A1A1A]">
-              {cleaner.serviceAreas.length} area{cleaner.serviceAreas.length !== 1 ? 's' : ''}
+              {t(cleaner.serviceAreas.length === 1 ? 'dashboard.pending.areaSingular' : 'dashboard.pending.areaPlural').replace('{count}', cleaner.serviceAreas.length.toString())}
             </span>
           </div>
           {cleaner.bio ? (
@@ -477,7 +479,7 @@ function PendingState({ cleaner }: { cleaner: Cleaner }) {
             </div>
           ) : (
             <div className="pt-3 border-t border-[#EBEBEB]">
-              <p className="text-sm text-[#9B9B9B] italic">No bio added yet - add one to stand out!</p>
+              <p className="text-sm text-[#9B9B9B] italic">{t('dashboard.pending.noBio')}</p>
             </div>
           )}
         </div>
@@ -486,7 +488,7 @@ function PendingState({ cleaner }: { cleaner: Cleaner }) {
       {/* Help */}
       <div className="text-center">
         <p className="text-sm text-[#6B6B6B]">
-          Questions? Contact{' '}
+          {t('dashboard.pending.questionsContact')}{' '}
           <a href="mailto:support@alicantecleaners.com" className="text-[#C4785A] font-medium">
             support@alicantecleaners.com
           </a>
