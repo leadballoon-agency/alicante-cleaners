@@ -46,6 +46,17 @@ export async function GET(request: NextRequest) {
       createdAt: c.createdAt,
     }))
 
+    // Photo-first: cleaners with a profile photo lead, so the directory
+    // doesn't open with a wall of placeholder cards. `user.image` nullness
+    // can't be expressed in the Prisma orderBy above (it's a relation
+    // field), so it's applied here in JS — cheap at this row count (~25).
+    formattedCleaners.sort((a, b) => {
+      const photoDiff = (b.photo ? 1 : 0) - (a.photo ? 1 : 0)
+      if (photoDiff !== 0) return photoDiff
+      if (b.reviewCount !== a.reviewCount) return b.reviewCount - a.reviewCount
+      return b.rating - a.rating
+    })
+
     // Get unique areas from all cleaners
     const allCleaners = await db.cleaner.findMany({
       where: { status: 'ACTIVE' },

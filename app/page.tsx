@@ -9,6 +9,8 @@ import LanguageSwitcher from '@/components/language-switcher'
 import { useLanguage } from '@/components/language-context'
 import { PageTracker } from '@/components/analytics/page-tracker'
 import { CleanerSlider, type SliderCleaner } from '@/components/CleanerSlider'
+import { CleanerPhotoPlaceholder } from '@/components/CleanerPhotoPlaceholder'
+import { useOwnCleanerSlug } from '@/lib/hooks/use-own-cleaner-slug'
 import { AREAS, areaName, areaPath } from '@/lib/area/areas'
 
 type Cleaner = {
@@ -39,6 +41,7 @@ export default function HomePage() {
   const { data: session } = useSession()
   const { t, lang } = useLanguage()
   const areaLinksLocale = lang === 'es' ? 'es' : 'en'
+  const ownSlug = useOwnCleanerSlug()
   const [cleaners, setCleaners] = useState<Cleaner[]>([])
   const [areas, setAreas] = useState<string[]>([])
   const [selectedArea, setSelectedArea] = useState('all')
@@ -316,6 +319,8 @@ export default function HomePage() {
               reviewsLabel="reviews"
               reviewLabel="review"
               newCleanerLabel={t('cleaner.newOnPlatform')}
+              photoComingSoonLabel={t('cleaner.photoComingSoon')}
+              addPhotoCtaLabel={t('cleaner.addYourPhoto')}
             />
           </div>
         </section>
@@ -367,90 +372,104 @@ export default function HomePage() {
               {selectedArea !== 'all' ? ` in ${selectedArea}` : ''}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {cleaners.map(cleaner => (
-                <Link
-                  key={cleaner.id}
-                  href={`/${cleaner.slug}`}
-                  className="bg-white rounded-2xl p-5 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-md transition-all group"
-                >
-                  {cleaner.featured && (
-                    <div className="mb-3">
-                      <span className="px-2 py-1 bg-[#FFF8F5] text-[#C4785A] text-xs font-medium rounded-full">
-                        {t('cleaner.featured')}
-                      </span>
+              {cleaners.map(cleaner => {
+                const isOwnCard = ownSlug !== null && ownSlug === cleaner.slug
+                return (
+                  <div
+                    key={cleaner.id}
+                    className="relative bg-white rounded-2xl p-5 border border-[#EBEBEB] hover:border-[#C4785A] hover:shadow-md transition-all group"
+                  >
+                    <Link href={`/${cleaner.slug}`} className="absolute inset-0 z-0 rounded-2xl" aria-label={cleaner.name} />
+                    {cleaner.featured && (
+                      <div className="mb-3 pointer-events-none">
+                        <span className="px-2 py-1 bg-[#FFF8F5] text-[#C4785A] text-xs font-medium rounded-full">
+                          {t('cleaner.featured')}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-start gap-4 pointer-events-none">
+                      <div className="w-16 h-16 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden relative flex-shrink-0">
+                        {cleaner.photo ? (
+                          <Image
+                            src={cleaner.photo}
+                            alt={cleaner.name}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <CleanerPhotoPlaceholder name={cleaner.name} initialClassName="text-xl" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-[#1A1A1A] group-hover:text-[#C4785A] transition-colors">
+                            {cleaner.name}
+                          </h3>
+                          {cleaner.slug === 'clara' && (
+                            <span className="px-2 py-0.5 bg-gradient-to-r from-amber-600 to-amber-500 text-white text-xs font-medium rounded-full shadow-sm">
+                              Co-fundadora
+                            </span>
+                          )}
+                          {cleaner.teamLeader && (
+                            <span className="px-2 py-0.5 bg-[#C4785A] text-white text-xs font-medium rounded-full">
+                              Team Leader
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-[#C4785A]">★</span>
+                          <span className="text-sm font-medium text-[#1A1A1A]">
+                            {cleaner.rating.toFixed(1)}
+                          </span>
+                          <span className="text-sm text-[#6B6B6B]">
+                            ({cleaner.reviewCount} review{cleaner.reviewCount !== 1 ? 's' : ''})
+                          </span>
+                        </div>
+                        <p className="text-sm text-[#6B6B6B] mt-1">
+                          {t('cleaner.from')} €{cleaner.hourlyRate * 3}/clean
+                        </p>
+                        {!cleaner.photo && !isOwnCard && (
+                          <p className="text-xs text-[#9B9B9B] italic mt-0.5">{t('cleaner.photoComingSoon')}</p>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden relative flex-shrink-0">
-                      {cleaner.photo ? (
-                        <Image
-                          src={cleaner.photo}
-                          alt={cleaner.name}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
-                      ) : (
-                        <span className="text-2xl">👤</span>
+                    {cleaner.bio && (
+                      <p className="text-sm text-[#6B6B6B] mt-3 line-clamp-2 pointer-events-none">
+                        {cleaner.bio}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-1.5 mt-3 pointer-events-none">
+                      {cleaner.serviceAreas.slice(0, 3).map(area => (
+                        <span
+                          key={area}
+                          className="px-2 py-0.5 bg-[#F5F5F3] text-[#6B6B6B] text-xs rounded-full"
+                        >
+                          {area}
+                        </span>
+                      ))}
+                      {cleaner.serviceAreas.length > 3 && (
+                        <span className="text-xs text-[#6B6B6B]">
+                          +{cleaner.serviceAreas.length - 3} more
+                        </span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-[#1A1A1A] group-hover:text-[#C4785A] transition-colors">
-                          {cleaner.name}
-                        </h3>
-                        {cleaner.slug === 'clara' && (
-                          <span className="px-2 py-0.5 bg-gradient-to-r from-amber-600 to-amber-500 text-white text-xs font-medium rounded-full shadow-sm">
-                            Co-fundadora
-                          </span>
-                        )}
-                        {cleaner.teamLeader && (
-                          <span className="px-2 py-0.5 bg-[#C4785A] text-white text-xs font-medium rounded-full">
-                            Team Leader
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="text-[#C4785A]">★</span>
-                        <span className="text-sm font-medium text-[#1A1A1A]">
-                          {cleaner.rating.toFixed(1)}
-                        </span>
-                        <span className="text-sm text-[#6B6B6B]">
-                          ({cleaner.reviewCount} review{cleaner.reviewCount !== 1 ? 's' : ''})
-                        </span>
-                      </div>
-                      <p className="text-sm text-[#6B6B6B] mt-1">
-                        {t('cleaner.from')} €{cleaner.hourlyRate * 3}/clean
-                      </p>
+                    <div className="mt-4 pt-4 border-t border-[#EBEBEB] flex items-center justify-between gap-2 pointer-events-none">
+                      <span className="text-sm font-medium text-[#C4785A] group-hover:underline">
+                        {t('cleaner.viewProfile')} →
+                      </span>
+                      {isOwnCard && !cleaner.photo && (
+                        <Link
+                          href="/dashboard?tab=profile"
+                          className="relative z-10 pointer-events-auto text-xs font-semibold text-[#B56A4F] bg-[#F3E4DC] px-2.5 py-1 rounded-full hover:bg-[#EBD5C8] transition-colors"
+                        >
+                          {t('cleaner.addYourPhoto')}
+                        </Link>
+                      )}
                     </div>
                   </div>
-                  {cleaner.bio && (
-                    <p className="text-sm text-[#6B6B6B] mt-3 line-clamp-2">
-                      {cleaner.bio}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {cleaner.serviceAreas.slice(0, 3).map(area => (
-                      <span
-                        key={area}
-                        className="px-2 py-0.5 bg-[#F5F5F3] text-[#6B6B6B] text-xs rounded-full"
-                      >
-                        {area}
-                      </span>
-                    ))}
-                    {cleaner.serviceAreas.length > 3 && (
-                      <span className="text-xs text-[#6B6B6B]">
-                        +{cleaner.serviceAreas.length - 3} more
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-[#EBEBEB]">
-                    <span className="text-sm font-medium text-[#C4785A] group-hover:underline">
-                      {t('cleaner.viewProfile')} →
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                )
+              })}
             </div>
           </>
         )}

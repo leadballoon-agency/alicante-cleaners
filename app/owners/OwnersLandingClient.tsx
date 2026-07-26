@@ -176,6 +176,8 @@ const translations = {
       reviews: 'reviews',
       review: 'review',
       newCleaner: 'New on VillaCare',
+      photoComingSoon: 'Photo coming soon',
+      addYourPhoto: '📷 Add your photo',
       cta: 'See all cleaners in my area →',
     },
     reviews: {
@@ -353,6 +355,8 @@ const translations = {
       reviews: 'reseñas',
       review: 'reseña',
       newCleaner: 'Nuevo en VillaCare',
+      photoComingSoon: 'Foto próximamente',
+      addYourPhoto: '📷 Añade tu foto',
       cta: 'Ver todos los limpiadores en mi zona →',
     },
     reviews: {
@@ -660,6 +664,8 @@ export function OwnersLandingClient({ cleaners, stats, areas, reviews }: Props) 
             reviewsLabel={t.cleaners.reviews}
             reviewLabel={t.cleaners.review}
             newCleanerLabel={t.cleaners.newCleaner}
+            photoComingSoonLabel={t.cleaners.photoComingSoon}
+            addPhotoCtaLabel={t.cleaners.addYourPhoto}
           />
 
           <Link

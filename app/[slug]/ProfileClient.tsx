@@ -7,6 +7,8 @@ import { useLanguage } from '@/components/language-context'
 import { LANGUAGES } from '@/lib/i18n'
 import { PublicChatWidget } from '@/components/ai/public-chat-widget'
 import { PageTracker } from '@/components/analytics/page-tracker'
+import { CleanerPhotoPlaceholder } from '@/components/CleanerPhotoPlaceholder'
+import { useOwnCleanerSlug } from '@/lib/hooks/use-own-cleaner-slug'
 
 export type Review = {
   id: string
@@ -99,6 +101,8 @@ function getReviewsLinkMeta(url: string | null): { href: string; platform: 'goog
 
 export default function ProfileClient({ cleaner, slug }: { cleaner: Cleaner; slug: string }) {
   const { t, lang } = useLanguage()
+  const ownSlug = useOwnCleanerSlug()
+  const isOwnProfile = ownSlug !== null && ownSlug === cleaner.slug
 
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-safe">
@@ -124,12 +128,17 @@ export default function ProfileClient({ cleaner, slug }: { cleaner: Cleaner; slu
         <div className="max-w-lg mx-auto">
           {/* Profile Header */}
           <div className="flex items-start gap-4 mb-4">
-            <div className="w-24 h-24 rounded-2xl bg-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0 border-2 border-white">
+            <div className="relative w-24 h-24 rounded-2xl bg-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0 border-2 border-white">
               {cleaner.photo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={cleaner.photo} alt={cleaner.name} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-4xl">&#128100;</span>
+                <CleanerPhotoPlaceholder
+                  name={cleaner.name}
+                  initialClassName="text-3xl"
+                  caption={isOwnProfile ? undefined : t('cleaner.photoComingSoon')}
+                  cta={isOwnProfile ? { label: t('cleaner.addYourPhoto'), href: '/dashboard?tab=profile' } : undefined}
+                />
               )}
             </div>
             <div className="flex-1 min-w-0">
