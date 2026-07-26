@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { db } from '@/lib/db'
+import { AREAS, areaPath } from '@/lib/area/areas'
 
 // Regenerate at most once a day — cleaner profiles change slowly and this
 // keeps the sitemap off the hot path for the DB.
@@ -41,5 +42,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  return [...staticPages, ...cleanerPages]
+  // Programmatic area landing pages — Spanish-primary with an English
+  // alternate for each of the 7 service areas (lib/area/areas.ts).
+  const areaPages: MetadataRoute.Sitemap = AREAS.flatMap((area) => [
+    { url: `${BASE}${areaPath('es', area.slug)}`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE}${areaPath('en', area.slug)}`, changeFrequency: 'weekly', priority: 0.7 },
+  ])
+
+  return [...staticPages, ...cleanerPages, ...areaPages]
 }

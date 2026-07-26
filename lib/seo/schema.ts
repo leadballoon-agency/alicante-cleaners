@@ -183,6 +183,52 @@ export function generateServiceSchema(service: ServiceSchemaInput) {
 }
 
 // ============================================
+// Area Service Schema (Area landing pages)
+// ============================================
+
+interface AreaServiceSchemaInput {
+  areaName: string
+  serviceName: string
+  description: string
+  minPrice: number
+  maxPrice: number
+  url: string
+}
+
+/**
+ * Service schema for a programmatic area landing page — provider is the
+ * Organization (no single cleaner "owns" the page), areaServed is the
+ * town/area itself, and pricing is an honest AggregateOffer range derived
+ * from the active cleaners actually covering that area (never fabricated).
+ */
+export function generateAreaServiceSchema(service: AreaServiceSchemaInput) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: service.serviceName,
+    description: service.description,
+    serviceType: 'House Cleaning',
+    url: service.url,
+    areaServed: {
+      '@type': 'Place',
+      name: `${service.areaName}, Alicante, Spain`,
+    },
+    provider: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+    offers: {
+      '@type': 'AggregateOffer',
+      lowPrice: service.minPrice,
+      highPrice: service.maxPrice,
+      priceCurrency: 'EUR',
+      availability: 'https://schema.org/InStock',
+    },
+  }
+}
+
+// ============================================
 // Review Schema (Individual Reviews)
 // ============================================
 
@@ -278,12 +324,15 @@ interface CleanerListItem {
   hourlyRate: number
 }
 
-export function generateCleanerListSchema(cleaners: CleanerListItem[]) {
+export function generateCleanerListSchema(
+  cleaners: CleanerListItem[],
+  options?: { name?: string; description?: string }
+) {
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Villa Cleaners in Alicante',
-    description: 'Trusted villa cleaning professionals in Alicante, Spain',
+    name: options?.name || 'Villa Cleaners in Alicante',
+    description: options?.description || 'Trusted villa cleaning professionals in Alicante, Spain',
     numberOfItems: cleaners.length,
     itemListElement: cleaners.map((cleaner, index) => ({
       '@type': 'ListItem',
