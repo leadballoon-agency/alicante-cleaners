@@ -5,6 +5,8 @@ import { db } from '@/lib/db'
 import { isApprovalReady, notifyIfApprovalReady } from '@/lib/notifications/approval-ready'
 import { runSideEffects } from '@/lib/side-effects'
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 // PATCH /api/dashboard/cleaner/profile - Update cleaner profile
 export async function PATCH(request: NextRequest) {
   try {
@@ -46,7 +48,7 @@ export async function PATCH(request: NextRequest) {
     const wasReadyBefore = isApprovalReady(cleaner)
 
     // Separate user updates from cleaner updates
-    const userUpdates: { name?: string; image?: string } = {}
+    const userUpdates: { name?: string; image?: string; email?: string } = {}
     const cleanerUpdates: {
       bio?: string
       serviceAreas?: string[]
@@ -73,42 +75,92 @@ export async function PATCH(request: NextRequest) {
       cleanerUpdates.reviewsLink = updates.reviewsLink
     }
 
-    // Update in a transaction
-    const result = await db.$transaction(async (tx) => {
-      if (Object.keys(userUpdates).length > 0) {
-        await tx.user.update({
-          where: { id: session.user.id },
-          data: userUpdates,
-        })
+    // Email capture (problem #4 in the unified-login PR): cleaners who
+    // signed up phone-only had no way to add an email afterwards - only
+    // onboarding captured it, and only optionally. This lets them add one
+    // from the Profile tab so they can magic-link in from any device.
+    // Deliberately does NOT touch emailVerified - a normal magic-link
+    // sign-in later verifies it the same way it does for every owner.
+    if (updates.email !== undefined) {
+      const candidate = typeof updates.email === 'string' ? updates.email.trim().toLowerCase() : ''
+      if (!candidate || !EMAIL_REGEX.test(candidate)) {
+        return NextResponse.json(
+          { error: 'Please enter a valid email address' },
+          { status: 400 }
+        )
       }
 
-      if (Object.keys(cleanerUpdates).length > 0) {
-        return await tx.cleaner.update({
+      const emailTaken = await db.user.findFirst({
+        where: { email: candidate, id: { not: session.user.id } },
+        select: { id: true },
+      })
+      if (emailTaken) {
+        return NextResponse.json(
+          { error: 'That email is already in use' },
+          { status: 409 }
+        )
+      }
+
+      userUpdates.email = candidate
+    }
+
+    // Update in a transaction
+    let result
+    try {
+      result = await db.$transaction(async (tx) => {
+        if (Object.keys(userUpdates).length > 0) {
+          await tx.user.update({
+            where: { id: session.user.id },
+            data: userUpdates,
+          })
+        }
+
+        if (Object.keys(cleanerUpdates).length > 0) {
+          return await tx.cleaner.update({
+            where: { id: cleaner.id },
+            data: cleanerUpdates,
+            include: {
+              user: {
+                select: {
+                  name: true,
+                  image: true,
+                  email: true,
+                },
+              },
+            },
+          })
+        }
+
+        return await tx.cleaner.findUnique({
           where: { id: cleaner.id },
-          data: cleanerUpdates,
           include: {
             user: {
               select: {
                 name: true,
                 image: true,
+                email: true,
               },
             },
           },
         })
-      }
-
-      return await tx.cleaner.findUnique({
-        where: { id: cleaner.id },
-        include: {
-          user: {
-            select: {
-              name: true,
-              image: true,
-            },
-          },
-        },
       })
-    })
+    } catch (err) {
+      // Race: another request claimed this email between our check above and
+      // this write. Never crash over an email conflict - surface the same
+      // friendly message the pre-check returns.
+      const isEmailConflict =
+        userUpdates.email &&
+        err &&
+        typeof err === 'object' &&
+        'code' in err &&
+        (err as { code?: string }).code === 'P2002' &&
+        (err as { meta?: { target?: string[] } }).meta?.target?.includes('email')
+
+      if (isEmailConflict) {
+        return NextResponse.json({ error: 'That email is already in use' }, { status: 409 })
+      }
+      throw err
+    }
 
     // Best-effort staff push the moment this update carries a PENDING
     // cleaner's profile across the approval-ready threshold. Must be
@@ -131,6 +183,7 @@ export async function PATCH(request: NextRequest) {
         hourlyRate: result?.hourlyRate ? Number(result.hourlyRate) : null,
         name: result?.user.name,
         photo: result?.user.image,
+        email: result?.user.email,
       },
     })
   } catch (error) {

@@ -78,6 +78,7 @@ export type Cleaner = {
   calendarToken?: string | null
   status: 'PENDING' | 'ACTIVE' | 'SUSPENDED'
   preferredLanguage?: string
+  email?: string | null
 }
 
 export type InternalComment = {

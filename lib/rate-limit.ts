@@ -14,6 +14,9 @@ export const RATE_LIMITS = {
   // Account creation (cleaner onboarding): conservative - nobody legitimately
   // creates more than a couple of accounts from one IP in an hour
   signup: { maxRequests: 5, windowMs: 60 * 60 * 1000 }, // 5 per hour
+  // Identify (unified login lookup): reveals account existence, so this is
+  // the mitigation for that tradeoff - keep it tight per IP.
+  identify: { maxRequests: 10, windowMs: 60 * 60 * 1000 }, // 10 per hour
   // Bookings: Prevent spam
   booking: { maxRequests: 10, windowMs: 60 * 1000 },    // 10 per minute
   // Messages: Prevent spam

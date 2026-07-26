@@ -5,10 +5,33 @@ import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useLanguage } from '@/components/language-context'
 
-type Step = 'select' | 'owner-method' | 'owner-email' | 'owner-phone' | 'owner-verify' | 'cleaner-phone' | 'cleaner-verify'
+// Unified login flow (non-admin): a single "phone or email" field replaces
+// the old up-front "Property Owner" vs "Cleaner" fork. That fork was
+// cosmetic - cleaners with an email on file could already magic-link in via
+// the owner path - but it hid the option and, worse, meant a magic-link
+// request for an email matching NO account silently minted a brand-new
+// OWNER account (see the signIn callback in lib/auth.ts). The new flow asks
+// /api/auth/identify what the identifier is BEFORE doing anything
+// account-touching, so an unrecognized email always needs an explicit human
+// choice ("email-choice" step) rather than a silent create, and an
+// unrecognized phone gets a friendly dead-end instead of nothing.
+//
+// Admin sign-in (?callbackUrl=/admin) is intentionally left on its own,
+// unchanged path ('select' -> 'owner-email') - it never had the phantom
+// owner-account problem in practice (staff accounts are pre-provisioned) and
+// isn't part of the identifier-first redesign.
+type Step =
+  | 'select'
+  | 'owner-email'
+  | 'identify'
+  | 'phone-verify'
+  | 'phone-not-found'
+  | 'email-choice'
 
 function LoginContent() {
+  const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
@@ -21,72 +44,128 @@ function LoginContent() {
   // through untouched so they land exactly where requested.
   const magicLinkCallbackUrl = explicitCallbackUrl || '/api/auth/post-login-redirect'
 
-  const [step, setStep] = useState<Step>('select')
+  const [step, setStep] = useState<Step>(isAdminLogin ? 'select' : 'identify')
   const [isLoading, setIsLoading] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [emailSent, setEmailSent] = useState(false)
 
-  // Owner login state
+  // Admin-only email entry (preserved exactly)
   const [email, setEmail] = useState('')
 
-  // Phone login state (shared by owner and cleaner)
+  // Unified identify field (non-admin)
+  const [identifier, setIdentifier] = useState('')
+
+  // Phone verify state
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
-  const [loginType, setLoginType] = useState<'owner' | 'cleaner'>('owner')
+  // Which OTP credentials provider verifies this phone - decided by
+  // /api/auth/identify BEFORE we ever call signIn(), since Twilio Verify
+  // codes are single-use and can't be replayed against a second provider.
+  const [loginProvider, setLoginProvider] = useState<'cleaner' | 'general' | null>(null)
 
-  const handleOwnerMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const sendMagicLinkForEmail = async (targetEmail: string) => {
     setIsLoading(true)
     setFormError(null)
 
     try {
       const result = await signIn('email', {
-        email,
+        email: targetEmail,
         redirect: false,
         callbackUrl: magicLinkCallbackUrl,
       })
 
       if (result?.error) {
         setFormError('Failed to send magic link. Please try again.')
-        setIsLoading(false)
       } else {
+        setEmail(targetEmail)
         setEmailSent(true)
-        setIsLoading(false)
       }
     } catch {
       setFormError('Something went wrong. Please try again.')
+    } finally {
       setIsLoading(false)
     }
   }
 
-  const handleSendCode = async (e: React.FormEvent) => {
+  // Admin-only form (preserved exactly)
+  const handleOwnerMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
+    await sendMagicLinkForEmail(email)
+  }
+
+  const sendOtpCode = async (targetPhone: string) => {
     setIsLoading(true)
     setFormError(null)
 
     try {
-      // Send OTP via Twilio Verify (defaults to SMS)
       const response = await fetch('/api/auth/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone,
-          action: 'send',
-        }),
+        body: JSON.stringify({ phone: targetPhone, action: 'send' }),
       })
 
       const result = await response.json()
 
       if (!response.ok) {
         setFormError(result.error || 'Failed to send verification code')
+        return
+      }
+
+      setStep('phone-verify')
+    } catch {
+      setFormError('Something went wrong. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Step 1 of the unified flow: figure out what the identifier is and
+  // whether it already has an account, WITHOUT creating anything.
+  const handleIdentify = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setFormError(null)
+
+    const trimmed = identifier.trim()
+
+    try {
+      const response = await fetch('/api/auth/identify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: trimmed }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setFormError(data.error || t('login.identify.genericError'))
         setIsLoading(false)
         return
       }
 
-      setStep(loginType === 'owner' ? 'owner-verify' : 'cleaner-verify')
+      if (data.method === 'email') {
+        const normalizedEmail = trimmed.toLowerCase()
+        setEmail(normalizedEmail)
+        if (data.exists) {
+          await sendMagicLinkForEmail(normalizedEmail)
+        } else {
+          setStep('email-choice')
+          setIsLoading(false)
+        }
+        return
+      }
+
+      // Phone path
+      setPhone(trimmed)
+      if (data.exists) {
+        setLoginProvider(data.loginProvider === 'cleaner' ? 'cleaner' : 'general')
+        await sendOtpCode(trimmed)
+      } else {
+        setStep('phone-not-found')
+        setIsLoading(false)
+      }
     } catch {
-      setFormError('Something went wrong. Please try again.')
-    } finally {
+      setFormError(t('login.identify.genericError'))
       setIsLoading(false)
     }
   }
@@ -96,11 +175,11 @@ function LoginContent() {
     setIsLoading(true)
     setFormError(null)
 
-    const providerId = loginType === 'owner' ? 'owner-phone-login' : 'cleaner-login'
+    const providerId = loginProvider === 'cleaner' ? 'cleaner-login' : 'owner-phone-login'
     // Honor an explicit callbackUrl (e.g. a deep link from a push
     // notification or a booking message) the same way the magic-link path
     // already does; otherwise fall back to each role's default dashboard.
-    const redirectPath = explicitCallbackUrl || (loginType === 'owner' ? '/owner/dashboard' : '/dashboard')
+    const redirectPath = explicitCallbackUrl || (loginProvider === 'cleaner' ? '/dashboard' : '/owner/dashboard')
 
     const result = await signIn(providerId, {
       phone,
@@ -112,7 +191,7 @@ function LoginContent() {
 
     if (result?.error) {
       // NextAuth doesn't pass through detailed error, so give helpful guidance
-      setFormError('Invalid or expired code. Please request a new code and try again.')
+      setFormError(t('login.verify.invalidCode'))
     } else {
       router.push(redirectPath)
       router.refresh()
@@ -122,20 +201,20 @@ function LoginContent() {
   const handleBack = () => {
     setFormError(null)
     setEmailSent(false)
-    if (step === 'cleaner-verify') {
-      setStep('cleaner-phone')
+    if (step === 'phone-verify') {
+      setStep('identify')
       setCode('')
-    } else if (step === 'owner-verify') {
-      setStep('owner-phone')
-      setCode('')
-    } else if (step === 'owner-email' || step === 'owner-phone') {
-      setStep(isAdminLogin ? 'select' : 'owner-method')
+    } else if (step === 'owner-email') {
+      setStep('select')
+      setEmail('')
+    } else if (step === 'phone-not-found' || step === 'email-choice') {
+      setStep('identify')
+      setIdentifier('')
       setEmail('')
       setPhone('')
-    } else if (step === 'owner-method') {
-      setStep('select')
     } else {
-      setStep('select')
+      setStep(isAdminLogin ? 'select' : 'identify')
+      setIdentifier('')
       setEmail('')
       setPhone('')
       setCode('')
@@ -252,123 +331,30 @@ function LoginContent() {
             </div>
           )}
 
-          {/* Step: Select user type */}
+          {/* Step: Admin select (preserved exactly - admin sign-in only) */}
           {step === 'select' && (
             <div className="space-y-6">
               <div className="text-center">
                 <h1 className="text-2xl font-semibold text-[#1A1A1A] mb-2">
-                  {isAdminLogin ? 'Admin Access' : 'Welcome back'}
+                  Admin Access
                 </h1>
                 <p className="text-[#6B6B6B]">
-                  {isAdminLogin ? 'Sign in to access the admin panel' : 'How would you like to sign in?'}
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    setLoginType('owner')
-                    setStep(isAdminLogin ? 'owner-email' : 'owner-method')
-                  }}
-                  className={`w-full bg-white border-2 rounded-2xl p-5 text-left transition-all group ${isAdminLogin ? 'border-[#1A1A1A]' : 'border-[#EBEBEB] hover:border-[#C4785A]'}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform ${isAdminLogin ? 'bg-[#1A1A1A]' : 'bg-[#FFF8F5]'}`}>
-                      {isAdminLogin ? (
-                        <span className="text-white text-xl">&#128274;</span>
-                      ) : (
-                        <span>&#127968;</span>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-[#1A1A1A]">{isAdminLogin ? 'Admin' : 'Property Owner'}</p>
-                      <p className="text-sm text-[#6B6B6B]">{isAdminLogin ? 'Sign in with email link' : 'Email or phone'}</p>
-                    </div>
-                  </div>
-                </button>
-
-                {!isAdminLogin && (
-                  <button
-                    onClick={() => {
-                      setLoginType('cleaner')
-                      setStep('cleaner-phone')
-                    }}
-                    className="w-full bg-white border-2 border-[#EBEBEB] hover:border-[#C4785A] rounded-2xl p-5 text-left transition-all group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-[#FFF8F5] rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                        &#10024;
-                      </div>
-                      <div>
-                        <p className="font-semibold text-[#1A1A1A]">Cleaner</p>
-                        <p className="text-sm text-[#6B6B6B]">Sign in with phone</p>
-                      </div>
-                    </div>
-                  </button>
-                )}
-              </div>
-
-              {!isAdminLogin && (
-                <p className="text-center text-xs text-[#9B9B9B]">
-                  VillaCare team?{' '}
-                  <Link href="/login?callbackUrl=/admin" className="text-[#9B9B9B] underline hover:text-[#6B6B6B]">
-                    Log in with your email
-                  </Link>
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Step: Owner method selection */}
-          {step === 'owner-method' && (
-            <div className="space-y-6">
-              <div>
-                <button
-                  onClick={handleBack}
-                  className="text-sm text-[#6B6B6B] flex items-center gap-1 mb-4 hover:text-[#1A1A1A]"
-                >
-                  &larr; Back
-                </button>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center text-xl">
-                    &#127968;
-                  </div>
-                  <h1 className="text-xl font-semibold text-[#1A1A1A]">
-                    Owner Sign In
-                  </h1>
-                </div>
-                <p className="text-[#6B6B6B]">
-                  How would you like to sign in?
+                  Sign in to access the admin panel
                 </p>
               </div>
 
               <div className="space-y-3">
                 <button
                   onClick={() => setStep('owner-email')}
-                  className="w-full bg-white border-2 border-[#EBEBEB] hover:border-[#C4785A] rounded-2xl p-4 text-left transition-all group"
+                  className="w-full bg-white border-2 border-[#1A1A1A] rounded-2xl p-5 text-left transition-all group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#F5F5F3] rounded-lg flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
-                      &#9993;
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform bg-[#1A1A1A]">
+                      <span className="text-white text-xl">&#128274;</span>
                     </div>
                     <div>
-                      <p className="font-medium text-[#1A1A1A]">Email link</p>
-                      <p className="text-sm text-[#6B6B6B]">We&apos;ll send you a sign-in link</p>
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => setStep('owner-phone')}
-                  className="w-full bg-white border-2 border-[#EBEBEB] hover:border-[#C4785A] rounded-2xl p-4 text-left transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#F5F5F3] rounded-lg flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
-                      &#128241;
-                    </div>
-                    <div>
-                      <p className="font-medium text-[#1A1A1A]">Phone code</p>
-                      <p className="text-sm text-[#6B6B6B]">We&apos;ll send you a verification code</p>
+                      <p className="font-semibold text-[#1A1A1A]">Admin</p>
+                      <p className="text-sm text-[#6B6B6B]">Sign in with email link</p>
                     </div>
                   </div>
                 </button>
@@ -376,7 +362,7 @@ function LoginContent() {
             </div>
           )}
 
-          {/* Step: Owner email entry for magic link */}
+          {/* Step: Admin email entry for magic link (preserved exactly) */}
           {step === 'owner-email' && (
             <div className="space-y-6">
               <div>
@@ -387,15 +373,11 @@ function LoginContent() {
                   &larr; Back
                 </button>
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl ${isAdminLogin ? 'bg-[#1A1A1A]' : 'bg-[#FFF8F5]'}`}>
-                    {isAdminLogin ? (
-                      <span className="text-white text-base">&#128274;</span>
-                    ) : (
-                      <span>&#127968;</span>
-                    )}
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-[#1A1A1A]">
+                    <span className="text-white text-base">&#128274;</span>
                   </div>
                   <h1 className="text-xl font-semibold text-[#1A1A1A]">
-                    {isAdminLogin ? 'Admin Sign In' : 'Owner Sign In'}
+                    Admin Sign In
                   </h1>
                 </div>
                 <p className="text-[#6B6B6B]">
@@ -418,7 +400,7 @@ function LoginContent() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder={isAdminLogin ? 'admin@villacare.com' : 'you@example.com'}
+                    placeholder="admin@villacare.com"
                     required
                     className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
                   />
@@ -439,35 +421,129 @@ function LoginContent() {
                   )}
                 </button>
               </form>
-
-              {!isAdminLogin && (
-                <p className="text-center text-sm text-[#6B6B6B]">
-                  No account? No problem! We&apos;ll create one for you.
-                </p>
-              )}
             </div>
           )}
 
-          {/* Step: Owner phone entry */}
-          {step === 'owner-phone' && (
+          {/* Step: Unified identify (phone or email) */}
+          {step === 'identify' && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h1 className="text-2xl font-semibold text-[#1A1A1A] mb-2">
+                  {t('login.identify.title')}
+                </h1>
+                <p className="text-[#6B6B6B]">
+                  {t('login.identify.subtitle')}
+                </p>
+              </div>
+
+              {formError && (
+                <div className="p-4 bg-[#FFEBEE] border border-[#C75050] rounded-xl text-[#C75050] text-sm">
+                  {formError}
+                </div>
+              )}
+
+              <form onSubmit={handleIdentify} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                    {t('login.identify.label')}
+                  </label>
+                  <input
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder={t('login.identify.placeholder')}
+                    required
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || !identifier.trim()}
+                  className="w-full bg-[#1A1A1A] text-white py-3.5 rounded-xl font-medium active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      {t('login.identify.checking')}
+                    </>
+                  ) : (
+                    t('login.identify.continue')
+                  )}
+                </button>
+              </form>
+
+              <p className="text-center text-xs text-[#9B9B9B]">
+                VillaCare team?{' '}
+                <Link href="/login?callbackUrl=/admin" className="text-[#9B9B9B] underline hover:text-[#6B6B6B]">
+                  Log in with your email
+                </Link>
+              </p>
+            </div>
+          )}
+
+          {/* Step: Phone not found */}
+          {step === 'phone-not-found' && (
             <div className="space-y-6">
               <div>
                 <button
                   onClick={handleBack}
                   className="text-sm text-[#6B6B6B] flex items-center gap-1 mb-4 hover:text-[#1A1A1A]"
                 >
-                  &larr; Back
+                  {t('login.back')}
+                </button>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-[#FFF3E0] rounded-xl flex items-center justify-center text-xl">
+                    &#128269;
+                  </div>
+                  <h1 className="text-xl font-semibold text-[#1A1A1A]">
+                    {t('login.phone.notFound.title')}
+                  </h1>
+                </div>
+                <p className="text-[#6B6B6B]">
+                  {t('login.phone.notFound.body')}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Link
+                  href="/onboarding/cleaner"
+                  className="block w-full bg-white border-2 border-[#EBEBEB] hover:border-[#C4785A] rounded-2xl p-4 text-center font-medium text-[#1A1A1A] transition-all"
+                >
+                  {t('login.phone.notFound.cleanerCta')}
+                </Link>
+                <Link
+                  href="/"
+                  className="block w-full bg-[#1A1A1A] text-white rounded-2xl p-4 text-center font-medium transition-all active:scale-[0.98]"
+                >
+                  {t('login.phone.notFound.ownerCta')}
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Step: Email choice (unrecognized email) */}
+          {step === 'email-choice' && (
+            <div className="space-y-6">
+              <div>
+                <button
+                  onClick={handleBack}
+                  className="text-sm text-[#6B6B6B] flex items-center gap-1 mb-4 hover:text-[#1A1A1A]"
+                >
+                  {t('login.back')}
                 </button>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center text-xl">
                     &#127968;
                   </div>
                   <h1 className="text-xl font-semibold text-[#1A1A1A]">
-                    Owner Sign In
+                    {t('login.email.choice.title')}
                   </h1>
                 </div>
                 <p className="text-[#6B6B6B]">
-                  We&apos;ll send a verification code to your phone
+                  {t('login.email.choice.body')}
                 </p>
               </div>
 
@@ -477,63 +553,53 @@ function LoginContent() {
                 </div>
               )}
 
-              <form onSubmit={handleSendCode} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+34 612 345 678"
-                    required
-                    className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
-                  />
-                </div>
-
+              <div className="space-y-3">
                 <button
-                  type="submit"
+                  onClick={() => sendMagicLinkForEmail(email)}
                   disabled={isLoading}
                   className="w-full bg-[#1A1A1A] text-white py-3.5 rounded-xl font-medium active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Sending code...
-                    </>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    'Send Verification Code'
+                    t('login.email.choice.ownerCta')
                   )}
                 </button>
-              </form>
-
-              <p className="text-center text-sm text-[#6B6B6B]">
-                No account? No problem! We&apos;ll create one for you.
-              </p>
+                <button
+                  onClick={() => {
+                    setStep('identify')
+                    setIdentifier('')
+                    setEmail('')
+                    setFormError(null)
+                  }}
+                  className="w-full bg-white border-2 border-[#EBEBEB] hover:border-[#C4785A] rounded-2xl p-4 text-center font-medium text-[#1A1A1A] transition-all"
+                >
+                  {t('login.email.choice.cleanerCta')}
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Step: Owner verify code */}
-          {step === 'owner-verify' && (
+          {/* Step: Verify phone code */}
+          {step === 'phone-verify' && (
             <div className="space-y-6">
               <div>
                 <button
                   onClick={handleBack}
                   className="text-sm text-[#6B6B6B] flex items-center gap-1 mb-4 hover:text-[#1A1A1A]"
                 >
-                  &larr; Back
+                  {t('login.back')}
                 </button>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 bg-[#E8F5E9] rounded-xl flex items-center justify-center text-xl">
                     &#128241;
                   </div>
                   <h1 className="text-xl font-semibold text-[#1A1A1A]">
-                    Enter Code
+                    {t('login.verify.title')}
                   </h1>
                 </div>
                 <p className="text-[#6B6B6B]">
-                  We sent a 6-digit code to <span className="font-medium text-[#1A1A1A]">{phone}</span>
+                  {t('login.verify.sentTo').replace('{phone}', phone)}
                 </p>
               </div>
 
@@ -546,7 +612,7 @@ function LoginContent() {
               <form onSubmit={handlePhoneLogin} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
-                    Verification Code
+                    {t('login.verify.codeLabel')}
                   </label>
                   <input
                     type="text"
@@ -567,166 +633,22 @@ function LoginContent() {
                   {isLoading ? (
                     <>
                       <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Verifying...
+                      {t('login.verify.verifying')}
                     </>
                   ) : (
-                    'Verify & Sign In'
+                    t('login.verify.verifyButton')
                   )}
                 </button>
               </form>
 
               <div className="text-center">
                 <p className="text-sm text-[#6B6B6B]">
-                  Didn&apos;t receive the code?{' '}
+                  {t('login.verify.resendPrompt')}{' '}
                   <button
-                    onClick={() => handleSendCode({ preventDefault: () => {} } as React.FormEvent)}
+                    onClick={() => sendOtpCode(phone)}
                     className="text-[#C4785A] font-medium hover:underline"
                   >
-                    Resend
-                  </button>
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Step: Cleaner phone entry */}
-          {step === 'cleaner-phone' && (
-            <div className="space-y-6">
-              <div>
-                <button
-                  onClick={handleBack}
-                  className="text-sm text-[#6B6B6B] flex items-center gap-1 mb-4 hover:text-[#1A1A1A]"
-                >
-                  &larr; Back
-                </button>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-[#FFF8F5] rounded-xl flex items-center justify-center text-xl">
-                    &#10024;
-                  </div>
-                  <h1 className="text-xl font-semibold text-[#1A1A1A]">
-                    Cleaner Sign In
-                  </h1>
-                </div>
-                <p className="text-[#6B6B6B]">
-                  We&apos;ll send a verification code to your phone
-                </p>
-              </div>
-
-              {formError && (
-                <div className="p-4 bg-[#FFEBEE] border border-[#C75050] rounded-xl text-[#C75050] text-sm">
-                  {formError}
-                </div>
-              )}
-
-              <form onSubmit={handleSendCode} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+34 612 345 678"
-                    required
-                    className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] text-base focus:outline-none focus:border-[#1A1A1A] transition-colors"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-[#1A1A1A] text-white py-3.5 rounded-xl font-medium active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Sending code...
-                    </>
-                  ) : (
-                    'Send Verification Code'
-                  )}
-                </button>
-              </form>
-
-              <p className="text-center text-sm text-[#6B6B6B]">
-                Not registered yet?{' '}
-                <Link href="/onboarding/cleaner" className="text-[#C4785A] font-medium hover:underline">
-                  Apply to join
-                </Link>
-              </p>
-            </div>
-          )}
-
-          {/* Step: Cleaner verify code */}
-          {step === 'cleaner-verify' && (
-            <div className="space-y-6">
-              <div>
-                <button
-                  onClick={handleBack}
-                  className="text-sm text-[#6B6B6B] flex items-center gap-1 mb-4 hover:text-[#1A1A1A]"
-                >
-                  &larr; Back
-                </button>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-[#E8F5E9] rounded-xl flex items-center justify-center text-xl">
-                    &#128241;
-                  </div>
-                  <h1 className="text-xl font-semibold text-[#1A1A1A]">
-                    Enter Code
-                  </h1>
-                </div>
-                <p className="text-[#6B6B6B]">
-                  We sent a 6-digit code to <span className="font-medium text-[#1A1A1A]">{phone}</span>
-                </p>
-              </div>
-
-              {formError && (
-                <div className="p-4 bg-[#FFEBEE] border border-[#C75050] rounded-xl text-[#C75050] text-sm">
-                  {formError}
-                </div>
-              )}
-
-              <form onSubmit={handlePhoneLogin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
-                    Verification Code
-                  </label>
-                  <input
-                    type="text"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="123456"
-                    required
-                    maxLength={6}
-                    className="w-full px-4 py-3.5 rounded-xl border border-[#DEDEDE] text-base text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:border-[#1A1A1A] transition-colors"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading || code.length !== 6}
-                  className="w-full bg-[#1A1A1A] text-white py-3.5 rounded-xl font-medium active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    'Verify & Sign In'
-                  )}
-                </button>
-              </form>
-
-              <div className="text-center">
-                <p className="text-sm text-[#6B6B6B]">
-                  Didn&apos;t receive the code?{' '}
-                  <button
-                    onClick={() => handleSendCode({ preventDefault: () => {} } as React.FormEvent)}
-                    className="text-[#C4785A] font-medium hover:underline"
-                  >
-                    Resend
+                    {t('login.verify.resendButton')}
                   </button>
                 </p>
               </div>
