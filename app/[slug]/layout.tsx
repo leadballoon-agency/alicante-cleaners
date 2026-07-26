@@ -28,10 +28,28 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const name = cleaner.user.name || 'Cleaner'
-  const description = cleaner.bio || `Book ${name} for professional villa cleaning in Alicante, Spain. Rated ${cleaner.rating}/5 with ${cleaner.reviewCount} reviews.`
+  const areaList = cleaner.serviceAreas.slice(0, 3).join(', ')
+
+  // Live rating claim, not the cached (seed-inflated) cleaner.rating/
+  // reviewCount columns — see the honesty note on the JSON-LD below.
+  const { _avg, _count } = await db.review.aggregate({
+    where: { cleanerId: cleaner.id, approved: true },
+    _avg: { rating: true },
+    _count: { rating: true },
+  })
+  const liveReviewCount = _count.rating
+  const ratingSuffix = liveReviewCount > 0
+    ? ` Rated ${(_avg.rating ?? 0).toFixed(1)}/5 from ${liveReviewCount} review${liveReviewCount === 1 ? '' : 's'}.`
+    : ''
+  const description = cleaner.bio
+    ? `${cleaner.bio}${areaList ? ` Serving ${areaList}.` : ''}`
+    : `Limpieza de villas / villa cleaning in ${areaList || 'Alicante'} with ${name}.${ratingSuffix}`
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alicantecleaners.com'
-  // Ensure www prefix for OG images (social crawlers don't follow redirects well)
+  // Ensure www prefix for OG images and canonical URLs (social crawlers and
+  // search engines shouldn't have to follow a redirect to reach the
+  // canonical host — matches the www convention used across the rest of
+  // the site, e.g. app/sitemap.ts).
   const ogBaseUrl = baseUrl.replace('://alicantecleaners.com', '://www.alicantecleaners.com')
   const ogImageUrl = `${ogBaseUrl}/api/og/cleaner/${slug}`
 
@@ -68,7 +86,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       images: [ogImageUrl],
     },
     alternates: {
-      canonical: `${baseUrl}/${slug}`,
+      canonical: `${ogBaseUrl}/${slug}`,
     },
   }
 }
@@ -79,19 +97,25 @@ export default async function CleanerLayout({ params, children }: Props) {
   // Fetch cleaner data for schema
   const cleaner = await db.cleaner.findUnique({
     where: { slug },
-    include: {
-      user: true,
-      reviews: {
-        where: { approved: true },
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-      },
-    },
+    include: { user: true },
   })
 
   if (!cleaner) {
     return <>{children}</>
   }
+
+  // Honesty check: cleaner.rating/reviewCount are cached columns that are
+  // currently seed-inflated for some profiles. The JSON-LD aggregateRating
+  // must reflect reality (Google penalizes fabricated ratings), so derive
+  // it live from actual approved reviews instead — and omit it entirely
+  // when there are none.
+  const { _avg, _count } = await db.review.aggregate({
+    where: { cleanerId: cleaner.id, approved: true },
+    _avg: { rating: true },
+    _count: { rating: true },
+  })
+  const liveReviewCount = _count.rating
+  const liveRating = _avg.rating ?? 0
 
   const hourlyRate = cleaner.hourlyRate?.toNumber() || 18
 
@@ -123,8 +147,8 @@ export default async function CleanerLayout({ params, children }: Props) {
     slug: cleaner.slug,
     bio: cleaner.bio || '',
     photo: cleaner.user.image,
-    rating: cleaner.rating?.toNumber() || 5,
-    reviewCount: cleaner.reviewCount,
+    rating: liveRating,
+    reviewCount: liveReviewCount,
     hourlyRate,
     serviceAreas: cleaner.serviceAreas,
     services,
