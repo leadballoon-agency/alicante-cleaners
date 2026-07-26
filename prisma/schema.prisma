@@ -956,11 +956,13 @@ model PageView {
   country     String?  // From Vercel headers
   sessionId   String?  // Anonymous session tracking
   userId      String?  // If logged in
+  ref         String?  // Advocacy loop: ?ref= query param (share-surface tag or an Owner.referralCode)
   createdAt   DateTime @default(now())
 
   @@index([path, createdAt])
   @@index([cleanerSlug, createdAt])
   @@index([createdAt])
+  @@index([ref, createdAt])
 }
 
 // ============================================

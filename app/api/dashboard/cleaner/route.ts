@@ -106,6 +106,21 @@ export async function GET() {
       return bookingDate >= monthStart && b.status === 'COMPLETED'
     }).length
 
+    // Advocacy loop: visits driven by this cleaner's own promotion (Promote
+    // tab's "?ref=cleaner-share" links) — all-time count, see promote.tsx.
+    // Isolated try/catch: PageView.ref is an additive column applied via a
+    // separate `prisma db push` at merge time, not in this deploy — if this
+    // route ships before that migration runs, the rest of the (much more
+    // important) cleaner dashboard payload must still load.
+    let inviteViews = 0
+    try {
+      inviteViews = await db.pageView.count({
+        where: { cleanerSlug: cleaner.slug, ref: 'cleaner-share' },
+      })
+    } catch (error) {
+      console.error('Error fetching inviteViews (PageView.ref may not exist yet):', error)
+    }
+
     return NextResponse.json({
       cleaner: {
         id: cleaner.id,
@@ -127,6 +142,7 @@ export async function GET() {
         thisWeekEarnings,
         thisWeekBookings: thisWeekBookings.length,
         completedThisMonth,
+        inviteViews,
       },
     })
   } catch (error) {

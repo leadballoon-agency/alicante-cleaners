@@ -128,6 +128,7 @@ function Dashboard() {
     ownerName: string
   } | null>(null)
   const [unreadMessages, setUnreadMessages] = useState(0)
+  const [inviteViews, setInviteViews] = useState(0)
   // Fetch cleaner profile and bookings
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -161,6 +162,7 @@ function Dashboard() {
       setBookings(bookingsData.bookings || [])
       setComments(commentsData.comments || [])
       setUnreadMessages(messagesData.unreadCount || 0)
+      setInviteViews(cleanerData.stats?.inviteViews || 0)
 
       // Sync language context with cleaner's preferred language
       if (cleanerData.cleaner?.preferredLanguage) {
@@ -387,7 +389,7 @@ function Dashboard() {
               <ProfileTab cleaner={cleaner} onUpdate={setCleaner} />
             )}
             {activeTab === 'promote' && (
-              <PromoteTab cleaner={cleaner} bookings={bookings} />
+              <PromoteTab cleaner={cleaner} bookings={bookings} inviteViews={inviteViews} />
             )}
             {activeTab === 'success' && <SuccessTab />}
           </>

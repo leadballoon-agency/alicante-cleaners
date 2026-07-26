@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { isPlausibleRefValue, rememberReferralCookie } from '@/lib/referrals'
+
+// Advocacy loop: sanitize a client-supplied `ref` before it's ever persisted
+// (cookie or PageView row). Defense in depth — the client already applies
+// the same format check, but this endpoint can't trust that.
+function sanitizeRef(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim().slice(0, 64)
+  return isPlausibleRefValue(trimmed) ? trimmed : null
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { path, cleanerSlug, referrer, sessionId } = body
+    const { path, cleanerSlug, referrer, sessionId, ref } = body
 
     if (!path) {
       return NextResponse.json({ error: 'Path required' }, { status: 400 })
@@ -19,6 +29,17 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || undefined
     const country = request.headers.get('x-vercel-ip-country') || undefined
 
+    const sanitizedRef = sanitizeRef(ref)
+
+    // Persist the ref in a first-party cookie so it survives to whenever an
+    // Owner account eventually gets created (guest booking, magic-link
+    // login, AI onboarding) — see lib/referrals.ts. Done before the
+    // PageView write, and independently of whether that write succeeds, so
+    // a transient analytics-table failure can never cost an attribution.
+    if (sanitizedRef) {
+      await rememberReferralCookie(sanitizedRef)
+    }
+
     // Create page view record
     await db.pageView.create({
       data: {
@@ -29,6 +50,7 @@ export async function POST(request: NextRequest) {
         country,
         sessionId: sessionId || null,
         userId: session?.user?.id || null,
+        ref: sanitizedRef,
       },
     })
 

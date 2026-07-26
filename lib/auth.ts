@@ -13,6 +13,7 @@ import { linkChatConversations } from './nurturing/link-conversations'
 import { runSideEffects } from './side-effects'
 import { computeStaffLevel, hasStaffAccess } from './staff-access'
 import { logAudit } from './audit'
+import { resolveReferredByFromCookie } from './referrals'
 
 // Create fresh Resend client each time (env vars can change between deployments)
 const getResend = () => {
@@ -323,6 +324,7 @@ export const authOptions: NextAuthOptions = {
               data: {
                 userId: user.id,
                 referralCode,
+                referredBy: (await resolveReferredByFromCookie(user.id)) ?? undefined,
                 trusted: false,
               },
             })

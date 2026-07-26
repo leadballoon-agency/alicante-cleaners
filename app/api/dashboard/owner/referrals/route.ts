@@ -17,11 +17,6 @@ export async function GET() {
 
     const owner = await db.owner.findUnique({
       where: { userId: session.user.id },
-      include: {
-        user: {
-          select: { name: true },
-        },
-      },
     })
 
     if (!owner) {
@@ -31,10 +26,14 @@ export async function GET() {
       )
     }
 
-    // Find owners who were referred by this owner's referral code
+    // Find owners who were referred by this owner's referral code.
+    // referredBy is only ever written as an Owner.referralCode (see
+    // lib/referrals.ts) — matching on the referrer's display name was
+    // dead code (no owner-creation path ever wrote a name there) and has
+    // been dropped.
     const referredOwners = await db.owner.findMany({
       where: {
-        referredBy: owner.user.name || owner.referralCode,
+        referredBy: owner.referralCode,
       },
       include: {
         user: {

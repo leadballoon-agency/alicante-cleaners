@@ -80,9 +80,15 @@ async function copyToClipboard(text: string): Promise<boolean> {
 // wa.me "share" link (no recipient phone — opens the picker) for a manager
 // to recommend a cleaner's profile to a prospective owner. Admin UI stays
 // English, but the outgoing message is Spanish: the people receiving this
-// share are Spanish-market villa owners, not the admin.
+// share are Spanish-market villa owners, not the admin. `?ref=admin-share`
+// tags visits from this share so they show up in the admin analytics
+// "visits by share source" read-out (see app/api/admin/analytics/route.ts).
+function shareProfileUrl(slug: string): string {
+  return `https://www.alicantecleaners.com/${slug}?ref=admin-share`
+}
+
 function buildShareMessage(name: string, slug: string): string {
-  return `Te recomiendo a ${name} para la limpieza de tu villa — perfil verificado en VillaCare: https://www.alicantecleaners.com/${slug}`
+  return `Te recomiendo a ${name} para la limpieza de tu villa — perfil verificado en VillaCare: ${shareProfileUrl(slug)}`
 }
 
 function shareWhatsAppUrl(name: string, slug: string): string {
@@ -695,7 +701,7 @@ export default function CleanersTab({ cleaners, onApprove, onReject, onArchive, 
               </a>
               <button
                 onClick={async () => {
-                  const success = await copyToClipboard(`https://www.alicantecleaners.com/${sharing.slug}`)
+                  const success = await copyToClipboard(shareProfileUrl(sharing.slug))
                   if (success) {
                     setLinkCopied(true)
                     setTimeout(() => setLinkCopied(false), 2000)
