@@ -232,7 +232,8 @@ export async function GET(
                 marginBottom: 30,
               }}
             >
-              {/* Rating */}
+              {/* Rating — never claim a star average for a cleaner with no
+                  reviews yet; show an honest "new" label instead. */}
               <div
                 style={{
                   display: 'flex',
@@ -240,24 +241,38 @@ export async function GET(
                   gap: 10,
                 }}
               >
-                <span style={{ fontSize: 32, color: '#C4785A' }}>★</span>
-                <span
-                  style={{
-                    fontSize: 32,
-                    fontWeight: 600,
-                    color: '#FFFFFF',
-                  }}
-                >
-                  {rating.toFixed(1)}
-                </span>
-                <span
-                  style={{
-                    fontSize: 24,
-                    color: '#9B9B9B',
-                  }}
-                >
-                  ({reviewCount} reviews)
-                </span>
+                {reviewCount > 0 ? (
+                  <>
+                    <span style={{ fontSize: 32, color: '#C4785A' }}>★</span>
+                    <span
+                      style={{
+                        fontSize: 32,
+                        fontWeight: 600,
+                        color: '#FFFFFF',
+                      }}
+                    >
+                      {rating.toFixed(1)}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 24,
+                        color: '#9B9B9B',
+                      }}
+                    >
+                      ({reviewCount} reviews)
+                    </span>
+                  </>
+                ) : (
+                  <span
+                    style={{
+                      fontSize: 28,
+                      fontWeight: 600,
+                      color: '#9B9B9B',
+                    }}
+                  >
+                    New on VillaCare
+                  </span>
+                )}
               </div>
 
               {/* Rate */}

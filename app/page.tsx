@@ -418,13 +418,19 @@ export default function HomePage() {
                           )}
                         </div>
                         <div className="flex items-center gap-1 mt-1">
-                          <span className="text-[#C4785A]">★</span>
-                          <span className="text-sm font-medium text-[#1A1A1A]">
-                            {cleaner.rating.toFixed(1)}
-                          </span>
-                          <span className="text-sm text-[#6B6B6B]">
-                            ({cleaner.reviewCount} review{cleaner.reviewCount !== 1 ? 's' : ''})
-                          </span>
+                          {cleaner.reviewCount > 0 ? (
+                            <>
+                              <span className="text-[#C4785A]">★</span>
+                              <span className="text-sm font-medium text-[#1A1A1A]">
+                                {cleaner.rating.toFixed(1)}
+                              </span>
+                              <span className="text-sm text-[#6B6B6B]">
+                                ({cleaner.reviewCount} review{cleaner.reviewCount !== 1 ? 's' : ''})
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-sm text-[#6B6B6B]">{t('cleaner.newOnPlatform')}</span>
+                          )}
                         </div>
                         <p className="text-sm text-[#6B6B6B] mt-1">
                           {t('cleaner.from')} €{cleaner.hourlyRate * 3}/clean

@@ -168,11 +168,15 @@ export default function ProfileClient({ cleaner, slug }: { cleaner: Cleaner; slu
                 </div>
               )}
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  <span className="text-[#C4785A]">&#9733;</span>
-                  <span className="font-semibold text-[#1A1A1A]">{cleaner.rating.toFixed(1)}</span>
-                  <span className="text-[#6B6B6B] text-sm">({cleaner.reviewCount})</span>
-                </div>
+                {cleaner.reviewCount > 0 ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-[#C4785A]">&#9733;</span>
+                    <span className="font-semibold text-[#1A1A1A]">{cleaner.rating.toFixed(1)}</span>
+                    <span className="text-[#6B6B6B] text-sm">({cleaner.reviewCount})</span>
+                  </div>
+                ) : (
+                  <span className="text-[#6B6B6B] text-sm">{t('profile.newToPlatform')}</span>
+                )}
                 <span className="text-[#DEDEDE]">|</span>
                 <span className="font-semibold text-[#C4785A]">&euro;{cleaner.hourlyRate}/hr</span>
               </div>
@@ -193,21 +197,21 @@ export default function ProfileClient({ cleaner, slug }: { cleaner: Cleaner; slu
             <p className="text-[#6B6B6B] text-sm">{cleaner.bio}</p>
           )}
 
-          {/* Trust badges - inline */}
-          <div className="flex gap-4 mt-4 pt-4 border-t border-[#EBEBEB]/50">
-            <div className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
-              <span className="text-base">&#9989;</span>
-              {t('profile.verified')}
+          {/* Trust badge - earned only. Photo proof / secure payment badges
+              removed: those features don't exist yet. "Verified" only shows
+              when a manager has actually vetted this cleaner (vettedNote),
+              and links down to that vouch instead of asserting it twice. */}
+          {cleaner.vettedNote && (
+            <div className="flex gap-4 mt-4 pt-4 border-t border-[#EBEBEB]/50">
+              <a
+                href="#vetted-by-villacare"
+                className="flex items-center gap-1.5 text-xs text-[#6B6B6B] hover:text-[#C4785A] transition-colors"
+              >
+                <span className="text-base">&#9989;</span>
+                {t('profile.verifiedBadge')}
+              </a>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
-              <span className="text-base">&#128247;</span>
-              {t('profile.photoProof')}
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
-              <span className="text-base">&#128179;</span>
-              {t('profile.securePayment')}
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -249,10 +253,14 @@ export default function ProfileClient({ cleaner, slug }: { cleaner: Cleaner; slu
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-[#1A1A1A] truncate">{member.name}</p>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[#C4785A] text-xs">&#9733;</span>
-                          <span className="text-xs text-[#6B6B6B]">{member.rating.toFixed(1)}</span>
-                        </div>
+                        {member.reviewCount > 0 ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-[#C4785A] text-xs">&#9733;</span>
+                            <span className="text-xs text-[#6B6B6B]">{member.rating.toFixed(1)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[#9B9B9B]">{t('cleaner.new')}</span>
+                        )}
                       </div>
                     </Link>
                   ))}
@@ -275,7 +283,7 @@ export default function ProfileClient({ cleaner, slug }: { cleaner: Cleaner; slu
             terracotta-tinted card with a checkmark, so it reads as a
             platform trust signal rather than a customer testimonial. */}
         {cleaner.vettedNote && (
-          <div className="mb-8">
+          <div id="vetted-by-villacare" className="mb-8 scroll-mt-24">
             <div className="bg-[#FFF8F5] border border-[#C4785A]/30 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-[#C4785A]">&#10003;</span>
