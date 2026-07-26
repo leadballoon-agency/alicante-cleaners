@@ -284,8 +284,8 @@ const CLEANER_EMAIL_TEMPLATES: Record<CleanerNurturingEmailType, {
     maxLength: 150,
   },
   CALENDAR_SYNC_GUIDE: {
-    goal: 'Explain how to connect Google Calendar to automatically show availability and avoid double bookings',
-    tone: 'Practical, step-by-step guidance, emphasize the time-saving benefit',
+    goal: 'Explain that connecting Google Calendar lets her AI assistant know her real availability so it can confidently offer time slots and book jobs for her 24/7 - without it, the AI can\'t sell while she\'s out cleaning. Avoiding double bookings is the second benefit',
+    tone: 'Practical, step-by-step guidance, lead with how it lets her AI assistant sell for her around the clock',
     cta: 'Connect your calendar',
     maxLength: 160,
   },
@@ -410,6 +410,7 @@ REQUIREMENTS:
     - Booking guide: alicantecleaners.com/join/booking-guide (for booking-related emails)
     - Team guide: alicantecleaners.com/join/team-guide (for team-related emails)
     - Growth guide: alicantecleaners.com/join/expand-guide (for profile/growth emails)
+    - Calendar guide: alicantecleaners.com/join/calendar-guide (for calendar-related emails)
 ${isPendingProfileTips ? '11. She is NOT yet approved — do NOT talk about getting "more bookings" or promoting her profile. The single call to action is finishing her profile so the WhatsApp approval-request button appears on her dashboard.' : ''}
 
 Return JSON: { "subject": "...", "body": "..." }`
@@ -515,18 +516,23 @@ The VillaCare Team`
     case 'CALENDAR_SYNC_GUIDE':
       return `Hi ${name},
 
-Connecting your Google Calendar makes scheduling effortless:
+Your AI assistant can answer inquiries and book jobs for you 24/7 - but it can only offer real time slots with confidence when it knows your availability. Without your calendar connected, it can't sell while you're out cleaning.
 
-✅ **Auto-availability** - We'll only show villa owners when you're free
+Connecting your Google Calendar fixes that:
+
+✅ **Your AI can sell around the clock** - It offers owners accurate, available time slots automatically, day or night
 ✅ **No double bookings** - Your existing appointments are respected
-✅ **Synced both ways** - VillaCare bookings appear in your calendar automatically
+🔒 **Private by design** - We only read your busy/free times - we never see event details and never write anything to your calendar
+
+Want your VillaCare bookings in your own calendar too? We also offer a separate calendar feed (ICS) you can subscribe to for Google, Apple, or Outlook.
 
 It takes just 2 minutes to connect. Here's how:
 
 1. Go to your Dashboard → Profile tab
-2. Click "Connect Google Calendar"
-3. Sign in with your Google account
-4. That's it! Your availability syncs automatically
+2. Tap "Calendar sync"
+3. Click "Connect Google Calendar" and sign in with your Google account
+
+📚 **Full guide:** alicantecleaners.com/join/calendar-guide
 
 Your calendar, your control.
 
