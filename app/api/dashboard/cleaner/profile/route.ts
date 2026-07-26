@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { isApprovalReady, notifyIfApprovalReady } from '@/lib/notifications/approval-ready'
+import { runSideEffects } from '@/lib/side-effects'
 
 // PATCH /api/dashboard/cleaner/profile - Update cleaner profile
 export async function PATCH(request: NextRequest) {
@@ -17,9 +19,21 @@ export async function PATCH(request: NextRequest) {
 
     const updates = await request.json()
 
+    // Loaded with enough fields to evaluate approval-readiness BEFORE this
+    // update is applied (see notifyIfApprovalReady call below) - this is the
+    // only route that can change any of photo/bio/serviceAreas/hourlyRate
+    // for an existing cleaner (photo uploads only return a blob URL; the
+    // client then PATCHes it here as `photo`).
     const cleaner = await db.cleaner.findUnique({
       where: { userId: session.user.id },
-      select: { id: true },
+      select: {
+        id: true,
+        status: true,
+        bio: true,
+        serviceAreas: true,
+        hourlyRate: true,
+        user: { select: { image: true } },
+      },
     })
 
     if (!cleaner) {
@@ -28,6 +42,8 @@ export async function PATCH(request: NextRequest) {
         { status: 404 }
       )
     }
+
+    const wasReadyBefore = isApprovalReady(cleaner)
 
     // Separate user updates from cleaner updates
     const userUpdates: { name?: string; image?: string } = {}
@@ -93,6 +109,17 @@ export async function PATCH(request: NextRequest) {
         },
       })
     })
+
+    // Best-effort staff push the moment this update carries a PENDING
+    // cleaner's profile across the approval-ready threshold. Must be
+    // awaited (not fire-and-forget) so the push actually completes before
+    // Vercel freezes this function - see lib/side-effects.ts.
+    await runSideEffects([
+      {
+        label: `approval-ready-push:${cleaner.id}`,
+        promise: notifyIfApprovalReady(cleaner.id, wasReadyBefore),
+      },
+    ])
 
     return NextResponse.json({
       success: true,

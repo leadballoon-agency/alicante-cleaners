@@ -47,6 +47,12 @@ function buildSteps(health: ProfileHealth): Step[] {
 // The four profile steps that matter for a human approval decision.
 // Calendar sync is deliberately excluded - it's a Google OAuth step and must
 // not gate a PENDING cleaner from asking a staff member to approve her.
+//
+// Server-side counterpart: `isApprovalReady()` in
+// lib/notifications/approval-ready.ts computes the SAME four criteria
+// (from a Prisma row instead of this component's ProfileHealth shape) to
+// fire a one-time staff push the moment a PENDING cleaner crosses into
+// readiness. Keep both in sync by hand if the criteria ever change.
 function isProfileReady(health: ProfileHealth): boolean {
   return (
     health.photo.has &&
