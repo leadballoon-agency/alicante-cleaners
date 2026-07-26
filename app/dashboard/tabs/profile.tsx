@@ -22,6 +22,8 @@ type TeamService = {
   sortOrder: number
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 const SERVICE_AREAS = [
   'Alicante City',
   'San Juan',
@@ -64,6 +66,13 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
   const [newPhone, setNewPhone] = useState('')
   const [phoneLoading, setPhoneLoading] = useState(false)
   const [phoneError, setPhoneError] = useState('')
+
+  // Email capture - phone-only cleaners have no way to add an email except
+  // during onboarding (and only optionally). This lets them add one here so
+  // they can magic-link in from any device (see /login unified flow).
+  const [emailInput, setEmailInput] = useState('')
+  const [emailSaving, setEmailSaving] = useState(false)
+  const [emailError, setEmailError] = useState('')
 
   // Services state (team leaders only)
   const [services, setServices] = useState<TeamService[]>([])
@@ -414,6 +423,38 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
     }
   }
 
+  const handleSaveEmail = async () => {
+    const candidate = emailInput.trim().toLowerCase()
+    if (!candidate || !EMAIL_REGEX.test(candidate)) {
+      setEmailError(t('profile.email.invalid'))
+      return
+    }
+
+    setEmailSaving(true)
+    setEmailError('')
+    try {
+      const response = await fetch('/api/dashboard/cleaner/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: candidate }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(response.status === 409 ? t('profile.email.taken') : (data.error || t('profile.email.saveFailed')))
+      }
+
+      if (onUpdate) {
+        onUpdate({ ...cleaner, email: data.cleaner?.email ?? candidate })
+      }
+      showToast(t('profile.email.saved'), 'success')
+      setEmailInput('')
+    } catch (err) {
+      setEmailError(err instanceof Error ? err.message : t('profile.email.saveFailed'))
+    } finally {
+      setEmailSaving(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Profile card */}
@@ -558,6 +599,40 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
           )}
         </div>
       )}
+
+      {/* Email capture - add-when-missing, read-only display once set */}
+      <div className="bg-white rounded-2xl border border-[#EBEBEB] p-4">
+        {cleaner.email ? (
+          <>
+            <h3 className="font-medium text-[#1A1A1A] mb-1">{t('profile.email.yourEmail')}</h3>
+            <p className="text-sm text-[#6B6B6B]">{cleaner.email}</p>
+          </>
+        ) : (
+          <>
+            <h3 className="font-medium text-[#1A1A1A] mb-1">{t('profile.email.addLabel')}</h3>
+            <p className="text-xs text-[#6B6B6B] mb-3">{t('profile.email.addHint')}</p>
+            {emailError && (
+              <p className="text-xs text-[#C75050] mb-2">{emailError}</p>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder={t('profile.email.placeholder')}
+                className="flex-1 px-3 py-2.5 rounded-lg border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A] transition-colors"
+              />
+              <button
+                onClick={handleSaveEmail}
+                disabled={emailSaving || !emailInput.trim()}
+                className="px-4 py-2.5 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium disabled:opacity-50 active:scale-[0.98] transition-all"
+              >
+                {emailSaving ? '…' : t('profile.email.save')}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Language preference */}
       <LanguageSelector

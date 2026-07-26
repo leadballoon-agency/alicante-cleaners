@@ -36,6 +36,16 @@ export const authOptions: NextAuthOptions = {
       from: process.env.EMAIL_FROM || 'VillaCare <noreply@alicantecleaners.com>',
       sendVerificationRequest: async ({ identifier: email, url }) => {
         try {
+          // Scanner-proofing: email security scanners (Microsoft ATP,
+          // Proofpoint, etc.) fetch every link in an inbound email before a
+          // human ever sees it, which silently consumes NextAuth's one-time
+          // callback URL and leaves the real recipient with a "link expired"
+          // error. Point the email at a wrapper page instead - scanners GET
+          // an inert page (the token inside `u` is never touched), and only
+          // an actual human click fires the real callback URL below.
+          const original = new URL(url)
+          const wrappedUrl = `${original.origin}/login/confirm?u=${encodeURIComponent(url)}`
+
           await getResend().emails.send({
             from: process.env.EMAIL_FROM || 'VillaCare <noreply@alicantecleaners.com>',
             to: email,
@@ -54,7 +64,7 @@ export const authOptions: NextAuthOptions = {
                     </div>
                     <h1 style="font-size: 24px; font-weight: 600; color: #1A1A1A; text-align: center; margin: 0 0 8px 0;">Sign in to VillaCare</h1>
                     <p style="color: #6B6B6B; text-align: center; margin: 0 0 24px 0;">Click the button below to sign in to your account.</p>
-                    <a href="${url}" style="display: block; background: #1A1A1A; color: white; text-decoration: none; padding: 14px 24px; border-radius: 12px; text-align: center; font-weight: 500;">Sign In</a>
+                    <a href="${wrappedUrl}" style="display: block; background: #1A1A1A; color: white; text-decoration: none; padding: 14px 24px; border-radius: 12px; text-align: center; font-weight: 500;">Sign In</a>
                     <p style="color: #9B9B9B; font-size: 12px; text-align: center; margin: 24px 0 0 0;">If you didn't request this email, you can safely ignore it.</p>
                   </div>
                 </body>
