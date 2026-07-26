@@ -9,6 +9,7 @@ import LanguageSwitcher from '@/components/language-switcher'
 import { useLanguage } from '@/components/language-context'
 import { PageTracker } from '@/components/analytics/page-tracker'
 import { CleanerSlider, type SliderCleaner } from '@/components/CleanerSlider'
+import { AREAS, areaName, areaPath } from '@/lib/area/areas'
 
 type Cleaner = {
   id: string
@@ -36,7 +37,8 @@ function isNewCleaner(createdAt: string): boolean {
 
 export default function HomePage() {
   const { data: session } = useSession()
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
+  const areaLinksLocale = lang === 'es' ? 'es' : 'en'
   const [cleaners, setCleaners] = useState<Cleaner[]>([])
   const [areas, setAreas] = useState<string[]>([])
   const [selectedArea, setSelectedArea] = useState('all')
@@ -453,6 +455,27 @@ export default function HomePage() {
           </>
         )}
       </main>
+
+      {/* Service area links — static, crawlable link block into the
+          programmatic area landing pages (doesn't depend on client-fetched
+          state, so it's present in the server-rendered HTML for crawlers
+          even though this page is a client component). */}
+      <div className="px-6 py-4 max-w-5xl mx-auto">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 justify-center">
+          <span className="text-xs text-[#9B9B9B]">
+            {areaLinksLocale === 'es' ? 'Zonas:' : 'Areas:'}
+          </span>
+          {AREAS.map((area) => (
+            <Link
+              key={area.slug}
+              href={areaPath(areaLinksLocale, area.slug)}
+              className="text-xs text-[#9B9B9B] hover:text-[#1A1A1A] underline decoration-[#DEDEDE] underline-offset-2 transition-colors"
+            >
+              {areaName(area, areaLinksLocale)}
+            </Link>
+          ))}
+        </div>
+      </div>
 
       {/* Problem → Solution Section */}
       <section className="px-6 py-12 bg-[#FFF8F5]">
@@ -1068,6 +1091,18 @@ export default function HomePage() {
                 Terms
               </Link>
             </div>
+          </div>
+          {/* Zonas / Areas — one-line crawl path into the area landing pages */}
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[11px] text-[#9B9B9B]">
+            <span>{areaLinksLocale === 'es' ? 'Zonas:' : 'Areas:'}</span>
+            {AREAS.map((area, i) => (
+              <span key={area.slug}>
+                <Link href={areaPath(areaLinksLocale, area.slug)} className="hover:text-[#1A1A1A] transition-colors">
+                  {areaName(area, areaLinksLocale)}
+                </Link>
+                {i < AREAS.length - 1 && <span className="text-[#DEDEDE]">,</span>}
+              </span>
+            ))}
           </div>
           {/* Powered by badge */}
           <div className="mt-4 pt-4 border-t border-[#EBEBEB] text-center">
