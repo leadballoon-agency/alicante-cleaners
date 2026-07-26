@@ -34,6 +34,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'cleaner.featured': 'Featured',
     'cleaner.new': 'New',
     'cleaner.newOnPlatform': 'New on VillaCare',
+    'cleaner.photoComingSoon': 'Photo coming soon',
+    'cleaner.addYourPhoto': '📷 Add your photo',
 
     // Featured cleaners slider
     'featured.heading': 'Featured cleaners',
@@ -495,6 +497,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'cleaner.featured': 'Destacado',
     'cleaner.new': 'Nuevo',
     'cleaner.newOnPlatform': 'Nuevo en VillaCare',
+    'cleaner.photoComingSoon': 'Foto próximamente',
+    'cleaner.addYourPhoto': '📷 Añade tu foto',
 
     'featured.heading': 'Limpiadores destacados',
     'featured.subheading': 'Algunos de nuestros profesionales mejor valorados y más nuevos',

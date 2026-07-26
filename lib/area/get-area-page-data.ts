@@ -33,6 +33,11 @@ export type AreaPricing = {
  * derived pricing for the three standard services. `pricing` is null when
  * there are no active cleaners in the area yet, so the page can hide the
  * pricing block instead of showing a fabricated range.
+ *
+ * Ordering is photo-first: photo-complete, reviewed cleaners lead, so the
+ * page doesn't open with a wall of placeholder cards. Inclusion is
+ * untouched by this — every ACTIVE cleaner covering the area still appears,
+ * just reordered.
  */
 export async function getAreaPageData(slug: string): Promise<{
   cleaners: AreaCleanerCard[]
@@ -64,6 +69,16 @@ export async function getAreaPageData(slug: string): Promise<{
     hourlyRate: Number(c.hourlyRate),
     teamLeader: c.teamLeader,
   }))
+
+  // Photo-first (see doc comment above) — `user.image` nullness can't be
+  // expressed in the Prisma orderBy above, so it's applied here in JS,
+  // same as app/api/cleaners/route.ts.
+  cards.sort((a, b) => {
+    const photoDiff = (b.photo ? 1 : 0) - (a.photo ? 1 : 0)
+    if (photoDiff !== 0) return photoDiff
+    if (b.reviewCount !== a.reviewCount) return b.reviewCount - a.reviewCount
+    return b.rating - a.rating
+  })
 
   let pricing: AreaPricing = null
   if (cards.length > 0) {

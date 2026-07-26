@@ -43,6 +43,8 @@ const LABELS = {
     reviewsLabel: 'reseñas',
     reviewLabel: 'reseña',
     newCleanerLabel: 'Nueva en la plataforma',
+    photoComingSoon: 'Foto próximamente',
+    addYourPhoto: '📷 Añade tu foto',
     privacy: 'Privacidad',
     terms: 'Términos',
   },
@@ -68,6 +70,8 @@ const LABELS = {
     reviewsLabel: 'reviews',
     reviewLabel: 'review',
     newCleanerLabel: 'New to the platform',
+    photoComingSoon: 'Photo coming soon',
+    addYourPhoto: '📷 Add your photo',
     privacy: 'Privacy',
     terms: 'Terms',
   },
@@ -217,6 +221,8 @@ export function AreaLandingPage({ area, locale, cleaners, pricing }: Props) {
               reviewsLabel={t.reviewsLabel}
               reviewLabel={t.reviewLabel}
               newCleanerLabel={t.newCleanerLabel}
+              photoComingSoonLabel={t.photoComingSoon}
+              addPhotoCtaLabel={t.addYourPhoto}
             />
           ) : (
             <div className="bg-white rounded-2xl p-6 border border-[#EBEBEB] text-center">
