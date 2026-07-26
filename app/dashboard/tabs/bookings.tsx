@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { Booking, InternalComment, TeamInfo, TeamMember } from '../page'
 import { formatMadridDate } from '@/lib/dates'
+import { useLanguage } from '@/components/language-context'
 
 type Props = {
   bookings: Booking[]
@@ -26,15 +27,16 @@ function AssignModal({
   onSelect: (memberId: string) => void
   onClose: () => void
 }) {
+  const { t } = useLanguage()
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
       <div className="bg-white rounded-2xl max-w-sm w-full p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-[#1A1A1A]">Assign to team member</h3>
+          <h3 className="font-semibold text-[#1A1A1A]">{t('bookings.assignModal.title')}</h3>
           <button onClick={onClose} className="text-[#6B6B6B] text-xl">&times;</button>
         </div>
         <p className="text-sm text-[#6B6B6B] mb-4">
-          Select a team member to accept and handle this booking
+          {t('bookings.assignModal.desc')}
         </p>
         <div className="space-y-2">
           {members.map((member) => (
@@ -58,7 +60,7 @@ function AssignModal({
           onClick={onClose}
           className="w-full mt-4 py-2 text-sm text-[#6B6B6B] hover:text-[#1A1A1A]"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
       </div>
     </div>
@@ -66,6 +68,7 @@ function AssignModal({
 }
 
 export default function BookingsTab({ bookings, comments, teamInfo, onAddComment, onReviewOwner, onBookingAction }: Props) {
+  const { t } = useLanguage()
   const [filter, setFilter] = useState<Filter>('all')
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null)
   const [assignModalBookingId, setAssignModalBookingId] = useState<string | null>(null)
@@ -81,10 +84,10 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
   const [newComment, setNewComment] = useState('')
 
   const filters: { id: Filter; label: string }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'pending', label: 'Pending' },
-    { id: 'confirmed', label: 'Confirmed' },
-    { id: 'completed', label: 'Completed' },
+    { id: 'all', label: t('bookings.filter.all') },
+    { id: 'pending', label: t('bookings.filter.pending') },
+    { id: 'confirmed', label: t('bookings.filter.confirmed') },
+    { id: 'completed', label: t('bookings.filter.completed') },
   ]
 
   const filteredBookings = bookings
@@ -102,9 +105,9 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
   const formatMemberSince = (date: Date | string) => {
     const d = typeof date === 'string' ? new Date(date) : date
     const months = Math.floor((Date.now() - d.getTime()) / (30 * 24 * 60 * 60 * 1000))
-    if (months < 1) return 'New member'
-    if (months === 1) return '1 month'
-    return `${months} months`
+    if (months < 1) return t('bookings.newMember')
+    if (months === 1) return t('bookings.oneMonth')
+    return t('bookings.monthsCount').replace('{count}', months.toString())
   }
 
   const statusColors = {
@@ -114,9 +117,16 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
   }
 
   const statusLabels = {
-    pending: 'Pending',
-    confirmed: 'Confirmed',
-    completed: 'Completed',
+    pending: t('bookings.status.pending'),
+    confirmed: t('bookings.status.confirmed'),
+    completed: t('bookings.status.completed'),
+  }
+
+  const emptyLabels: Record<Filter, string> = {
+    all: t('bookings.empty.all'),
+    pending: t('bookings.empty.pending'),
+    confirmed: t('bookings.empty.confirmed'),
+    completed: t('bookings.empty.completed'),
   }
 
   const getCommentsForProperty = (propertyId: string) => {
@@ -152,7 +162,7 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
       {/* Bookings list */}
       {filteredBookings.length === 0 ? (
         <div className="bg-[#F5F5F3] rounded-2xl p-8 text-center">
-          <p className="text-[#6B6B6B]">No {filter === 'all' ? '' : filter} bookings</p>
+          <p className="text-[#6B6B6B]">{emptyLabels[filter]}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -191,7 +201,7 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
                       <span className="text-[#1A1A1A]">{booking.owner.name}</span>
                       {booking.owner.trusted && (
                         <span className="px-1.5 py-0.5 rounded text-xs bg-[#E8F5E9] text-[#2E7D32] font-medium">
-                          Trusted
+                          {t('bookings.trustedBadge')}
                         </span>
                       )}
                       {booking.owner.cleanerRating && (
@@ -208,7 +218,7 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
                     onClick={() => setExpandedBooking(isExpanded ? null : booking.id)}
                     className="mt-3 text-sm text-[#C4785A] font-medium"
                   >
-                    {isExpanded ? 'Hide details' : 'View owner & notes'}
+                    {isExpanded ? t('bookings.hideDetails') : t('bookings.viewOwnerNotes')}
                   </button>
                 </div>
 
@@ -218,7 +228,7 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
                     {/* Owner details */}
                     <div>
                       <h4 className="text-xs font-medium text-[#6B6B6B] uppercase tracking-wide mb-2">
-                        Owner Details
+                        {t('bookings.ownerDetails')}
                       </h4>
                       <div className="bg-white rounded-xl p-3 border border-[#EBEBEB]">
                         <div className="flex items-center gap-3 mb-2">
@@ -230,19 +240,21 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
                               <p className="font-medium text-[#1A1A1A]">{booking.owner.name}</p>
                               {booking.owner.trusted && (
                                 <span className="px-1.5 py-0.5 rounded text-xs bg-[#E8F5E9] text-[#2E7D32] font-medium">
-                                  Trusted
+                                  {t('bookings.trustedBadge')}
                                 </span>
                               )}
                             </div>
                             <p className="text-xs text-[#6B6B6B]">
-                              Member for {formatMemberSince(booking.owner.memberSince)} · {booking.owner.totalBookings} bookings
+                              {t('bookings.memberFor')
+                                .replace('{duration}', formatMemberSince(booking.owner.memberSince))
+                                .replace('{count}', booking.owner.totalBookings.toString())}
                             </p>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div className="bg-[#F5F5F3] rounded-lg p-2">
-                            <p className="text-xs text-[#6B6B6B]">Cleaner rating</p>
+                            <p className="text-xs text-[#6B6B6B]">{t('bookings.cleanerRatingLabel')}</p>
                             {booking.owner.cleanerRating ? (
                               <p className="font-medium text-[#1A1A1A] flex items-center gap-1">
                                 <span className="text-[#C4785A]">★</span>
@@ -252,13 +264,13 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
                                 </span>
                               </p>
                             ) : (
-                              <p className="text-[#6B6B6B] text-xs">No reviews yet</p>
+                              <p className="text-[#6B6B6B] text-xs">{t('bookings.noReviewsYet')}</p>
                             )}
                           </div>
                           <div className="bg-[#F5F5F3] rounded-lg p-2">
-                            <p className="text-xs text-[#6B6B6B]">Referred by</p>
+                            <p className="text-xs text-[#6B6B6B]">{t('bookings.referredBy')}</p>
                             <p className="font-medium text-[#1A1A1A]">
-                              {booking.owner.referredBy || 'Waitlist'}
+                              {booking.owner.referredBy || t('bookings.waitlist')}
                             </p>
                           </div>
                         </div>
@@ -268,7 +280,7 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
                     {/* Internal comments */}
                     <div>
                       <h4 className="text-xs font-medium text-[#6B6B6B] uppercase tracking-wide mb-2">
-                        Cleaner Notes ({propertyComments.length})
+                        {t('bookings.cleanerNotes').replace('{count}', propertyComments.length.toString())}
                       </h4>
 
                       {propertyComments.length > 0 && (
@@ -290,7 +302,7 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
                           type="text"
                           value={newComment}
                           onChange={(e) => setNewComment(e.target.value)}
-                          placeholder="Add a note for other cleaners..."
+                          placeholder={t('bookings.addNotePlaceholder')}
                           className="flex-1 px-3 py-2 rounded-lg border border-[#DEDEDE] text-sm focus:outline-none focus:border-[#1A1A1A]"
                         />
                         <button
@@ -298,7 +310,7 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
                           disabled={!newComment.trim()}
                           className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium disabled:opacity-50"
                         >
-                          Add
+                          {t('bookings.add')}
                         </button>
                       </div>
                     </div>
@@ -312,21 +324,21 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
                       onClick={() => onBookingAction?.(booking.id, 'accept')}
                       className="flex-1 bg-[#1A1A1A] text-white py-2 rounded-lg text-sm font-medium active:scale-[0.98] transition-all"
                     >
-                      Accept
+                      {t('bookings.accept')}
                     </button>
                     {isTeamLeader && (
                       <button
                         onClick={() => setAssignModalBookingId(booking.id)}
                         className="flex-1 bg-[#C4785A] text-white py-2 rounded-lg text-sm font-medium active:scale-[0.98] transition-all"
                       >
-                        Assign
+                        {t('bookings.assign')}
                       </button>
                     )}
                     <button
                       onClick={() => onBookingAction?.(booking.id, 'decline')}
                       className={`${isTeamLeader ? 'px-4' : 'flex-1'} bg-white border border-[#DEDEDE] text-[#1A1A1A] py-2 rounded-lg text-sm font-medium active:scale-[0.98] transition-all`}
                     >
-                      Decline
+                      {t('bookings.decline')}
                     </button>
                   </div>
                 )}
@@ -338,14 +350,14 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
                       className="flex-1 flex items-center justify-center gap-2 bg-[#F5F5F3] text-[#1A1A1A] py-2 rounded-lg text-sm font-medium active:scale-[0.98] transition-all"
                     >
                       <span>📞</span>
-                      <span>Call</span>
+                      <span>{t('bookings.call')}</span>
                     </a>
                     <button
                       onClick={() => onBookingAction?.(booking.id, 'complete')}
                       className="flex-1 flex items-center justify-center gap-2 bg-[#1A1A1A] text-white py-2 rounded-lg text-sm font-medium active:scale-[0.98] transition-all"
                     >
                       <span>📸</span>
-                      <span>Complete</span>
+                      <span>{t('bookings.complete')}</span>
                     </button>
                   </div>
                 )}
@@ -357,7 +369,7 @@ export default function BookingsTab({ bookings, comments, teamInfo, onAddComment
                       className="w-full flex items-center justify-center gap-2 bg-[#C4785A] text-white py-2 rounded-lg text-sm font-medium active:scale-[0.98] transition-all"
                     >
                       <span>★</span>
-                      <span>Rate this owner</span>
+                      <span>{t('bookings.rateThisOwner')}</span>
                     </button>
                   </div>
                 )}

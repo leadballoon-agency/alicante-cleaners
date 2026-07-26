@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useLanguage } from '@/components/language-context'
 
 const LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -21,6 +22,7 @@ export default function LanguageSelector({
   label = 'Preferred Language',
   description = 'Messages from other users will be translated to this language'
 }: Props) {
+  const { t } = useLanguage()
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -81,10 +83,10 @@ export default function LanguageSelector({
       <div className="flex items-center justify-between mb-1">
         <h3 className="font-medium text-[#1A1A1A]">{label}</h3>
         {saving && (
-          <span className="text-xs text-[#9B9B9B]">Saving...</span>
+          <span className="text-xs text-[#9B9B9B]">{t('langSelector.saving')}</span>
         )}
         {saved && (
-          <span className="text-xs text-[#2E7D32]">Saved!</span>
+          <span className="text-xs text-[#2E7D32]">{t('langSelector.saved')}</span>
         )}
       </div>
       <p className="text-sm text-[#6B6B6B] mb-4">{description}</p>
@@ -120,8 +122,7 @@ export default function LanguageSelector({
         <div className="flex items-start gap-2">
           <span className="text-lg">💡</span>
           <p className="text-xs text-[#6B6B6B]">
-            When someone messages you in a different language, it will automatically
-            be translated to {LANGUAGES.find(l => l.code === selectedLanguage)?.name}.
+            {t('langSelector.autoTranslateNote').replace('{lang}', LANGUAGES.find(l => l.code === selectedLanguage)?.name || '')}
           </p>
         </div>
       </div>

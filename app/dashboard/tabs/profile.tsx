@@ -103,8 +103,8 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Book ${cleaner.name} for villa cleaning`,
-          text: 'Trusted villa cleaning in Alicante',
+          title: t('profile.share.title').replace('{name}', cleaner.name),
+          text: t('profile.share.text'),
           url: `https://${bookingUrl}`,
         })
       } catch {
@@ -112,7 +112,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
       }
     } else {
       navigator.clipboard.writeText(`https://${bookingUrl}`)
-      showToast('Link copied to clipboard!', 'success')
+      showToast(t('profile.toast.linkCopied'), 'success')
     }
   }
 
@@ -139,17 +139,17 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
   const handleSaveService = async () => {
     if (!serviceName.trim()) {
-      showToast('Service name is required', 'error')
+      showToast(t('profile.service.nameRequired'), 'error')
       return
     }
 
     if (servicePriceType === 'FIXED' && !servicePrice) {
-      showToast('Price is required for fixed price services', 'error')
+      showToast(t('profile.service.priceRequired'), 'error')
       return
     }
 
     if (servicePriceType === 'HOURLY' && !serviceHours) {
-      showToast('Hours are required for hourly services', 'error')
+      showToast(t('profile.service.hoursRequired'), 'error')
       return
     }
 
@@ -177,24 +177,24 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || 'Failed to save service')
+        throw new Error(data.error || t('profile.service.saveFailed'))
       }
 
       showToast(
-        editingService ? 'Service updated!' : 'Service submitted for approval!',
+        editingService ? t('profile.service.updated') : t('profile.service.submitted'),
         'success'
       )
       setShowServiceModal(false)
       fetchServices()
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to save service', 'error')
+      showToast(err instanceof Error ? err.message : t('profile.service.saveFailed'), 'error')
     } finally {
       setServiceSaving(false)
     }
   }
 
   const handleDeleteService = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this service?')) return
+    if (!confirm(t('profile.service.confirmDelete'))) return
 
     try {
       const res = await fetch(`/api/dashboard/cleaner/services/${id}`, {
@@ -202,13 +202,13 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
       })
 
       if (!res.ok) {
-        throw new Error('Failed to delete service')
+        throw new Error(t('profile.service.deleteFailed'))
       }
 
-      showToast('Service deleted', 'success')
+      showToast(t('profile.service.deleted'), 'success')
       fetchServices()
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to delete', 'error')
+      showToast(err instanceof Error ? err.message : t('profile.service.deleteFailed'), 'error')
     }
   }
 
@@ -219,14 +219,14 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
     if (!allowedTypes.includes(file.type)) {
-      showToast('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.', 'error')
+      showToast(t('profile.photo.invalidType'), 'error')
       return
     }
 
     // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024
     if (file.size > maxSize) {
-      showToast('File too large. Maximum size is 5MB.', 'error')
+      showToast(t('profile.photo.tooLarge'), 'error')
       return
     }
 
@@ -251,13 +251,13 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to upload photo')
+        throw new Error(data.error || t('profile.photo.uploadFailed'))
       }
 
       const data = await response.json()
       return data.url
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to upload photo', 'error')
+      showToast(err instanceof Error ? err.message : t('profile.photo.uploadFailed'), 'error')
       return null
     } finally {
       setUploadingPhoto(false)
@@ -287,14 +287,14 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
       } else if (editMode === 'pricing') {
         const rate = parseFloat(hourlyRate)
         if (isNaN(rate) || rate < 10 || rate > 100) {
-          showToast('Hourly rate must be between €10 and €100', 'error')
+          showToast(t('profile.pricing.rateRange'), 'error')
           setSaving(false)
           return
         }
         updates.hourlyRate = rate
       } else if (editMode === 'areas') {
         if (selectedAreas.length === 0) {
-          showToast('Please select at least one service area', 'error')
+          showToast(t('profile.areas.selectAtLeastOne'), 'error')
           setSaving(false)
           return
         }
@@ -309,7 +309,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to update profile')
+        throw new Error(data.error || t('profile.saveFailed'))
       }
 
       const data = await response.json()
@@ -326,13 +326,13 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
         })
       }
 
-      showToast('Profile updated successfully!', 'success')
+      showToast(t('profile.saveSuccess'), 'success')
       // Reset photo state
       setPhotoPreview(null)
       setPhotoFile(null)
       setEditMode(null)
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to save', 'error')
+      showToast(err instanceof Error ? err.message : t('profile.saveFailed'), 'error')
     } finally {
       setSaving(false)
     }
@@ -347,19 +347,19 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
   }
 
   const menuItems = [
-    { icon: '👤', label: 'Edit profile', action: () => setEditMode('profile') },
-    { icon: '📱', label: 'Update phone', action: () => {
+    { icon: '👤', label: t('profile.menu.editProfile'), action: () => setEditMode('profile') },
+    { icon: '📱', label: t('profile.menu.updatePhone'), action: () => {
       setPhoneStep('initial')
       setOtpCode('')
       setNewPhone('')
       setPhoneError('')
       setEditMode('phone')
     }},
-    { icon: '💰', label: 'Update pricing', action: () => setEditMode('pricing') },
-    { icon: '📍', label: 'Service areas', action: () => setEditMode('areas') },
-    { icon: '📅', label: 'Calendar sync', href: '/dashboard/availability' },
-    { icon: '💳', label: 'Payment settings', href: '#', disabled: true },
-    { icon: '⚙️', label: 'Account settings', href: '/dashboard/account' },
+    { icon: '💰', label: t('profile.menu.updatePricing'), action: () => setEditMode('pricing') },
+    { icon: '📍', label: t('profile.menu.serviceAreas'), action: () => setEditMode('areas') },
+    { icon: '📅', label: t('profile.menu.calendarSync'), href: '/dashboard/availability' },
+    { icon: '💳', label: t('profile.menu.paymentSettings'), href: '#', disabled: true },
+    { icon: '⚙️', label: t('profile.menu.accountSettings'), href: '/dashboard/account' },
   ]
 
   const handleSendPhoneCode = async () => {
@@ -371,13 +371,13 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
       })
       const data = await response.json()
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send code')
+        throw new Error(data.error || t('profile.phone.sendCodeFailed'))
       }
       setMaskedPhone(data.maskedPhone)
       setPhoneStep('verify')
-      showToast('Verification code sent!', 'success')
+      showToast(t('profile.phone.codeSent'), 'success')
     } catch (err) {
-      setPhoneError(err instanceof Error ? err.message : 'Failed to send code')
+      setPhoneError(err instanceof Error ? err.message : t('profile.phone.sendCodeFailed'))
     } finally {
       setPhoneLoading(false)
     }
@@ -385,11 +385,11 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
   const handleVerifyAndUpdatePhone = async () => {
     if (!otpCode || otpCode.length !== 6) {
-      setPhoneError('Please enter the 6-digit code')
+      setPhoneError(t('profile.phone.enterCode'))
       return
     }
     if (!newPhone) {
-      setPhoneError('Please enter your new phone number')
+      setPhoneError(t('profile.phone.enterNewPhone'))
       return
     }
 
@@ -403,12 +403,12 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
       })
       const data = await response.json()
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to update phone')
+        throw new Error(data.error || t('profile.phone.updateFailed'))
       }
-      showToast('Phone number updated!', 'success')
+      showToast(t('profile.phone.updated'), 'success')
       setEditMode(null)
     } catch (err) {
-      setPhoneError(err instanceof Error ? err.message : 'Failed to update phone')
+      setPhoneError(err instanceof Error ? err.message : t('profile.phone.updateFailed'))
     } finally {
       setPhoneLoading(false)
     }
@@ -429,13 +429,13 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
           <div>
             <h2 className="font-semibold text-[#1A1A1A]">{cleaner.name}</h2>
             <p className="text-sm text-[#6B6B6B]">
-              {cleaner.serviceAreas.length} service area{cleaner.serviceAreas.length !== 1 ? 's' : ''}
+              {t(cleaner.serviceAreas.length === 1 ? 'profile.serviceAreaCount.singular' : 'profile.serviceAreaCount.plural').replace('{count}', cleaner.serviceAreas.length.toString())}
             </p>
           </div>
         </div>
 
         <div className="bg-[#F5F5F3] rounded-xl p-4">
-          <p className="text-xs text-[#6B6B6B] mb-1">Your booking page</p>
+          <p className="text-xs text-[#6B6B6B] mb-1">{t('profile.bookingPage')}</p>
           <p className="font-medium text-[#1A1A1A] text-sm break-all">{bookingUrl}</p>
         </div>
 
@@ -444,13 +444,13 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
             href={`/${cleaner.slug}`}
             className="flex-1 bg-white border border-[#DEDEDE] text-[#1A1A1A] py-2.5 rounded-xl text-sm font-medium text-center active:scale-[0.98] transition-all"
           >
-            View page
+            {t('profile.viewPage')}
           </Link>
           <button
             onClick={handleShare}
             className="flex-1 bg-[#1A1A1A] text-white py-2.5 rounded-xl text-sm font-medium active:scale-[0.98] transition-all"
           >
-            Share link
+            {t('profile.shareLink')}
           </button>
         </div>
       </div>
@@ -459,15 +459,15 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-xl p-3 border border-[#EBEBEB] text-center">
           <p className="text-xl font-semibold text-[#1A1A1A]">€{cleaner.hourlyRate}</p>
-          <p className="text-xs text-[#6B6B6B]">/hour</p>
+          <p className="text-xs text-[#6B6B6B]">{t('profile.perHour')}</p>
         </div>
         <div className="bg-white rounded-xl p-3 border border-[#EBEBEB] text-center">
           <p className="text-xl font-semibold text-[#1A1A1A]">{cleaner.rating?.toFixed(1) || '–'}</p>
-          <p className="text-xs text-[#6B6B6B]">rating</p>
+          <p className="text-xs text-[#6B6B6B]">{t('profile.ratingLabel')}</p>
         </div>
         <div className="bg-white rounded-xl p-3 border border-[#EBEBEB] text-center">
           <p className="text-xl font-semibold text-[#1A1A1A]">{cleaner.reviewCount || 0}</p>
-          <p className="text-xs text-[#6B6B6B]">reviews</p>
+          <p className="text-xs text-[#6B6B6B]">{t('team.reviews')}</p>
         </div>
       </div>
 
@@ -477,10 +477,10 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-semibold text-[#1A1A1A]">
-                {teamName ? `${teamName} Services` : 'Team Services'}
+                {teamName ? t('profile.teamServices.titleNamed').replace('{team}', teamName) : t('profile.teamServices.titleGeneric')}
               </h3>
               <p className="text-xs text-[#6B6B6B]">
-                {isTeamLeader ? 'Custom services for your team' : 'Available to your team'}
+                {isTeamLeader ? t('profile.teamServices.leaderSubtitle') : t('profile.teamServices.memberSubtitle')}
               </p>
             </div>
             {isTeamLeader && (
@@ -496,9 +496,9 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
           {services.length === 0 ? (
             <div className="text-center py-6 text-[#6B6B6B]">
               <p className="text-3xl mb-2">🛠️</p>
-              <p className="text-sm">No custom services yet</p>
+              <p className="text-sm">{t('profile.teamServices.empty')}</p>
               {isTeamLeader && (
-                <p className="text-xs mt-1">Add pool cleaning, laundry, or other services</p>
+                <p className="text-xs mt-1">{t('profile.teamServices.emptyHint')}</p>
               )}
             </div>
           ) : (
@@ -520,18 +520,18 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                           ? 'bg-[#FFF3E0] text-[#E65100]'
                           : 'bg-[#FFEBEE] text-[#C75050]'
                       }`}>
-                        {service.status === 'APPROVED' ? 'Live' : service.status === 'PENDING' ? 'Pending' : 'Rejected'}
+                        {service.status === 'APPROVED' ? t('profile.service.status.live') : service.status === 'PENDING' ? t('profile.service.status.pending') : t('profile.service.status.rejected')}
                       </span>
                       {service.type === 'ADDON' && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#E3F2FD] text-[#1565C0] font-medium">
-                          Add-on
+                          {t('profile.service.addonBadge')}
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-[#6B6B6B]">
                       {service.priceType === 'FIXED'
                         ? `€${service.price}`
-                        : `${service.hours}h × hourly rate`}
+                        : t('profile.service.hourlyFormula').replace('{hours}', String(service.hours))}
                     </p>
                   </div>
                   {isTeamLeader && (
@@ -539,14 +539,14 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                       <button
                         onClick={() => openServiceModal(service)}
                         className="p-1.5 text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
-                        title="Edit"
+                        title={t('profile.editTitle')}
                       >
                         ✏️
                       </button>
                       <button
                         onClick={() => handleDeleteService(service.id)}
                         className="p-1.5 text-[#6B6B6B] hover:text-[#C75050] transition-colors"
-                        title="Delete"
+                        title={t('profile.deleteTitle')}
                       >
                         🗑️
                       </button>
@@ -561,8 +561,8 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
       {/* Language preference */}
       <LanguageSelector
-        label="Preferred Language"
-        description="Messages from owners will be translated to this language"
+        label={t('profile.language.label')}
+        description={t('profile.language.description')}
       />
 
       {/* Notifications */}
@@ -602,7 +602,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
               <span className="text-lg">{item.icon}</span>
               <span className="font-medium text-[#1A1A1A]">{item.label}</span>
               {item.disabled && (
-                <span className="ml-auto text-xs text-[#9B9B9B] bg-[#F5F5F3] px-2 py-0.5 rounded">Soon</span>
+                <span className="ml-auto text-xs text-[#9B9B9B] bg-[#F5F5F3] px-2 py-0.5 rounded">{t('profile.menu.soon')}</span>
               )}
               {!item.disabled && <span className="ml-auto text-[#9B9B9B]">→</span>}
             </Link>
@@ -616,18 +616,18 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
           href="#"
           className="block w-full bg-white border border-[#EBEBEB] text-[#1A1A1A] py-3.5 rounded-xl font-medium text-center active:scale-[0.98] transition-all"
         >
-          Help & Support
+          {t('profile.helpSupport')}
         </Link>
         <button
           onClick={() => signOut({ callbackUrl: '/' })}
           className="w-full text-[#C75050] py-3 font-medium text-sm active:opacity-70"
         >
-          Log out
+          {t('profile.logOut')}
         </button>
       </div>
 
       <p className="text-center text-xs text-[#9B9B9B]">
-        VillaCare v1.0 · Made in Alicante
+        {t('profile.footerTagline')}
       </p>
 
       {/* Edit Profile Modal */}
@@ -635,7 +635,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-[#1A1A1A]">Edit Profile</h2>
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">{t('profile.modal.editProfileTitle')}</h2>
               <button
                 onClick={() => {
                   setPhotoPreview(null)
@@ -652,7 +652,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
               {/* Photo upload */}
               <div>
                 <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                  Profile Photo
+                  {t('profile.modal.profilePhotoLabel')}
                 </label>
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-full bg-[#F5F5F3] flex items-center justify-center overflow-hidden relative flex-shrink-0">
@@ -667,7 +667,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                   <div className="flex-1">
                     <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#F5F5F3] rounded-xl text-sm font-medium text-[#1A1A1A] cursor-pointer hover:bg-[#EBEBEB] transition-colors">
                       <span>📷</span>
-                      <span>{photoFile ? 'Change Photo' : 'Upload Photo'}</span>
+                      <span>{photoFile ? t('profile.modal.changePhoto') : t('profile.modal.uploadPhoto')}</span>
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp,image/gif"
@@ -676,7 +676,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                       />
                     </label>
                     <p className="text-xs text-[#9B9B9B] mt-2">
-                      JPEG, PNG, WebP or GIF. Max 5MB.
+                      {t('profile.modal.photoHint')}
                     </p>
                   </div>
                 </div>
@@ -684,29 +684,29 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
               <div>
                 <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                  Display Name
+                  {t('profile.modal.displayName')}
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base"
-                  placeholder="Your name"
+                  placeholder={t('profile.modal.namePlaceholder')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                  Bio
+                  {t('profile.modal.bioLabel')}
                 </label>
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={4}
                   className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base resize-none"
-                  placeholder="Tell owners about yourself and your experience..."
+                  placeholder={t('profile.modal.bioPlaceholder')}
                 />
-                <p className="text-xs text-[#9B9B9B] mt-1">{bio.length}/500 characters</p>
+                <p className="text-xs text-[#9B9B9B] mt-1">{t('profile.modal.charactersCount').replace('{count}', bio.length.toString())}</p>
               </div>
             </div>
 
@@ -719,14 +719,14 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                 }}
                 className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving || uploadingPhoto || !name.trim()}
                 className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
               >
-                {uploadingPhoto ? 'Uploading...' : saving ? 'Saving...' : 'Save Changes'}
+                {uploadingPhoto ? t('profile.uploading') : saving ? t('profile.saving') : t('profile.saveChanges')}
               </button>
             </div>
           </div>
@@ -738,7 +738,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-[#1A1A1A]">Update Pricing</h2>
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">{t('profile.modal.updatePricingTitle')}</h2>
               <button
                 onClick={() => setEditMode(null)}
                 className="text-[#9B9B9B] hover:text-[#1A1A1A]"
@@ -749,7 +749,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
             <div>
               <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                Hourly Rate (€)
+                {t('profile.modal.hourlyRateLabel')}
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B6B6B]">€</span>
@@ -765,19 +765,19 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                 />
               </div>
               <p className="text-xs text-[#9B9B9B] mt-2">
-                Services will be calculated based on this rate:
+                {t('profile.modal.ratesNote')}
               </p>
               <div className="mt-3 space-y-2 text-sm">
                 <div className="flex justify-between text-[#6B6B6B]">
-                  <span>Regular Clean (3 hrs)</span>
+                  <span>{t('profile.modal.regularClean')}</span>
                   <span>€{(parseFloat(hourlyRate) * 3 || 0).toFixed(0)}</span>
                 </div>
                 <div className="flex justify-between text-[#6B6B6B]">
-                  <span>Deep Clean (5 hrs)</span>
+                  <span>{t('profile.modal.deepClean')}</span>
                   <span>€{(parseFloat(hourlyRate) * 5 || 0).toFixed(0)}</span>
                 </div>
                 <div className="flex justify-between text-[#6B6B6B]">
-                  <span>Arrival Prep (4 hrs)</span>
+                  <span>{t('profile.modal.arrivalPrep')}</span>
                   <span>€{(parseFloat(hourlyRate) * 4 || 0).toFixed(0)}</span>
                 </div>
               </div>
@@ -788,14 +788,14 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                 onClick={() => setEditMode(null)}
                 className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
                 className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
               >
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? t('profile.saving') : t('profile.saveChanges')}
               </button>
             </div>
           </div>
@@ -807,7 +807,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-[#1A1A1A]">Service Areas</h2>
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">{t('profile.modal.serviceAreasTitle')}</h2>
               <button
                 onClick={() => setEditMode(null)}
                 className="text-[#9B9B9B] hover:text-[#1A1A1A]"
@@ -817,7 +817,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
             </div>
 
             <p className="text-sm text-[#6B6B6B] mb-4">
-              Select the areas where you provide cleaning services.
+              {t('profile.modal.selectAreasDesc')}
             </p>
 
             <div className="space-y-2">
@@ -840,7 +840,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
             </div>
 
             <p className="text-xs text-[#9B9B9B] mt-4">
-              {selectedAreas.length} area{selectedAreas.length !== 1 ? 's' : ''} selected
+              {t(selectedAreas.length === 1 ? 'profile.modal.areaSelectedSingular' : 'profile.modal.areaSelectedPlural').replace('{count}', selectedAreas.length.toString())}
             </p>
 
             <div className="flex gap-3 mt-6">
@@ -851,14 +851,14 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                 }}
                 className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving || selectedAreas.length === 0}
                 className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
               >
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? t('profile.saving') : t('profile.saveChanges')}
               </button>
             </div>
           </div>
@@ -870,7 +870,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-[#1A1A1A]">Update Phone Number</h2>
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">{t('profile.modal.updatePhoneTitle')}</h2>
               <button
                 onClick={() => setEditMode(null)}
                 className="text-[#9B9B9B] hover:text-[#1A1A1A]"
@@ -882,8 +882,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
             {phoneStep === 'initial' && (
               <div className="space-y-4">
                 <p className="text-sm text-[#6B6B6B]">
-                  To change your phone number, we need to verify your identity.
-                  We&apos;ll send a verification code to your current phone.
+                  {t('profile.phone.initialDesc')}
                 </p>
 
                 {phoneError && (
@@ -897,17 +896,17 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                   disabled={phoneLoading}
                   className="w-full py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
                 >
-                  {phoneLoading ? 'Sending...' : 'Send Verification Code'}
+                  {phoneLoading ? t('profile.phone.sending') : t('profile.phone.sendCode')}
                 </button>
 
                 <div className="pt-4 border-t border-[#EBEBEB]">
                   <p className="text-xs text-[#9B9B9B] text-center">
-                    Lost your phone?{' '}
+                    {t('profile.phone.lostPhone')}{' '}
                     <a
                       href="mailto:support@alicantecleaners.com?subject=Phone%20Change%20Request"
                       className="text-[#C4785A] font-medium"
                     >
-                      Contact support
+                      {t('profile.phone.contactSupport')}
                     </a>
                   </p>
                 </div>
@@ -917,12 +916,12 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
             {phoneStep === 'verify' && (
               <div className="space-y-4">
                 <p className="text-sm text-[#6B6B6B]">
-                  Enter the 6-digit code sent to {maskedPhone}
+                  {t('profile.phone.enterCodeSentTo').replace('{phone}', maskedPhone)}
                 </p>
 
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                    Verification Code
+                    {t('profile.phone.verificationCodeLabel')}
                   </label>
                   <input
                     type="text"
@@ -936,7 +935,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
 
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                    New Phone Number
+                    {t('profile.phone.newPhoneLabel')}
                   </label>
                   <input
                     type="tel"
@@ -946,7 +945,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                     placeholder="+34 612 345 678"
                   />
                   <p className="text-xs text-[#9B9B9B] mt-1">
-                    Include country code (e.g., +34 for Spain)
+                    {t('profile.phone.countryCodeHint')}
                   </p>
                 </div>
 
@@ -961,14 +960,14 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                     onClick={() => setPhoneStep('initial')}
                     className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
                   >
-                    Back
+                    {t('common.back')}
                   </button>
                   <button
                     onClick={handleVerifyAndUpdatePhone}
                     disabled={phoneLoading || otpCode.length !== 6 || !newPhone}
                     className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
                   >
-                    {phoneLoading ? 'Updating...' : 'Update Phone'}
+                    {phoneLoading ? t('profile.phone.updating') : t('profile.phone.updateButton')}
                   </button>
                 </div>
 
@@ -977,7 +976,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                   disabled={phoneLoading}
                   className="w-full text-sm text-[#C4785A] font-medium"
                 >
-                  Resend code
+                  {t('profile.phone.resendCode')}
                 </button>
               </div>
             )}
@@ -991,7 +990,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
           <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-[#1A1A1A]">
-                {editingService ? 'Edit Service' : 'Add Service'}
+                {editingService ? t('profile.serviceModal.editTitle') : t('profile.serviceModal.addTitle')}
               </h2>
               <button
                 onClick={() => setShowServiceModal(false)}
@@ -1005,35 +1004,35 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
               {/* Service Name */}
               <div>
                 <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                  Service Name *
+                  {t('profile.serviceModal.nameLabel')}
                 </label>
                 <input
                   type="text"
                   value={serviceName}
                   onChange={(e) => setServiceName(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base"
-                  placeholder="e.g., Pool Cleaning, Ironing"
+                  placeholder={t('profile.serviceModal.namePlaceholder')}
                 />
               </div>
 
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                  Description
+                  {t('profile.serviceModal.descriptionLabel')}
                 </label>
                 <textarea
                   value={serviceDescription}
                   onChange={(e) => setServiceDescription(e.target.value)}
                   rows={2}
                   className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base resize-none"
-                  placeholder="Brief description of the service..."
+                  placeholder={t('profile.serviceModal.descPlaceholder')}
                 />
               </div>
 
               {/* Service Type */}
               <div>
                 <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
-                  Service Type *
+                  {t('profile.serviceModal.typeLabel')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -1045,8 +1044,8 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                         : 'border-[#EBEBEB]'
                     }`}
                   >
-                    🛠️ Custom Service
-                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">Standalone service</p>
+                    {t('profile.serviceModal.customService')}
+                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">{t('profile.serviceModal.standaloneService')}</p>
                   </button>
                   <button
                     type="button"
@@ -1057,8 +1056,8 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                         : 'border-[#EBEBEB]'
                     }`}
                   >
-                    ➕ Add-on
-                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">Extra for bookings</p>
+                    {t('profile.serviceModal.addon')}
+                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">{t('profile.serviceModal.extraForBookings')}</p>
                   </button>
                 </div>
               </div>
@@ -1066,7 +1065,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
               {/* Pricing Type */}
               <div>
                 <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
-                  Pricing *
+                  {t('profile.serviceModal.pricingLabel')}
                 </label>
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   <button
@@ -1078,8 +1077,8 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                         : 'border-[#EBEBEB]'
                     }`}
                   >
-                    ⏱️ Hourly
-                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">Hours × your rate</p>
+                    {t('profile.serviceModal.hourly')}
+                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">{t('profile.serviceModal.hoursTimesRate')}</p>
                   </button>
                   <button
                     type="button"
@@ -1090,8 +1089,8 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                         : 'border-[#EBEBEB]'
                     }`}
                   >
-                    💰 Fixed Price
-                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">Set amount</p>
+                    {t('profile.serviceModal.fixedPrice')}
+                    <p className="text-xs text-[#6B6B6B] font-normal mt-0.5">{t('profile.serviceModal.setAmount')}</p>
                   </button>
                 </div>
 
@@ -1099,7 +1098,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                 {servicePriceType === 'HOURLY' ? (
                   <div>
                     <label className="block text-sm text-[#6B6B6B] mb-1.5">
-                      Estimated Hours *
+                      {t('profile.serviceModal.estimatedHours')}
                     </label>
                     <input
                       type="number"
@@ -1108,18 +1107,21 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                       min="1"
                       max="24"
                       className="w-full px-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base"
-                      placeholder="e.g., 2"
+                      placeholder={t('profile.serviceModal.hoursPlaceholder')}
                     />
                     {serviceHours && (
                       <p className="text-xs text-[#6B6B6B] mt-1">
-                        Price: {serviceHours}h × €{cleaner.hourlyRate} = €{parseInt(serviceHours) * cleaner.hourlyRate}
+                        {t('profile.serviceModal.priceFormula')
+                          .replace('{hours}', serviceHours)
+                          .replace('{rate}', cleaner.hourlyRate.toString())
+                          .replace('{total}', (parseInt(serviceHours) * cleaner.hourlyRate).toString())}
                       </p>
                     )}
                   </div>
                 ) : (
                   <div>
                     <label className="block text-sm text-[#6B6B6B] mb-1.5">
-                      Fixed Price (€) *
+                      {t('profile.serviceModal.fixedPriceLabel')}
                     </label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B6B6B]">€</span>
@@ -1130,7 +1132,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                         min="1"
                         step="0.01"
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#DEDEDE] focus:border-[#1A1A1A] focus:outline-none text-base"
-                        placeholder="e.g., 50"
+                        placeholder={t('profile.serviceModal.pricePlaceholder')}
                       />
                     </div>
                   </div>
@@ -1140,7 +1142,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
               {/* Note about approval */}
               <div className="bg-[#FFF3E0] rounded-xl p-3">
                 <p className="text-xs text-[#E65100]">
-                  ⚠️ New services require admin approval before appearing on your profile.
+                  {t('profile.serviceModal.approvalNote')}
                 </p>
               </div>
             </div>
@@ -1150,14 +1152,14 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
                 onClick={() => setShowServiceModal(false)}
                 className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSaveService}
                 disabled={serviceSaving || !serviceName.trim()}
                 className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white font-medium disabled:opacity-50"
               >
-                {serviceSaving ? 'Saving...' : editingService ? 'Save Changes' : 'Submit for Approval'}
+                {serviceSaving ? t('profile.saving') : editingService ? t('profile.saveChanges') : t('profile.serviceModal.submitForApproval')}
               </button>
             </div>
           </div>
