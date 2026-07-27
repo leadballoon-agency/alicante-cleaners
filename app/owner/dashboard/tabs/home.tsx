@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Owner, Property, OwnerBooking } from '../page'
 import { JobsTimeline, BookingCardData } from '@/components/job-card'
 import { getMadridDateKey } from '@/lib/dates'
+import ReviewPromptCard from '../components/review-prompt-card'
 
 type Props = {
   owner: Owner
@@ -273,6 +274,11 @@ export default function HomeTab({ owner, properties, bookings, onNavigate, onOwn
 
   return (
     <div className="space-y-6">
+      {/* Review prompt - surfaces any recently completed, unreviewed
+          bookings right on Home so owners don't have to dig through the
+          Bookings tab to find the review CTA. */}
+      <ReviewPromptCard bookings={bookings} onNavigate={onNavigate} />
+
       {/* Getting Started Checklist */}
       {showGettingStarted && (
         <div className="bg-white rounded-2xl border border-[#EBEBEB] overflow-hidden">
