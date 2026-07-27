@@ -50,7 +50,12 @@ export async function POST(request: NextRequest) {
 
     // Compress and resize image
     // Profile photos: max 800x800, 80% quality JPEG
+    // .rotate() with no args auto-orients from the EXIF Orientation tag
+    // before anything else touches the pixels - phone cameras store portrait
+    // photos as landscape data + an orientation flag, and resize() ignores
+    // that flag entirely, so it must run first or the output saves sideways.
     const compressedBuffer = await sharp(buffer)
+      .rotate()
       .resize(800, 800, {
         fit: 'inside',
         withoutEnlargement: true,

@@ -9,6 +9,7 @@ import LanguageSelector from '@/components/language-selector'
 import { useToast } from '@/components/ui/toast'
 import { useLanguage } from '@/components/language-context'
 import EnableNotifications from '@/components/push/EnableNotifications'
+import { AREAS, areaName, normalizeServiceAreas } from '@/lib/area/areas'
 
 type TeamService = {
   id: string
@@ -24,16 +25,6 @@ type TeamService = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const SERVICE_AREAS = [
-  'Alicante City',
-  'San Juan',
-  'Playa de San Juan',
-  'El Campello',
-  'Mutxamel',
-  'San Vicente',
-  'Jijona',
-]
-
 type Props = {
   cleaner: Cleaner
   onUpdate?: (cleaner: Cleaner) => void
@@ -44,7 +35,8 @@ type PhoneStep = 'initial' | 'verify'
 
 export default function ProfileTab({ cleaner, onUpdate }: Props) {
   const { showToast } = useToast()
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
+  const areaLocale = lang === 'es' ? 'es' : 'en'
   const bookingUrl = `alicantecleaners.com/${cleaner.slug}`
 
   const [editMode, setEditMode] = useState<EditMode>(null)
@@ -54,7 +46,10 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
   const [name, setName] = useState(cleaner.name)
   const [bio, setBio] = useState(cleaner.bio || '')
   const [hourlyRate, setHourlyRate] = useState(cleaner.hourlyRate.toString())
-  const [selectedAreas, setSelectedAreas] = useState<string[]>(cleaner.serviceAreas)
+  // Normalized to slugs on load - cleaner.serviceAreas may still hold
+  // display-name values from the historical modal bug (see areas.ts), and
+  // this modal's checkboxes are keyed by slug.
+  const [selectedAreas, setSelectedAreas] = useState<string[]>(() => normalizeServiceAreas(cleaner.serviceAreas))
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
@@ -470,7 +465,10 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
           <div>
             <h2 className="font-semibold text-[#1A1A1A]">{cleaner.name}</h2>
             <p className="text-sm text-[#6B6B6B]">
-              {t(cleaner.serviceAreas.length === 1 ? 'profile.serviceAreaCount.singular' : 'profile.serviceAreaCount.plural').replace('{count}', cleaner.serviceAreas.length.toString())}
+              {(() => {
+                const areaCount = normalizeServiceAreas(cleaner.serviceAreas).length
+                return t(areaCount === 1 ? 'profile.serviceAreaCount.singular' : 'profile.serviceAreaCount.plural').replace('{count}', areaCount.toString())
+              })()}
             </p>
           </div>
         </div>
@@ -896,18 +894,18 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
             </p>
 
             <div className="space-y-2">
-              {SERVICE_AREAS.map((area) => (
+              {AREAS.map((area) => (
                 <button
-                  key={area}
-                  onClick={() => toggleArea(area)}
+                  key={area.slug}
+                  onClick={() => toggleArea(area.slug)}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                    selectedAreas.includes(area)
+                    selectedAreas.includes(area.slug)
                       ? 'border-[#1A1A1A] bg-[#F5F5F3]'
                       : 'border-[#EBEBEB]'
                   }`}
                 >
-                  <span className="font-medium text-[#1A1A1A]">{area}</span>
-                  {selectedAreas.includes(area) && (
+                  <span className="font-medium text-[#1A1A1A]">{areaName(area, areaLocale)}</span>
+                  {selectedAreas.includes(area.slug) && (
                     <span className="text-[#1A1A1A]">✓</span>
                   )}
                 </button>
@@ -921,7 +919,7 @@ export default function ProfileTab({ cleaner, onUpdate }: Props) {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => {
-                  setSelectedAreas(cleaner.serviceAreas)
+                  setSelectedAreas(normalizeServiceAreas(cleaner.serviceAreas))
                   setEditMode(null)
                 }}
                 className="flex-1 py-3 rounded-xl border border-[#DEDEDE] text-[#6B6B6B] font-medium"

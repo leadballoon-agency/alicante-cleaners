@@ -5,6 +5,7 @@ import { loadKnowledge } from './knowledge'
 import { createFeedbackIssue } from '@/lib/feedback-issue'
 import { triggerCleanerApprovalEffects } from '@/lib/notifications/cleaner-approval'
 import { runSideEffects } from '@/lib/side-effects'
+import { normalizeServiceAreas } from '@/lib/area/areas'
 
 // Lazy initialization
 let anthropic: Anthropic | null = null
@@ -962,8 +963,15 @@ async function handleUpdateCleaner(params: {
   }
 
   if (params.service_areas) {
-    updates.cleaner.serviceAreas = params.service_areas
-    changes.push(`service areas: ${cleaner.serviceAreas.join(', ')} → ${params.service_areas.join(', ')}`)
+    // Same normalization as the cleaner-facing PATCH route (see
+    // app/api/dashboard/cleaner/profile/route.ts) - the AI agent takes
+    // free-text area names from admin chat, so map display names to slugs
+    // and drop anything unrecognized rather than writing raw values.
+    const normalizedAreas = normalizeServiceAreas(params.service_areas)
+    if (normalizedAreas.length > 0) {
+      updates.cleaner.serviceAreas = normalizedAreas
+      changes.push(`service areas: ${cleaner.serviceAreas.join(', ')} → ${normalizedAreas.join(', ')}`)
+    }
   }
 
   if (params.bio) {

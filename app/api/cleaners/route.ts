@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { normalizeAreaValue, normalizeServiceAreas, areaVariants } from '@/lib/area/areas'
 
 // GET /api/cleaners - Get all active cleaners for homepage
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const area = searchParams.get('area')
+    const rawArea = searchParams.get('area')
+    // Resolve to a canonical slug before filtering, and match against every
+    // raw form (slug + display-name variants) still sitting in the DB from
+    // the historical Service Areas modal bug - see lib/area/areas.ts. This
+    // keeps filtering correct even for cleaners whose serviceAreas haven't
+    // been repaired yet (scripts/normalize-service-areas.ts).
+    const area = rawArea && rawArea !== 'all' ? (normalizeAreaValue(rawArea) ?? rawArea) : null
 
     const cleaners = await db.cleaner.findMany({
       where: {
         status: 'ACTIVE',
-        ...(area && area !== 'all' ? {
+        ...(area ? {
           serviceAreas: {
-            has: area,
+            hasSome: areaVariants(area),
           },
         } : {}),
       },
@@ -37,7 +44,7 @@ export async function GET(request: NextRequest) {
       name: c.user.name || 'Cleaner',
       photo: c.user.image,
       bio: c.bio,
-      serviceAreas: c.serviceAreas,
+      serviceAreas: normalizeServiceAreas(c.serviceAreas),
       hourlyRate: Number(c.hourlyRate),
       rating: Number(c.rating) || 0,
       reviewCount: c.reviewCount,
@@ -62,7 +69,7 @@ export async function GET(request: NextRequest) {
       where: { status: 'ACTIVE' },
       select: { serviceAreas: true },
     })
-    const areas = Array.from(new Set(allCleaners.flatMap(c => c.serviceAreas))).sort()
+    const areas = normalizeServiceAreas(allCleaners.flatMap(c => c.serviceAreas)).sort()
 
     return NextResponse.json({
       cleaners: formattedCleaners,
