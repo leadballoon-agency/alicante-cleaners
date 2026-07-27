@@ -18,6 +18,14 @@ export const revalidate = 3600
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://alicantecleaners.com'
 
+// Owner-consented urbanization-level place names for specific reviews,
+// keyed by review id. ONLY add entries here with the reviewing owner's
+// explicit consent (these override the town-level cleanerAreaLabel).
+const FOUNDER_REVIEW_PLACES: Record<string, string> = {
+  // Kerry & Mark's own review of Mara — they asked for their urbanization.
+  cms234evf0001avhgthql1aup: 'Bonalba',
+}
+
 const OG_TITLE = 'Trusted villa cleaners on the Costa Blanca'
 const OG_SUBTITLE = 'Vetted, reviewed local cleaners — booked in minutes, in any language'
 
@@ -167,7 +175,11 @@ async function getOwnerLandingData(): Promise<{
         rating: r.rating,
         text: r.text,
         authorName: r.owner.user.name || 'Villa Owner',
-        location: cleanerAreaLabel(r.cleaner.serviceAreas),
+        // FOUNDER_REVIEW_PLACES: owner-CONSENTED urbanization-level naming
+        // for specific reviews (the founders asked for "Bonalba" on their
+        // own — hundreds of villas, good local SEO). The privacy rule above
+        // stands: nothing finer than a town is ever DERIVED from data.
+        location: FOUNDER_REVIEW_PLACES[r.id] ?? cleanerAreaLabel(r.cleaner.serviceAreas),
       }))
 
     // Featured story cleaner (hero + "trust is the product" section) — real
