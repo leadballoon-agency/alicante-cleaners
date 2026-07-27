@@ -3,7 +3,14 @@ import { db } from '@/lib/db'
 import { SchemaScript } from '@/components/seo/schema-script'
 import { generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema'
 import { formatAreasSentence } from '@/lib/format-areas'
-import { OwnersLandingClient, type CleanerCard, type TrustStats, type OwnerReview } from './OwnersLandingClient'
+import { cleanerAreaLabel } from '@/lib/area/areas'
+import {
+  OwnersLandingClient,
+  type CleanerCard,
+  type TrustStats,
+  type OwnerReview,
+  type FeaturedStory,
+} from './OwnersLandingClient'
 
 // Revalidate hourly so the trust bar / cleaner cards stay fresh without
 // hitting the database on every request (this is a paid-ads landing page).
@@ -71,11 +78,22 @@ const AREAS_QUESTION = 'Which areas do you cover?'
 const AREAS_FALLBACK_ANSWER =
   'Alicante City, San Juan, Playa de San Juan, El Campello, Mutxamel, San Vicente and Jijona.'
 
+// The one cleaner whose real photo + real 5-star review anchor the hero and
+// story section (see OwnersLandingClient's `stories` section and hero — the
+// "trust is the product" rebuild). Hardcoded by slug because this is a
+// specific, deliberately-chosen real person, same as the hardcoded "Mark &
+// Kerry · Founders" quote below it — not a general query. If she's ever
+// deactivated, loses her photo, or her review is unapproved, the lookup
+// below degrades gracefully (see the `if (featuredCleaner?.user.image)`
+// check) rather than fabricating anything.
+const FEATURED_CLEANER_SLUG = 'nilmara'
+
 async function getOwnerLandingData(): Promise<{
   cleaners: CleanerCard[]
   stats: TrustStats
   areas: string[]
   reviews: OwnerReview[]
+  featuredStory: FeaturedStory | null
 }> {
   try {
     const activeCleaners = await db.cleaner.findMany({
@@ -101,6 +119,10 @@ async function getOwnerLandingData(): Promise<{
         ? ratedCleaners.reduce((sum, c) => sum + Number(c.rating) * c.reviewCount, 0) / totalReviews
         : null
 
+    // "Vetted" is an earned badge (see PR #51 / app/[slug]/ProfileClient.tsx)
+    // — only cleaners with a manager's vettedNote get it. Never derived from
+    // teamLeader or anything else, so the client can't accidentally show it
+    // on an unvetted cleaner the way the bespoke chip logic here used to.
     const cleaners: CleanerCard[] = activeCleaners.slice(0, 6).map((c) => ({
       id: c.id,
       slug: c.slug,
@@ -110,6 +132,7 @@ async function getOwnerLandingData(): Promise<{
       reviewCount: c.reviewCount,
       serviceAreas: c.serviceAreas,
       teamLeader: c.teamLeader,
+      vetted: Boolean(c.vettedNote),
     }))
 
     const stats: TrustStats = {
@@ -128,30 +151,56 @@ async function getOwnerLandingData(): Promise<{
       take: 2,
       include: {
         owner: { include: { user: { select: { name: true } } } },
-        booking: { include: { property: { select: { address: true } } } },
+        cleaner: { select: { serviceAreas: true } },
+        // PRIVACY: never select the property/address here — a real owner's
+        // street address leaked on this exact section once ("Kerry · 21 La
+        // Arboleda Bonalba"). The location shown next to a review is the
+        // CLEANER's own public service area, never anything derived from
+        // the reviewing owner's property.
       },
     })
 
     const reviews: OwnerReview[] = approvedReviews
       .filter((r) => r.rating > 0 && r.text.trim().length > 0)
-      .map((r) => {
-        const address = r.booking?.property?.address || ''
-        const parts = address
-          .split(',')
-          .map((p) => p.trim())
-          .filter(Boolean)
-        const location = parts.length > 1 ? parts[parts.length - 1] : 'Alicante'
+      .map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        text: r.text,
+        authorName: r.owner.user.name || 'Villa Owner',
+        location: cleanerAreaLabel(r.cleaner.serviceAreas),
+      }))
 
-        return {
-          id: r.id,
-          rating: r.rating,
-          text: r.text,
-          authorName: r.owner.user.name || 'Villa Owner',
-          location,
-        }
-      })
+    // Featured story cleaner (hero + "trust is the product" section) — real
+    // photo, real review, sourced live so it can never drift into an
+    // overclaim if her situation changes (she previously had no review at
+    // all, which is what made the old hardcoded "brought me steady
+    // bookings" placeholder quote false).
+    let featuredStory: FeaturedStory | null = null
+    const featuredCleaner = await db.cleaner.findFirst({
+      where: { slug: FEATURED_CLEANER_SLUG, status: 'ACTIVE' },
+      include: {
+        user: { select: { image: true } },
+        reviews: {
+          where: { approved: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          include: { owner: { include: { user: { select: { name: true } } } } },
+        },
+      },
+    })
 
-    return { cleaners, stats, areas, reviews }
+    if (featuredCleaner?.user.image) {
+      const review = featuredCleaner.reviews[0]
+      featuredStory = {
+        slug: featuredCleaner.slug,
+        photo: featuredCleaner.user.image,
+        quote: review?.text ?? null,
+        rating: review?.rating ?? (featuredCleaner.rating ? Number(featuredCleaner.rating) : null),
+        reviewerFirstName: review ? review.owner.user.name?.split(' ')[0] || null : null,
+      }
+    }
+
+    return { cleaners, stats, areas, reviews, featuredStory }
   } catch (error) {
     console.error('Error loading owners landing data:', error)
     return {
@@ -159,12 +208,13 @@ async function getOwnerLandingData(): Promise<{
       stats: { vettedCleaners: 0, areasCovered: 0, avgRating: null, totalReviews: 0 },
       areas: [],
       reviews: [],
+      featuredStory: null,
     }
   }
 }
 
 export default async function OwnersLandingPage() {
-  const { cleaners, stats, areas, reviews } = await getOwnerLandingData()
+  const { cleaners, stats, areas, reviews, featuredStory } = await getOwnerLandingData()
 
   const areasSentence = formatAreasSentence(areas, 'and')
   const faqs = [
@@ -184,7 +234,13 @@ export default async function OwnersLandingPage() {
   return (
     <>
       <SchemaScript schema={[faqSchema, breadcrumbSchema]} />
-      <OwnersLandingClient cleaners={cleaners} stats={stats} areas={areas} reviews={reviews} />
+      <OwnersLandingClient
+        cleaners={cleaners}
+        stats={stats}
+        areas={areas}
+        reviews={reviews}
+        featuredStory={featuredStory}
+      />
     </>
   )
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { AREAS } from '@/lib/area/areas'
+import { cleanerAreaLabel } from '@/lib/area/areas'
 
 // This route uses no request data, so without an explicit revalidate Next
 // statically bakes its output AT BUILD TIME — the "live" social-proof feed
@@ -134,17 +134,4 @@ export async function GET() {
     console.error('Error fetching activity feed:', error)
     return NextResponse.json({ activities: [] })
   }
-}
-
-// Public-safe locality: the CLEANER's own (already-public) primary service
-// area — never anything derived from an owner's property or address.
-// Tolerates the known data corruption where serviceAreas may hold display
-// names instead of slugs.
-function cleanerAreaLabel(serviceAreas: string[]): string {
-  const first = serviceAreas?.[0]
-  if (!first) return ''
-  const match = AREAS.find(
-    (a) => a.slug === first || a.es === first || a.en === first
-  )
-  return match?.es ?? ''
 }

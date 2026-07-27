@@ -98,4 +98,23 @@ export function alternateAreaPath(locale: AreaLocale, slug: string): string {
   return areaPath(locale === 'es' ? 'en' : 'es', slug)
 }
 
+/**
+ * Public-safe locality label for a cleaner: their own (already-public)
+ * primary service area — NEVER anything derived from an owner's property or
+ * address. Originally introduced for the homepage activity feed (see
+ * app/api/activity/route.ts, and the privacy hotfix in PR #56 — a real
+ * street address leaked here once via an old extractArea() heuristic) and
+ * reused anywhere a public page needs to show "where" without touching
+ * owner/property data — e.g. attributing an owner review to a place by
+ * showing the CLEANER's area instead of the reviewer's address.
+ * Tolerates the known data corruption where serviceAreas may hold display
+ * names instead of slugs.
+ */
+export function cleanerAreaLabel(serviceAreas: string[]): string {
+  const first = serviceAreas?.[0]
+  if (!first) return ''
+  const match = AREAS.find((a) => a.slug === first || a.es === first || a.en === first)
+  return match?.es ?? ''
+}
+
 export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.alicantecleaners.com'
