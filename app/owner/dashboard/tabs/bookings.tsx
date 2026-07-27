@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { OwnerBooking } from '../page'
 import { JobsTimeline, BookingCardData } from '@/components/job-card'
@@ -11,10 +11,28 @@ type Props = {
   onLeaveReview?: (bookingId: string, cleanerId: string, cleanerName: string, cleanerSlug: string) => void
   onMessage?: (cleanerId: string, cleanerName: string, propertyId?: string) => void
   onOpenChat?: (initialMessage?: string) => void
+  initialReviewBookingId?: string | null
 }
 
-export default function BookingsTab({ bookings, onLeaveReview, onMessage, onOpenChat }: Props) {
+export default function BookingsTab({ bookings, onLeaveReview, onMessage, onOpenChat, initialReviewBookingId }: Props) {
   const router = useRouter()
+  const [autoOpenedReview, setAutoOpenedReview] = useState(false)
+
+  // Deep-link support: /owner/dashboard?tab=bookings&review=<bookingId>
+  // (the booking-completion email's review link, and the Home tab's review
+  // prompt card) auto-opens the review modal for that booking once it's
+  // loaded — one-shot guard mirrors the cleaner Messages tab's
+  // `autoOpenedConversation` (app/dashboard/tabs/messages.tsx). Only opens
+  // if the id matches one of this owner's bookings that is completed and
+  // not yet reviewed; otherwise (bogus id, already reviewed) it no-ops.
+  useEffect(() => {
+    if (!initialReviewBookingId || autoOpenedReview || !onLeaveReview) return
+    const booking = bookings.find(b => b.id === initialReviewBookingId)
+    if (booking && booking.status === 'completed' && !booking.hasReviewedCleaner) {
+      setAutoOpenedReview(true)
+      onLeaveReview(booking.id, booking.cleaner.id, booking.cleaner.name, booking.cleaner.slug)
+    }
+  }, [bookings, initialReviewBookingId, autoOpenedReview, onLeaveReview])
 
   // Transform bookings to shared BookingCardData format
   const transformedBookings: BookingCardData[] = useMemo(() => {
