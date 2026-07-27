@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { AREAS } from '@/lib/area/areas'
 
+// This route uses no request data, so without an explicit revalidate Next
+// statically bakes its output AT BUILD TIME — the "live" social-proof feed
+// was a snapshot frozen until the next deploy (observed: a 14h-old entry
+// persisting after the content was fixed). ISR every 5 minutes keeps it
+// fresh AND keeps DB load near zero for homepage traffic.
+export const revalidate = 300
+
 // GET /api/activity - Get recent activity for social proof feed
 export async function GET() {
   try {
