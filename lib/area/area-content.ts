@@ -26,8 +26,8 @@ export const AREA_INTROS: Record<string, Record<AreaLocale, string>> = {
     en: "El Campello still feels like the fishing village it started out as — fish auction, marina and all — but it's also home to beachfront villas around Muchavista and El Charco. The tram line into Alicante makes it an easy hop, which is part of why it draws owners who split their time between here and somewhere else.",
   },
   mutxamel: {
-    es: 'Mutxamel es tierra de huerta: parcelas grandes, chalets con jardines amplios y menos presión turística que en la costa. Muchos propietarios lo eligen precisamente por eso, para tener espacio de verdad, aunque eso también significa más metros que mantener limpios.',
-    en: "Mutxamel is market-garden country — big plots, villas with proper-sized gardens, and none of the holiday-let churn you get on the coast. Owners tend to choose it for the extra space, which is great for living but means more square metres for a cleaner to cover on each visit.",
+    es: 'Mutxamel es tierra de huerta: parcelas grandes, chalets con jardines amplios — incluida la urbanización Bonalba Golf, muy popular entre propietarios extranjeros — y menos presión turística que en la costa. Muchos propietarios lo eligen precisamente por eso, para tener espacio de verdad, aunque eso también significa más metros que mantener limpios.',
+    en: "Mutxamel is market-garden country — big plots, villas with proper-sized gardens, including the Bonalba Golf resort community that's a favourite with international owners, and none of the holiday-let churn you get on the coast. Owners tend to choose it for the extra space, which is great for living but means more square metres for a cleaner to cover on each visit.",
   },
   'san-vicente': {
     es: 'San Vicente del Raspeig crece rápido gracias a la Universidad de Alicante, con urbanizaciones nuevas junto a fincas más antiguas. Tiene vida todo el año, no solo en verano, así que las limpiezas suelen reservarse con una cadencia más regular.',
