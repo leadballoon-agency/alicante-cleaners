@@ -1,5 +1,6 @@
 import { db } from '@/lib/db'
 import { STANDARD_SERVICES } from './area-content'
+import { areaVariants } from './areas'
 
 export type AreaCleanerCard = {
   id: string
@@ -46,7 +47,11 @@ export async function getAreaPageData(slug: string): Promise<{
   const cleaners = await db.cleaner.findMany({
     where: {
       status: 'ACTIVE',
-      serviceAreas: { has: slug },
+      // hasSome (not has) also matches cleaners whose serviceAreas still
+      // hold a pre-repair display-name variant instead of the slug - see
+      // lib/area/areas.ts and app/api/cleaners/route.ts (same rule, kept in
+      // sync per the doc comment above).
+      serviceAreas: { hasSome: areaVariants(slug) },
     },
     include: {
       user: { select: { name: true, image: true } },

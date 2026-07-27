@@ -11,7 +11,7 @@ import { PageTracker } from '@/components/analytics/page-tracker'
 import { CleanerSlider, type SliderCleaner } from '@/components/CleanerSlider'
 import { CleanerPhotoPlaceholder } from '@/components/CleanerPhotoPlaceholder'
 import { useOwnCleanerSlug } from '@/lib/hooks/use-own-cleaner-slug'
-import { AREAS, areaName, areaPath } from '@/lib/area/areas'
+import { AREAS, areaName, areaPath, getArea } from '@/lib/area/areas'
 
 type Cleaner = {
   id: string
@@ -113,6 +113,28 @@ export default function HomePage() {
       }
     })
   }, [cleaners, t])
+
+  // The partners grid below renders straight from the API response - dedupe
+  // defensively by cleaner id so a data issue upstream (e.g. a cleaner
+  // re-onboarding into a second record) can't ever double-list the same
+  // profile. The featured slider above is unaffected on purpose.
+  const dedupedCleaners = useMemo(() => {
+    const seen = new Set<string>()
+    return cleaners.filter(c => {
+      if (seen.has(c.id)) return false
+      seen.add(c.id)
+      return true
+    })
+  }, [cleaners])
+
+  // `/api/cleaners` now normalizes serviceAreas/areas to canonical slugs
+  // (see app/api/cleaners/route.ts) - this maps a slug back to a
+  // human-readable label for display, falling back to the raw value for any
+  // slug not in the canonical list.
+  const areaLabel = (slug: string) => {
+    const area = getArea(slug)
+    return area ? areaName(area, areaLinksLocale) : slug
+  }
 
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans pb-safe">
@@ -229,7 +251,7 @@ export default function HomePage() {
                     : 'bg-white border border-[#DEDEDE] text-[#6B6B6B] hover:border-[#1A1A1A]'
                 }`}
               >
-                {area}
+                {areaLabel(area)}
               </button>
             ))}
           </div>
@@ -368,11 +390,11 @@ export default function HomePage() {
         ) : (
           <>
             <p className="text-sm text-[#6B6B6B] mb-4">
-              {cleaners.length} partner{cleaners.length !== 1 ? 's' : ''} available
-              {selectedArea !== 'all' ? ` in ${selectedArea}` : ''}
+              {dedupedCleaners.length} partner{dedupedCleaners.length !== 1 ? 's' : ''} available
+              {selectedArea !== 'all' ? ` in ${areaLabel(selectedArea)}` : ''}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {cleaners.map(cleaner => {
+              {dedupedCleaners.map(cleaner => {
                 const isOwnCard = ownSlug !== null && ownSlug === cleaner.slug
                 return (
                   <div
@@ -451,7 +473,7 @@ export default function HomePage() {
                           key={area}
                           className="px-2 py-0.5 bg-[#F5F5F3] text-[#6B6B6B] text-xs rounded-full"
                         >
-                          {area}
+                          {areaLabel(area)}
                         </span>
                       ))}
                       {cleaner.serviceAreas.length > 3 && (

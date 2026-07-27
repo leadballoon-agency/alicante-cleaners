@@ -39,6 +39,55 @@ export function areaName(area: Area, locale: AreaLocale): string {
   return locale === 'es' ? area.es : area.en
 }
 
+/**
+ * Case-insensitive lookup from any known form of an area — the canonical
+ * slug, or either display-name label — to its canonical slug. Exists because
+ * `Cleaner.serviceAreas` picked up display-name values from a client bug in
+ * the dashboard's Service Areas modal (it submitted labels like "San Juan"
+ * instead of the slug "san-juan" — see app/dashboard/tabs/profile.tsx). Used
+ * to normalize both writes (profile PATCH, admin AI agent) and reads
+ * (homepage/area-page filter matching) so the corrupted historical data
+ * doesn't need to be fixed everywhere at once.
+ */
+const AREA_LOOKUP: ReadonlyMap<string, string> = new Map(
+  AREAS.flatMap((area) => [
+    [area.slug.toLowerCase(), area.slug],
+    [area.es.toLowerCase(), area.slug],
+    [area.en.toLowerCase(), area.slug],
+  ] as const)
+)
+
+/** Resolves any known slug/label form of an area to its canonical slug, or undefined if unrecognized. */
+export function normalizeAreaValue(value: string): string | undefined {
+  return AREA_LOOKUP.get(value.trim().toLowerCase())
+}
+
+/**
+ * Normalizes a raw `Cleaner.serviceAreas` list to canonical, deduped slugs.
+ * Unrecognized entries are dropped rather than passed through, so junk data
+ * can't keep re-accumulating.
+ */
+export function normalizeServiceAreas(values: string[]): string[] {
+  const slugs = new Set<string>()
+  for (const value of values) {
+    const slug = normalizeAreaValue(value)
+    if (slug) slugs.add(slug)
+  }
+  return Array.from(slugs)
+}
+
+/**
+ * All known raw forms (slug + both display labels) a cleaner's serviceAreas
+ * entry could be stored as for a given canonical slug — for matching against
+ * not-yet-repaired production data with Prisma's `hasSome`. Falls back to
+ * `[slug]` for an unrecognized slug so callers can pass through user input.
+ */
+export function areaVariants(slug: string): string[] {
+  const area = getArea(slug)
+  if (!area) return [slug]
+  return Array.from(new Set([area.slug, area.es, area.en]))
+}
+
 /** Locale-specific URL for a given area's landing page. */
 export function areaPath(locale: AreaLocale, slug: string): string {
   return locale === 'es' ? `/limpieza-de-villas/${slug}` : `/en/villa-cleaning/${slug}`

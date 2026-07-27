@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { isApprovalReady, notifyIfApprovalReady } from '@/lib/notifications/approval-ready'
 import { runSideEffects } from '@/lib/side-effects'
+import { normalizeServiceAreas } from '@/lib/area/areas'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -66,7 +67,19 @@ export async function PATCH(request: NextRequest) {
       cleanerUpdates.bio = updates.bio
     }
     if (updates.serviceAreas !== undefined) {
-      cleanerUpdates.serviceAreas = updates.serviceAreas
+      // Self-healing regardless of client: normalize to canonical slugs,
+      // dedupe, and drop anything unrecognized (e.g. the display-name
+      // values an older dashboard bug submitted - see lib/area/areas.ts).
+      const normalizedAreas = normalizeServiceAreas(
+        Array.isArray(updates.serviceAreas) ? updates.serviceAreas : []
+      )
+      if (normalizedAreas.length === 0) {
+        return NextResponse.json(
+          { error: 'Select at least one recognized service area' },
+          { status: 400 }
+        )
+      }
+      cleanerUpdates.serviceAreas = normalizedAreas
     }
     if (updates.hourlyRate !== undefined) {
       cleanerUpdates.hourlyRate = updates.hourlyRate
