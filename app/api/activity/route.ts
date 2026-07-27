@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { AREAS } from '@/lib/area/areas'
 
 // GET /api/activity - Get recent activity for social proof feed
 export async function GET() {
@@ -14,11 +15,15 @@ export async function GET() {
       },
       include: {
         cleaner: {
-          include: {
+          select: {
+            serviceAreas: true,
             user: { select: { name: true, image: true } },
           },
         },
-        property: { select: { name: true, address: true } },
+        // PRIVACY: never select the property here — the owner's address must
+        // not reach this public feed in any form (it leaked once: the old
+        // extractArea() heuristic showed a real street address on the
+        // homepage). Location shown = the CLEANER's own public service area.
       },
       orderBy: { updatedAt: 'desc' },
       take: 10,
@@ -75,7 +80,7 @@ export async function GET() {
     // Add completed cleans
     recentBookings.forEach((booking) => {
       const cleanerName = booking.cleaner.user.name?.split(' ')[0] || 'A cleaner'
-      const area = extractArea(booking.property.address)
+      const area = cleanerAreaLabel(booking.cleaner.serviceAreas)
       activities.push({
         id: `completed-${booking.id}`,
         type: 'completed',
@@ -124,11 +129,15 @@ export async function GET() {
   }
 }
 
-// Extract area from address (e.g., "Calle del Mar 42, San Juan, Alicante" -> "San Juan")
-function extractArea(address: string): string {
-  const parts = address.split(',').map((p) => p.trim())
-  if (parts.length >= 2) {
-    return parts[parts.length - 2] // Second to last part is usually the area
-  }
-  return parts[0] || ''
+// Public-safe locality: the CLEANER's own (already-public) primary service
+// area — never anything derived from an owner's property or address.
+// Tolerates the known data corruption where serviceAreas may hold display
+// names instead of slugs.
+function cleanerAreaLabel(serviceAreas: string[]): string {
+  const first = serviceAreas?.[0]
+  if (!first) return ''
+  const match = AREAS.find(
+    (a) => a.slug === first || a.es === first || a.en === first
+  )
+  return match?.es ?? ''
 }
