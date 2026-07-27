@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { PageTracker } from '@/components/analytics/page-tracker'
 import { CleanerSlider, type SliderCleaner } from '@/components/CleanerSlider'
@@ -15,6 +16,8 @@ export type CleanerCard = {
   reviewCount: number
   serviceAreas: string[]
   teamLeader: boolean
+  /** Earned badge — only true when a manager has actually left a vettedNote (see PR #51). */
+  vetted: boolean
 }
 
 export type TrustStats = {
@@ -34,6 +37,17 @@ export type OwnerReview = {
   location: string
 }
 
+// The real cleaner + real review behind the hero and "trust is the product"
+// story card (see app/owners/page.tsx). Null when she has no photo yet —
+// the client never fabricates a photo or a quote to fill the gap.
+export type FeaturedStory = {
+  slug: string
+  photo: string
+  quote: string | null
+  rating: number | null
+  reviewerFirstName: string | null
+}
+
 type Lang = 'en' | 'es'
 
 type Props = {
@@ -41,6 +55,7 @@ type Props = {
   stats: TrustStats
   areas: string[]
   reviews: OwnerReview[]
+  featuredStory: FeaturedStory | null
 }
 
 const translations = {
@@ -51,8 +66,10 @@ const translations = {
       titlePre: "Come home to a villa that's been",
       titleEm: 'loved while you were away.',
       sub: 'Vetted, reviewed local cleaners who treat your home like their own — booked in minutes, in any language.',
-      videoQuote: 'The story of coming home to a cared-for villa.',
-      videoName: 'A real VillaCare story',
+      reviewChip: 'Verified review',
+      reviewerSuffix: ', a real VillaCare owner',
+      fallbackHeading: 'Real cleaners. Real reviews.',
+      fallbackSub: 'Every review on VillaCare comes from a booking that actually happened.',
       ctaFind: 'Find your cleaner →',
       ctaHow: 'See how it works',
       trustMicro: 'Real reviews from real owners · No platform fees',
@@ -62,7 +79,7 @@ const translations = {
       areas: 'Areas covered',
       anyLanguage: 'Any language',
       autoTranslated: 'auto-translated',
-      ratingLabel: 'Avg rating',
+      ratingLabel: 'Verified reviews',
       newValue: 'New',
       newLabel: 'Just launched',
     },
@@ -119,22 +136,18 @@ const translations = {
     stories: {
       eyebrow: 'Real people, real stories',
       heading: 'The trust is the product.',
-      sub: 'Not stock photos. Not actors. The owners and cleaners who make VillaCare.',
-      cards: [
-        {
-          name: 'Mara · Cleaner',
-          quote:
-            "I came for a bit of extra income. VillaCare brought me steady bookings — and owners who trust me completely.",
-        },
-        {
-          name: 'Mark & Kerry · Founders',
-          quote: "We live here, and we still couldn't find someone we trusted. So we built the network we needed.",
-        },
-        {
-          name: 'Jessica & Ernesto · Team leaders',
-          quote: "We're building our own cleaning business here — VillaCare gives us the bookings and the trust.",
-        },
-      ],
+      sub: 'No stock photos. No actors. The people who make VillaCare.',
+      mara: {
+        name: 'Mara',
+        role: 'Cleaner',
+        quoteLabel: 'What Kerry, a real owner, wrote after Mara’s clean',
+        fallbackStatus: 'First cleaner with a verified 5-star review on VillaCare',
+      },
+      founders: {
+        name: 'Mark & Kerry',
+        role: 'Founders',
+        quote: "We live here, and we still couldn't find someone we trusted. So we built the network we needed.",
+      },
     },
     moat: {
       eyebrow: 'Why owners trust us',
@@ -228,8 +241,10 @@ const translations = {
       titlePre: 'Vuelve a una villa que ha sido',
       titleEm: 'cuidada mientras no estabas.',
       sub: 'Limpiadores locales verificados y valorados que cuidan tu casa como si fuera suya — reserva en minutos, en cualquier idioma.',
-      videoQuote: 'La historia de volver a una villa cuidada.',
-      videoName: 'Una historia real de VillaCare',
+      reviewChip: 'Reseña verificada',
+      reviewerSuffix: ', propietario/a real de VillaCare',
+      fallbackHeading: 'Limpiadores reales. Reseñas reales.',
+      fallbackSub: 'Cada reseña en VillaCare proviene de una reserva que realmente ocurrió.',
       ctaFind: 'Encuentra tu limpiador →',
       ctaHow: 'Ver cómo funciona',
       trustMicro: 'Reseñas reales de propietarios reales · Sin comisiones de plataforma',
@@ -296,24 +311,19 @@ const translations = {
     stories: {
       eyebrow: 'Personas reales, historias reales',
       heading: 'La confianza es el producto.',
-      sub: 'No son fotos de stock. No son actores. Los propietarios y limpiadores que hacen VillaCare.',
-      cards: [
-        {
-          name: 'Mara · Limpiadora',
-          quote:
-            'Empecé buscando un ingreso extra. VillaCare me trajo reservas constantes — y propietarios que confían en mí por completo.',
-        },
-        {
-          name: 'Mark y Kerry · Fundadores',
-          quote:
-            'Vivimos aquí, y aun así no encontrábamos a alguien de confianza. Así que construimos la red que necesitábamos.',
-        },
-        {
-          name: 'Jessica y Ernesto · Líderes de equipo',
-          quote:
-            'Estamos construyendo nuestro propio negocio de limpieza aquí — VillaCare nos da las reservas y la confianza.',
-        },
-      ],
+      sub: 'Sin fotos de stock. Sin actores. Las personas que hacen VillaCare.',
+      mara: {
+        name: 'Mara',
+        role: 'Limpiadora',
+        quoteLabel: 'Lo que Kerry, una propietaria real, escribió tras la limpieza de Mara',
+        fallbackStatus: 'La primera limpiadora con una reseña verificada de 5 estrellas en VillaCare',
+      },
+      founders: {
+        name: 'Mark y Kerry',
+        role: 'Fundadores',
+        quote:
+          'Vivimos aquí, y aun así no encontrábamos a alguien de confianza. Así que construimos la red que necesitábamos.',
+      },
     },
     moat: {
       eyebrow: 'Por qué confían en nosotros',
@@ -402,12 +412,6 @@ const translations = {
   },
 } as const
 
-const storyGradients = [
-  'bg-gradient-to-br from-[#7c9885] to-[#566b5b]',
-  'bg-gradient-to-br from-[#b08968] to-[#7d5a3c]',
-  'bg-gradient-to-br from-[#9a8fb0] to-[#5e5273]',
-]
-
 function formatAreasList(areas: string[], max: number): string {
   if (areas.length === 0) return ''
   const shown = areas.slice(0, max)
@@ -424,7 +428,7 @@ function starString(rating: number): string {
   return '★'.repeat(filled) + '☆'.repeat(5 - filled)
 }
 
-export function OwnersLandingClient({ cleaners, stats, areas, reviews }: Props) {
+export function OwnersLandingClient({ cleaners, stats, areas, reviews, featuredStory }: Props) {
   const [lang, setLang] = useState<Lang>('en')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const t = translations[lang]
@@ -439,22 +443,33 @@ export function OwnersLandingClient({ cleaners, stats, areas, reviews }: Props) 
     ? `${formatAreasSentence(areas, lang)}.`
     : t.faq.areasFallback
 
-  const sliderCleaners: SliderCleaner[] = cleaners.map((cleaner) => ({
-    id: cleaner.id,
-    slug: cleaner.slug,
-    name: cleaner.name,
-    photo: cleaner.photo,
-    rating: cleaner.rating,
-    reviewCount: cleaner.reviewCount,
-    serviceAreas: cleaner.serviceAreas,
-    chips: [
-      {
-        label: cleaner.teamLeader ? t.cleaners.teamLeaderChip : t.cleaners.vettedChip,
-        className:
-          'inline-block text-[10.5px] bg-[#E8F5E9] text-[#2E7D32] px-1.5 py-0.5 rounded-full font-semibold',
-      },
-    ],
-  }))
+  const badgeChipClassName =
+    'inline-block text-[10.5px] bg-[#E8F5E9] text-[#2E7D32] px-1.5 py-0.5 rounded-full font-semibold'
+
+  const sliderCleaners: SliderCleaner[] = cleaners.map((cleaner) => {
+    // Both badges are earned independently — a cleaner can be a team leader
+    // AND vetted, one, or neither. "Vetted" only shows when `cleaner.vetted`
+    // is true (a manager actually left a vettedNote — see app/owners/page.tsx
+    // and PR #51). It used to be shown to every non-team-leader cleaner
+    // regardless of whether they'd actually been vetted.
+    const chips = []
+    if (cleaner.teamLeader) {
+      chips.push({ label: t.cleaners.teamLeaderChip, className: badgeChipClassName })
+    }
+    if (cleaner.vetted) {
+      chips.push({ label: t.cleaners.vettedChip, className: badgeChipClassName })
+    }
+    return {
+      id: cleaner.id,
+      slug: cleaner.slug,
+      name: cleaner.name,
+      photo: cleaner.photo,
+      rating: cleaner.rating,
+      reviewCount: cleaner.reviewCount,
+      serviceAreas: cleaner.serviceAreas,
+      chips,
+    }
+  })
 
   return (
     <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] font-sans">
@@ -463,9 +478,14 @@ export function OwnersLandingClient({ cleaners, stats, areas, reviews }: Props) 
       {/* HEADER */}
       <header className="sticky top-0 z-50 bg-[#FAFAF8]/90 backdrop-blur-md border-b border-[#EBEBEB]">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 sm:px-6 py-3">
-          <Link href="/" className="flex items-center gap-2 font-extrabold text-lg tracking-tight text-[#1A1A1A]">
-            <span className="w-7 h-7 rounded-lg bg-[#C4785A] flex items-center justify-center text-sm">🏡</span>
-            VillaCare
+          <Link href="/">
+            <Image
+              src="/villacare-horizontal-logo.png"
+              alt="VillaCare"
+              width={140}
+              height={40}
+              className="object-contain"
+            />
           </Link>
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-[#F5F5F3] rounded-lg p-1">
@@ -504,17 +524,45 @@ export function OwnersLandingClient({ cleaners, stats, areas, reviews }: Props) 
         </h1>
         <p className="text-base text-[#6B6B6B] max-w-sm mx-auto mb-6">{t.hero.sub}</p>
 
-        {/* UGC hero video slot (placeholder - structured for a real clip later) */}
-        <div className="relative rounded-2xl overflow-hidden aspect-[3/4] max-w-xs mx-auto shadow-[0_8px_30px_rgba(26,26,26,0.10)] mb-6 bg-gradient-to-br from-[#cdb4a4] via-[#a9866f] to-[#8a6852]">
-          <div className="absolute inset-x-0 bottom-0 p-4 text-left">
-            <p className="text-white text-sm font-semibold italic drop-shadow-[0_1px_8px_rgba(0,0,0,0.4)] mb-1">
-              &ldquo;{t.hero.videoQuote}&rdquo;
-            </p>
-            <p className="text-white/85 text-xs font-medium drop-shadow-[0_1px_8px_rgba(0,0,0,0.4)]">
-              {t.hero.videoName}
-            </p>
+        {/* Real-content hero card. Was an empty gradient block captioned "A
+            real VillaCare story" with no actual footage behind it — replaced
+            with Mara's real photo + her real review, so the emotional
+            promise ties to actual proof instead of a placeholder. */}
+        {featuredStory ? (
+          <div className="relative rounded-2xl overflow-hidden aspect-[3/4] max-w-xs mx-auto shadow-[0_8px_30px_rgba(26,26,26,0.10)] mb-6">
+            <Image
+              src={featuredStory.photo}
+              alt={t.stories.mara.name}
+              fill
+              unoptimized
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
+            <span className="absolute top-3 left-3 inline-flex items-center gap-1 bg-white/90 text-[#1A1A1A] text-[11px] font-semibold px-2.5 py-1 rounded-full">
+              ✓ {t.hero.reviewChip}
+            </span>
+            <div className="absolute inset-x-0 bottom-0 p-4 text-left">
+              {featuredStory.rating !== null && (
+                <div className="text-[#F5C451] text-xs tracking-widest mb-1">{starString(featuredStory.rating)}</div>
+              )}
+              <p className="text-white text-sm font-semibold italic drop-shadow-[0_1px_8px_rgba(0,0,0,0.4)] mb-1">
+                &ldquo;{featuredStory.quote ?? t.stories.mara.fallbackStatus}&rdquo;
+              </p>
+              <p className="text-white/85 text-xs font-medium drop-shadow-[0_1px_8px_rgba(0,0,0,0.4)]">
+                {featuredStory.reviewerFirstName
+                  ? `— ${featuredStory.reviewerFirstName}${t.hero.reviewerSuffix}`
+                  : `${t.stories.mara.name} · ${t.stories.mara.role}`}
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="relative rounded-2xl overflow-hidden aspect-[3/4] max-w-xs mx-auto shadow-[0_8px_30px_rgba(26,26,26,0.10)] mb-6 bg-gradient-to-br from-[#cdb4a4] via-[#a9866f] to-[#8a6852] flex items-end">
+            <div className="p-4 text-left">
+              <p className="text-white text-base font-bold mb-1">{t.hero.fallbackHeading}</p>
+              <p className="text-white/85 text-xs font-medium">{t.hero.fallbackSub}</p>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col gap-2.5 max-w-xs mx-auto">
           <a
@@ -615,18 +663,59 @@ export function OwnersLandingClient({ cleaners, stats, areas, reviews }: Props) 
           </span>
           <h2 className="text-[23px] font-extrabold text-white text-center mt-2 mb-1.5">{t.stories.heading}</h2>
           <p className="text-center text-[#bdbdbd] text-sm mb-6 max-w-sm mx-auto">{t.stories.sub}</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {t.stories.cards.map((card, i) => (
-              <div
-                key={card.name}
-                className={`relative rounded-2xl overflow-hidden aspect-square shadow-[0_8px_30px_rgba(26,26,26,0.10)] ${storyGradients[i % storyGradients.length]}`}
-              >
+          {/* Two real cards, not three: this used to include a third "Jessica
+              & Ernesto · Team leaders" card whose quote had gone stale
+              (Ernesto has stepped back) and wasn't independently verifiable.
+              Rather than invent a replacement, we kept only the two cards
+              backed by something true — Mara's real photo/review and the
+              founders' real quote. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
+            {featuredStory ? (
+              <div className="relative rounded-2xl overflow-hidden aspect-[4/5] shadow-[0_8px_30px_rgba(26,26,26,0.10)]">
+                <Image
+                  src={featuredStory.photo}
+                  alt={t.stories.mara.name}
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-3.5 text-left">
-                  <div className="text-white font-bold text-[15px] mb-0.5">{card.name}</div>
-                  <div className="text-white/90 text-[12.5px]">&ldquo;{card.quote}&rdquo;</div>
+                  <div className="text-white font-bold text-[15px] mb-1">
+                    {t.stories.mara.name} · {t.stories.mara.role}
+                  </div>
+                  {featuredStory.quote ? (
+                    <>
+                      <div className="text-white/60 text-[10px] uppercase tracking-wide font-semibold mb-1">
+                        {t.stories.mara.quoteLabel}
+                      </div>
+                      <div className="text-white/90 text-[12.5px] italic">&ldquo;{featuredStory.quote}&rdquo;</div>
+                    </>
+                  ) : (
+                    <div className="text-white/90 text-[12.5px]">{t.stories.mara.fallbackStatus}</div>
+                  )}
                 </div>
               </div>
-            ))}
+            ) : (
+              <div className="relative rounded-2xl overflow-hidden aspect-[4/5] bg-[#24211d] border border-white/10 shadow-[0_8px_30px_rgba(26,26,26,0.10)] flex flex-col justify-between p-4">
+                <span className="text-[#C4785A] text-5xl font-serif leading-none">&ldquo;</span>
+                <p className="text-white text-[13.5px] leading-snug font-medium">{t.stories.mara.fallbackStatus}</p>
+                <div className="text-white/70 text-[12.5px] font-semibold mt-2">
+                  {t.stories.mara.name} · {t.stories.mara.role}
+                </div>
+              </div>
+            )}
+
+            {/* Founders' quote is real but no photo exists — a deliberately
+                quote-forward typographic card, not a stand-in for a missing
+                photo. */}
+            <div className="relative rounded-2xl overflow-hidden aspect-[4/5] bg-[#24211d] border border-white/10 shadow-[0_8px_30px_rgba(26,26,26,0.10)] flex flex-col justify-between p-4">
+              <span className="text-[#C4785A] text-5xl font-serif leading-none">&ldquo;</span>
+              <p className="text-white text-[13.5px] leading-snug font-medium">{t.stories.founders.quote}</p>
+              <div className="text-white/70 text-[12.5px] font-semibold mt-2">
+                {t.stories.founders.name} · {t.stories.founders.role}
+              </div>
+            </div>
           </div>
         </div>
       </section>
