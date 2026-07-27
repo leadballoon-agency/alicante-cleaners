@@ -23,17 +23,14 @@ const WINDOW_DAYS = 30
 // last 30 days (older completions are unlikely to get a review and would
 // just be nagging).
 //
-// The completion email/WhatsApp message links to
-// `/owner/dashboard?tab=bookings&review={bookingId}`. As of this writing
-// that query string isn't actually read anywhere (`page.tsx` manages
-// `activeTab` as in-memory state and never calls `useSearchParams`), so the
-// email link doesn't auto-open anything today. This button still pushes
-// that same URL shape (cheap, forward-compatible, keeps the address bar in
-// sync with the deep link owners may already have from email/WhatsApp) and
-// additionally calls the existing `onNavigate('bookings')` prop — the same
-// mechanism already used elsewhere in home.tsx — so the click actually goes
-// somewhere useful today: the Bookings tab, where the real review CTA
-// (unchanged) lives.
+// The button pushes `/owner/dashboard?tab=bookings&review={bookingId}` —
+// the exact deep link the booking-completion email/WhatsApp message
+// already uses (app/api/dashboard/cleaner/bookings/[id]/route.ts). The
+// dashboard reads that query string (`page.tsx` -> BookingsTab's
+// `initialReviewBookingId`) and auto-opens the existing review modal.
+// `onNavigate('bookings')` switches the tab in-place too, since the
+// in-memory `activeTab` state only reads the URL on initial mount, not on
+// client-side navigation within the already-mounted page.
 export default function ReviewPromptCard({ bookings, onNavigate }: Props) {
   const router = useRouter()
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import HomeTab from './tabs/home'
 import BookingsTab from './tabs/bookings'
@@ -79,12 +80,41 @@ export type OwnerBooking = {
   recurringSkipped?: boolean
 }
 
-export default function OwnerDashboard() {
+// Wrapper component to handle Suspense boundary for useSearchParams —
+// mirrors the cleaner dashboard (app/dashboard/page.tsx, PR #38).
+export default function OwnerDashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen min-w-[320px] bg-[#FAFAF8] flex items-center justify-center">
+        <div className="text-center">
+          <span className="w-8 h-8 border-2 border-[#1A1A1A]/20 border-t-[#1A1A1A] rounded-full animate-spin inline-block" />
+          <p className="text-[#6B6B6B] mt-3">Loading dashboard...</p>
+        </div>
+      </div>
+    }>
+      <OwnerDashboard />
+    </Suspense>
+  )
+}
+
+function OwnerDashboard() {
   const { data: session } = useSession()
   const isAdmin = session?.user?.role === 'ADMIN'
   const [showAdminBanner, setShowAdminBanner] = useState(true)
 
-  const [activeTab, setActiveTab] = useState<Tab>('home')
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab') as Tab | null
+  // Deep-link support for /owner/dashboard?tab=bookings&review=<bookingId>
+  // — the URL the booking-completion email/WhatsApp message already links
+  // to (app/api/dashboard/cleaner/bookings/[id]/route.ts) and the Home
+  // tab's review prompt card pushes. Mirrors the cleaner dashboard's
+  // ?tab= + ?conversation= handling (app/dashboard/page.tsx, PR #38).
+  const reviewFromUrl = searchParams.get('review')
+  const [activeTab, setActiveTab] = useState<Tab>(
+    tabParam && ['home', 'bookings', 'properties', 'messages', 'account'].includes(tabParam)
+      ? tabParam
+      : 'home'
+  )
   const [owner, setOwner] = useState<Owner | null>(null)
   const [properties, setProperties] = useState<Property[]>([])
   const [bookings, setBookings] = useState<OwnerBooking[]>([])
@@ -458,7 +488,7 @@ export default function OwnerDashboard() {
           />
         )}
         {activeTab === 'bookings' && (
-          <BookingsTab bookings={bookings} onLeaveReview={handleLeaveReview} onMessage={handleMessage} onOpenChat={handleOpenChat} />
+          <BookingsTab bookings={bookings} onLeaveReview={handleLeaveReview} onMessage={handleMessage} onOpenChat={handleOpenChat} initialReviewBookingId={reviewFromUrl} />
         )}
         {activeTab === 'messages' && <MessagesTab />}
         {activeTab === 'properties' && (
