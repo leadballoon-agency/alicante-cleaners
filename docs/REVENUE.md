@@ -1,269 +1,159 @@
-# VillaCare Revenue Model (Beta)
+# VillaCare Revenue Model — Membership
 
-## Overview
+> **Decided 1 Aug 2026 (Mark & advisor session).** This supersedes the earlier
+> transaction-fee model (20% first booking + processing fees). The reasoning for
+> that change is recorded at the bottom of this document so we don't re-litigate
+> it from scratch every six months.
 
-Platform is **free to use** for both owners and cleaners. We make money when bookings happen.
+## The Principle
 
----
+**We never monetize the transaction. We monetize absence.**
 
-## Fee Structure
+- The marketplace is **free, forever, for everyone**.
+- Cleaners keep **100% of every clean, always**, paid directly by the owner
+  (cash / Bizum / transfer — exactly as today). We never touch their money.
+- Revenue comes from **remote owners** — people whose villa sits empty most of
+  the year — paying a membership for the thing a WhatsApp thread with one
+  cleaner can never give them: eyes and hands on the ground when they're 2,000km
+  away.
 
-### New Clients (Platform-Acquired)
-
-When an owner discovers a cleaner through VillaCare and makes their **first booking**:
-
-| Item | Amount |
-|------|--------|
-| Platform fee | 20% of booking value |
-| Payment processing | ~2.5% + €0.25 |
-
-**Example**: €90 deep clean
-- Owner pays: €90
-- Platform fee: €18 (20%)
-- Processing: ~€2.50
-- Cleaner receives: ~€69.50
-
-### Returning Clients
-
-All subsequent bookings from the same owner-cleaner pair:
-
-| Item | Amount |
-|------|--------|
-| Platform fee | €0 |
-| Payment processing | ~2.5% + €0.25 |
-
-**Example**: €90 deep clean (repeat customer)
-- Owner pays: €90
-- Cleaner receives: ~€87.25
-
-### Cleaner's Own Clients
-
-If a cleaner brings their existing clients to book through VillaCare:
-
-| Item | Amount |
-|------|--------|
-| Platform fee | €0 |
-| Payment processing | ~2.5% + €0.25 |
-
-We only charge the platform fee when **we** bring them the business.
+The customer isn't paying for an introduction. They're paying to never think
+about it.
 
 ---
 
-## How We Track "New Client"
+## The Three Streams
 
-A booking is considered "platform-acquired" when:
+### 1. Free Marketplace (€0 — growth engine, not revenue)
 
-1. Owner discovered cleaner via VillaCare marketplace (homepage, search)
-2. Owner came through cleaner's public profile page (villacare.com/clara)
-3. AI sales agent created the booking
+Everything that exists today stays free for owners and cleaners alike:
+browse profiles, book, message (auto-translated), reviews, recurring bookings,
+WhatsApp confirmations. Free users are review-fuel, SEO-fuel and the top of the
+membership funnel. Resident owners will mostly stay here — that's fine, they
+were never the ICP.
 
-We track the `firstBooking` flag per owner-cleaner relationship.
+**Cleaner pitch this makes possible:** *"VillaCare takes nothing from you.
+Not now, not later. 100% of every clean is yours."* Permanently true, because
+it's structural — recruiting superpower and the honesty positioning made
+concrete.
 
-If a cleaner manually adds an existing client, no platform fee applies.
+### 2. VillaCare Plus — the remote-owner membership (~€29/month)
 
----
+For owners who are away most of the year. What they get:
 
-## Implementation Requirements
+| Included | What it means |
+|----------|---------------|
+| Guaranteed cover | Cleaner sick or unavailable → vetted backup from the team network within 48h |
+| Managed schedule | Recurring cleans run on autopilot; we chase, you don't |
+| Arrival prep priority | "I'm coming home" requests jump the queue |
+| Completion confirmation | Notification when the clean is done (photo proof when built) |
+| Human concierge | A real person on WhatsApp who knows your villa |
 
-### Database Changes
+**Launch rule:** Plus goes live area-by-area, only where team density can
+honour the backup guarantee. Never promise cover we can't staff.
 
-```prisma
-// Track owner-cleaner relationships
-model OwnerCleanerRelationship {
-  id              String   @id @default(cuid())
-  ownerId         String
-  cleanerId       String
-  firstBookingId  String?  // The booking that established this relationship
-  source          String   // MARKETPLACE, PROFILE_PAGE, AI_AGENT, CLEANER_ADDED
-  platformFeeApplied Boolean @default(false)
-  createdAt       DateTime @default(now())
+**Pilot:** hand-managed, zero code. First ~10 remote owners, a Stripe payment
+link, Mark & Kerry personally doing the concierge layer (the Kerry-as-customer-
+zero method, applied to revenue). Product gets built after the promise is
+proven, not before.
 
-  owner           Owner    @relation(fields: [ownerId], references: [id])
-  cleaner         Cleaner  @relation(fields: [cleanerId], references: [id])
+### 3. VillaCare Manage — property-management lite (~€99–149/month, later)
 
-  @@unique([ownerId, cleanerId])
-}
+Key holding, monthly walk-through with photo report, contractor coordination.
+Undercuts traditional local property managers (€200–500/month).
 
-// Add to Booking model
-model Booking {
-  // ... existing fields
-  platformFee       Decimal?  @db.Decimal(10, 2)
-  processingFee     Decimal?  @db.Decimal(10, 2)
-  cleanerPayout     Decimal?  @db.Decimal(10, 2)
-  stripePaymentId   String?
-  stripeTranferId   String?
-  paidAt            DateTime?
-  paidOutAt         DateTime?
-}
-```
+**Staffed by Team Leaders on a revenue split (~50/50).** The leader holds the
+keys, does the checks, coordinates the trades; roughly half the fee is hers,
+recurring, per member villa in her area. This is what makes the Team Leader
+role a real business instead of a favour — and it's the concrete offer for a
+business-minded leader. The existing team architecture becomes a franchise
+layer.
 
-### Stripe Connect Integration
+### The Endgame: Real Estate (Phase 3, unchanged)
 
-We need **Stripe Connect** for marketplace payments:
-
-1. **Connected Accounts**: Each cleaner has a Stripe Connect account
-2. **Direct Charges**: Owner pays, we split automatically
-3. **Platform Fee**: Deducted before transfer to cleaner
-4. **Payouts**: Automatic daily/weekly to cleaner's bank
-
-### Cleaner Onboarding Flow
-
-Add Stripe Connect onboarding:
-
-1. Cleaner signs up (existing flow)
-2. Cleaner completes profile (existing flow)
-3. **NEW**: Cleaner connects Stripe account
-4. Cleaner goes live and can receive payments
-
-### Payment Flow
-
-```
-Owner books €90 clean
-        ↓
-Stripe checkout (€90 charge)
-        ↓
-Is this first booking with this cleaner?
-   YES → Calculate 20% platform fee (€18)
-   NO  → Platform fee = €0
-        ↓
-Processing fee calculated (~€2.50)
-        ↓
-Stripe splits payment:
-   - VillaCare: €18 + €2.50 = €20.50
-   - Cleaner: €69.50
-        ↓
-Cleaner receives payout (T+2 days)
-```
+Members are the pipeline. A Plus/Manage member whose trust we've held for two
+years lists and buys through us: **€15–25K per sale (3%)**. The membership
+model exists to *keep* the relationship until that day — which is exactly what
+transaction fees failed to do (they reward shallow matches; the asset is deep
+retention).
 
 ---
 
-## Files to Create/Modify
+## The Math
 
-| File | Purpose |
+| Milestone | Monthly revenue |
+|-----------|----------------|
+| 10 Plus members (pilot) | €290 |
+| 50 Plus members | €1,450 |
+| 200 Plus members | €5,800 |
+| 200 Plus + 20 Manage (net of leader split) | ~€7,000 |
+
+€84K+/year from one province, before a single property sale. For contrast, the
+old model produced ~€12–18 **once per relationship** — a hundred successful
+matches was worth less than €2,000, ever.
+
+Manage-tier split also creates the leader economy: 10 member villas × €120 ×
+50% = **€600/month recurring to a Team Leader** — a real reason to build and
+hold a territory.
+
+---
+
+## Sequencing & Triggers
+
+| Step | Trigger |
 |------|---------|
-| `lib/stripe.ts` | Stripe client, Connect helpers |
-| `app/api/stripe/connect/route.ts` | Create Connect account |
-| `app/api/stripe/connect/callback/route.ts` | OAuth callback |
-| `app/api/stripe/checkout/route.ts` | Create checkout session |
-| `app/api/stripe/webhook/route.ts` | Handle payment events |
-| `app/dashboard/tabs/payments.tsx` | Cleaner payment dashboard |
-| `components/stripe/connect-button.tsx` | Onboarding button |
+| 1. Free everything, ads running | **Now** (campaign live 1 Aug) |
+| 2. Start Spanish entity setup | First ad-driven bookings exist |
+| 3. Stripe (simple subscriptions — **not Connect**) | Entity live |
+| 4. Plus pilot, hand-managed, ~10 remote owners | Stripe live + 15–20 active owner relationships |
+| 5. Plus self-serve in product | Pilot promise proven for 2–3 months |
+| 6. Manage tier + leader revenue share | First committed Team Leader + key-holding demand |
 
 ---
 
-## Environment Variables
+## Implementation (deliberately tiny)
 
-```env
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_CONNECT_CLIENT_ID=ca_...
-```
+The membership model deletes most of the old build:
+
+- ~~Stripe Connect, cleaner payout accounts, payment splits, webhooks~~ → **one
+  vanilla Stripe subscription product**.
+- ~~OwnerCleanerRelationship fee tracking, platformFee/payout columns~~ → a
+  `membershipTier` + `membershipSince` on Owner (and later a Stripe customer id).
+- Cleaners never onboard to payments at all — no formalization burden on a
+  cash-culture supply base.
+
+Pilot needs literally none of the above — a payment link and a spreadsheet.
 
 ---
 
-## Pricing Display
+## Why we killed transaction fees (decision record)
 
-On cleaner profile pages, show:
+1. **Disintermediation is structural in recurring home cleaning.** Same two
+   people, weekly, personal relationship after two visits. Any per-booking fee
+   is a standing invitation to move to WhatsApp; enforcement is impossible and
+   the fee ceiling is ~zero. (Homejoy raised $38M and died of exactly this;
+   Thumbtack retreated to lead fees; TaskRabbit pivoted to one-offs.)
+2. **A membership has no fee to dodge.** Cancelling Plus loses the safety net —
+   retention works *for* us.
+3. **Finder's-fee economics point the wrong way.** They reward many shallow
+   matches; the Phase 3 asset is deep, retained owner relationships.
+4. **Stripe Connect was a mountain of engineering** (and forced tax
+   formalization onto cleaners, many of whom aren't registered autónomas).
+   A subscription is a molehill.
+5. **"Cleaners keep 100%" is worth more as a permanent structural truth** than
+   the ~€2K/year the fees would have produced.
 
-> "Book securely through VillaCare. Pay online, no cash needed."
-
-We don't need to show the fee breakdown to owners - they just pay the listed price.
-
-For cleaners in their dashboard:
-
-> "First booking from new clients: 20% platform fee
-> Repeat bookings: Processing only (~2.5%)
-> Your existing clients: Processing only"
+What was dropped: 20% first-booking fee, 2.5% repeat processing pass-through,
+per-booking flat fees (considered 1 Aug, rejected same day).
 
 ---
 
 ## Future Considerations
 
-- **Tipping**: Allow owners to add tips (100% to cleaner)
-- **Deposits**: Require deposit for bookings (refundable)
-- **Cancellation fees**: Charge for late cancellations
-- **Subscription tier**: Premium features for high-volume cleaners
-
----
-
-## Crypto-Ready Architecture
-
-> **Internal only** - Not for public messaging. Subtle nod when asked.
-
-We're building with crypto payments in mind from day one. The goal is to make adding crypto a drop-in, not a rebuild.
-
-### Design Principles
-
-1. **Abstract payment providers** - Stripe is one implementation, not the only one
-2. **Store wallet addresses** - Optional field in User model, ready when needed
-3. **Points-based rewards** - Internal credits that can tokenize later
-4. **Event-driven** - Webhooks pattern works for Stripe and on-chain events
-
-### Payment Provider Interface
-
-```typescript
-interface PaymentProvider {
-  createCheckout(booking: Booking, options: CheckoutOptions): Promise<CheckoutSession>
-  processRefund(paymentId: string, amount: number): Promise<Refund>
-  getPayoutStatus(transferId: string): Promise<PayoutStatus>
-  onPaymentComplete(callback: (event: PaymentEvent) => void): void
-}
-
-// Implementations
-class StripeProvider implements PaymentProvider { ... }
-class CryptoProvider implements PaymentProvider { ... }  // Future
-```
-
-### Database Fields (Add Now, Use Later)
-
-```prisma
-model User {
-  // ... existing fields
-  walletAddress    String?   // ETH/EVM address
-  preferredPayout  String    @default("bank") // bank | crypto
-}
-
-model Booking {
-  // ... existing fields
-  paymentMethod    String    @default("card") // card | crypto
-  cryptoTxHash     String?   // On-chain transaction hash
-}
-```
-
-### Crypto Payment Options (Future)
-
-| Type | Use Case | Settlement |
-|------|----------|------------|
-| **EURC/USDC** | Stable payments, no volatility | Instant |
-| **ETH/SOL** | Crypto-native users | Instant |
-| **Lightning** | Fast BTC payments | Instant |
-
-### Rewards System (Tokenizable)
-
-Build rewards as internal points now, tokenize later:
-
-```
-Cleaner completes job → Earns VillaCare Credits
-Credits can be:
-  - Cashed out (EUR via Stripe)
-  - Converted to crypto (future)
-  - Spent on platform perks
-  - Converted to $VILLA token (future)
-```
-
-### Why This Matters
-
-Large legacy platforms have:
-- Outdated payment infrastructure
-- Millions of users to migrate
-- Risk-averse decision making
-- Slow adoption cycles
-
-We have:
-- Greenfield architecture
-- Beta users who expect innovation
-- Feedback tool for rapid iteration
-- Ability to move fast
-
-**Crypto readiness is a competitive moat.**
+- **Tipping** — owners add tips, 100% to cleaner (unchanged, fits the model)
+- **Annual membership discount** (e.g. 2 months free) once Plus is self-serve
+- **Member referral** — existing €10-credit referral system extends naturally
+  to "gift a month of Plus"
+- **Crypto-ready** (internal note, unchanged): payment provider stays
+  abstracted; a subscription is even easier to settle in stablecoins later
+  than marketplace splits would have been.
