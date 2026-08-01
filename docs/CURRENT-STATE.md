@@ -120,16 +120,15 @@ Weekly villa visits = early intel on property sales. Future real estate play bui
 - Platform is free to use
 - Focus: Build trust, prove product-market fit
 
-### Post-Beta: Stripe Connect
+### Post-Beta: Membership (decided 1 Aug 2026)
 | Revenue Stream | Rate |
 |----------------|------|
-| First booking (platform-acquired) | 20% |
-| Repeat bookings | 2.5% processing |
-| Cleaner's own clients | 2.5% processing only |
-| Property management | 10-15% monthly |
+| Marketplace — booking, messaging, reviews | Free forever; cleaners keep 100% |
+| VillaCare Plus (remote-owner membership) | ~€29/month |
+| VillaCare Manage (key holding, inspections) | ~€99–149/month, ~50% to Team Leader |
 | Real estate (future) | 3% commission |
 
-**We only charge platform fees when we bring the business.**
+**We never take a cut of the transaction — we monetize absence, not introductions.** Full model and decision record in REVENUE.md.
 
 ---
 

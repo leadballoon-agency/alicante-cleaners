@@ -112,13 +112,13 @@ Zillow gets data from listings. We get it from relationships. Our cleaners are i
 
 ### The Math
 
-| | Cleaning | Real Estate |
+| | Membership | Real Estate |
 |---|----------|-------------|
-| Avg Transaction | €60 | €500,000 |
-| Our Commission | €12 (20%) | €15,000 (3%) |
-| **Multiplier** | 1x | **1,250x** |
+| Avg Transaction | €29/month (Plus) | €500,000 |
+| Our Revenue | €348/year recurring | €15,000 (3%) |
+| **The link** | Keeps the relationship | Cashes it in |
 
-**One villa sale = 1,250 cleans worth of revenue.**
+**A member villa is worth €348+/year while we wait — and €15,000+ the day they sell.**
 
 ---
 
@@ -146,16 +146,16 @@ Zillow gets data from listings. We get it from relationships. Our cleaners are i
 
 ---
 
-## Business Model (Free-to-Join Marketplace)
+## Business Model (Free Marketplace + Membership)
 
 | Revenue Stream | Rate | Notes |
 |----------------|------|-------|
-| First Booking | 20% | New client acquisition |
-| Repeat Bookings | 2.5% | Transaction fee |
-| Property Management | 10-15% | Monthly retainer |
-| Real Estate | 3% | Sales commission |
+| Marketplace (booking, messaging, reviews) | Free, forever | Cleaners keep 100% of every clean |
+| VillaCare Plus | ~€29/month | Remote-owner membership: guaranteed cover, managed schedule, concierge |
+| VillaCare Manage | ~€99–149/month | Key holding, inspections — delivered by Team Leaders on a ~50/50 revenue split |
+| Real Estate | 3% | Sales commission (the endgame) |
 
-**Free to join.** No subscription, no setup fees. We only earn when they earn.
+**We never take a cut of the transaction.** Cleaners keep 100%; owners pay for peace of mind, not introductions. See REVENUE.md for the full model and decision record.
 
 ---
 
