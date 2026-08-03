@@ -5,18 +5,79 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID
 const authToken = process.env.TWILIO_AUTH_TOKEN
 const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER // e.g., 'whatsapp:+14155238886'
 
+// SMS fallback sender. Defaults to the same number as WhatsApp (our UK
+// numbers are all SMS-capable) but can be pointed at a dedicated number via
+// TWILIO_SMS_NUMBER without touching WhatsApp config.
+const smsNumber =
+  process.env.TWILIO_SMS_NUMBER || (whatsappNumber ? whatsappNumber.replace(/^whatsapp:/, '') : undefined)
+
+// Kill switch for the WhatsApp channel. When the WhatsApp Business Account is
+// disabled by Meta (Twilio errors 63112 / 63002), WhatsApp sends are accepted
+// by the API and then fail asynchronously at delivery — a plain try/catch
+// can't catch that. Setting WHATSAPP_ENABLED=false routes every notification
+// straight to SMS so alerts still land. Flip back to true once the WABA is
+// restored. Defaults to enabled.
+const whatsappEnabled = (process.env.WHATSAPP_ENABLED ?? 'true').toLowerCase() !== 'false'
+
 const client = accountSid && authToken ? Twilio(accountSid, authToken) : null
 
+type SendResult = {
+  success: boolean
+  messageId?: string
+  error?: string
+  channel?: 'whatsapp' | 'sms'
+}
+
 /**
- * Send a WhatsApp message via Twilio
+ * Send a plain SMS via Twilio. Used as the fallback channel for booking
+ * notifications while the WhatsApp sender is offline.
+ */
+export async function sendSMS(to: string, body: string): Promise<SendResult> {
+  if (!client || !smsNumber) {
+    console.error('Twilio not configured - cannot send SMS fallback')
+    return { success: false, error: 'SMS not configured' }
+  }
+
+  try {
+    // SMS uses the bare E.164 number (no whatsapp: prefix)
+    const formattedTo = to.replace(/^whatsapp:/, '')
+
+    const message = await client.messages.create({
+      body,
+      from: smsNumber,
+      to: formattedTo,
+    })
+
+    console.log(`SMS sent (fallback): ${message.sid}`)
+    return { success: true, messageId: message.sid, channel: 'sms' }
+  } catch (error) {
+    console.error('Failed to send SMS:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      channel: 'sms',
+    }
+  }
+}
+
+/**
+ * Send a free-text message to a user, preferring WhatsApp and falling back to
+ * SMS. When WHATSAPP_ENABLED=false the WhatsApp attempt is skipped entirely
+ * (see note above) and the message goes straight to SMS.
  */
 export async function sendWhatsAppMessage(
   to: string,
   body: string
-): Promise<{ success: boolean; messageId?: string; error?: string }> {
+): Promise<SendResult> {
   if (!client || !whatsappNumber) {
     console.error('Twilio not configured - missing credentials')
-    return { success: false, error: 'WhatsApp not configured' }
+    // Even without WhatsApp config we may still be able to SMS.
+    return sendSMS(to, body)
+  }
+
+  // WhatsApp channel is switched off (WABA down) — go straight to SMS.
+  if (!whatsappEnabled) {
+    return sendSMS(to, body)
   }
 
   try {
@@ -30,13 +91,11 @@ export async function sendWhatsAppMessage(
     })
 
     console.log(`WhatsApp message sent: ${message.sid}`)
-    return { success: true, messageId: message.sid }
+    return { success: true, messageId: message.sid, channel: 'whatsapp' }
   } catch (error) {
-    console.error('Failed to send WhatsApp message:', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }
+    // Hard failure at create time (e.g. sender rejected synchronously) — try SMS.
+    console.error('WhatsApp send failed, falling back to SMS:', error)
+    return sendSMS(to, body)
   }
 }
 
@@ -151,19 +210,32 @@ export async function notifyCleanerNewBooking(
     price: string
     shortCode?: string // Reference code for WhatsApp commands
   }
-): Promise<{ success: boolean; error?: string }> {
-  if (!client || !whatsappNumber) {
-    console.error('Twilio not configured - missing credentials')
-    return { success: false, error: 'WhatsApp not configured' }
+): Promise<SendResult> {
+  // Include shortCode in service field for easy reference
+  const serviceWithCode = details.shortCode
+    ? `${details.service} - ${details.price} (#${details.shortCode})`
+    : `${details.service} - ${details.price}`
+
+  // Plain-text version used for the SMS fallback (WhatsApp templates can't be
+  // sent over SMS, so we reproduce the same content as free text).
+  const smsBody = `New booking${details.shortCode ? ` #${details.shortCode}` : ''} - VillaCare
+Owner: ${details.ownerName}
+Date: ${details.date} at ${details.time}
+Service: ${serviceWithCode}
+Address: ${details.address}
+Reply ACCEPT ${details.shortCode || ''} or DECLINE ${details.shortCode || ''}, or open your dashboard.`.trim()
+
+  // WhatsApp channel is switched off (WABA down) — go straight to SMS.
+  if (!client || !whatsappNumber || !whatsappEnabled) {
+    if (!client) {
+      console.error('Twilio not configured - missing credentials')
+      return { success: false, error: 'Twilio not configured' }
+    }
+    return sendSMS(phone, smsBody)
   }
 
   try {
     const formattedTo = phone.startsWith('whatsapp:') ? phone : `whatsapp:${phone}`
-
-    // Include shortCode in service field for easy reference
-    const serviceWithCode = details.shortCode
-      ? `${details.service} - ${details.price} (#${details.shortCode})`
-      : `${details.service} - ${details.price}`
 
     // Use approved content template for new booking
     const message = await client.messages.create({
@@ -180,13 +252,11 @@ export async function notifyCleanerNewBooking(
     })
 
     console.log(`WhatsApp new booking notification sent: ${message.sid}`)
-    return { success: true }
+    return { success: true, channel: 'whatsapp' }
   } catch (error) {
-    console.error('Failed to send WhatsApp booking notification:', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }
+    // Hard failure at create time — fall back to SMS so the cleaner still hears.
+    console.error('WhatsApp booking notification failed, falling back to SMS:', error)
+    return sendSMS(phone, smsBody)
   }
 }
 
