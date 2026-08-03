@@ -11,7 +11,27 @@
 import { db } from '@/lib/db'
 import { sendPushToStaff, sendPushToUser, cleanerPushText } from '@/lib/push'
 import { sendOwnerBookingDeclinedEmail } from '@/lib/emails/owner-booking-emails'
-import { formatMadridDate } from '@/lib/dates'
+import { formatMadridDate, getMadridDateParts } from '@/lib/dates'
+import { sendSms } from '@/lib/sms'
+
+/** dd/MM in Europe/Madrid, for the short SMS fallback copy (no locale formatting needed). */
+function formatDdMmMadrid(date: Date): string {
+  const { day, month } = getMadridDateParts(date)
+  return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}`
+}
+
+/**
+ * SMS fallback for a cleaner notification, only sent if the cleaner has no
+ * push subscription (push already covers them - WhatsApp is dead, SMS
+ * costs ~€0.08/message to Spain). Never throws - sendSms is safe to await
+ * directly inside a runSideEffects() promise.
+ */
+async function smsFallbackIfNoPush(userId: string, phone: string | null, body: string): Promise<void> {
+  if (!phone) return
+  const pushCount = await db.pushSubscription.count({ where: { userId } })
+  if (pushCount > 0) return
+  await sendSms(phone, body)
+}
 
 interface BookingDetails {
   id: string
@@ -84,6 +104,15 @@ export async function onBookingCreated(booking: BookingDetails) {
     cleaner.userId,
     cleanerPushText('newBooking', cleaner.user.preferredLanguage, summary)
   )
+
+  // SMS fallback for cleaners with no push subscription - see
+  // smsFallbackIfNoPush above for why (push adoption is ~5 users
+  // platform-wide, WhatsApp booking notifications are dead).
+  const ddMm = formatDdMmMadrid(booking.date)
+  const smsBody = isEnglish
+    ? `VillaCare: New booking on ${ddMm}! Log in at alicantecleaners.com to view and accept it.`
+    : `VillaCare: ¡Nueva reserva el ${ddMm}! Entra en alicantecleaners.com para verla y aceptarla.`
+  await smsFallbackIfNoPush(cleaner.userId, cleaner.user.phone, smsBody)
 
   console.log(`[Notification] New booking request created for cleaner ${cleaner.user.name}`)
 }
@@ -174,7 +203,7 @@ async function sendReminder(
     date: Date
     time: string
   },
-  cleaner: { userId: string; user: { name: string | null; preferredLanguage: string } },
+  cleaner: { userId: string; user: { name: string | null; preferredLanguage: string; phone: string | null } },
   reminderNumber: 1 | 2,
   hoursElapsed?: number
 ) {
@@ -202,6 +231,15 @@ async function sendReminder(
     cleaner.userId,
     cleanerPushText('bookingOverdue', cleaner.user.preferredLanguage)
   )
+
+  // SMS fallback for cleaners with no push subscription (see
+  // smsFallbackIfNoPush above).
+  const isEnglish = cleaner.user.preferredLanguage === 'en'
+  const ddMm = formatDdMmMadrid(booking.date)
+  const reminderSmsBody = isEnglish
+    ? `VillaCare: You have a pending booking (${ddMm}) waiting for your response. Log in at alicantecleaners.com.`
+    : `VillaCare: Tienes una reserva pendiente (${ddMm}) esperando tu respuesta. Entra en alicantecleaners.com.`
+  await smsFallbackIfNoPush(cleaner.userId, cleaner.user.phone, reminderSmsBody)
 
   await db.notification.create({
     data: {
