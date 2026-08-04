@@ -15,7 +15,7 @@
  */
 
 import { db } from '@/lib/db'
-import { notifyCleanerNewBooking, sendBookingConfirmation } from '@/lib/whatsapp'
+import { sendBookingConfirmation } from '@/lib/whatsapp'
 import { notifyAdminNewBooking } from '@/lib/email'
 import { sendOwnerBookingReceivedEmail } from '@/lib/emails/owner-booking-emails'
 import { triggerWelcomeEmail } from '@/lib/nurturing/send-email'
@@ -191,22 +191,10 @@ export async function createBookingCore(params: CreateBookingCoreParams): Promis
   // in here.
   const sideEffects: SideEffect[] = []
 
-  // Send WhatsApp notification to cleaner (outside transaction)
-  const cleanerPhone = params.cleaner.user.phone
-  if (cleanerPhone) {
-    sideEffects.push({
-      label: `whatsapp:notify-cleaner-new-booking:${booking.id}`,
-      promise: notifyCleanerNewBooking(cleanerPhone, {
-        ownerName: owner?.user.name || params.guestName || 'Villa Owner',
-        date: formattedDate,
-        time: params.time,
-        address: params.propertyAddress,
-        service: params.serviceType,
-        price: `€${price}`,
-        shortCode: booking.shortCode || undefined,
-      }),
-    })
-  }
+  // Note: the cleaner's new-booking notification (WhatsApp when live, else an
+  // actionable SMS for push-less cleaners) is sent by onBookingCreated() below
+  // — the single source shared by every booking-creation path. Don't add a
+  // second cleaner notification here or push-less cleaners get duplicate SMS.
 
   // Send WhatsApp confirmation to owner (if they have a phone)
   const ownerPhone = params.guestPhone || owner?.user.phone

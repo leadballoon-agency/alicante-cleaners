@@ -1,15 +1,10 @@
 import Twilio from 'twilio'
+import { sendSms } from '@/lib/sms'
 
 // Initialize Twilio client
 const accountSid = process.env.TWILIO_ACCOUNT_SID
 const authToken = process.env.TWILIO_AUTH_TOKEN
 const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER // e.g., 'whatsapp:+14155238886'
-
-// SMS fallback sender. Defaults to the same number as WhatsApp (our UK
-// numbers are all SMS-capable) but can be pointed at a dedicated number via
-// TWILIO_SMS_NUMBER without touching WhatsApp config.
-const smsNumber =
-  process.env.TWILIO_SMS_NUMBER || (whatsappNumber ? whatsappNumber.replace(/^whatsapp:/, '') : undefined)
 
 // Kill switch for the WhatsApp channel. When the WhatsApp Business Account is
 // disabled by Meta (Twilio errors 63112 / 63002), WhatsApp sends are accepted
@@ -18,6 +13,11 @@ const smsNumber =
 // straight to SMS so alerts still land. Flip back to true once the WABA is
 // restored. Defaults to enabled.
 const whatsappEnabled = (process.env.WHATSAPP_ENABLED ?? 'true').toLowerCase() !== 'false'
+
+/** Whether the WhatsApp channel is currently live (vs. SMS-only fallback). */
+export function isWhatsAppEnabled(): boolean {
+  return whatsappEnabled
+}
 
 const client = accountSid && authToken ? Twilio(accountSid, authToken) : null
 
@@ -28,36 +28,10 @@ type SendResult = {
   channel?: 'whatsapp' | 'sms'
 }
 
-/**
- * Send a plain SMS via Twilio. Used as the fallback channel for booking
- * notifications while the WhatsApp sender is offline.
- */
-export async function sendSMS(to: string, body: string): Promise<SendResult> {
-  if (!client || !smsNumber) {
-    console.error('Twilio not configured - cannot send SMS fallback')
-    return { success: false, error: 'SMS not configured' }
-  }
-
-  try {
-    // SMS uses the bare E.164 number (no whatsapp: prefix)
-    const formattedTo = to.replace(/^whatsapp:/, '')
-
-    const message = await client.messages.create({
-      body,
-      from: smsNumber,
-      to: formattedTo,
-    })
-
-    console.log(`SMS sent (fallback): ${message.sid}`)
-    return { success: true, messageId: message.sid, channel: 'sms' }
-  } catch (error) {
-    console.error('Failed to send SMS:', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      channel: 'sms',
-    }
-  }
+/** Thin adapter: send via the canonical lib/sms.ts sender, shaped as a SendResult. */
+async function smsFallback(to: string, body: string): Promise<SendResult> {
+  const ok = await sendSms(to, body)
+  return { success: ok, channel: 'sms', error: ok ? undefined : 'SMS send failed' }
 }
 
 /**
@@ -72,12 +46,12 @@ export async function sendWhatsAppMessage(
   if (!client || !whatsappNumber) {
     console.error('Twilio not configured - missing credentials')
     // Even without WhatsApp config we may still be able to SMS.
-    return sendSMS(to, body)
+    return smsFallback(to, body)
   }
 
   // WhatsApp channel is switched off (WABA down) — go straight to SMS.
   if (!whatsappEnabled) {
-    return sendSMS(to, body)
+    return smsFallback(to, body)
   }
 
   try {
@@ -95,7 +69,7 @@ export async function sendWhatsAppMessage(
   } catch (error) {
     // Hard failure at create time (e.g. sender rejected synchronously) — try SMS.
     console.error('WhatsApp send failed, falling back to SMS:', error)
-    return sendSMS(to, body)
+    return smsFallback(to, body)
   }
 }
 
@@ -231,7 +205,7 @@ Reply ACCEPT ${details.shortCode || ''} or DECLINE ${details.shortCode || ''}, o
       console.error('Twilio not configured - missing credentials')
       return { success: false, error: 'Twilio not configured' }
     }
-    return sendSMS(phone, smsBody)
+    return smsFallback(phone, smsBody)
   }
 
   try {
@@ -256,7 +230,7 @@ Reply ACCEPT ${details.shortCode || ''} or DECLINE ${details.shortCode || ''}, o
   } catch (error) {
     // Hard failure at create time — fall back to SMS so the cleaner still hears.
     console.error('WhatsApp booking notification failed, falling back to SMS:', error)
-    return sendSMS(phone, smsBody)
+    return smsFallback(phone, smsBody)
   }
 }
 

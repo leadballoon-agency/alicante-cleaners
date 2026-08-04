@@ -13,6 +13,12 @@ import { sendPushToStaff, sendPushToUser, cleanerPushText } from '@/lib/push'
 import { sendOwnerBookingDeclinedEmail } from '@/lib/emails/owner-booking-emails'
 import { formatMadridDate, getMadridDateParts } from '@/lib/dates'
 import { sendSms } from '@/lib/sms'
+import { notifyCleanerNewBooking, isWhatsAppEnabled } from '@/lib/whatsapp'
+
+/** True if the user has at least one web-push subscription. */
+async function hasPushSubscription(userId: string): Promise<boolean> {
+  return (await db.pushSubscription.count({ where: { userId } })) > 0
+}
 
 /** dd/MM in Europe/Madrid, for the short SMS fallback copy (no locale formatting needed). */
 function formatDdMmMadrid(date: Date): string {
@@ -28,8 +34,7 @@ function formatDdMmMadrid(date: Date): string {
  */
 async function smsFallbackIfNoPush(userId: string, phone: string | null, body: string): Promise<void> {
   if (!phone) return
-  const pushCount = await db.pushSubscription.count({ where: { userId } })
-  if (pushCount > 0) return
+  if (await hasPushSubscription(userId)) return
   await sendSms(phone, body)
 }
 
@@ -105,14 +110,28 @@ export async function onBookingCreated(booking: BookingDetails) {
     cleanerPushText('newBooking', cleaner.user.preferredLanguage, summary)
   )
 
-  // SMS fallback for cleaners with no push subscription - see
-  // smsFallbackIfNoPush above for why (push adoption is ~5 users
-  // platform-wide, WhatsApp booking notifications are dead).
-  const ddMm = formatDdMmMadrid(booking.date)
-  const smsBody = isEnglish
-    ? `VillaCare: New booking on ${ddMm}! Log in at alicantecleaners.com to view and accept it.`
-    : `VillaCare: ¡Nueva reserva el ${ddMm}! Entra en alicantecleaners.com para verla y aceptarla.`
-  await smsFallbackIfNoPush(cleaner.userId, cleaner.user.phone, smsBody)
+  // Cleaner's booking notification (single source for ALL booking-creation
+  // paths — guest/manual, rebook, recurring, onboarding). WhatsApp is the
+  // primary channel and goes to every cleaner when it's live; when it's down
+  // (WHATSAPP_ENABLED=false) notifyCleanerNewBooking sends an actionable SMS
+  // (with the ACCEPT/DECLINE #code) instead — but we only pay for that SMS
+  // when the cleaner has no push subscription, since push already reaches the
+  // rest. notifyCleanerNewBooking picks WhatsApp-vs-SMS internally.
+  if (cleaner.user.phone && (isWhatsAppEnabled() || !(await hasPushSubscription(cleaner.userId)))) {
+    const bookingRow = await db.booking.findUnique({
+      where: { id: booking.id },
+      select: { shortCode: true, property: { select: { address: true } } },
+    })
+    await notifyCleanerNewBooking(cleaner.user.phone, {
+      ownerName: booking.ownerName,
+      date: dateStr,
+      time: booking.time,
+      address: bookingRow?.property?.address || booking.propertyName,
+      service: booking.service,
+      price: `€${booking.price}`,
+      shortCode: bookingRow?.shortCode || undefined,
+    })
+  }
 
   console.log(`[Notification] New booking request created for cleaner ${cleaner.user.name}`)
 }
