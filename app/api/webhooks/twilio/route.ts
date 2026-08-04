@@ -7,6 +7,18 @@ import { formatMadridDate } from '@/lib/dates'
 import { runSideEffects, type SideEffect } from '@/lib/side-effects'
 import twilio from 'twilio'
 
+// Acknowledge a Twilio webhook with an empty TwiML document (no auto-reply).
+// Twilio treats a messaging webhook's HTTP response body as the reply to send
+// back: returning plain text like "OK" makes Twilio SMS the sender a literal
+// "OK" after every ACCEPT/DECLINE/HELP. An empty <Response/> says "no reply",
+// while our own explicit sends (sendWhatsAppMessage/SMS) do the real messaging.
+function twimlNoReply(): NextResponse {
+  return new NextResponse('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
+    status: 200,
+    headers: { 'Content-Type': 'text/xml' },
+  })
+}
+
 // Reconstruct the public URL that Twilio signed (Vercel serverless fix)
 function getTwilioSignedUrl(req: NextRequest): string {
   const proto = req.headers.get('x-forwarded-proto') ?? 'https'
@@ -114,7 +126,7 @@ export async function POST(request: NextRequest) {
     console.log(`WhatsApp webhook received: ${messageSid} from ${from}: "${body}"`)
 
     if (!from || !body || !messageSid) {
-      return new NextResponse('OK', { status: 200 })
+      return twimlNoReply()
     }
 
     // Idempotency: try to claim this webhook (insert-first pattern)
@@ -122,7 +134,7 @@ export async function POST(request: NextRequest) {
     const claimed = await claimWebhook(messageSid)
     if (!claimed) {
       console.log(`Webhook ${messageSid} already processed - skipping`)
-      return new NextResponse('OK', { status: 200 })
+      return twimlNoReply()
     }
 
     // Normalise phone to E.164 for exact matching
@@ -143,7 +155,7 @@ export async function POST(request: NextRequest) {
     if (!cleaner) {
       // Not a cleaner - could be an owner message, log and acknowledge
       console.log(`Message from non-cleaner: ${phone}`)
-      return new NextResponse('OK', { status: 200 })
+      return twimlNoReply()
     }
 
     // Parse command and optional reference code
@@ -180,7 +192,7 @@ export async function POST(request: NextRequest) {
 
         if (!pendingBooking) {
           await sendWhatsAppMessage(from, `No pending booking found with code #${refCode}.`)
-          return new NextResponse('OK', { status: 200 })
+          return twimlNoReply()
         }
       } else {
         // Find most recent pending booking
@@ -200,7 +212,7 @@ export async function POST(request: NextRequest) {
 
         if (!pendingBooking) {
           await sendWhatsAppMessage(from, 'No pending bookings found to accept.')
-          return new NextResponse('OK', { status: 200 })
+          return twimlNoReply()
         }
 
         // Check if cleaner has multiple pending bookings - require reference code
@@ -233,7 +245,7 @@ export async function POST(request: NextRequest) {
             from,
             `You have ${pendingCount} pending bookings. Please specify which one:\n\n${bookingList}\n\nReply: ACCEPT [code] or DECLINE [code]`
           )
-          return new NextResponse('OK', { status: 200 })
+          return twimlNoReply()
         }
       }
 
@@ -316,7 +328,7 @@ export async function POST(request: NextRequest) {
 
         if (!pendingBooking) {
           await sendWhatsAppMessage(from, `No pending booking found with code #${refCode}.`)
-          return new NextResponse('OK', { status: 200 })
+          return twimlNoReply()
         }
       } else {
         pendingBooking = await db.booking.findFirst({
@@ -335,7 +347,7 @@ export async function POST(request: NextRequest) {
 
         if (!pendingBooking) {
           await sendWhatsAppMessage(from, 'No pending bookings found to decline.')
-          return new NextResponse('OK', { status: 200 })
+          return twimlNoReply()
         }
 
         // Check for multiple pending bookings
@@ -367,7 +379,7 @@ export async function POST(request: NextRequest) {
             from,
             `You have ${pendingCount} pending bookings. Please specify which one:\n\n${bookingList}\n\nReply: ACCEPT [code] or DECLINE [code]`
           )
-          return new NextResponse('OK', { status: 200 })
+          return twimlNoReply()
         }
       }
 
@@ -440,12 +452,12 @@ export async function POST(request: NextRequest) {
     await runSideEffects(sideEffects)
 
     // Always return 200 to acknowledge receipt
-    return new NextResponse('OK', { status: 200 })
+    return twimlNoReply()
 
   } catch (error) {
     console.error('Twilio webhook error:', error)
     // Still return 200 to prevent Twilio retries
-    return new NextResponse('OK', { status: 200 })
+    return twimlNoReply()
   }
 }
 
